@@ -149,10 +149,12 @@
   /* ---------- Cards ---------- */
   .card-grid {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--card-min-width), 1fr));
-    gap: 1px; background: var(--rule); border: 0.5px solid var(--rule); border-radius: var(--border-radius);
+    gap: 1px; padding: 1px; border-radius: var(--border-radius);
   }
-  body.cards-no-divider .card-grid { background: transparent; border: none; gap: 1.25rem; }
-  body.cards-no-divider .card { border: 0.5px solid var(--rule); border-radius: var(--border-radius); }
+  /* Divider lines are drawn on each card (not the grid background) so empty slots stay the page color */
+  .card { box-shadow: 0 0 0 1px var(--rule); }
+  body.cards-no-divider .card-grid { gap: 1.25rem; padding: 0; }
+  body.cards-no-divider .card { box-shadow: none; border: 0.5px solid var(--rule); border-radius: var(--border-radius); }
   body.card-aspect-square .card-img { height: auto; aspect-ratio: 1 / 1; }
   body.card-aspect-landscape .card-img { height: auto; aspect-ratio: 4 / 3; }
   body.card-aspect-portrait .card-img { height: auto; aspect-ratio: 3 / 4; }
