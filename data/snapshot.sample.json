@@ -1,0 +1,26 @@
+{
+  "folders": [
+    {"id":"f-1","parent_id":null,"name":"Chemistry","slug":"chemistry","description":"Fall semester labs","sort_order":0,"listed":true,"access":"inherit","created_at":"2026-09-01T00:00:00Z"},
+    {"id":"f-2","parent_id":"f-1","name":"Unit 2 — Acids and bases","slug":"unit-2-acids","description":null,"sort_order":1,"listed":true,"access":"inherit","created_at":"2026-09-01T00:00:00Z"},
+    {"id":"f-3","parent_id":null,"name":"Physics","slug":"physics","description":"Password-protected course","sort_order":1,"listed":true,"access":"password","created_at":"2026-09-01T00:00:00Z"}
+  ],
+  "labs": [
+    {"id":"l-1","folder_id":"f-2","title":"Lab 3 — Titration of vinegar","slug":"lab-3-titration","summary":"Determine the concentration of acetic acid in household vinegar using a standardized NaOH solution.","cover_path":"youtube:dQw4w9WgXcQ","status":"published","publish_at":null,"access":"inherit","tags":["acids","titration"],"estimated_minutes":50,"sort_order":0,"created_at":"2026-09-02T00:00:00Z","updated_at":"2026-09-10T00:00:00Z"},
+    {"id":"l-2","folder_id":"f-2","title":"Lab 4 — Indicators","slug":"lab-4-indicators","summary":"Make a red-cabbage indicator and test household solutions.","cover_path":null,"status":"published","publish_at":null,"access":"inherit","tags":["acids"],"estimated_minutes":40,"sort_order":1,"created_at":"2026-09-02T00:00:00Z","updated_at":"2026-09-12T00:00:00Z"},
+    {"id":"l-3","folder_id":"f-3","title":"Pendulum period","slug":"pendulum-period","summary":"Measure g with a simple pendulum.","cover_path":null,"status":"published","publish_at":null,"access":"inherit","tags":["mechanics"],"estimated_minutes":45,"sort_order":0,"created_at":"2026-09-02T00:00:00Z","updated_at":"2026-09-12T00:00:00Z"},
+    {"id":"l-4","folder_id":null,"title":"Lab safety orientation","slug":"lab-safety","summary":"Read before your first lab.","cover_path":null,"status":"published","publish_at":null,"access":"inherit","tags":["safety"],"estimated_minutes":15,"sort_order":0,"created_at":"2026-09-02T00:00:00Z","updated_at":"2026-09-03T00:00:00Z"}
+  ],
+  "lab_content": [
+    {"lab_id":"l-1","media":["youtube:dQw4w9WgXcQ"],"content":"<h2>Objectives</h2><p>Determine the molarity of acetic acid in vinegar.</p><h2>Safety</h2><ul><li>Goggles on at all times.</li><li>NaOH is caustic; rinse spills immediately.</li></ul><h2>Procedure</h2><ol><li>Pipette 10.00 mL of vinegar into a flask.</li><li>Add two drops of phenolphthalein.</li><li>Titrate with $0.100\\ \\text{M}$ NaOH to the first persistent pink.</li></ol><p>The reaction is $$\\ce{CH3COOH + NaOH -> CH3COONa + H2O}$$ and the concentration follows from $$c_a = \\frac{c_b V_b}{V_a}$$</p>"},
+    {"lab_id":"l-2","media":[],"content":"<p>Chop cabbage, boil, strain. Test with vinegar, baking soda and soap.</p>"},
+    {"lab_id":"l-4","media":[],"content":"<h2>Rules</h2><ol><li>No food or drink.</li><li>Know where the eyewash station is.</li></ol>"}
+  ],
+  "attachments": [
+    {"id":"att-1","lab_id":"l-1","name":"Data sheet.pdf","path":"labs/l-1/data-sheet.pdf","mime":"application/pdf","size_bytes":184320,"sort_order":0,"created_at":"2026-09-02T00:00:00Z"},
+    {"id":"att-2","lab_id":"l-1","name":"Calculations.xlsx","path":"labs/l-1/calc.xlsx","mime":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet","size_bytes":22000,"sort_order":1,"created_at":"2026-09-02T00:00:00Z"}
+  ],
+  "site_content": [
+    {"key":"siteTitle","value":"Clark Labs"},
+    {"key":"_announcement","value":"{\"text\":\"Lab 3 reports are due Friday.\",\"link\":\"#/lab/lab-3-titration\"}"}
+  ]
+}

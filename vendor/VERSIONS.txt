@@ -1,0 +1,5 @@
+Vendored libraries (pinned). Update by replacing files and this list.
+@supabase/supabase-js 2.116.0 (dist/umd/supabase.js)
+quill 2.0.2 (dist/quill.js, dist/quill.snow.css)
+katex 0.16.11 (katex.min.js, katex.min.css, contrib/auto-render.min.js, contrib/mhchem.min.js, fonts/*.woff2)
+qrcode-generator 1.4.4 (qrcode.js)

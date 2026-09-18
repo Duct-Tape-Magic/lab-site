@@ -1,0 +1,45 @@
+name: content-snapshot
+# Hourly copy of all PUBLIC content into data/snapshot.json so the site keeps
+# working (public labs only) if Supabase is unreachable. Also touches
+# data/heartbeat.txt weekly so GitHub never disables this schedule for inactivity.
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: snapshot
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build snapshot
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: node scripts/snapshot.mjs
+      - name: Weekly heartbeat
+        run: |
+          if [ ! -f data/heartbeat.txt ] || [ -z "$(find data/heartbeat.txt -mtime -6)" ]; then
+            date -u +%Y-%m-%dT%H:%M:%SZ > data/heartbeat.txt
+          fi
+      - name: Commit if changed
+        run: |
+          git config user.name "snapshot-bot"
+          git config user.email "snapshot-bot@users.noreply.github.com"
+          git add data/snapshot.json data/heartbeat.txt
+          if git diff --cached --quiet; then
+            echo "Nothing to commit"
+          else
+            git commit -m "Content snapshot $(date -u +%Y-%m-%d\ %H:%M)"
+            git push
+          fi

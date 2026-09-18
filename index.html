@@ -1,0 +1,2381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Labs</title>
+<meta name="robots" content="noindex">
+<!-- Fonts are the only runtime dependency outside this repo. If Google Fonts is unreachable the
+     browser falls back to system fonts (display=swap); nothing else is affected. -->
+<link href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Crimson+Pro:wght@300;400;500&family=DM+Sans:wght@300;400;500&family=DM+Serif+Display&family=EB+Garamond:wght@400;500&family=IBM+Plex+Mono:wght@300;400&family=Inter:wght@300;400;500&family=Lora:wght@400;500&family=Playfair+Display:wght@400;500&family=Source+Sans+3:wght@300;400;500&family=Space+Grotesk:wght@300;400;500&family=Work+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<!-- Vendored, pinned libraries (see vendor/VERSIONS.txt). No CDN at runtime. -->
+<script src="vendor/supabase.js"></script>
+<link href="vendor/quill.snow.css" rel="stylesheet">
+<script src="vendor/quill.js"></script>
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<script defer src="vendor/katex/katex.min.js"></script>
+<script defer src="vendor/katex/mhchem.min.js"></script>
+<script defer src="vendor/katex/auto-render.min.js"></script>
+
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  :root {
+    --ink: #1a1a18;
+    --muted: #7d7c75;
+    --rule: rgba(0,0,0,0.1);
+    --rule-strong: rgba(0,0,0,0.25);
+    --bg: #faf9f6;
+    --card-bg: #f3f1ec;
+    --accent: #2f5d8a;
+    --danger: #A32D2D;
+    --warn: #8a6d1f;
+
+    --font-heading: 'Cormorant Garamond', serif;
+    --font-body: 'DM Sans', sans-serif;
+    --base-font-size: 16px;
+
+    --card-min-width: 280px;
+    --card-img-height: 170px;
+    --slideshow-height: 480px;
+    --page-max-width: 1100px;
+    --section-padding-y: 3.5rem;
+    --section-padding-x: 3rem;
+    --border-radius: 0px;
+    --measure: 760px;
+  }
+
+  html, body {
+    font-family: var(--font-body);
+    font-weight: 300;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: var(--base-font-size);
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  #loading {
+    position: fixed; inset: 0; background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000; transition: opacity 0.3s;
+  }
+  #loading.hidden { opacity: 0; pointer-events: none; }
+  .loader { font-family: var(--font-heading); font-size: 1.2rem; color: var(--muted); letter-spacing: 0.1em; }
+
+  /* ---------- Banners ---------- */
+  .banner {
+    padding: 0.6rem 3rem; font-size: 13px; line-height: 1.5;
+    background: #fff5d6; color: #5b4a12; border-bottom: 0.5px solid rgba(0,0,0,0.08);
+    display: flex; justify-content: space-between; gap: 1rem; align-items: center;
+  }
+  .banner.error { background: #fde3e3; color: #6b1e1e; }
+  .banner.announce { background: var(--card-bg); color: var(--ink); }
+  .banner button {
+    background: none; border: 0.5px solid currentColor; color: inherit; font-family: inherit;
+    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.25rem 0.7rem; cursor: pointer;
+  }
+
+  /* ---------- Nav ---------- */
+  nav {
+    display: flex; justify-content: space-between; align-items: center; gap: 1.5rem;
+    padding: 1.25rem 3rem; border-bottom: 0.5px solid var(--rule);
+    position: sticky; top: 0; background: var(--bg); z-index: 10;
+  }
+  .nav-logo {
+    font-family: var(--font-heading); font-weight: 300; font-size: 1.5rem;
+    letter-spacing: 0.06em; color: var(--ink); cursor: pointer; text-decoration: none; white-space: nowrap;
+  }
+  .nav-right { display: flex; align-items: center; gap: 1rem; flex: 1; justify-content: flex-end; }
+  .search-form { display: flex; align-items: center; gap: 0.5rem; max-width: 360px; flex: 1; }
+  .search-form input {
+    width: 100%; background: transparent; border: none; border-bottom: 0.5px solid var(--rule-strong);
+    padding: 0.4rem 0; color: var(--ink); font-family: var(--font-body); font-size: 14px; font-weight: 300;
+    outline: none; border-radius: 0; -webkit-appearance: none;
+  }
+  .search-form input:focus { border-bottom-color: var(--ink); }
+  .search-form button {
+    background: none; border: none; color: var(--muted); cursor: pointer; font-family: inherit;
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.4rem 0;
+  }
+  .search-form button:hover { color: var(--ink); }
+  .nav-link {
+    background: none; border: none; color: var(--muted); font-size: 11px; letter-spacing: 0.12em;
+    text-transform: uppercase; cursor: pointer; font-family: inherit; padding: 0.4rem 0; text-decoration: none; white-space: nowrap;
+  }
+  .nav-link:hover { color: var(--ink); }
+  .nav-admin {
+    background: none; border: none; color: var(--muted); cursor: pointer; padding: 0.4rem;
+    font-size: 15px; opacity: 0.35; transition: opacity 0.2s;
+  }
+  .nav-admin:hover { opacity: 1; }
+
+  main { min-height: calc(100vh - 160px); }
+
+  .page {
+    padding: var(--section-padding-y) var(--section-padding-x);
+    max-width: var(--page-max-width); margin: 0 auto; animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .page-label {
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.75rem;
+  }
+  .page-title {
+    font-family: var(--font-heading); font-size: clamp(2.2rem, 4.5vw, 3.2rem);
+    font-weight: 300; line-height: 1.1; margin-bottom: 1.5rem; color: var(--ink);
+  }
+  .page-title em { font-style: italic; color: var(--accent); }
+  .section-heading {
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted);
+    margin: 2.5rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 0.5px solid var(--rule);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .empty-state {
+    border: 0.5px dashed var(--rule-strong); padding: 3rem 2rem; text-align: center; color: var(--muted); font-size: 14px;
+  }
+
+  /* ---------- Breadcrumb ---------- */
+  .breadcrumb {
+    display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center;
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.5rem;
+  }
+  .breadcrumb a { color: var(--muted); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--ink); }
+  .breadcrumb span.sep { opacity: 0.5; }
+
+  /* ---------- Cards ---------- */
+  .card-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--card-min-width), 1fr));
+    gap: 1px; background: var(--rule); border: 0.5px solid var(--rule); border-radius: var(--border-radius);
+  }
+  body.cards-no-divider .card-grid { background: transparent; border: none; gap: 1.25rem; }
+  body.cards-no-divider .card { border: 0.5px solid var(--rule); border-radius: var(--border-radius); }
+  body.card-aspect-square .card-img { height: auto; aspect-ratio: 1 / 1; }
+  body.card-aspect-landscape .card-img { height: auto; aspect-ratio: 4 / 3; }
+  body.card-aspect-portrait .card-img { height: auto; aspect-ratio: 3 / 4; }
+
+  .card {
+    background: var(--bg); padding: 1.25rem; cursor: pointer; transition: background 0.2s;
+    position: relative; display: flex; flex-direction: column; gap: 0.8rem; text-decoration: none; color: inherit;
+  }
+  .card:hover { background: var(--card-bg); }
+  .card-img {
+    height: var(--card-img-height); background: var(--card-bg); display: flex; align-items: center;
+    justify-content: center; overflow: hidden; position: relative; border-radius: var(--border-radius);
+  }
+  .card-img img { width: 100%; height: 100%; object-fit: cover; }
+  .card-img-placeholder { color: var(--muted); opacity: 0.5; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .card-img .folder-glyph { font-family: var(--font-heading); font-size: 2.6rem; color: var(--muted); opacity: 0.5; }
+  .video-overlay {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    pointer-events: none; background: rgba(0,0,0,0.15);
+  }
+  .video-overlay svg { width: 40px; height: 40px; color: white; filter: drop-shadow(0 0 4px rgba(0,0,0,0.4)); }
+  .card-title { font-family: var(--font-heading); font-size: 1.35rem; font-weight: 400; line-height: 1.2; }
+  .card-summary { font-size: 13.5px; color: var(--ink); opacity: 0.85; line-height: 1.55; }
+  .card-meta {
+    display: flex; flex-wrap: wrap; gap: 0.4rem 0.9rem; align-items: center; margin-top: auto;
+    padding-top: 0.6rem; border-top: 0.5px solid var(--rule); font-size: 11px; color: var(--muted); letter-spacing: 0.04em;
+  }
+  .badge {
+    font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 7px;
+    border: 0.5px solid var(--rule-strong); color: var(--muted); white-space: nowrap;
+  }
+  .badge.lock { color: var(--warn); border-color: var(--warn); }
+  .badge.draft { color: var(--danger); border-color: var(--danger); }
+  .badge.scheduled, .badge.hidden { color: var(--accent); border-color: var(--accent); }
+  .tag { font-size: 11px; color: var(--muted); }
+  .tag::before { content: '#'; opacity: 0.6; }
+
+  .admin-controls { position: absolute; top: 8px; right: 8px; display: none; gap: 4px; z-index: 2; }
+  body.admin-mode .admin-controls { display: flex; }
+  .admin-controls button {
+    background: var(--bg); border: 0.5px solid var(--rule-strong); padding: 4px 8px; font-size: 11px;
+    cursor: pointer; font-family: inherit; color: var(--ink);
+  }
+  .admin-controls button:hover { background: var(--ink); color: var(--bg); }
+  .admin-controls button.delete:hover { background: var(--danger); border-color: var(--danger); color: white; }
+
+  /* ---------- Lab page ---------- */
+  .lab-page { max-width: var(--page-max-width); }
+  .lab-header { margin-bottom: 2rem; }
+  .lab-title { font-family: var(--font-heading); font-size: clamp(2rem, 4vw, 2.9rem); font-weight: 300; line-height: 1.12; margin-bottom: 0.75rem; }
+  .lab-meta { display: flex; flex-wrap: wrap; gap: 0.5rem 1.2rem; align-items: center; font-size: 12px; color: var(--muted); letter-spacing: 0.04em; }
+  .lab-summary { font-size: 1.05rem; max-width: var(--measure); margin-top: 1rem; color: var(--ink); opacity: 0.9; }
+  .lab-toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.5rem 0 0; }
+  .lab-body { max-width: var(--measure); margin-top: 2.5rem; }
+  .lab-media { margin: 2rem 0; }
+  .lab-footer-nav { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3rem; padding-top: 1.5rem; border-top: 0.5px solid var(--rule); }
+  .lab-footer-nav a { color: var(--muted); text-decoration: none; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .lab-footer-nav a:hover { color: var(--ink); }
+
+  .btn-small {
+    display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.9rem; border: 0.5px solid var(--rule-strong);
+    color: var(--ink); background: transparent; font-family: var(--font-body); font-size: 11px; letter-spacing: 0.1em;
+    text-transform: uppercase; cursor: pointer; text-decoration: none; border-radius: var(--border-radius); font-weight: 300;
+  }
+  .btn-small:hover { border-color: var(--ink); background: var(--card-bg); }
+
+  /* Attachments */
+  .attachments { list-style: none; max-width: var(--measure); border-top: 0.5px solid var(--rule); margin-top: 0.5rem; }
+  .attachments li { display: flex; align-items: center; gap: 1rem; padding: 0.8rem 0; border-bottom: 0.5px solid var(--rule); font-size: 14px; }
+  .attachments .file-icon {
+    width: 34px; height: 40px; border: 0.5px solid var(--rule-strong); display: flex; align-items: center; justify-content: center;
+    font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); flex-shrink: 0;
+  }
+  .attachments .file-name { flex: 1; min-width: 0; }
+  .attachments .file-name span { display: block; font-size: 11px; color: var(--muted); }
+  .attachments .file-actions { display: flex; gap: 0.4rem; }
+  .pdf-frame { width: 100%; height: 75vh; border: 0.5px solid var(--rule-strong); margin-top: 1rem; background: var(--card-bg); }
+
+  /* Lock panel */
+  .lock-panel { max-width: 480px; border: 0.5px solid var(--rule-strong); padding: 2rem; margin-top: 2rem; }
+  .lock-panel h3 { font-family: var(--font-heading); font-weight: 400; font-size: 1.5rem; margin-bottom: 0.5rem; }
+  .lock-panel p { font-size: 14px; color: var(--muted); margin-bottom: 1rem; }
+  .lock-panel .lock-error { color: var(--danger); font-size: 13px; margin-top: 0.75rem; }
+
+  /* ---------- Rich content ---------- */
+  .rich-content { color: var(--ink); line-height: 1.85; font-weight: 300; }
+  .rich-content p { margin-bottom: 1.1rem; }
+  .rich-content p:last-child { margin-bottom: 0; }
+  .rich-content h1, .rich-content h2, .rich-content h3 { font-family: var(--font-heading); font-weight: 400; margin: 2rem 0 0.8rem; line-height: 1.2; }
+  .rich-content h1 { font-size: 2rem; }
+  .rich-content h2 { font-size: 1.6rem; }
+  .rich-content h3 { font-size: 1.3rem; }
+  .rich-content em, .rich-content i { font-style: italic; }
+  .rich-content strong, .rich-content b { font-weight: 500; }
+  .rich-content u { text-decoration: underline; }
+  .rich-content ul, .rich-content ol { margin: 0 0 1.1rem 1.5rem; }
+  .rich-content li { margin-bottom: 0.45rem; }
+  .rich-content ol li { padding-left: 0.25rem; }
+  .rich-content a { color: var(--accent); text-decoration: underline; text-decoration-thickness: 0.5px; text-underline-offset: 3px; }
+  .rich-content img { max-width: 100%; height: auto; margin: 1.5rem 0; display: block; }
+  .rich-content .ql-align-center { text-align: center; }
+  .rich-content .ql-align-right { text-align: right; }
+  .rich-content .ql-align-justify { text-align: justify; }
+  .rich-content .ql-size-small { font-size: 0.8em; }
+  .rich-content .ql-size-large { font-size: 1.4em; }
+  .rich-content .ql-size-huge { font-size: 2.2em; }
+  .rich-content .ql-font-serif { font-family: var(--font-heading); }
+  .rich-content .ql-font-mono { font-family: 'IBM Plex Mono', monospace; font-size: 0.92em; }
+  .rich-content blockquote { border-left: 2px solid var(--accent); padding-left: 1rem; margin: 1.5rem 0; font-style: italic; color: var(--muted); }
+  .rich-content pre, .rich-content .ql-code-block-container {
+    background: var(--card-bg); padding: 1rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.9em; margin: 1.2rem 0; overflow-x: auto; white-space: pre-wrap;
+  }
+  .rich-content table { border-collapse: collapse; margin: 1.2rem 0; width: 100%; font-size: 0.95em; }
+  .rich-content td, .rich-content th { border: 0.5px solid var(--rule-strong); padding: 0.4rem 0.6rem; vertical-align: top; }
+  .rich-content .embed-youtube { position: relative; width: 100%; padding-bottom: 56.25%; margin: 1.5rem 0; background: var(--card-bg); }
+  .rich-content .embed-youtube iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .rich-content .katex { font-size: 1.05em; }
+  .rich-content .katex-display { margin: 1.4rem 0; overflow-x: auto; overflow-y: hidden; }
+  .home-intro { max-width: var(--measure); margin-bottom: 1rem; }
+
+  /* ---------- Slideshow ---------- */
+  .slideshow { background: var(--card-bg); position: relative; user-select: none; overflow: hidden; }
+  .slideshow-main { height: var(--slideshow-height); position: relative; overflow: hidden; }
+  .slideshow-slide { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.4s ease; }
+  .slideshow-slide.active { opacity: 1; }
+  .slideshow-slide img { width: 100%; height: 100%; object-fit: contain; background: var(--card-bg); }
+  .slideshow-slide iframe { width: 100%; height: 100%; border: 0; }
+  .slideshow-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none;
+    width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: #1a1a18; z-index: 3; transition: background 0.2s;
+  }
+  .slideshow-arrow:hover { background: white; }
+  .slideshow-arrow.prev { left: 12px; }
+  .slideshow-arrow.next { right: 12px; }
+  .slideshow-dots { display: flex; justify-content: center; gap: 6px; margin-top: 0.8rem; }
+  .slideshow-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--rule-strong); border: none; cursor: pointer; padding: 0; }
+  .slideshow-dot.active { background: var(--ink); }
+  .slideshow-counter { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.6); color: white; font-size: 11px; padding: 4px 10px; border-radius: 2px; z-index: 3; }
+  .slideshow-caption { font-size: 12px; color: var(--muted); text-align: center; margin-top: 0.5rem; min-height: 1.2em; }
+
+  /* ---------- Forms & buttons ---------- */
+  .form-row { margin-bottom: 1.25rem; }
+  .form-row label { display: block; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+  .form-row input, .form-row select, .form-row textarea {
+    width: 100%; background: transparent; border: none; border-bottom: 0.5px solid var(--rule-strong); padding: 0.5rem 0;
+    color: var(--ink); font-family: var(--font-body); font-size: 14px; font-weight: 300; outline: none;
+    transition: border-color 0.2s; border-radius: 0; -webkit-appearance: none;
+  }
+  .form-row select option { background: var(--bg); }
+  .form-row input:focus, .form-row select:focus, .form-row textarea:focus { border-bottom-color: var(--ink); }
+  .form-row textarea { resize: vertical; min-height: 80px; }
+  .form-row .hint { font-size: 11px; color: var(--muted); margin-top: 0.4rem; line-height: 1.5; }
+  .form-row input[type="checkbox"] { width: auto; -webkit-appearance: checkbox; accent-color: var(--accent); }
+  .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+
+  .btn {
+    display: inline-block; padding: 0.75rem 1.8rem; border: 0.5px solid var(--ink); color: var(--ink); text-decoration: none;
+    font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; background: transparent;
+    transition: background 0.2s, color 0.2s; font-family: var(--font-body); font-weight: 300; border-radius: var(--border-radius);
+  }
+  .btn:hover { background: var(--ink); color: var(--bg); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-accent { border-color: var(--accent); color: var(--accent); }
+  .btn-accent:hover { background: var(--accent); color: var(--bg); }
+  .btn-danger { border-color: var(--danger); color: var(--danger); }
+  .btn-danger:hover { background: var(--danger); color: white; }
+
+  /* ---------- Admin bar ---------- */
+  .admin-bar {
+    display: none; background: var(--ink); color: var(--bg); padding: 0.6rem 3rem; align-items: center;
+    justify-content: space-between; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; flex-wrap: wrap; gap: 0.5rem;
+  }
+  body.admin-mode .admin-bar { display: flex; }
+  .admin-bar button {
+    background: transparent; border: 0.5px solid rgba(255,255,255,0.4); color: var(--bg); padding: 0.4rem 0.9rem;
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; font-family: inherit; margin-left: 0.4rem;
+  }
+  .admin-bar button:hover { background: rgba(255,255,255,0.15); }
+  .admin-inline { display: none; gap: 0.4rem; margin-left: 0.75rem; vertical-align: middle; }
+  body.admin-mode .admin-inline { display: inline-flex; }
+
+  /* ---------- Modal ---------- */
+  .modal-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center;
+    justify-content: center; padding: 2rem; backdrop-filter: blur(2px); overflow-y: auto;
+  }
+  .modal-backdrop.open { display: flex; animation: fadeIn 0.2s ease; }
+  .modal { background: var(--bg); border-radius: 4px; max-width: 760px; width: 100%; max-height: 92vh; overflow-y: auto; padding: 2.5rem; position: relative; margin: auto; }
+  .modal.modal-narrow { max-width: 540px; }
+  .modal.modal-wide { max-width: 900px; }
+  .modal-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; cursor: pointer; color: var(--muted); font-size: 20px; width: 32px; height: 32px; z-index: 5; }
+  .modal h2 { font-family: var(--font-heading); font-size: 1.8rem; font-weight: 300; margin-bottom: 1.5rem; }
+  .modal-actions { display: flex; gap: 0.75rem; margin-top: 2rem; flex-wrap: wrap; align-items: center; }
+
+  /* ---------- Media manager ---------- */
+  .media-manager { margin-bottom: 1.5rem; }
+  .media-dropzone {
+    display: block; border: 1.5px dashed var(--rule-strong); padding: 1.5rem; text-align: center; color: var(--muted);
+    font-size: 13px; cursor: pointer; transition: all 0.2s; margin-bottom: 1rem; border-radius: 4px;
+  }
+  .media-dropzone:hover, .media-dropzone.dragover { border-color: var(--accent); color: var(--accent); background: rgba(47, 93, 138, 0.05); }
+  .media-dropzone input[type="file"] { display: none; }
+  .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.5rem; margin-bottom: 1rem; }
+  .media-item { position: relative; aspect-ratio: 1; background: var(--card-bg); overflow: hidden; cursor: move; border: 1px solid var(--rule); }
+  .media-item.dragging { opacity: 0.4; }
+  .media-item img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+  .media-item-video { width: 100%; height: 100%; background: #000; display: flex; align-items: center; justify-content: center; position: relative; }
+  .media-item-video img { object-fit: cover; opacity: 0.7; }
+  .media-item-video-icon { position: absolute; color: white; font-size: 24px; pointer-events: none; }
+  .media-item-remove {
+    position: absolute; top: 4px; right: 4px; background: rgba(255,255,255,0.95); border: none; width: 22px; height: 22px;
+    border-radius: 50%; cursor: pointer; font-size: 14px; color: var(--danger); display: flex; align-items: center; justify-content: center; line-height: 1;
+  }
+  .media-item-order { position: absolute; bottom: 4px; left: 4px; background: rgba(0,0,0,0.6); color: white; font-size: 10px; padding: 2px 6px; border-radius: 2px; }
+  .media-item-alt {
+    position: absolute; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.92); border: none; border-top: 0.5px solid var(--rule);
+    font-size: 11px; padding: 3px 26px 3px 6px; font-family: var(--font-body); color: var(--ink); display: none;
+  }
+  .media-item:hover .media-item-alt, .media-item .media-item-alt:focus { display: block; }
+  .media-add-row { display: flex; gap: 0.5rem; align-items: center; }
+  .media-add-row input { flex: 1; background: transparent; border: 0.5px solid var(--rule-strong); padding: 0.5rem 0.75rem; color: var(--ink); font-family: var(--font-body); font-size: 13px; border-radius: 2px; }
+  .media-add-row button { background: transparent; border: 0.5px solid var(--ink); padding: 0.5rem 1rem; color: var(--ink); font-family: inherit; font-size: 11px; cursor: pointer; letter-spacing: 0.08em; text-transform: uppercase; border-radius: 2px; }
+
+  .attach-list { list-style: none; margin-bottom: 1rem; }
+  .attach-list li { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0; border-bottom: 0.5px solid var(--rule); font-size: 13px; }
+  .attach-list input { flex: 1; background: transparent; border: none; border-bottom: 0.5px solid transparent; font-family: var(--font-body); font-size: 13px; color: var(--ink); padding: 0.2rem 0; }
+  .attach-list input:focus { outline: none; border-bottom-color: var(--rule-strong); }
+  .attach-list .size { font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .attach-list button { background: none; border: 0.5px solid var(--rule-strong); cursor: pointer; font-family: inherit; font-size: 11px; padding: 2px 7px; color: var(--ink); }
+  .attach-list button.remove { color: var(--danger); }
+
+  /* ---------- Quill ---------- */
+  .quill-container { background: var(--bg); border: 0.5px solid var(--rule-strong); border-radius: 4px; margin-bottom: 1rem; }
+  .quill-container .ql-toolbar.ql-snow { border: none; border-bottom: 0.5px solid var(--rule); padding: 0.5rem; font-family: var(--font-body); position: sticky; top: 0; background: var(--bg); z-index: 2; }
+  .quill-container .ql-container.ql-snow { border: none; font-family: var(--font-body); font-size: 15px; min-height: 260px; }
+  .quill-container .ql-editor { min-height: 260px; line-height: 1.7; }
+  .quill-container .ql-editor h1, .quill-container .ql-editor h2, .quill-container .ql-editor h3 { font-family: var(--font-heading); font-weight: 400; }
+  .ql-snow .ql-formula-custom::before { content: 'Σ'; font-style: italic; font-weight: 600; font-size: 16px; }
+  .ql-snow .ql-youtube::before { content: '▶'; font-size: 12px; }
+  .ql-snow .ql-template::before { content: '☰ Template'; font-size: 11px; letter-spacing: 0.04em; white-space: nowrap; }
+  .ql-snow .ql-template { width: auto !important; padding: 0 6px !important; }
+  .ql-snow .ql-editor .embed-youtube { position: relative; width: 100%; padding-bottom: 56.25%; margin: 1rem 0; background: #eee; }
+  .ql-snow .ql-editor .embed-youtube iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none; }
+
+  /* ---------- Footer ---------- */
+  footer { border-top: 0.5px solid var(--rule); padding: 2rem 3rem; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--muted); margin-top: 4rem; gap: 1rem; flex-wrap: wrap; }
+  footer a { color: var(--muted); text-decoration: none; letter-spacing: 0.08em; text-transform: uppercase; font-size: 11px; }
+  footer a:hover { color: var(--ink); }
+
+  /* ---------- Editable hover state ---------- */
+  .editable { position: relative; }
+  body.admin-mode .editable:hover { outline: 1px dashed var(--accent); outline-offset: 8px; cursor: pointer; }
+  body.admin-mode .editable::after {
+    content: '✎ edit'; display: none; position: absolute; top: -28px; right: 0; background: var(--accent); color: white;
+    padding: 2px 8px; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; font-family: var(--font-body); font-weight: 300;
+  }
+  body.admin-mode .editable:hover::after { display: block; }
+
+  /* Site text groups */
+  .text-group { margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 0.5px solid var(--rule); }
+  .text-group:last-of-type { border-bottom: none; }
+  .text-group-label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
+  .text-group .form-row { margin-bottom: 0.85rem; }
+  .text-group .form-row label { font-size: 10px; text-transform: none; letter-spacing: 0.02em; }
+
+  .toast {
+    position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--ink); color: var(--bg);
+    padding: 0.75rem 1.5rem; border-radius: 4px; font-size: 13px; letter-spacing: 0.04em; opacity: 0; transition: all 0.3s; z-index: 200; pointer-events: none; max-width: 90vw;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.error { background: var(--danger); }
+
+  /* Design modal bits */
+  .design-tab { background: none; border: none; color: var(--muted); font-family: var(--font-body); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; padding: 0.5rem 0; border-bottom: 0.5px solid transparent; margin-bottom: -0.5rem; }
+  .design-tab.active { color: var(--ink); border-bottom-color: var(--ink); }
+  .design-tab:hover { color: var(--ink); }
+  .palette-option { border: 0.5px solid var(--rule-strong); border-radius: 4px; padding: 0.75rem; cursor: pointer; transition: border-color 0.2s, transform 0.1s; background: var(--bg); }
+  .palette-option:hover { transform: translateY(-1px); }
+  .palette-option.active { border-color: var(--accent); border-width: 1.5px; padding: calc(0.75rem - 0.5px); }
+  .palette-swatches { display: flex; gap: 4px; margin-bottom: 0.5rem; height: 32px; }
+  .palette-swatch { flex: 1; border-radius: 2px; border: 0.5px solid rgba(0,0,0,0.1); }
+  .palette-name { font-size: 12px; letter-spacing: 0.05em; }
+  input[type="color"] { width: 40px; height: 32px; padding: 0; border: 0.5px solid var(--rule-strong); border-radius: 2px; cursor: pointer; background: transparent; }
+  input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
+  input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
+  input[type="range"] { width: 100%; accent-color: var(--accent); }
+
+  @media (max-width: 768px) {
+    nav { padding: 0.9rem 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
+    .nav-right { width: 100%; justify-content: space-between; }
+    .search-form { max-width: none; }
+    .page { padding: 2rem 1.25rem; }
+    .banner { padding: 0.6rem 1.25rem; }
+    .slideshow-main { height: 260px; }
+    footer { padding: 1.5rem 1.25rem; flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+    .admin-bar { padding: 0.6rem 1.25rem; flex-direction: column; gap: 0.5rem; align-items: flex-start; }
+    .modal { padding: 1.5rem; }
+    .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; }
+    .pdf-frame { height: 60vh; }
+    .lab-footer-nav { flex-direction: column; }
+  }
+
+  @media print {
+    nav, footer, .admin-bar, .banner, .lab-toolbar, .admin-controls, .lab-footer-nav, .breadcrumb, .slideshow-arrow, .slideshow-dots, .slideshow-counter, .toast, #loading { display: none !important; }
+    body { background: white; color: black; font-size: 12pt; }
+    .page { padding: 0; max-width: none; }
+    .lab-body, .lab-summary { max-width: none; }
+    .rich-content h1, .rich-content h2 { page-break-after: avoid; break-after: avoid; }
+    .rich-content img, .rich-content table { page-break-inside: avoid; break-inside: avoid; }
+    .rich-content a { color: black; text-decoration: none; }
+    .slideshow-main { height: auto; }
+    .slideshow-slide { position: static; opacity: 1; display: none; }
+    .slideshow-slide.active { display: block; }
+    .slideshow-slide iframe, .embed-youtube { display: none; }
+    .pdf-frame { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loading"><div class="loader">Loading…</div></div>
+
+<div class="admin-bar">
+  <span>● Admin mode</span>
+  <div>
+    <button onclick="openLabModal()">+ Lab</button>
+    <button onclick="openFolderModal()">+ Folder</button>
+    <button onclick="openSiteTextModal()">Site text</button>
+    <button onclick="openDesignModal()">Design</button>
+    <button onclick="logoutAdmin()">Log out</button>
+  </div>
+</div>
+
+<div class="banner error" id="error-banner" hidden><span id="error-banner-text"></span><button onclick="location.reload()">Reload</button></div>
+<div class="banner" id="fallback-banner" hidden><span id="fallback-banner-text"></span></div>
+<div class="banner announce" id="announce-banner" hidden><span id="announce-banner-text"></span><button id="announce-dismiss" onclick="dismissAnnouncement()">Dismiss</button></div>
+
+<nav>
+  <a class="nav-logo editable" data-edit="siteTitle" href="#/" id="site-title" onclick="return handleLogoClick(event)">Labs</a>
+  <div class="nav-right">
+    <form class="search-form" id="search-form" onsubmit="return submitSearch(event)">
+      <input type="search" id="search-input" placeholder="Search labs…" aria-label="Search"/>
+      <button type="submit" id="search-btn">Search</button>
+    </form>
+    <a class="nav-link" id="nav-signin" href="#/signin" hidden>Student sign in</a>
+    <button class="nav-admin" onclick="openAdminLogin()" title="Admin" aria-label="Admin login">⚙</button>
+  </div>
+</nav>
+
+<main id="view"></main>
+
+<footer>
+  <span id="footer-text" class="editable" data-edit="footerText" onclick="handleEditableClick(event, 'footerText')">© Labs</span>
+  <a href="#/signin" id="footer-signin" hidden>Student sign in</a>
+</footer>
+
+<!-- Admin login -->
+<div class="modal-backdrop" id="login-modal">
+  <div class="modal modal-narrow" style="max-width:400px;">
+    <button class="modal-close" onclick="closeModal('login-modal')">×</button>
+    <h2>Admin login</h2>
+    <div class="form-row"><label>Email</label><input type="email" id="login-email" autocomplete="email"/></div>
+    <div class="form-row"><label>Password</label><input type="password" id="login-password" autocomplete="current-password"/></div>
+    <div class="modal-actions"><button class="btn" onclick="tryLogin()" id="login-btn">Sign in</button></div>
+    <p style="font-size:12px; color:var(--muted); margin-top:1.5rem; line-height:1.6;">Use the admin email and password set up in Supabase Authentication.</p>
+  </div>
+</div>
+
+<!-- Lab editor -->
+<div class="modal-backdrop" id="lab-modal">
+  <div class="modal modal-wide">
+    <button class="modal-close" onclick="closeModal('lab-modal')">×</button>
+    <h2 id="lab-modal-title">Add a lab</h2>
+    <input type="hidden" id="lab-id"/>
+
+    <div class="form-grid-2">
+      <div class="form-row"><label>Title</label><input type="text" id="lab-title" placeholder="e.g. Lab 3 — Titration of vinegar" oninput="onLabTitleInput()"/></div>
+      <div class="form-row"><label>Link name (slug)</label><input type="text" id="lab-slug" placeholder="lab-3-titration" oninput="labSlugTouched = true"/><div class="hint">Becomes the address: <span id="lab-slug-preview">#/lab/…</span></div></div>
+    </div>
+    <div class="form-row"><label>Folder</label><select id="lab-folder"></select></div>
+    <div class="form-row"><label>Summary (one or two sentences, shown on cards and in search)</label><textarea id="lab-summary" style="min-height:56px;"></textarea></div>
+    <div class="form-grid-3">
+      <div class="form-row"><label>Tags (comma separated)</label><input type="text" id="lab-tags" placeholder="chemistry, acids"/></div>
+      <div class="form-row"><label>Estimated minutes</label><input type="number" id="lab-minutes" min="0" step="5"/></div>
+      <div class="form-row"><label>Order within folder</label><input type="number" id="lab-order" step="1" value="0"/><div class="hint">Lower numbers come first.</div></div>
+    </div>
+    <div class="form-grid-3">
+      <div class="form-row">
+        <label>Status</label>
+        <select id="lab-status" onchange="onLabStatusChange()">
+          <option value="draft">Draft (admins only)</option>
+          <option value="published">Published</option>
+          <option value="scheduled">Scheduled</option>
+        </select>
+      </div>
+      <div class="form-row" id="lab-publish-row" style="display:none;"><label>Publish at</label><input type="datetime-local" id="lab-publish-at"/></div>
+      <div class="form-row">
+        <label>Who can open it</label>
+        <select id="lab-access">
+          <option value="inherit">Same as its folder</option>
+          <option value="public">Everyone (public)</option>
+          <option value="password">Anyone with the password</option>
+          <option value="accounts">Selected student accounts</option>
+          <option value="admin">Admins only</option>
+        </select>
+        <div class="hint" id="lab-access-hint"></div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label>Cover image (optional — the first photo is used if empty)</label>
+      <div class="media-manager" id="lab-cover-manager"></div>
+    </div>
+    <div class="form-row">
+      <label>Photos &amp; videos (drag to reorder; hover a photo to add a description for screen readers)</label>
+      <div class="media-manager" id="lab-media-manager"></div>
+    </div>
+    <div class="form-row">
+      <label>Procedure</label>
+      <div id="lab-content-editor" class="quill-container"></div>
+    </div>
+    <div class="form-row">
+      <label>Files (PDF, Word, Excel, PowerPoint, CSV — up to 50 MB each)</label>
+      <div class="media-manager" id="lab-attachments-manager"></div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-accent" onclick="saveLab()" id="save-lab-btn">Save</button>
+      <button class="btn" onclick="closeModal('lab-modal')">Cancel</button>
+      <button class="btn btn-danger" id="delete-lab-btn" onclick="deleteLabFromModal()" style="display:none; margin-left:auto;">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Folder editor -->
+<div class="modal-backdrop" id="folder-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('folder-modal')">×</button>
+    <h2 id="folder-modal-title">Add a folder</h2>
+    <input type="hidden" id="folder-id"/>
+    <div class="form-grid-2">
+      <div class="form-row"><label>Name</label><input type="text" id="folder-name" placeholder="e.g. Chemistry — Fall" oninput="onFolderNameInput()"/></div>
+      <div class="form-row"><label>Link name (slug)</label><input type="text" id="folder-slug" oninput="folderSlugTouched = true"/></div>
+    </div>
+    <div class="form-row"><label>Inside</label><select id="folder-parent"></select></div>
+    <div class="form-row"><label>Description (optional)</label><textarea id="folder-description" style="min-height:56px;"></textarea></div>
+    <div class="form-grid-3">
+      <div class="form-row"><label>Order</label><input type="number" id="folder-order" step="1" value="0"/></div>
+      <div class="form-row">
+        <label>Who can open it</label>
+        <select id="folder-access">
+          <option value="inherit">Same as the folder above</option>
+          <option value="public">Everyone (public)</option>
+          <option value="password">Anyone with the password</option>
+          <option value="accounts">Selected student accounts</option>
+          <option value="admin">Admins only</option>
+        </select>
+      </div>
+      <div class="form-row"><label>Listing</label><label style="display:flex; align-items:center; gap:0.5rem; text-transform:none; letter-spacing:0; font-size:13px; color:var(--ink);"><input type="checkbox" id="folder-listed" checked/> Show in navigation</label><div class="hint">Unlisted folders still open from a direct link.</div></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-accent" onclick="saveFolder()" id="save-folder-btn">Save</button>
+      <button class="btn" onclick="closeModal('folder-modal')">Cancel</button>
+      <button class="btn btn-danger" id="delete-folder-btn" onclick="deleteFolderFromModal()" style="display:none; margin-left:auto;">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rich text edit (intro block etc.) -->
+<div class="modal-backdrop" id="rich-text-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('rich-text-modal')">×</button>
+    <h2 id="rich-text-modal-title">Edit content</h2>
+    <input type="hidden" id="rich-text-key"/>
+    <div class="form-row"><div id="rich-text-editor" class="quill-container"></div></div>
+    <div class="modal-actions">
+      <button class="btn btn-accent" onclick="saveRichText()">Save</button>
+      <button class="btn" onclick="closeModal('rich-text-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Plain text edit -->
+<div class="modal-backdrop" id="text-modal">
+  <div class="modal modal-narrow">
+    <button class="modal-close" onclick="closeModal('text-modal')">×</button>
+    <h2 id="text-modal-title">Edit text</h2>
+    <input type="hidden" id="text-edit-key"/>
+    <div class="form-row"><label>Text</label><textarea id="text-edit-value" style="min-height:100px;"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-accent" onclick="saveText()">Save</button>
+      <button class="btn" onclick="closeModal('text-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Site text -->
+<div class="modal-backdrop" id="site-text-modal">
+  <div class="modal" style="max-width:640px;">
+    <button class="modal-close" onclick="closeModal('site-text-modal')">×</button>
+    <h2>Site text</h2>
+    <p style="font-size:13px; color:var(--muted); margin-bottom:2rem; line-height:1.6;">Every word students see. Placeholders such as {n}, {date} and {year} are filled in automatically.</p>
+    <div id="site-text-form"></div>
+    <div class="modal-actions">
+      <button class="btn btn-accent" onclick="saveSiteText()" id="save-site-text-btn">Save all</button>
+      <button class="btn" onclick="closeModal('site-text-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Design -->
+<div class="modal-backdrop" id="design-modal">
+  <div class="modal" style="max-width:680px;">
+    <button class="modal-close" onclick="cancelDesign()">×</button>
+    <h2>Design</h2>
+    <p style="font-size:13px; color:var(--muted); margin-bottom:1.5rem; line-height:1.6;">Changes preview live. Save to publish them, or Cancel to discard.</p>
+    <div style="display:flex; gap:1rem; margin-bottom:2rem; border-bottom:0.5px solid var(--rule); padding-bottom:0.5rem; flex-wrap:wrap;">
+      <button type="button" class="design-tab active" data-tab="palette" onclick="switchDesignTab(event)">Palette</button>
+      <button type="button" class="design-tab" data-tab="typography" onclick="switchDesignTab(event)">Typography</button>
+      <button type="button" class="design-tab" data-tab="layout" onclick="switchDesignTab(event)">Layout</button>
+      <button type="button" class="design-tab" data-tab="cards" onclick="switchDesignTab(event)">Cards</button>
+      <button type="button" class="design-tab" data-tab="background" onclick="switchDesignTab(event)">Background</button>
+    </div>
+
+    <div class="design-tab-panel" id="design-panel-palette">
+      <p class="text-group-label" style="margin-bottom:0.75rem;">Choose a palette</p>
+      <div id="palette-options" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:0.75rem; margin-bottom:2rem;"></div>
+      <div style="margin-top:1.5rem; padding-top:1.5rem; border-top:0.5px solid var(--rule);">
+        <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:13px;"><input type="checkbox" id="design-advanced-toggle" onchange="toggleAdvancedColors()"/> Advanced — pick custom colors</label>
+      </div>
+      <div id="advanced-colors" style="display:none; margin-top:1.5rem;">
+        <div class="form-row"><label>Background color</label><div style="display:flex; gap:0.5rem; align-items:center;"><input type="color" id="dc-bg" onchange="previewDesign()"/><input type="text" id="dc-bg-text" oninput="syncColorInput('dc-bg', this)" style="flex:1;"/></div></div>
+        <div class="form-row"><label>Text color</label><div style="display:flex; gap:0.5rem; align-items:center;"><input type="color" id="dc-ink" onchange="previewDesign()"/><input type="text" id="dc-ink-text" oninput="syncColorInput('dc-ink', this)" style="flex:1;"/></div></div>
+        <div class="form-row"><label>Accent color (links, highlights)</label><div style="display:flex; gap:0.5rem; align-items:center;"><input type="color" id="dc-accent" onchange="previewDesign()"/><input type="text" id="dc-accent-text" oninput="syncColorInput('dc-accent', this)" style="flex:1;"/></div></div>
+        <div class="form-row"><label>Card background</label><div style="display:flex; gap:0.5rem; align-items:center;"><input type="color" id="dc-card-bg" onchange="previewDesign()"/><input type="text" id="dc-card-bg-text" oninput="syncColorInput('dc-card-bg', this)" style="flex:1;"/></div></div>
+        <div class="form-row"><label>Muted text (captions, labels)</label><div style="display:flex; gap:0.5rem; align-items:center;"><input type="color" id="dc-muted" onchange="previewDesign()"/><input type="text" id="dc-muted-text" oninput="syncColorInput('dc-muted', this)" style="flex:1;"/></div></div>
+      </div>
+    </div>
+
+    <div class="design-tab-panel" id="design-panel-typography" style="display:none;">
+      <div class="form-row"><label>Heading font</label>
+        <select id="dc-font-heading" onchange="previewDesign()">
+          <option value="'Cormorant Garamond', serif">Cormorant Garamond (default — refined serif)</option>
+          <option value="'Playfair Display', serif">Playfair Display (high contrast serif)</option>
+          <option value="'EB Garamond', serif">EB Garamond (classic book serif)</option>
+          <option value="'Cardo', serif">Cardo (warm transitional)</option>
+          <option value="'DM Serif Display', serif">DM Serif Display (bold modern serif)</option>
+          <option value="'Inter', sans-serif">Inter (clean sans)</option>
+          <option value="'DM Sans', sans-serif">DM Sans (matches body)</option>
+          <option value="'Space Grotesk', sans-serif">Space Grotesk (geometric sans)</option>
+          <option value="'IBM Plex Mono', monospace">IBM Plex Mono (typewriter)</option>
+        </select></div>
+      <div class="form-row"><label>Body font</label>
+        <select id="dc-font-body" onchange="previewDesign()">
+          <option value="'DM Sans', sans-serif">DM Sans (default — clean modern sans)</option>
+          <option value="'Inter', sans-serif">Inter (very readable sans)</option>
+          <option value="'Work Sans', sans-serif">Work Sans (warm sans)</option>
+          <option value="'Source Sans 3', sans-serif">Source Sans (technical sans)</option>
+          <option value="'Lora', serif">Lora (readable serif)</option>
+          <option value="'Crimson Pro', serif">Crimson Pro (book serif)</option>
+          <option value="'IBM Plex Mono', monospace">IBM Plex Mono (monospace)</option>
+        </select></div>
+      <div class="form-row"><label>Base text size: <span id="dc-base-size-display">16px</span></label><input type="range" id="dc-base-size" min="13" max="20" step="1" oninput="document.getElementById('dc-base-size-display').textContent = this.value + 'px'; previewDesign();"/></div>
+    </div>
+
+    <div class="design-tab-panel" id="design-panel-layout" style="display:none;">
+      <div class="form-row"><label>Page width: <span id="dc-page-width-display">1100px</span></label><input type="range" id="dc-page-width" min="900" max="1600" step="50" oninput="document.getElementById('dc-page-width-display').textContent = this.value + 'px'; previewDesign();"/></div>
+      <div class="form-row"><label>Reading width for lab text: <span id="dc-measure-display">760px</span></label><input type="range" id="dc-measure" min="600" max="1100" step="20" oninput="document.getElementById('dc-measure-display').textContent = this.value + 'px'; previewDesign();"/></div>
+      <div class="form-row"><label>Section vertical spacing: <span id="dc-section-y-display">3.5rem</span></label><input type="range" id="dc-section-y" min="1.5" max="7" step="0.5" oninput="document.getElementById('dc-section-y-display').textContent = this.value + 'rem'; previewDesign();"/></div>
+      <div class="form-row"><label>Slideshow height: <span id="dc-slideshow-height-display">480px</span></label><input type="range" id="dc-slideshow-height" min="300" max="720" step="20" oninput="document.getElementById('dc-slideshow-height-display').textContent = this.value + 'px'; previewDesign();"/></div>
+      <div class="form-row"><label>Corner roundness: <span id="dc-radius-display">0px</span></label><input type="range" id="dc-radius" min="0" max="20" step="1" oninput="document.getElementById('dc-radius-display').textContent = this.value + 'px'; previewDesign();"/></div>
+    </div>
+
+    <div class="design-tab-panel" id="design-panel-cards" style="display:none;">
+      <div class="form-row"><label>Card size</label>
+        <select id="dc-card-size" onchange="previewDesign()">
+          <option value="small">Small (more columns, denser)</option>
+          <option value="medium" selected>Medium (default)</option>
+          <option value="large">Large (fewer columns, prominent)</option>
+          <option value="xlarge">Extra large</option>
+        </select></div>
+      <div class="form-row"><label>Card image shape</label>
+        <select id="dc-card-aspect" onchange="previewDesign()">
+          <option value="">Fixed height (default)</option>
+          <option value="square">Square (1:1)</option>
+          <option value="landscape">Landscape (4:3)</option>
+          <option value="portrait">Portrait (3:4)</option>
+        </select></div>
+      <div class="form-row"><label>Card divider style</label>
+        <select id="dc-card-divider" onchange="previewDesign()">
+          <option value="">Tight grid with dividers (default)</option>
+          <option value="cards-no-divider">Separated cards with spacing</option>
+        </select></div>
+    </div>
+
+    <div class="design-tab-panel" id="design-panel-background" style="display:none;">
+      <div class="form-row"><label>Background pattern</label>
+        <select id="dc-bg-pattern" onchange="previewDesign()"><option value="">None (solid color)</option><option value="topo">Topographic lines</option></select></div>
+      <div id="topo-controls" style="display:none;">
+        <div class="form-row"><label>Line color</label><div style="display:flex; gap:0.5rem; align-items:center;"><input type="color" id="dc-topo-line" onchange="previewDesign()"/><input type="text" id="dc-topo-line-text" oninput="syncColorInput('dc-topo-line', this)" style="flex:1;"/></div></div>
+        <div class="form-row"><label>Pattern background color</label><div style="display:flex; gap:0.5rem; align-items:center;"><input type="color" id="dc-topo-bg" onchange="previewDesign()"/><input type="text" id="dc-topo-bg-text" oninput="syncColorInput('dc-topo-bg', this)" style="flex:1;"/></div></div>
+        <div class="form-row"><label>Opacity: <span id="dc-topo-opacity-display">0.18</span></label><input type="range" id="dc-topo-opacity" min="0.04" max="0.6" step="0.02" oninput="document.getElementById('dc-topo-opacity-display').textContent = (+this.value).toFixed(2); previewDesign();"/></div>
+        <div class="form-row"><label>Line density: <span id="dc-topo-density-display">12</span></label><input type="range" id="dc-topo-density" min="5" max="22" step="1" oninput="document.getElementById('dc-topo-density-display').textContent = this.value; previewDesign();"/></div>
+        <div class="form-row"><label>Scale: <span id="dc-topo-scale-display">600px</span></label><input type="range" id="dc-topo-scale" min="320" max="1000" step="40" oninput="document.getElementById('dc-topo-scale-display').textContent = this.value + 'px'; previewDesign();"/></div>
+        <div class="form-row"><label>Line thickness: <span id="dc-topo-thickness-display">1.0</span></label><input type="range" id="dc-topo-thickness" min="0.5" max="2.5" step="0.1" oninput="document.getElementById('dc-topo-thickness-display').textContent = (+this.value).toFixed(1); previewDesign();"/></div>
+        <div style="margin-top:1rem;"><button type="button" class="btn" onclick="regenerateTopo()">↻ Roll new pattern</button></div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-accent" onclick="saveDesign()" id="save-design-btn">Save</button>
+      <button class="btn" onclick="cancelDesign()">Cancel</button>
+      <button class="btn btn-danger" onclick="resetDesign()" style="margin-left:auto;">Reset to default</button>
+    </div>
+  </div>
+</div>
+
+<!-- LaTeX -->
+<div class="modal-backdrop" id="latex-modal">
+  <div class="modal modal-narrow">
+    <button class="modal-close" onclick="closeModal('latex-modal')">×</button>
+    <h2>Insert equation</h2>
+    <div class="form-row"><label>LaTeX</label><input type="text" id="latex-input" placeholder="e.g. \frac{m}{V}  or  \ce{H2O}"/>
+      <div class="hint">Examples: <code>x^2 + y^2 = r^2</code>, <code>\sqrt{a^2 + b^2}</code>, chemistry: <code>\ce{2H2 + O2 -> 2H2O}</code>. Inline math also works directly in the text: type <code>$E = mc^2$</code>.</div></div>
+    <div class="form-row"><label>Preview</label><div id="latex-preview" style="padding:1rem; background:var(--card-bg); min-height:50px; border-radius:4px;"></div></div>
+    <div class="modal-actions">
+      <button class="btn btn-accent" onclick="insertLatex()">Insert</button>
+      <button class="btn" onclick="closeModal('latex-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- YouTube -->
+<div class="modal-backdrop" id="youtube-modal">
+  <div class="modal modal-narrow">
+    <button class="modal-close" onclick="closeModal('youtube-modal')">×</button>
+    <h2>Embed YouTube video</h2>
+    <div class="form-row"><label>YouTube URL or video ID</label><input type="text" id="youtube-input" placeholder="https://youtube.com/watch?v=..."/><div class="hint">Any YouTube link works (watch, shorts, youtu.be), or just the 11-character video ID. Unlisted videos are fine.</div></div>
+    <div class="modal-actions">
+      <button class="btn btn-accent" onclick="insertYoutube()">Insert</button>
+      <button class="btn" onclick="closeModal('youtube-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   CONFIG — the only values to change when connecting a Supabase project.
+   The publishable key is safe in client code; never put the service key here.
+   ============================================================ */
+const CONFIG = {
+  SUPABASE_URL: 'https://YOUR-PROJECT-REF.supabase.co',
+  SUPABASE_KEY: 'sb_publishable_YOUR_KEY',
+  PUBLIC_BUCKET: 'lab-files-public',
+  PRIVATE_BUCKET: 'lab-files-private',
+  SNAPSHOT_URL: 'data/snapshot.json',
+  FETCH_TIMEOUT_MS: 7000,
+  MAX_UPLOAD_BYTES: 50 * 1024 * 1024,
+  IMAGE_MAX_EDGE: 1600,
+  IMAGE_QUALITY: 0.82
+};
+const CONFIGURED = !CONFIG.SUPABASE_URL.includes('YOUR-PROJECT') && !CONFIG.SUPABASE_KEY.includes('YOUR_KEY');
+const sb = CONFIGURED && window.supabase ? window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY) : null;
+
+/* ============================================================
+   STUDENT-FACING TEXT — every string here is editable in the Site text panel.
+   Placeholders: {n}, {date}, {year}, {title}.
+   ============================================================ */
+const DEFAULTS = {
+  siteTitle: 'Labs',
+  footerText: '© {year} Labs',
+  searchPlaceholder: 'Search labs…',
+  searchButton: 'Search',
+  searchResultsTitle: 'Search results for “{q}”',
+  searchNoResults: 'No labs match that search.',
+  homeIntro: '<p>Welcome. Choose a course below to find your lab procedures. Log in as admin and click this text to change it.</p>',
+  homeFoldersLabel: 'Courses',
+  homeLabsLabel: 'Labs',
+  homeEmpty: 'No labs have been posted yet.',
+  folderSectionsLabel: 'Sections',
+  folderLabsLabel: 'Labs',
+  folderEmpty: 'Nothing here yet.',
+  cardMinutes: '{n} min',
+  cardUpdated: 'Updated {date}',
+  lockedBadge: 'Locked',
+  signInRequiredBadge: 'Sign in required',
+  labMinutes: 'About {n} minutes',
+  labUpdated: 'Last updated {date}',
+  labFilesLabel: 'Files',
+  labOpenFile: 'Open',
+  labDownloadFile: 'Download',
+  labViewInline: 'View here',
+  labPrint: 'Print',
+  labCopyLink: 'Copy link',
+  labLinkCopied: 'Link copied',
+  labPrev: '← Previous',
+  labNext: 'Next →',
+  labNoContent: 'This lab has no procedure text yet.',
+  lockPasswordTitle: 'This lab is locked',
+  lockPasswordPrompt: 'Enter the password your teacher gave you.',
+  lockPasswordPlaceholder: 'Password',
+  lockPasswordButton: 'Unlock',
+  lockPasswordWrong: 'That password is not correct.',
+  lockTooMany: 'Too many attempts. Please wait a few minutes and try again.',
+  lockAccountsTitle: 'Sign in required',
+  lockAccountsPrompt: 'This lab is available to signed-in students only.',
+  lockNotAllowed: 'This lab is not available to your account.',
+  lockAdminOnly: 'This lab is not available.',
+  lockUnavailable: 'Locked labs cannot be opened right now because the content server is unreachable. Please try again shortly.',
+  signInLink: 'Student sign in',
+  signOutLink: 'Sign out',
+  signInTitle: 'Student sign in',
+  signInEmail: 'Email',
+  signInPassword: 'Password',
+  signInButton: 'Sign in',
+  signInForgot: 'Forgot password?',
+  signInResetSent: 'Check your email for a link to set a new password.',
+  signInError: 'Could not sign in. Check your email and password.',
+  signInComingSoon: 'Student accounts are not enabled yet.',
+  notFoundTitle: 'Page not found',
+  notFoundBody: 'That link does not go anywhere. It may have been moved or unpublished.',
+  notFoundHome: 'Go to the home page',
+  unavailableTitle: 'Content temporarily unavailable',
+  unavailableBody: 'The site could not reach its content. Please try again in a few minutes.',
+  fallbackBanner: 'Showing a saved copy of the site. Recent changes and locked labs may be unavailable until the connection is restored.',
+  errorBanner: 'Something went wrong on this page. Reloading usually fixes it.',
+  loadingText: 'Loading…',
+  draftBadge: 'Draft',
+  scheduledBadge: 'Scheduled',
+  hiddenBadge: 'Unlisted'
+};
+
+const SITE_TEXT_GROUPS = [
+  { label: 'Site', keys: ['siteTitle', 'footerText', 'loadingText'] },
+  { label: 'Search', keys: ['searchPlaceholder', 'searchButton', 'searchResultsTitle', 'searchNoResults'] },
+  { label: 'Home page', keys: ['homeFoldersLabel', 'homeLabsLabel', 'homeEmpty'] },
+  { label: 'Folder pages', keys: ['folderSectionsLabel', 'folderLabsLabel', 'folderEmpty'] },
+  { label: 'Cards', keys: ['cardMinutes', 'cardUpdated', 'lockedBadge', 'signInRequiredBadge', 'draftBadge', 'scheduledBadge', 'hiddenBadge'] },
+  { label: 'Lab page', keys: ['labMinutes', 'labUpdated', 'labFilesLabel', 'labOpenFile', 'labDownloadFile', 'labViewInline', 'labPrint', 'labCopyLink', 'labLinkCopied', 'labPrev', 'labNext', 'labNoContent'] },
+  { label: 'Locked labs', keys: ['lockPasswordTitle', 'lockPasswordPrompt', 'lockPasswordPlaceholder', 'lockPasswordButton', 'lockPasswordWrong', 'lockTooMany', 'lockAccountsTitle', 'lockAccountsPrompt', 'lockNotAllowed', 'lockAdminOnly', 'lockUnavailable'] },
+  { label: 'Student sign in', keys: ['signInLink', 'signOutLink', 'signInTitle', 'signInEmail', 'signInPassword', 'signInButton', 'signInForgot', 'signInResetSent', 'signInError', 'signInComingSoon'] },
+  { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
+];
+
+const TEXT_LABELS = {
+  siteTitle: 'Site title', footerText: 'Footer text', loadingText: 'Loading message',
+  searchPlaceholder: 'Search box placeholder', searchButton: 'Search button', searchResultsTitle: 'Search results title', searchNoResults: 'No results message',
+  homeFoldersLabel: 'Folders heading', homeLabsLabel: 'Labs heading', homeEmpty: 'Empty site message',
+  folderSectionsLabel: 'Sub-folders heading', folderLabsLabel: 'Labs heading', folderEmpty: 'Empty folder message',
+  cardMinutes: 'Minutes on cards', cardUpdated: 'Updated date on cards', lockedBadge: 'Locked badge', signInRequiredBadge: 'Sign-in badge',
+  draftBadge: 'Draft badge (admins)', scheduledBadge: 'Scheduled badge (admins)', hiddenBadge: 'Unlisted badge (admins)',
+  labMinutes: 'Minutes line', labUpdated: 'Updated line', labFilesLabel: 'Files heading', labOpenFile: 'Open button', labDownloadFile: 'Download button', labViewInline: 'View-here button',
+  labPrint: 'Print button', labCopyLink: 'Copy link button', labLinkCopied: 'Link copied message', labPrev: 'Previous lab link', labNext: 'Next lab link', labNoContent: 'No procedure text message',
+  lockPasswordTitle: 'Password lock title', lockPasswordPrompt: 'Password lock prompt', lockPasswordPlaceholder: 'Password field placeholder', lockPasswordButton: 'Unlock button',
+  lockPasswordWrong: 'Wrong password message', lockTooMany: 'Too many attempts message', lockAccountsTitle: 'Account lock title', lockAccountsPrompt: 'Account lock prompt',
+  lockNotAllowed: 'Not allowed message', lockAdminOnly: 'Admin-only message', lockUnavailable: 'Lock server unavailable message',
+  signInLink: 'Sign-in link', signOutLink: 'Sign-out link', signInTitle: 'Sign-in title', signInEmail: 'Email field', signInPassword: 'Password field', signInButton: 'Sign-in button',
+  signInForgot: 'Forgot password link', signInResetSent: 'Reset email sent message', signInError: 'Sign-in error', signInComingSoon: 'Accounts not enabled message',
+  notFoundTitle: 'Not found title', notFoundBody: 'Not found text', notFoundHome: 'Not found home link', unavailableTitle: 'Unavailable title', unavailableBody: 'Unavailable text',
+  fallbackBanner: 'Saved-copy banner', errorBanner: 'Error banner'
+};
+
+/* ============================================================
+   DESIGN SYSTEM (persisted as JSON in site_content key "_design")
+   ============================================================ */
+const DESIGN_DEFAULTS = {
+  ink: '#1a1a18', muted: '#7d7c75', bg: '#faf9f6', cardBg: '#f3f1ec', accent: '#2f5d8a',
+  fontHeading: "'Cormorant Garamond', serif", fontBody: "'DM Sans', sans-serif", baseFontSize: '16',
+  pageWidth: '1100', measure: '760', sectionPaddingY: '3.5', slideshowHeight: '480', borderRadius: '0',
+  cardSize: 'medium', cardAspect: '', cardDivider: '',
+  bgPattern: '', topoLine: '#2f5d8a', topoBg: '#faf9f6', topoOpacity: '0.18', topoDensity: '12', topoScale: '600', topoThickness: '1.0', topoSeed: '1234'
+};
+const CARD_SIZE_PRESETS = {
+  small:  { minWidth: '220px', imgHeight: '130px' },
+  medium: { minWidth: '280px', imgHeight: '170px' },
+  large:  { minWidth: '360px', imgHeight: '230px' },
+  xlarge: { minWidth: '460px', imgHeight: '290px' }
+};
+const PALETTES = [
+  { id: 'default',   name: 'Original', ink: '#1a1a18', muted: '#7d7c75', bg: '#faf9f6', cardBg: '#f3f1ec', accent: '#2f5d8a' },
+  { id: 'cream',     name: 'Cream',    ink: '#2a2520', muted: '#9a8f7e', bg: '#f8f1e4', cardBg: '#efe6d3', accent: '#a8632b' },
+  { id: 'stone',     name: 'Stone',    ink: '#2b2b2b', muted: '#7d7d7d', bg: '#e9e9e6', cardBg: '#dcdcd7', accent: '#5b6b5c' },
+  { id: 'paper',     name: 'Paper',    ink: '#222222', muted: '#888888', bg: '#ffffff', cardBg: '#f4f4f4', accent: '#000000' },
+  { id: 'forest',    name: 'Forest',   ink: '#1c2a1c', muted: '#7a8a7a', bg: '#f4f6f1', cardBg: '#e6ebde', accent: '#2d5a2d' },
+  { id: 'ocean',     name: 'Ocean',    ink: '#1a2530', muted: '#7a8a98', bg: '#f3f6f8', cardBg: '#e2eaef', accent: '#1f5775' },
+  { id: 'rust',      name: 'Rust',     ink: '#2b1a14', muted: '#9a8478', bg: '#fbf4ee', cardBg: '#f0e4d8', accent: '#a04525' },
+  { id: 'graphite',  name: 'Graphite', ink: '#e8e6e0', muted: '#9a9890', bg: '#1f1f1d', cardBg: '#2b2b28', accent: '#a8c060' },
+  { id: 'midnight',  name: 'Midnight', ink: '#e8e8ed', muted: '#888896', bg: '#161821', cardBg: '#22242e', accent: '#7a9be0' },
+  { id: 'mono-dark', name: 'Mono dark',ink: '#ffffff', muted: '#888888', bg: '#0d0d0d', cardBg: '#1a1a1a', accent: '#ffffff' }
+];
+let designState = { palette: 'default', custom: false, ...DESIGN_DEFAULTS };
+let designStateBackup = null;
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let state = {
+  folders: [], labs: [],
+  content: {},        // labId -> { media: [...], content: html, attachments: [...] }
+  text: {},           // site_content cache
+  session: null, role: null,
+  source: null,       // 'live' | 'snapshot' | 'cache' | 'none'
+  route: { view: 'home' },
+  currentSlideMedia: null, currentSlide: 0,
+  unlockTokens: {}    // governingId -> token (password labs, kept for the session)
+};
+let labEditor = null, richTextEditor = null;
+let labMediaItems = [], labCoverItem = null, labAttachmentItems = [];
+let labSlugTouched = false, folderSlugTouched = false;
+let editingLabId = null; // id used for upload paths while the lab modal is open
+
+/* ============================================================
+   SMALL HELPERS
+   ============================================================ */
+const $ = id => document.getElementById(id);
+function toast(msg, isError = false) {
+  const t = $('toast'); t.textContent = msg; t.classList.toggle('error', isError); t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 3200);
+}
+function escapeHTML(str) {
+  if (str == null) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+function getText(key) { return state.text[key] !== undefined && state.text[key] !== null ? state.text[key] : DEFAULTS[key]; }
+function fmt(key, vars = {}) {
+  let s = getText(key) || '';
+  vars.year = new Date().getFullYear();
+  return s.replace(/\{(\w+)\}/g, (m, k) => (vars[k] !== undefined ? escapeHTML(vars[k]) : m));
+}
+function formatDate(iso) {
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }); } catch (e) { return ''; }
+}
+function slugify(s) {
+  return String(s || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'item';
+}
+function uniqueSlug(base, taken, currentId, list) {
+  let slug = base, n = 2;
+  const clash = s => list.some(x => x.slug === s && x.id !== currentId);
+  while (clash(slug)) slug = `${base}-${n++}`;
+  return slug;
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function withTimeout(promise, ms, label = 'request') {
+  return Promise.race([promise, new Promise((_, rej) => setTimeout(() => rej(new Error(label + ' timed out')), ms))]);
+}
+function humanSize(bytes) {
+  if (!bytes) return '';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+  return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+}
+function fileUrl(path) {
+  if (!path) return '';
+  if (/^https?:\/\//.test(path)) return path;
+  return `${CONFIG.SUPABASE_URL}/storage/v1/object/public/${CONFIG.PUBLIC_BUCKET}/${path.split('/').map(encodeURIComponent).join('/')}`;
+}
+function storagePathFromUrl(url) {
+  if (typeof url !== 'string') return null;
+  const marker = `/storage/v1/object/public/${CONFIG.PUBLIC_BUCKET}/`;
+  const idx = url.indexOf(marker);
+  if (idx === -1) return null;
+  let path = url.slice(idx + marker.length);
+  const q = path.indexOf('?'); if (q !== -1) path = path.slice(0, q);
+  try { return decodeURIComponent(path); } catch (e) { return path; }
+}
+function extractYoutubeId(input) {
+  if (!input) return null;
+  input = input.trim();
+  if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+  const m = input.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+function youtubeThumb(id) { return `https://i.ytimg.com/vi/${id}/mqdefault.jpg`; }
+function youtubeEmbed(id) { return `https://www.youtube-nocookie.com/embed/${id}?rel=0`; }
+function deviceClass() {
+  const w = window.innerWidth; return w < 700 ? 'mobile' : (w < 1100 ? 'tablet' : 'desktop');
+}
+function showBanner(id, text) { const el = $(id); $(id + '-text').textContent = text; el.hidden = false; }
+function hideBanner(id) { $(id).hidden = true; }
+
+// Global safety net: never leave a blank page.
+window.addEventListener('error', e => { console.error(e.error || e.message); showBanner('error-banner', getText('errorBanner')); });
+window.addEventListener('unhandledrejection', e => { console.error(e.reason); });
+
+/* ============================================================
+   MEDIA NORMALISATION
+   media entries: 'img:<path>' (bucket path), 'youtube:<id>', or a full URL (legacy/external)
+   Optional alt text: 'img:<path>|<alt text>'
+   ============================================================ */
+function parseMediaEntry(item) {
+  if (!item || typeof item !== 'string') return null;
+  if (item.startsWith('youtube:')) return { type: 'youtube', id: item.slice(8) };
+  let src = item, alt = '';
+  const bar = item.indexOf('|');
+  if (bar !== -1) { src = item.slice(0, bar); alt = item.slice(bar + 1); }
+  if (src.startsWith('img:')) src = src.slice(4);
+  return { type: 'image', path: src, url: fileUrl(src), alt };
+}
+function serializeMediaItem(m) {
+  if (m.type === 'youtube') return `youtube:${m.id}`;
+  return `img:${m.path}` + (m.alt ? `|${m.alt}` : '');
+}
+function coverFor(lab) {
+  // Returns { type:'image', url } | { type:'youtube', id } | null
+  if (lab.cover_path) {
+    const m = parseMediaEntry(lab.cover_path);
+    return m;
+  }
+  return null;
+}
+
+/* ============================================================
+   DATA LOADING WITH FALLBACK CHAIN: live → snapshot → local cache → unavailable
+   ============================================================ */
+const CACHE_KEY = 'labsite.catalogue.v1';
+
+async function loadLive() {
+  const timeout = CONFIG.FETCH_TIMEOUT_MS;
+  const [f, l, s] = await withTimeout(Promise.all([
+    sb.from('folders').select('*').order('sort_order').order('name'),
+    sb.from('labs').select('*').order('sort_order').order('title'),
+    sb.from('site_content').select('*')
+  ]), timeout, 'catalogue');
+  if (f.error) throw f.error;
+  if (l.error) throw l.error;
+  if (s.error) throw s.error;
+  return { folders: f.data || [], labs: l.data || [], site_content: s.data || [] };
+}
+
+async function loadSnapshot() {
+  const res = await withTimeout(fetch(CONFIG.SNAPSHOT_URL + '?t=' + Date.now(), { cache: 'no-store' }), CONFIG.FETCH_TIMEOUT_MS, 'snapshot');
+  if (!res.ok) throw new Error('snapshot HTTP ' + res.status);
+  return res.json();
+}
+
+function applyCatalogue(data) {
+  state.folders = Array.isArray(data.folders) ? data.folders : [];
+  state.labs = Array.isArray(data.labs) ? data.labs : [];
+  state.text = {};
+  (data.site_content || []).forEach(row => { if (row && row.key) state.text[row.key] = row.value; });
+  // Snapshot and cache may carry content for public labs — prefill the cache.
+  if (Array.isArray(data.lab_content)) {
+    const attachByLab = {};
+    (data.attachments || []).forEach(a => { (attachByLab[a.lab_id] = attachByLab[a.lab_id] || []).push(a); });
+    data.lab_content.forEach(c => {
+      state.content[c.lab_id] = { media: c.media || [], content: c.content || '', attachments: attachByLab[c.lab_id] || [] };
+    });
+  }
+}
+
+async function loadCatalogue() {
+  let data = null, source = 'none';
+  if (sb) {
+    for (let attempt = 1; attempt <= 3 && !data; attempt++) {
+      try { data = await loadLive(); source = 'live'; }
+      catch (e) { console.warn(`Live load failed (attempt ${attempt}):`, e.message || e); if (attempt < 3) await sleep(600 * attempt); }
+    }
+  }
+  if (!data) {
+    try { data = await loadSnapshot(); source = 'snapshot'; }
+    catch (e) { console.warn('Snapshot load failed:', e.message || e); }
+  }
+  if (!data) {
+    try { const raw = localStorage.getItem(CACHE_KEY); if (raw) { data = JSON.parse(raw); source = 'cache'; } }
+    catch (e) { /* ignore */ }
+  }
+  state.source = source;
+  if (data) applyCatalogue(data);
+  if (source === 'live') {
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ folders: state.folders, labs: state.labs, site_content: data.site_content, savedAt: Date.now() })); } catch (e) { /* quota or private mode */ }
+  }
+  if (sb && source !== 'live' && source !== 'none') showBanner('fallback-banner', getText('fallbackBanner'));
+  else hideBanner('fallback-banner');
+}
+
+async function getLabContent(lab) {
+  if (state.content[lab.id]) return state.content[lab.id];
+  if (state.source === 'live' && sb) {
+    const [c, a] = await withTimeout(Promise.all([
+      sb.from('lab_content').select('*').eq('lab_id', lab.id).maybeSingle(),
+      sb.from('attachments').select('*').eq('lab_id', lab.id).order('sort_order').order('name')
+    ]), CONFIG.FETCH_TIMEOUT_MS, 'lab content');
+    if (c.error) throw c.error;
+    if (!c.data) return null; // locked for this viewer (RLS) or missing
+    const entry = { media: c.data.media || [], content: c.data.content || '', attachments: a.data || [] };
+    state.content[lab.id] = entry;
+    return entry;
+  }
+  return null;
+}
+
+/* ============================================================
+   ACCESS (client-side mirror of resolve_access, for display decisions only —
+   the database and gate function enforce the real rules)
+   ============================================================ */
+function folderById(id) { return state.folders.find(f => f.id === id) || null; }
+function labBySlug(slug) { return state.labs.find(l => l.slug === slug) || null; }
+function folderBySlug(slug) { return state.folders.find(f => f.slug === slug) || null; }
+function folderChain(folderId) {
+  const chain = []; let f = folderById(folderId); let guard = 0;
+  while (f && guard++ < 30) { chain.unshift(f); f = f.parent_id ? folderById(f.parent_id) : null; }
+  return chain;
+}
+function effectiveAccess(lab) {
+  if (lab.access && lab.access !== 'inherit') return { level: lab.access, governingId: lab.id };
+  const chain = folderChain(lab.folder_id).reverse();
+  for (const f of chain) if (f.access && f.access !== 'inherit') return { level: f.access, governingId: f.id };
+  return { level: 'public', governingId: null };
+}
+function effectiveFolderAccess(folder) {
+  const chain = folderChain(folder.id).reverse();
+  for (const f of chain) if (f.access && f.access !== 'inherit') return f.access;
+  return 'public';
+}
+function isAdmin() { return state.role === 'admin'; }
+function labIsLive(lab) {
+  if (lab.status === 'published') return true;
+  if (lab.status === 'scheduled' && lab.publish_at) return new Date(lab.publish_at) <= new Date();
+  return false;
+}
+function visibleLabs() { return state.labs.filter(l => isAdmin() || labIsLive(l)); }
+function visibleFolders() { return state.folders.filter(f => isAdmin() || effectiveFolderAccess(f) !== 'admin'); }
+function labsInFolder(folderId) {
+  return visibleLabs().filter(l => (l.folder_id || null) === (folderId || null))
+    .sort((a, b) => (a.sort_order - b.sort_order) || a.title.localeCompare(b.title));
+}
+function subfolders(parentId, includeUnlisted = false) {
+  return visibleFolders().filter(f => (f.parent_id || null) === (parentId || null) && (includeUnlisted || f.listed !== false || isAdmin()))
+    .sort((a, b) => (a.sort_order - b.sort_order) || a.name.localeCompare(b.name));
+}
+
+/* ============================================================
+   ROUTER
+   ============================================================ */
+function parseRoute() {
+  const raw = location.hash.replace(/^#\/?/, '');
+  const [path, qs] = raw.split('?');
+  const parts = path.split('/').filter(Boolean).map(decodeURIComponent);
+  const params = new URLSearchParams(qs || '');
+  if (parts.length === 0) return { view: 'home' };
+  if (parts[0] === 'f' && parts[1]) return { view: 'folder', slug: parts[1] };
+  if (parts[0] === 'lab' && parts[1]) return { view: 'lab', slug: parts[1] };
+  if (parts[0] === 'search') return { view: 'search', q: params.get('q') || '' };
+  if (parts[0] === 'signin') return { view: 'signin' };
+  return { view: 'notfound' };
+}
+function navigate(hash) { if (location.hash === hash) render(); else location.hash = hash; }
+window.addEventListener('hashchange', () => render());
+
+function submitSearch(e) {
+  e.preventDefault();
+  const q = $('search-input').value.trim();
+  if (q) navigate('#/search?q=' + encodeURIComponent(q));
+  return false;
+}
+
+/* ============================================================
+   RENDERING — chrome
+   ============================================================ */
+function renderChrome() {
+  const title = getText('siteTitle');
+  $('site-title').textContent = title;
+  $('footer-text').innerHTML = fmt('footerText');
+  $('search-input').placeholder = getText('searchPlaceholder');
+  $('search-btn').textContent = getText('searchButton');
+  $('nav-signin').textContent = getText('signInLink');
+  $('footer-signin').textContent = getText('signInLink');
+  $('nav-signin').hidden = true;      // shown once student accounts are enabled (Phase 3)
+  $('footer-signin').hidden = true;
+  $('announce-dismiss').textContent = 'Dismiss';
+  renderAnnouncement();
+}
+
+function renderAnnouncement() {
+  let a = null;
+  try { a = state.text._announcement ? JSON.parse(state.text._announcement) : null; } catch (e) { a = null; }
+  const el = $('announce-banner');
+  if (!a || !a.text || (a.expires && new Date(a.expires) < new Date())) { el.hidden = true; return; }
+  let dismissed = false;
+  try { dismissed = sessionStorage.getItem('labsite.announce.dismissed') === String(a.text); } catch (e) { /* ignore */ }
+  if (dismissed) { el.hidden = true; return; }
+  $('announce-banner-text').innerHTML = a.link ? `<a href="${escapeHTML(a.link)}" style="color:inherit;">${escapeHTML(a.text)}</a>` : escapeHTML(a.text);
+  el.hidden = false;
+}
+function dismissAnnouncement() {
+  try { const a = JSON.parse(state.text._announcement || '{}'); sessionStorage.setItem('labsite.announce.dismissed', String(a.text)); } catch (e) { /* ignore */ }
+  $('announce-banner').hidden = true;
+}
+
+function renderMathIn(elements) {
+  if (typeof renderMathInElement !== 'function') return;
+  elements.forEach(el => {
+    if (!el) return;
+    try {
+      renderMathInElement(el, {
+        delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }, { left: '\\(', right: '\\)', display: false }, { left: '\\[', right: '\\]', display: true }],
+        throwOnError: false, ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code', 'option']
+      });
+    } catch (e) { /* ignore */ }
+  });
+}
+
+/* ============================================================
+   RENDERING — views
+   ============================================================ */
+function render() {
+  state.route = parseRoute();
+  const view = $('view');
+  try {
+    switch (state.route.view) {
+      case 'home': renderHome(view); break;
+      case 'folder': renderFolder(view); break;
+      case 'lab': renderLab(view); break;
+      case 'search': renderSearch(view); break;
+      case 'signin': renderSignIn(view); break;
+      default: renderNotFound(view);
+    }
+  } catch (e) {
+    console.error(e);
+    view.innerHTML = `<section class="page"><h1 class="page-title">${escapeHTML(getText('unavailableTitle'))}</h1><p>${escapeHTML(getText('unavailableBody'))}</p></section>`;
+  }
+  window.scrollTo({ top: 0 });
+}
+
+function breadcrumbHTML(folderId, includeCurrent = true) {
+  const chain = folderChain(folderId);
+  const items = [`<a href="#/">${escapeHTML(getText('siteTitle'))}</a>`];
+  chain.forEach((f, i) => {
+    const last = i === chain.length - 1;
+    items.push('<span class="sep">/</span>');
+    items.push(last && !includeCurrent ? `<span>${escapeHTML(f.name)}</span>` : `<a href="#/f/${encodeURIComponent(f.slug)}">${escapeHTML(f.name)}</a>`);
+  });
+  return `<div class="breadcrumb">${items.join('')}</div>`;
+}
+
+function labBadges(lab) {
+  const b = [];
+  if (isAdmin()) {
+    if (lab.status === 'draft') b.push(`<span class="badge draft">${escapeHTML(getText('draftBadge'))}</span>`);
+    else if (lab.status === 'scheduled' && !labIsLive(lab)) b.push(`<span class="badge scheduled">${escapeHTML(getText('scheduledBadge'))}</span>`);
+  }
+  const acc = effectiveAccess(lab).level;
+  if (acc === 'password') b.push(`<span class="badge lock">${escapeHTML(getText('lockedBadge'))}</span>`);
+  else if (acc === 'accounts') b.push(`<span class="badge lock">${escapeHTML(getText('signInRequiredBadge'))}</span>`);
+  else if (acc === 'admin' && isAdmin()) b.push(`<span class="badge draft">Admin only</span>`);
+  return b.join('');
+}
+
+function labCardHTML(lab) {
+  const cover = coverFor(lab);
+  let img;
+  if (!cover) img = `<span class="folder-glyph">≣</span>`;
+  else if (cover.type === 'youtube') img = `<img src="${escapeHTML(youtubeThumb(cover.id))}" alt="" loading="lazy"/><div class="video-overlay"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>`;
+  else img = `<img src="${escapeHTML(cover.url)}" alt="${escapeHTML(cover.alt || '')}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'card-img-placeholder',textContent:''}))"/>`;
+  const meta = [];
+  if (lab.estimated_minutes) meta.push(`<span>${fmt('cardMinutes', { n: lab.estimated_minutes })}</span>`);
+  if (lab.updated_at) meta.push(`<span>${fmt('cardUpdated', { date: formatDate(lab.updated_at) })}</span>`);
+  (lab.tags || []).slice(0, 4).forEach(t => meta.push(`<span class="tag">${escapeHTML(t)}</span>`));
+  return `
+    <a class="card" href="#/lab/${encodeURIComponent(lab.slug)}">
+      <div class="admin-controls" onclick="event.preventDefault(); event.stopPropagation();">
+        <button onclick="openLabModal('${lab.id}')">Edit</button>
+        <button class="delete" onclick="confirmDeleteLab('${lab.id}')">Delete</button>
+      </div>
+      <div class="card-img">${img}</div>
+      <div class="card-title">${escapeHTML(lab.title)}</div>
+      ${lab.summary ? `<div class="card-summary">${escapeHTML(lab.summary)}</div>` : ''}
+      <div class="card-meta">${labBadges(lab)}${meta.join('')}</div>
+    </a>`;
+}
+
+function folderCardHTML(f) {
+  const count = labsInFolder(f.id).length + subfolders(f.id).length;
+  const acc = effectiveFolderAccess(f);
+  const badges = [];
+  if (isAdmin() && f.listed === false) badges.push(`<span class="badge hidden">${escapeHTML(getText('hiddenBadge'))}</span>`);
+  if (acc === 'password') badges.push(`<span class="badge lock">${escapeHTML(getText('lockedBadge'))}</span>`);
+  if (acc === 'accounts') badges.push(`<span class="badge lock">${escapeHTML(getText('signInRequiredBadge'))}</span>`);
+  if (acc === 'admin') badges.push(`<span class="badge draft">Admin only</span>`);
+  return `
+    <a class="card" href="#/f/${encodeURIComponent(f.slug)}">
+      <div class="admin-controls" onclick="event.preventDefault(); event.stopPropagation();">
+        <button onclick="openFolderModal('${f.id}')">Edit</button>
+        <button class="delete" onclick="confirmDeleteFolder('${f.id}')">Delete</button>
+      </div>
+      <div class="card-img"><span class="folder-glyph">▤</span></div>
+      <div class="card-title">${escapeHTML(f.name)}</div>
+      ${f.description ? `<div class="card-summary">${escapeHTML(f.description)}</div>` : ''}
+      <div class="card-meta">${badges.join('')}<span>${count} ${count === 1 ? 'item' : 'items'}</span></div>
+    </a>`;
+}
+
+function gridOrEmpty(cards, emptyText) {
+  return cards.length ? `<div class="card-grid">${cards.join('')}</div>` : `<div class="empty-state">${escapeHTML(emptyText)}</div>`;
+}
+
+function renderHome(view) {
+  document.title = getText('siteTitle');
+  const folders = subfolders(null);
+  const labs = labsInFolder(null);
+  const intro = getText('homeIntro');
+  let html = `<section class="page">
+    <div class="home-intro rich-content editable" data-edit="homeIntro" data-rich="true" onclick="handleEditableClick(event, 'homeIntro', true)">${intro}</div>`;
+  if (folders.length === 0 && labs.length === 0) {
+    html += `<div class="empty-state" style="margin-top:2rem;">${escapeHTML(getText('homeEmpty'))}</div>`;
+  } else {
+    if (folders.length) html += `<div class="section-heading"><span>${escapeHTML(getText('homeFoldersLabel'))}</span></div>${gridOrEmpty(folders.map(folderCardHTML), '')}`;
+    if (labs.length) html += `<div class="section-heading"><span>${escapeHTML(getText('homeLabsLabel'))}</span></div>${gridOrEmpty(labs.map(labCardHTML), '')}`;
+  }
+  html += `</section>`;
+  view.innerHTML = html;
+  renderMathIn(view.querySelectorAll('.rich-content'));
+}
+
+function renderFolder(view) {
+  const f = folderBySlug(state.route.slug);
+  if (!f || (!isAdmin() && effectiveFolderAccess(f) === 'admin')) return renderNotFound(view);
+  document.title = `${f.name} · ${getText('siteTitle')}`;
+  const subs = subfolders(f.id);
+  const labs = labsInFolder(f.id);
+  let html = `<section class="page">
+    ${breadcrumbHTML(f.parent_id)}
+    <h1 class="page-title">${escapeHTML(f.name)} <span class="admin-inline"><button class="btn-small" onclick="openFolderModal('${f.id}')">Edit folder</button></span></h1>
+    ${f.description ? `<p class="lab-summary" style="margin-top:-0.5rem; margin-bottom:1rem;">${escapeHTML(f.description)}</p>` : ''}`;
+  if (subs.length === 0 && labs.length === 0) html += `<div class="empty-state" style="margin-top:2rem;">${escapeHTML(getText('folderEmpty'))}</div>`;
+  else {
+    if (subs.length) html += `<div class="section-heading"><span>${escapeHTML(getText('folderSectionsLabel'))}</span></div>${gridOrEmpty(subs.map(folderCardHTML), '')}`;
+    if (labs.length) html += `<div class="section-heading"><span>${escapeHTML(getText('folderLabsLabel'))}</span></div>${gridOrEmpty(labs.map(labCardHTML), '')}`;
+  }
+  html += `</section>`;
+  view.innerHTML = html;
+  logEvent('view', { folder_id: f.id, path: location.hash });
+}
+
+function renderSearch(view) {
+  const q = (state.route.q || '').trim();
+  $('search-input').value = q;
+  document.title = `${getText('searchButton')} · ${getText('siteTitle')}`;
+  const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+  const results = terms.length ? visibleLabs().filter(l => {
+    const hay = [l.title, l.summary, (l.tags || []).join(' '), folderChain(l.folder_id).map(f => f.name).join(' ')].join(' ').toLowerCase();
+    return terms.every(t => hay.includes(t));
+  }) : [];
+  view.innerHTML = `<section class="page">
+    <h1 class="page-title" style="font-size:2rem;">${fmt('searchResultsTitle', { q })}</h1>
+    ${gridOrEmpty(results.map(labCardHTML), getText('searchNoResults'))}
+  </section>`;
+  if (q) logEvent('search', { path: 'search:' + q.slice(0, 120) });
+}
+
+function renderNotFound(view) {
+  document.title = `${getText('notFoundTitle')} · ${getText('siteTitle')}`;
+  view.innerHTML = `<section class="page"><h1 class="page-title">${escapeHTML(getText('notFoundTitle'))}</h1>
+    <p style="max-width:var(--measure); color:var(--muted);">${escapeHTML(getText('notFoundBody'))}</p>
+    <p style="margin-top:1.5rem;"><a class="btn" href="#/">${escapeHTML(getText('notFoundHome'))}</a></p></section>`;
+}
+
+function renderSignIn(view) {
+  document.title = `${getText('signInTitle')} · ${getText('siteTitle')}`;
+  view.innerHTML = `<section class="page"><h1 class="page-title">${escapeHTML(getText('signInTitle'))}</h1>
+    <p style="max-width:var(--measure); color:var(--muted);">${escapeHTML(getText('signInComingSoon'))}</p></section>`;
+}
+
+/* ---------- Lab page ---------- */
+async function renderLab(view) {
+  const lab = labBySlug(state.route.slug);
+  if (!lab || (!isAdmin() && !labIsLive(lab))) return renderNotFound(view);
+  document.title = `${lab.title} · ${getText('siteTitle')}`;
+  const access = effectiveAccess(lab);
+  const meta = [];
+  if (lab.estimated_minutes) meta.push(`<span>${fmt('labMinutes', { n: lab.estimated_minutes })}</span>`);
+  if (lab.updated_at) meta.push(`<span>${fmt('labUpdated', { date: formatDate(lab.updated_at) })}</span>`);
+  (lab.tags || []).forEach(t => meta.push(`<span class="tag">${escapeHTML(t)}</span>`));
+
+  view.innerHTML = `<section class="page lab-page">
+    ${breadcrumbHTML(lab.folder_id)}
+    <header class="lab-header">
+      <h1 class="lab-title">${escapeHTML(lab.title)} <span class="admin-inline"><button class="btn-small" onclick="openLabModal('${lab.id}')">Edit lab</button></span></h1>
+      <div class="lab-meta">${labBadges(lab)}${meta.join('')}</div>
+      ${lab.summary ? `<p class="lab-summary">${escapeHTML(lab.summary)}</p>` : ''}
+      <div class="lab-toolbar">
+        <button class="btn-small" onclick="printLab('${lab.id}')">${escapeHTML(getText('labPrint'))}</button>
+        <button class="btn-small" onclick="copyLabLink()">${escapeHTML(getText('labCopyLink'))}</button>
+      </div>
+    </header>
+    <div id="lab-content-area"><p style="color:var(--muted);">${escapeHTML(getText('loadingText'))}</p></div>
+    ${labFooterNavHTML(lab)}
+  </section>`;
+
+  const area = $('lab-content-area');
+  let entry = null;
+  try { entry = await getLabContent(lab); }
+  catch (e) { console.warn('Lab content failed:', e.message || e); }
+  if (state.route.view !== 'lab' || state.route.slug !== lab.slug) return; // navigated away meanwhile
+
+  if (!entry) {
+    // Either locked for this viewer, or unreachable.
+    if (access.level === 'public' || isAdmin()) {
+      area.innerHTML = `<div class="lock-panel"><h3>${escapeHTML(getText('unavailableTitle'))}</h3><p>${escapeHTML(getText('unavailableBody'))}</p></div>`;
+    } else {
+      area.innerHTML = lockPanelHTML(lab, access);
+    }
+    return;
+  }
+  renderLabContent(area, lab, entry);
+  logEvent('view', { lab_id: lab.id, folder_id: lab.folder_id, path: location.hash });
+}
+
+function renderLabContent(area, lab, entry) {
+  const media = (entry.media || []).map(parseMediaEntry).filter(Boolean);
+  const attachments = entry.attachments || [];
+  let html = '';
+  if (media.length) html += `<div class="lab-media" id="lab-media-wrap"></div>`;
+  html += `<div class="lab-body rich-content" id="lab-body">${entry.content && entry.content !== '<p><br></p>' ? entry.content : `<p style="color:var(--muted)">${escapeHTML(getText('labNoContent'))}</p>`}</div>`;
+  if (attachments.length) {
+    html += `<div class="section-heading" style="max-width:var(--measure);"><span>${escapeHTML(getText('labFilesLabel'))}</span></div><ul class="attachments">` +
+      attachments.map(a => {
+        const url = fileUrl(a.path);
+        const ext = (a.name.split('.').pop() || '').toUpperCase().slice(0, 4);
+        const isPdf = (a.mime || '').includes('pdf') || /\.pdf$/i.test(a.name);
+        return `<li>
+          <div class="file-icon">${escapeHTML(ext)}</div>
+          <div class="file-name">${escapeHTML(a.name)}<span>${escapeHTML(humanSize(a.size_bytes))}</span></div>
+          <div class="file-actions">
+            ${isPdf ? `<button class="btn-small" onclick="toggleInlinePdf(this, '${escapeHTML(url)}')">${escapeHTML(getText('labViewInline'))}</button>` : ''}
+            <a class="btn-small" href="${escapeHTML(url)}" target="_blank" rel="noopener" onclick="logEvent('download', { lab_id: '${lab.id}', path: '${escapeHTML(a.path)}' })">${escapeHTML(getText(isPdf ? 'labOpenFile' : 'labDownloadFile'))}</a>
+          </div>
+        </li>`;
+      }).join('') + `</ul>`;
+  }
+  area.innerHTML = html;
+  if (media.length) renderSlideshow(media, $('lab-media-wrap'));
+  renderMathIn([$('lab-body')]);
+  // Make YouTube embeds inside rich text privacy-friendly and lazy
+  area.querySelectorAll('.embed-youtube iframe').forEach(f => { f.setAttribute('loading', 'lazy'); f.setAttribute('allowfullscreen', 'true'); });
+}
+
+function toggleInlinePdf(btn, url) {
+  const li = btn.closest('li');
+  const existing = li.querySelector('.pdf-frame');
+  if (existing) { existing.remove(); return; }
+  const frame = document.createElement('iframe');
+  frame.className = 'pdf-frame'; frame.src = url + '#toolbar=1'; frame.title = 'PDF';
+  li.appendChild(frame);
+  li.style.flexWrap = 'wrap';
+}
+
+function lockPanelHTML(lab, access) {
+  if (access.level === 'password') {
+    return `<div class="lock-panel">
+      <h3>${escapeHTML(getText('lockPasswordTitle'))}</h3>
+      <p>${escapeHTML(getText('lockPasswordPrompt'))}</p>
+      <form onsubmit="return submitUnlock(event, '${lab.id}')">
+        <div class="form-row"><input type="password" id="unlock-password" placeholder="${escapeHTML(getText('lockPasswordPlaceholder'))}" autocomplete="off"/></div>
+        <button class="btn btn-accent" type="submit" id="unlock-btn">${escapeHTML(getText('lockPasswordButton'))}</button>
+        <div class="lock-error" id="unlock-error"></div>
+      </form></div>`;
+  }
+  if (access.level === 'accounts') {
+    return `<div class="lock-panel"><h3>${escapeHTML(getText('lockAccountsTitle'))}</h3><p>${escapeHTML(getText('lockAccountsPrompt'))}</p>
+      <a class="btn btn-accent" href="#/signin">${escapeHTML(getText('signInButton'))}</a></div>`;
+  }
+  return `<div class="lock-panel"><h3>${escapeHTML(getText('lockPasswordTitle'))}</h3><p>${escapeHTML(getText('lockAdminOnly'))}</p></div>`;
+}
+
+async function submitUnlock(e, labId) {
+  e.preventDefault();
+  // The gate function arrives in the access-control phase; until it is deployed this reports the unavailable message.
+  $('unlock-error').textContent = getText('lockUnavailable');
+  return false;
+}
+
+function labFooterNavHTML(lab) {
+  const siblings = labsInFolder(lab.folder_id);
+  const i = siblings.findIndex(l => l.id === lab.id);
+  const prev = i > 0 ? siblings[i - 1] : null;
+  const next = i >= 0 && i < siblings.length - 1 ? siblings[i + 1] : null;
+  if (!prev && !next) return '';
+  return `<div class="lab-footer-nav">
+    <span>${prev ? `<a href="#/lab/${encodeURIComponent(prev.slug)}">${escapeHTML(getText('labPrev'))} · ${escapeHTML(prev.title)}</a>` : ''}</span>
+    <span>${next ? `<a href="#/lab/${encodeURIComponent(next.slug)}">${escapeHTML(next.title)} · ${escapeHTML(getText('labNext'))}</a>` : ''}</span>
+  </div>`;
+}
+
+function printLab(labId) { logEvent('print', { lab_id: labId, path: location.hash }); window.print(); }
+async function copyLabLink() {
+  try { await navigator.clipboard.writeText(location.href); toast(getText('labLinkCopied')); }
+  catch (e) { prompt('Copy this link:', location.href); }
+}
+
+/* ---------- Slideshow (shared with the knife site) ---------- */
+function renderSlideshow(media, wrap) {
+  if (!wrap) return;
+  state.currentSlide = 0;
+  state.currentSlideMedia = media;
+  const slidesHtml = media.map((m, i) => m.type === 'youtube'
+    ? `<div class="slideshow-slide ${i === 0 ? 'active' : ''}"><iframe src="${escapeHTML(youtubeEmbed(m.id))}" allowfullscreen loading="lazy" title="Video"></iframe></div>`
+    : `<div class="slideshow-slide ${i === 0 ? 'active' : ''}"><img src="${escapeHTML(m.url)}" alt="${escapeHTML(m.alt || '')}" loading="${i === 0 ? 'eager' : 'lazy'}"/></div>`).join('');
+  const multi = media.length > 1;
+  wrap.innerHTML = `<div class="slideshow" id="slideshow">
+      <div class="slideshow-main">${slidesHtml}
+        ${multi ? `<button class="slideshow-arrow prev" onclick="changeSlide(-1)" aria-label="Previous">‹</button><button class="slideshow-arrow next" onclick="changeSlide(1)" aria-label="Next">›</button><div class="slideshow-counter" id="slide-counter">1 / ${media.length}</div>` : ''}
+      </div>
+      ${multi ? `<div class="slideshow-dots">${media.map((_, i) => `<button class="slideshow-dot ${i === 0 ? 'active' : ''}" onclick="goToSlide(${i})" aria-label="Slide ${i + 1}"></button>`).join('')}</div>` : ''}
+      <div class="slideshow-caption" id="slide-caption">${escapeHTML(media[0].alt || '')}</div>
+    </div>`;
+  const el = $('slideshow'); let x0 = 0;
+  el.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
+  el.addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 50) changeSlide(dx < 0 ? 1 : -1); }, { passive: true });
+}
+function changeSlide(dir) {
+  const media = state.currentSlideMedia; if (!media || media.length < 2) return;
+  state.currentSlide = (state.currentSlide + dir + media.length) % media.length; applySlide();
+}
+function goToSlide(i) { state.currentSlide = i; applySlide(); }
+function applySlide() {
+  const slides = document.querySelectorAll('.slideshow-slide'), dots = document.querySelectorAll('.slideshow-dot');
+  slides.forEach((s, i) => s.classList.toggle('active', i === state.currentSlide));
+  dots.forEach((d, i) => d.classList.toggle('active', i === state.currentSlide));
+  const counter = $('slide-counter'); if (counter) counter.textContent = `${state.currentSlide + 1} / ${slides.length}`;
+  const cap = $('slide-caption'); if (cap && state.currentSlideMedia) cap.textContent = state.currentSlideMedia[state.currentSlide].alt || '';
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.querySelectorAll('.modal-backdrop.open').forEach(m => m.classList.remove('open'));
+  if (state.route.view === 'lab' && !document.querySelector('.modal-backdrop.open') && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
+    if (e.key === 'ArrowLeft') changeSlide(-1);
+    if (e.key === 'ArrowRight') changeSlide(1);
+  }
+});
+
+/* ============================================================
+   ACTIVITY EVENTS (anonymous; never logged for admins; fire-and-forget)
+   ============================================================ */
+function visitorId() {
+  try {
+    let v = localStorage.getItem('labsite.visitor');
+    if (!v) { v = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2)); localStorage.setItem('labsite.visitor', v); }
+    return v;
+  } catch (e) { return null; }
+}
+function logEvent(type, fields = {}) {
+  if (!sb || state.source !== 'live' || isAdmin()) return;
+  try {
+    if (type === 'view' && fields.lab_id) {
+      const k = 'labsite.viewed.' + fields.lab_id;
+      if (sessionStorage.getItem(k)) return;
+      sessionStorage.setItem(k, '1');
+    }
+    sb.from('events').insert({
+      type, lab_id: fields.lab_id || null, folder_id: fields.folder_id || null,
+      path: (fields.path || location.hash || '').slice(0, 300), visitor_id: visitorId(),
+      referrer: (document.referrer || '').slice(0, 200) || null, device: deviceClass()
+    }).then(({ error }) => { if (error) console.warn('event not logged:', error.message); });
+  } catch (e) { /* never break the page for analytics */ }
+}
+
+/* ============================================================
+   AUTH (admin)
+   ============================================================ */
+function roleFromSession(session) { return session?.user?.app_metadata?.role || null; }
+async function checkSession() {
+  if (!sb) return;
+  try {
+    const { data } = await sb.auth.getSession();
+    state.session = data.session; state.role = roleFromSession(data.session);
+  } catch (e) { console.warn('session check failed', e); }
+  document.body.classList.toggle('admin-mode', isAdmin());
+}
+function openAdminLogin() {
+  if (!sb) { toast('This copy of the site is not connected to Supabase yet (see CONFIG in index.html).', true); return; }
+  if (isAdmin()) { toast('Already logged in'); return; }
+  $('login-email').value = ''; $('login-password').value = '';
+  openModal('login-modal'); setTimeout(() => $('login-email').focus(), 100);
+}
+async function tryLogin() {
+  const email = $('login-email').value.trim(), password = $('login-password').value;
+  if (!email || !password) { toast('Please enter email and password', true); return; }
+  const btn = $('login-btn'); btn.disabled = true; btn.textContent = 'Signing in…';
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  btn.disabled = false; btn.textContent = 'Sign in';
+  if (error) { toast('Login failed: ' + error.message, true); return; }
+  if (roleFromSession(data.session) !== 'admin') {
+    await sb.auth.signOut();
+    toast('That account is not an admin account.', true); return;
+  }
+  state.session = data.session; state.role = 'admin';
+  document.body.classList.add('admin-mode');
+  closeModal('login-modal');
+  await reloadCatalogue();
+  toast('Welcome back');
+}
+async function logoutAdmin() {
+  await sb.auth.signOut();
+  state.session = null; state.role = null; state.content = {};
+  document.body.classList.remove('admin-mode');
+  await reloadCatalogue();
+  toast('Logged out');
+}
+$('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+
+async function reloadCatalogue() {
+  state.content = {};
+  await loadCatalogue();
+  renderChrome(); render();
+}
+
+/* ============================================================
+   UPLOADS (with client-side image compression)
+   ============================================================ */
+function safeFilename(name) {
+  const base = name.replace(/\.[^.]+$/, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'file';
+  const ext = (name.match(/\.([a-z0-9]+)$/i) || [, ''])[1].toLowerCase();
+  return ext ? `${base}.${ext}` : base;
+}
+async function compressImage(file) {
+  // Returns { blob, ext } — WebP when supported, otherwise JPEG. Falls back to the original for GIF/SVG/tiny files.
+  if (!file.type.startsWith('image/')) return null;
+  if (['image/gif', 'image/svg+xml'].includes(file.type)) return null;
+  if (file.size < 150 * 1024) return null;
+  let bitmap;
+  try { bitmap = await createImageBitmap(file); }
+  catch (e) { throw new Error('This image format cannot be read by the browser. Please use JPG or PNG (on iPhone, set Camera → Formats → Most Compatible).'); }
+  const scale = Math.min(1, CONFIG.IMAGE_MAX_EDGE / Math.max(bitmap.width, bitmap.height));
+  const w = Math.round(bitmap.width * scale), h = Math.round(bitmap.height * scale);
+  const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
+  canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
+  const toBlob = type => new Promise(res => canvas.toBlob(res, type, CONFIG.IMAGE_QUALITY));
+  let blob = await toBlob('image/webp'), ext = 'webp';
+  if (!blob || blob.type !== 'image/webp') { blob = await toBlob('image/jpeg'); ext = 'jpg'; }
+  if (!blob || blob.size >= file.size) return null;
+  return { blob, ext };
+}
+async function uploadFile(file, folderPath, { compress = true } = {}) {
+  if (!sb || !isAdmin()) throw new Error('Not logged in');
+  if (file.size > CONFIG.MAX_UPLOAD_BYTES) throw new Error(`"${file.name}" is larger than 50 MB`);
+  let body = file, name = safeFilename(file.name), contentType = file.type || 'application/octet-stream';
+  if (compress && file.type.startsWith('image/')) {
+    const c = await compressImage(file);
+    if (c) { body = c.blob; contentType = c.blob.type; name = name.replace(/\.[^.]+$/, '') + '.' + c.ext; }
+  }
+  const path = `${folderPath}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}-${name}`;
+  const { error } = await sb.storage.from(CONFIG.PUBLIC_BUCKET).upload(path, body, { cacheControl: '31536000', upsert: false, contentType });
+  if (error) throw error;
+  return { path, size: body.size, mime: contentType };
+}
+async function removeStoragePaths(paths) {
+  const list = [...new Set((paths || []).filter(Boolean))];
+  if (!list.length || !sb) return;
+  const { error } = await sb.storage.from(CONFIG.PUBLIC_BUCKET).remove(list);
+  if (error) console.warn('Could not remove storage files:', error.message);
+}
+async function listStorageFolder(prefix) {
+  if (!sb) return [];
+  const { data, error } = await sb.storage.from(CONFIG.PUBLIC_BUCKET).list(prefix, { limit: 1000 });
+  if (error) { console.warn('list failed', error.message); return []; }
+  return (data || []).filter(o => o.id).map(o => `${prefix}/${o.name}`);
+}
+function imagePathsInHTML(html) {
+  const out = []; if (!html) return out;
+  const re = /<img[^>]+src="([^"]+)"/g; let m;
+  while ((m = re.exec(html))) { const p = storagePathFromUrl(m[1].replace(/&amp;/g, '&')); if (p) out.push(p); }
+  return out;
+}
+function setupDropzone(dropzoneId, fileInputId, onFiles, filter = () => true) {
+  const dz = $(dropzoneId), input = $(fileInputId);
+  if (!dz || !input) return;
+  input.addEventListener('change', () => { const files = Array.from(input.files).filter(filter); if (files.length) onFiles(files); input.value = ''; });
+  ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); dz.classList.add('dragover'); }));
+  ['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); if (ev === 'dragleave' && dz.contains(e.relatedTarget)) return; dz.classList.remove('dragover'); }));
+  dz.addEventListener('drop', e => { const files = Array.from(e.dataTransfer.files).filter(filter); if (files.length) onFiles(files); });
+}
+
+/* ============================================================
+   QUILL
+   ============================================================ */
+const LAB_TEMPLATE_HTML = `
+<h2>Objectives</h2><p>By the end of this lab you will be able to…</p>
+<h2>Safety</h2><ul><li>Wear goggles at all times.</li><li>…</li></ul>
+<h2>Materials</h2><ul><li>…</li></ul>
+<h2>Procedure</h2><ol><li>…</li><li>…</li></ol>
+<h2>Data</h2><p>Record your measurements in your notebook or the data sheet below.</p>
+<h2>Analysis questions</h2><ol><li>…</li></ol>`;
+
+(function registerYoutubeBlot() {
+  if (!window.Quill) return;
+  const BlockEmbed = Quill.import('blots/block/embed');
+  class YoutubeEmbedBlot extends BlockEmbed {
+    static create(value) {
+      const node = super.create();
+      const id = typeof value === 'string' ? value : value.id;
+      node.setAttribute('class', 'embed-youtube');
+      node.setAttribute('data-youtube-id', id);
+      const iframe = document.createElement('iframe');
+      iframe.setAttribute('src', youtubeEmbed(id)); iframe.setAttribute('allowfullscreen', 'true'); iframe.setAttribute('frameborder', '0');
+      node.appendChild(iframe);
+      return node;
+    }
+    static value(node) { return { id: node.getAttribute('data-youtube-id') }; }
+  }
+  YoutubeEmbedBlot.blotName = 'youtube-embed'; YoutubeEmbedBlot.tagName = 'div'; YoutubeEmbedBlot.className = 'embed-youtube';
+  Quill.register(YoutubeEmbedBlot);
+  const Font = Quill.import('formats/font'); Font.whitelist = ['sans', 'serif', 'mono']; Quill.register(Font, true);
+})();
+
+function buildQuillEditor(containerId, { template = false, uploadFolder = () => 'site' } = {}) {
+  const toolbar = [
+    [{ header: [1, 2, 3, false] }],
+    [{ font: ['sans', 'serif', 'mono'] }], [{ size: ['small', false, 'large', 'huge'] }],
+    ['bold', 'italic', 'underline', 'strike'], [{ color: [] }, { background: [] }],
+    [{ align: [] }], [{ list: 'ordered' }, { list: 'bullet' }], ['blockquote', 'code-block'],
+    ['link', 'image'], ['formula-custom', 'youtube'], template ? ['template'] : [], ['clean']
+  ].filter(g => g.length);
+  const quill = new Quill('#' + containerId, {
+    theme: 'snow', placeholder: 'Start writing…',
+    modules: { toolbar: { container: toolbar, handlers: {
+      'formula-custom': function () { openLatexModal(quill); },
+      'youtube': function () { openYoutubeModal(quill); },
+      'template': function () {
+        const range = quill.getSelection(true);
+        quill.clipboard.dangerouslyPasteHTML(range ? range.index : quill.getLength(), LAB_TEMPLATE_HTML);
+      },
+      'image': function () {
+        const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*';
+        input.onchange = async () => {
+          const file = input.files[0]; if (!file) return;
+          toast('Uploading image…');
+          try {
+            const up = await uploadFile(file, uploadFolder());
+            const range = quill.getSelection(true);
+            quill.insertEmbed(range.index, 'image', fileUrl(up.path)); quill.setSelection(range.index + 1);
+            toast('Image inserted');
+          } catch (e) { toast('Upload failed: ' + e.message, true); }
+        };
+        input.click();
+      }
+    } } }
+  });
+  return quill;
+}
+
+let currentEditorForInsert = null;
+function openLatexModal(editor) {
+  currentEditorForInsert = editor; $('latex-input').value = '';
+  $('latex-preview').innerHTML = '<span style="color:var(--muted); font-size:13px;">Type LaTeX above to see a preview</span>';
+  openModal('latex-modal'); setTimeout(() => $('latex-input').focus(), 100);
+}
+$('latex-input').addEventListener('input', e => {
+  const tex = e.target.value, preview = $('latex-preview');
+  if (!tex.trim()) { preview.innerHTML = '<span style="color:var(--muted); font-size:13px;">Type LaTeX above to see a preview</span>'; return; }
+  try { katex.render(tex, preview, { throwOnError: false, displayMode: true }); } catch (err) { preview.innerHTML = '<span style="color:var(--danger); font-size:13px;">Invalid LaTeX</span>'; }
+});
+$('latex-input').addEventListener('keydown', e => { if (e.key === 'Enter') insertLatex(); });
+function insertLatex() {
+  const tex = $('latex-input').value.trim();
+  if (!tex) { toast('Please enter LaTeX', true); return; }
+  if (!currentEditorForInsert) return;
+  const range = currentEditorForInsert.getSelection(true);
+  currentEditorForInsert.insertText(range.index, ` $$${tex}$$ `);
+  currentEditorForInsert.setSelection(range.index + tex.length + 6);
+  closeModal('latex-modal');
+}
+function openYoutubeModal(editor) { currentEditorForInsert = editor; $('youtube-input').value = ''; openModal('youtube-modal'); setTimeout(() => $('youtube-input').focus(), 100); }
+$('youtube-input').addEventListener('keydown', e => { if (e.key === 'Enter') insertYoutube(); });
+function insertYoutube() {
+  const id = extractYoutubeId($('youtube-input').value);
+  if (!id) { toast('Could not read a YouTube video ID from that', true); return; }
+  if (!currentEditorForInsert) return;
+  const range = currentEditorForInsert.getSelection(true);
+  currentEditorForInsert.insertEmbed(range.index, 'youtube-embed', { id });
+  currentEditorForInsert.setSelection(range.index + 1);
+  closeModal('youtube-modal');
+}
+
+/* ============================================================
+   LAB MODAL: cover, media, attachments managers
+   ============================================================ */
+function labUploadFolder() { return `labs/${editingLabId}`; }
+
+function renderCoverManager() {
+  const c = $('lab-cover-manager');
+  c.innerHTML = `
+    <label class="media-dropzone" id="cover-dropzone" style="${labCoverItem ? 'display:none;' : ''}">
+      <input type="file" accept="image/*" id="cover-file-input"/>
+      <div>Drop a cover image here, or <u>click to choose</u></div>
+    </label>
+    <div class="media-grid" id="cover-preview" style="${labCoverItem ? '' : 'display:none;'}"></div>`;
+  setupDropzone('cover-dropzone', 'cover-file-input', async files => {
+    try { toast('Uploading…'); const up = await uploadFile(files[0], labUploadFolder()); labCoverItem = { type: 'image', path: up.path, url: fileUrl(up.path) }; renderCoverManager(); toast('Cover set'); }
+    catch (e) { toast('Upload failed: ' + e.message, true); }
+  }, f => f.type.startsWith('image/'));
+  const p = $('cover-preview');
+  if (labCoverItem) {
+    const thumb = labCoverItem.type === 'youtube' ? `<div class="media-item-video"><img src="${escapeHTML(youtubeThumb(labCoverItem.id))}" alt=""/><span class="media-item-video-icon">▶</span></div>` : `<img src="${escapeHTML(labCoverItem.url)}" alt=""/>`;
+    p.innerHTML = `<div class="media-item" style="cursor:default;">${thumb}<button type="button" class="media-item-remove" onclick="labCoverItem = null; renderCoverManager();">×</button></div>`;
+  }
+}
+
+function renderMediaManager() {
+  const c = $('lab-media-manager');
+  c.innerHTML = `
+    <label class="media-dropzone" id="media-dropzone">
+      <input type="file" accept="image/*" multiple id="media-file-input"/>
+      <div>Drop photos here, or <u>click to choose</u></div>
+      <div style="font-size:11px; margin-top:0.4rem; opacity:0.7;">Photos are resized and compressed automatically before upload.</div>
+    </label>
+    <div class="media-add-row"><input type="text" id="media-youtube-url" placeholder="Or paste a YouTube link…"/><button type="button" onclick="addMediaYoutube()">Add video</button></div>
+    <div class="media-grid" id="media-grid" style="margin-top:1rem;"></div>`;
+  setupDropzone('media-dropzone', 'media-file-input', async files => {
+    for (const file of files) {
+      try { toast(`Uploading ${file.name}…`); const up = await uploadFile(file, labUploadFolder()); labMediaItems.push({ type: 'image', path: up.path, url: fileUrl(up.path), alt: '' }); renderMediaGrid(); }
+      catch (e) { toast('Upload failed: ' + e.message, true); }
+    }
+    toast('Done');
+  }, f => f.type.startsWith('image/'));
+  $('media-youtube-url').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addMediaYoutube(); } });
+  renderMediaGrid();
+}
+function addMediaYoutube() {
+  const input = $('media-youtube-url'); const id = extractYoutubeId(input.value);
+  if (!id) { toast('Could not read a YouTube video ID from that', true); return; }
+  labMediaItems.push({ type: 'youtube', id }); input.value = ''; renderMediaGrid(); toast('Video added');
+}
+function renderMediaGrid() {
+  const grid = $('media-grid'); if (!grid) return;
+  grid.innerHTML = labMediaItems.map((m, i) => {
+    const thumb = m.type === 'youtube'
+      ? `<div class="media-item-video"><img src="${escapeHTML(youtubeThumb(m.id))}" alt=""/><span class="media-item-video-icon">▶</span></div>`
+      : `<img src="${escapeHTML(m.url)}" alt=""/>`;
+    const alt = m.type === 'image' ? `<input class="media-item-alt" placeholder="Describe this photo…" value="${escapeHTML(m.alt || '')}" oninput="labMediaItems[${i}].alt = this.value" onmousedown="event.stopPropagation()"/>` : '';
+    return `<div class="media-item" draggable="true" data-index="${i}">${thumb}<span class="media-item-order">${i + 1}</span>${alt}<button type="button" class="media-item-remove" onclick="labMediaItems.splice(${i}, 1); renderMediaGrid();">×</button></div>`;
+  }).join('');
+  grid.querySelectorAll('.media-item').forEach(item => {
+    item.addEventListener('dragstart', e => { item.classList.add('dragging'); e.dataTransfer.setData('text/plain', item.dataset.index); });
+    item.addEventListener('dragend', () => item.classList.remove('dragging'));
+    item.addEventListener('dragover', e => {
+      e.preventDefault(); const dragging = grid.querySelector('.dragging'); if (!dragging || dragging === item) return;
+      const r = item.getBoundingClientRect(); grid.insertBefore(dragging, e.clientX > r.left + r.width / 2 ? item.nextSibling : item);
+    });
+    item.addEventListener('drop', e => {
+      e.preventDefault();
+      labMediaItems = Array.from(grid.querySelectorAll('.media-item')).map(el => labMediaItems[+el.dataset.index]);
+      renderMediaGrid();
+    });
+  });
+}
+
+function renderAttachmentsManager() {
+  const c = $('lab-attachments-manager');
+  c.innerHTML = `
+    <label class="media-dropzone" id="attach-dropzone">
+      <input type="file" multiple id="attach-file-input"/>
+      <div>Drop files here, or <u>click to choose</u></div>
+      <div style="font-size:11px; margin-top:0.4rem; opacity:0.7;">PDFs open inside the site; other file types are offered as downloads.</div>
+    </label>
+    <ul class="attach-list" id="attach-list"></ul>`;
+  setupDropzone('attach-dropzone', 'attach-file-input', async files => {
+    for (const file of files) {
+      try { toast(`Uploading ${file.name}…`); const up = await uploadFile(file, labUploadFolder(), { compress: false }); labAttachmentItems.push({ id: 'att-' + Date.now() + '-' + Math.random().toString(36).slice(2, 5), name: file.name, path: up.path, mime: up.mime, size_bytes: up.size }); renderAttachList(); }
+      catch (e) { toast('Upload failed: ' + e.message, true); }
+    }
+    toast('Done');
+  });
+  renderAttachList();
+}
+function renderAttachList() {
+  const ul = $('attach-list'); if (!ul) return;
+  ul.innerHTML = labAttachmentItems.map((a, i) => `<li>
+      <input value="${escapeHTML(a.name)}" oninput="labAttachmentItems[${i}].name = this.value" title="Display name"/>
+      <span class="size">${escapeHTML(humanSize(a.size_bytes))}</span>
+      <button type="button" onclick="moveAttachment(${i}, -1)" title="Move up">↑</button>
+      <button type="button" onclick="moveAttachment(${i}, 1)" title="Move down">↓</button>
+      <button type="button" class="remove" onclick="labAttachmentItems.splice(${i}, 1); renderAttachList();">Remove</button>
+    </li>`).join('');
+}
+function moveAttachment(i, dir) {
+  const j = i + dir; if (j < 0 || j >= labAttachmentItems.length) return;
+  [labAttachmentItems[i], labAttachmentItems[j]] = [labAttachmentItems[j], labAttachmentItems[i]]; renderAttachList();
+}
+
+/* ============================================================
+   LAB CRUD
+   ============================================================ */
+function folderOptionsHTML(selectedId, excludeId = null) {
+  const opts = [`<option value="">(Top level)</option>`];
+  const walk = (parentId, depth) => {
+    state.folders.filter(f => (f.parent_id || null) === parentId).sort((a, b) => (a.sort_order - b.sort_order) || a.name.localeCompare(b.name)).forEach(f => {
+      if (f.id === excludeId) return;
+      opts.push(`<option value="${f.id}" ${f.id === selectedId ? 'selected' : ''}>${'&nbsp;&nbsp;'.repeat(depth)}${depth ? '↳ ' : ''}${escapeHTML(f.name)}</option>`);
+      walk(f.id, depth + 1);
+    });
+  };
+  walk(null, 0);
+  return opts.join('');
+}
+function toLocalDatetime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso); const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function onLabTitleInput() {
+  if (!labSlugTouched) $('lab-slug').value = slugify($('lab-title').value);
+  $('lab-slug-preview').textContent = '#/lab/' + ($('lab-slug').value || '…');
+}
+function onLabStatusChange() { $('lab-publish-row').style.display = $('lab-status').value === 'scheduled' ? '' : 'none'; }
+function updateAccessHint() {
+  const v = $('lab-access').value;
+  $('lab-access-hint').textContent = {
+    inherit: 'Follows whatever the folder allows.',
+    public: 'Anyone with the link can open it.',
+    password: 'Students enter a password once per visit. Password unlocking is enabled in a later update.',
+    accounts: 'Only signed-in students in the allowed groups. Student accounts are enabled in a later update.',
+    admin: 'Hidden from everyone except admins.'
+  }[v] || '';
+}
+$('lab-access').addEventListener('change', updateAccessHint);
+
+async function openLabModal(id) {
+  if (!isAdmin()) return;
+  const lab = id ? state.labs.find(l => l.id === id) : null;
+  let entry = null;
+  if (lab) {
+    try { entry = await getLabContent(lab); } catch (e) { /* fall through */ }
+    if (!entry) entry = { media: [], content: '', attachments: [] };
+  }
+  editingLabId = lab ? lab.id : 'l-' + Date.now();
+  labSlugTouched = !!lab;
+  $('lab-modal-title').textContent = lab ? 'Edit lab' : 'Add a lab';
+  $('delete-lab-btn').style.display = lab ? 'inline-block' : 'none';
+  $('lab-id').value = lab ? lab.id : '';
+  $('lab-title').value = lab?.title || '';
+  $('lab-slug').value = lab?.slug || '';
+  $('lab-slug-preview').textContent = '#/lab/' + (lab?.slug || '…');
+  $('lab-folder').innerHTML = folderOptionsHTML(lab?.folder_id || (state.route.view === 'folder' ? folderBySlug(state.route.slug)?.id : null) || null);
+  $('lab-summary').value = lab?.summary || '';
+  $('lab-tags').value = (lab?.tags || []).join(', ');
+  $('lab-minutes').value = lab?.estimated_minutes || '';
+  $('lab-order').value = lab?.sort_order ?? 0;
+  $('lab-status').value = lab?.status || 'draft';
+  $('lab-publish-at').value = toLocalDatetime(lab?.publish_at);
+  onLabStatusChange();
+  $('lab-access').value = lab?.access || 'inherit'; updateAccessHint();
+  labCoverItem = lab?.cover_path ? parseMediaEntry(lab.cover_path) : null;
+  labMediaItems = (entry?.media || []).map(parseMediaEntry).filter(Boolean);
+  labAttachmentItems = (entry?.attachments || []).map(a => ({ ...a }));
+  openModal('lab-modal');
+  setTimeout(() => {
+    if (!labEditor) labEditor = buildQuillEditor('lab-content-editor', { template: true, uploadFolder: labUploadFolder });
+    labEditor.root.innerHTML = entry?.content || '';
+    renderCoverManager(); renderMediaManager(); renderAttachmentsManager();
+  }, 60);
+}
+
+function referencedPaths(lab, entry) {
+  const paths = [];
+  if (lab?.cover_path) { const m = parseMediaEntry(lab.cover_path); if (m?.type === 'image') paths.push(m.path); }
+  (entry?.media || []).forEach(x => { const m = parseMediaEntry(x); if (m?.type === 'image' && m.path && !/^https?:/.test(m.path)) paths.push(m.path); });
+  (entry?.attachments || []).forEach(a => paths.push(a.path));
+  paths.push(...imagePathsInHTML(entry?.content));
+  return paths;
+}
+
+async function saveLab() {
+  const existingId = $('lab-id').value;
+  const title = $('lab-title').value.trim();
+  if (!title) { toast('Please add a title', true); return; }
+  const original = existingId ? state.labs.find(l => l.id === existingId) : null;
+  const originalEntry = existingId ? state.content[existingId] : null;
+
+  let slug = slugify($('lab-slug').value || title);
+  slug = uniqueSlug(slug, null, existingId || null, state.labs);
+  const status = $('lab-status').value;
+  const publishAt = status === 'scheduled' && $('lab-publish-at').value ? new Date($('lab-publish-at').value).toISOString() : null;
+  if (status === 'scheduled' && !publishAt) { toast('Please choose a publish date and time', true); return; }
+
+  const content = labEditor ? labEditor.root.innerHTML : '';
+  const isEmpty = content === '<p><br></p>' || content === '';
+  const mediaArr = labMediaItems.map(serializeMediaItem);
+  if (!labCoverItem) { const firstImg = labMediaItems.find(m => m.type === 'image') || labMediaItems[0]; if (firstImg) labCoverItem = firstImg; }
+
+  const lab = {
+    id: existingId || editingLabId, title, slug,
+    folder_id: $('lab-folder').value || null,
+    summary: $('lab-summary').value.trim() || null,
+    cover_path: labCoverItem ? serializeMediaItem({ ...labCoverItem, alt: '' }) : null,
+    status, publish_at: publishAt,
+    access: $('lab-access').value,
+    tags: $('lab-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+    estimated_minutes: parseInt($('lab-minutes').value, 10) || null,
+    sort_order: parseInt($('lab-order').value, 10) || 0
+  };
+  const btn = $('save-lab-btn'); btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    if (original) {
+      const { error: revErr } = await sb.from('lab_revisions').insert({ lab_id: original.id, snapshot: { lab: original, content: originalEntry || null }, note: 'before save' });
+      if (revErr) console.warn('revision not saved:', revErr.message);
+    }
+    let r = await sb.from('labs').upsert(lab); if (r.error) throw r.error;
+    r = await sb.from('lab_content').upsert({ lab_id: lab.id, media: mediaArr, content: isEmpty ? null : content }); if (r.error) throw r.error;
+    const keepIds = new Set(labAttachmentItems.map(a => a.id));
+    const removed = (originalEntry?.attachments || []).filter(a => !keepIds.has(a.id)).map(a => a.id);
+    if (removed.length) { r = await sb.from('attachments').delete().in('id', removed); if (r.error) throw r.error; }
+    if (labAttachmentItems.length) {
+      r = await sb.from('attachments').upsert(labAttachmentItems.map((a, i) => ({ id: a.id, lab_id: lab.id, name: a.name.trim() || 'File', path: a.path, mime: a.mime || null, size_bytes: a.size_bytes || 0, sort_order: i })));
+      if (r.error) throw r.error;
+    }
+    // Remove files under this lab's folder that are no longer referenced.
+    const newEntry = { media: mediaArr, content, attachments: labAttachmentItems };
+    const stillUsed = new Set(referencedPaths(lab, newEntry));
+    const previously = referencedPaths(original, originalEntry);
+    await removeStoragePaths(previously.filter(p => p.startsWith(`labs/${lab.id}/`) && !stillUsed.has(p)));
+  } catch (e) {
+    btn.disabled = false; btn.textContent = 'Save';
+    toast('Could not save: ' + (e.message || e), true); return;
+  }
+  btn.disabled = false; btn.textContent = 'Save';
+  closeModal('lab-modal');
+  delete state.content[lab.id];
+  await reloadCatalogue();
+  toast(existingId ? 'Lab updated' : 'Lab added');
+  if (!existingId) navigate('#/lab/' + encodeURIComponent(slug));
+}
+
+async function deleteLabById(id) {
+  const lab = state.labs.find(l => l.id === id); if (!lab) return false;
+  if (!confirm(`Delete "${lab.title}"? Its photos and files are removed too. This cannot be undone.`)) return false;
+  const { error } = await sb.from('labs').delete().eq('id', id);
+  if (error) { toast('Could not delete: ' + error.message, true); return false; }
+  await removeStoragePaths(await listStorageFolder(`labs/${id}`));
+  delete state.content[id];
+  return true;
+}
+async function confirmDeleteLab(id) { if (await deleteLabById(id)) { await reloadCatalogue(); toast('Lab deleted'); if (state.route.view === 'lab') navigate('#/'); } }
+async function deleteLabFromModal() { const id = $('lab-id').value; if (id && await deleteLabById(id)) { closeModal('lab-modal'); await reloadCatalogue(); toast('Lab deleted'); if (state.route.view === 'lab') navigate('#/'); } }
+
+/* ============================================================
+   FOLDER CRUD
+   ============================================================ */
+function onFolderNameInput() { if (!folderSlugTouched) $('folder-slug').value = slugify($('folder-name').value); }
+function openFolderModal(id) {
+  if (!isAdmin()) return;
+  const f = id ? folderById(id) : null;
+  folderSlugTouched = !!f;
+  $('folder-modal-title').textContent = f ? 'Edit folder' : 'Add a folder';
+  $('delete-folder-btn').style.display = f ? 'inline-block' : 'none';
+  $('folder-id').value = f ? f.id : '';
+  $('folder-name').value = f?.name || '';
+  $('folder-slug').value = f?.slug || '';
+  $('folder-parent').innerHTML = folderOptionsHTML(f?.parent_id || (state.route.view === 'folder' ? folderBySlug(state.route.slug)?.id : null) || null, f?.id || null);
+  $('folder-description').value = f?.description || '';
+  $('folder-order').value = f?.sort_order ?? 0;
+  $('folder-access').value = f?.access || 'inherit';
+  $('folder-listed').checked = f ? f.listed !== false : true;
+  openModal('folder-modal');
+  setTimeout(() => $('folder-name').focus(), 100);
+}
+async function saveFolder() {
+  const existingId = $('folder-id').value;
+  const name = $('folder-name').value.trim();
+  if (!name) { toast('Please add a name', true); return; }
+  const parentId = $('folder-parent').value || null;
+  if (existingId && parentId) { // prevent moving a folder inside itself
+    if (folderChain(parentId).some(f => f.id === existingId)) { toast('A folder cannot be moved inside itself', true); return; }
+  }
+  const folder = {
+    id: existingId || ('f-' + Date.now()), name,
+    slug: uniqueSlug(slugify($('folder-slug').value || name), null, existingId || null, state.folders),
+    parent_id: parentId, description: $('folder-description').value.trim() || null,
+    sort_order: parseInt($('folder-order').value, 10) || 0,
+    access: $('folder-access').value, listed: $('folder-listed').checked
+  };
+  const btn = $('save-folder-btn'); btn.disabled = true; btn.textContent = 'Saving…';
+  const { error } = await sb.from('folders').upsert(folder);
+  btn.disabled = false; btn.textContent = 'Save';
+  if (error) { toast('Could not save: ' + error.message, true); return; }
+  closeModal('folder-modal');
+  await reloadCatalogue();
+  toast(existingId ? 'Folder updated' : 'Folder added');
+  if (!existingId) navigate('#/f/' + encodeURIComponent(folder.slug));
+}
+async function deleteFolderById(id) {
+  const f = folderById(id); if (!f) return false;
+  const hasChildren = state.folders.some(x => x.parent_id === id) || state.labs.some(l => l.folder_id === id);
+  if (hasChildren) { toast('Move or delete everything inside this folder first.', true); return false; }
+  if (!confirm(`Delete the folder "${f.name}"?`)) return false;
+  const { error } = await sb.from('folders').delete().eq('id', id);
+  if (error) { toast('Could not delete: ' + error.message, true); return false; }
+  return true;
+}
+async function confirmDeleteFolder(id) { if (await deleteFolderById(id)) { await reloadCatalogue(); toast('Folder deleted'); if (state.route.view === 'folder') navigate('#/'); } }
+async function deleteFolderFromModal() { const id = $('folder-id').value; if (id && await deleteFolderById(id)) { closeModal('folder-modal'); await reloadCatalogue(); toast('Folder deleted'); if (state.route.view === 'folder') navigate('#/'); } }
+
+/* ============================================================
+   CLICK-TO-EDIT (site text pieces on the page)
+   ============================================================ */
+function handleLogoClick(event) {
+  if (isAdmin()) { event.preventDefault(); openPlainTextEditor('siteTitle'); return false; }
+  return true;
+}
+function handleEditableClick(event, key, rich = false) {
+  if (!isAdmin()) return;
+  if (event.target.tagName === 'A' && !rich) return;
+  event.preventDefault(); event.stopPropagation();
+  rich ? openRichTextEditor(key) : openPlainTextEditor(key);
+}
+function openRichTextEditor(key) {
+  $('rich-text-modal-title').textContent = 'Edit: ' + (TEXT_LABELS[key] || key);
+  $('rich-text-key').value = key;
+  openModal('rich-text-modal');
+  setTimeout(() => { if (!richTextEditor) richTextEditor = buildQuillEditor('rich-text-editor', { uploadFolder: () => 'site' }); richTextEditor.root.innerHTML = getText(key); }, 60);
+}
+async function saveRichText() {
+  const key = $('rich-text-key').value, value = richTextEditor.root.innerHTML;
+  const { error } = await sb.from('site_content').upsert({ key, value });
+  if (error) { toast('Could not save: ' + error.message, true); return; }
+  state.text[key] = value; closeModal('rich-text-modal'); renderChrome(); render(); toast('Saved');
+}
+function openPlainTextEditor(key) {
+  $('text-modal-title').textContent = 'Edit: ' + (TEXT_LABELS[key] || key);
+  $('text-edit-key').value = key; $('text-edit-value').value = getText(key);
+  openModal('text-modal'); setTimeout(() => $('text-edit-value').focus(), 100);
+}
+async function saveText() {
+  const key = $('text-edit-key').value, value = $('text-edit-value').value;
+  const { error } = await sb.from('site_content').upsert({ key, value });
+  if (error) { toast('Could not save: ' + error.message, true); return; }
+  state.text[key] = value; closeModal('text-modal'); renderChrome(); render(); toast('Saved');
+}
+
+/* ============================================================
+   SITE TEXT PANEL
+   ============================================================ */
+function openSiteTextModal() {
+  $('site-text-form').innerHTML = SITE_TEXT_GROUPS.map(group => `
+    <div class="text-group"><p class="text-group-label">${group.label}</p>
+      ${group.keys.map(key => {
+        const value = getText(key); const isLong = (DEFAULTS[key] || '').length > 70;
+        return `<div class="form-row"><label>${escapeHTML(TEXT_LABELS[key] || key)}</label>
+          ${isLong ? `<textarea data-key="${key}" style="min-height:56px;">${escapeHTML(value)}</textarea>` : `<input type="text" data-key="${key}" value="${escapeHTML(value)}"/>`}</div>`;
+      }).join('')}
+    </div>`).join('');
+  openModal('site-text-modal');
+}
+async function saveSiteText() {
+  const updates = [];
+  document.querySelectorAll('#site-text-form [data-key]').forEach(input => { updates.push({ key: input.dataset.key, value: input.value }); });
+  const btn = $('save-site-text-btn'); btn.disabled = true; btn.textContent = 'Saving…';
+  const { error } = await sb.from('site_content').upsert(updates);
+  btn.disabled = false; btn.textContent = 'Save all';
+  if (error) { toast('Could not save: ' + error.message, true); return; }
+  updates.forEach(u => { state.text[u.key] = u.value; });
+  closeModal('site-text-modal'); renderChrome(); render(); toast('Site text updated');
+}
+
+/* ============================================================
+   MODALS
+   ============================================================ */
+function openModal(id) { $(id).classList.add('open'); }
+function closeModal(id) { $(id).classList.remove('open'); }
+document.querySelectorAll('.modal-backdrop').forEach(bd => bd.addEventListener('mousedown', e => { if (e.target === bd) bd.classList.remove('open'); }));
+
+/* ============================================================
+   DESIGN: apply, preview, save (ported from the knife site)
+   ============================================================ */
+function applyDesign(d) {
+  const root = document.documentElement;
+  root.style.setProperty('--ink', d.ink); root.style.setProperty('--muted', d.muted); root.style.setProperty('--bg', d.bg);
+  root.style.setProperty('--card-bg', d.cardBg); root.style.setProperty('--accent', d.accent);
+  root.style.setProperty('--font-heading', d.fontHeading); root.style.setProperty('--font-body', d.fontBody);
+  root.style.setProperty('--base-font-size', d.baseFontSize + 'px');
+  root.style.setProperty('--page-max-width', d.pageWidth + 'px'); root.style.setProperty('--measure', d.measure + 'px');
+  root.style.setProperty('--section-padding-y', d.sectionPaddingY + 'rem'); root.style.setProperty('--slideshow-height', d.slideshowHeight + 'px');
+  root.style.setProperty('--border-radius', d.borderRadius + 'px');
+  const preset = CARD_SIZE_PRESETS[d.cardSize] || CARD_SIZE_PRESETS.medium;
+  root.style.setProperty('--card-min-width', preset.minWidth); root.style.setProperty('--card-img-height', preset.imgHeight);
+  document.body.classList.remove('cards-no-divider', 'card-aspect-square', 'card-aspect-landscape', 'card-aspect-portrait');
+  if (d.cardDivider) document.body.classList.add(d.cardDivider);
+  if (d.cardAspect) document.body.classList.add('card-aspect-' + d.cardAspect);
+  const dark = isColorDark(d.bg);
+  root.style.setProperty('--rule', dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)');
+  root.style.setProperty('--rule-strong', dark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.25)');
+  applyBackgroundPattern(d);
+}
+function applyBackgroundPattern(d) {
+  if (d.bgPattern === 'topo') {
+    document.body.style.backgroundImage = `url("${buildTopoBackground(d)}")`; document.body.style.backgroundRepeat = 'repeat';
+    document.body.style.backgroundSize = `${d.topoScale}px ${d.topoScale}px`; document.body.style.backgroundAttachment = 'fixed';
+  } else { document.body.style.backgroundImage = ''; document.body.style.backgroundRepeat = ''; document.body.style.backgroundSize = ''; document.body.style.backgroundAttachment = ''; }
+}
+function makeRng(seed) { let a = (parseInt(seed, 10) || 1) | 0; return function () { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function buildTopoBackground(d) {
+  const size = 400, density = parseInt(d.topoDensity, 10) || 12, opacity = parseFloat(d.topoOpacity) || 0.18, thickness = parseFloat(d.topoThickness) || 1.0;
+  const rng = makeRng(d.topoSeed || '1234');
+  const peaks = []; const numPeaks = 2 + Math.floor(rng() * 3);
+  for (let i = 0; i < numPeaks; i++) peaks.push({ x: rng() * size, y: rng() * size, strength: 80 + rng() * 160, stretchX: 0.6 + rng() * 0.8, stretchY: 0.6 + rng() * 0.8, rotation: rng() * Math.PI });
+  const elevation = (x, y) => peaks.reduce((sum, p) => { const dx = x - p.x, dy = y - p.y, cos = Math.cos(p.rotation), sin = Math.sin(p.rotation); const rx = dx * cos - dy * sin, ry = dx * sin + dy * cos; const sx = rx / p.stretchX, sy = ry / p.stretchY; const dist = Math.sqrt(sx * sx + sy * sy); return sum + p.strength * Math.exp(-dist * dist / (p.strength * p.strength * 0.6)); }, 0);
+  const grid = 60, step = size / grid, field = []; let minE = Infinity, maxE = -Infinity;
+  for (let i = 0; i <= grid; i++) { field[i] = []; for (let j = 0; j <= grid; j++) { const e = elevation(i * step, j * step); field[i][j] = e; if (e < minE) minE = e; if (e > maxE) maxE = e; } }
+  let paths = '';
+  for (let c = 1; c <= density; c++) paths += marchingSquares(field, grid, step, minE + (maxE - minE) * (c / (density + 1)));
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" preserveAspectRatio="none"><rect width="100%" height="100%" fill="${d.topoBg || '#ffffff'}"/><g stroke="${d.topoLine || '#000'}" stroke-width="${thickness}" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="${opacity}">${paths}</g></svg>`;
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+function marchingSquares(field, grid, step, level) {
+  let seg = '';
+  const frac = (a, b) => { const den = b - a; if (Math.abs(den) < 1e-9) return 0.5; return Math.max(0, Math.min(1, (level - a) / den)); };
+  for (let i = 0; i < grid; i++) for (let j = 0; j < grid; j++) {
+    const a = field[i][j], b = field[i + 1][j], c = field[i + 1][j + 1], d = field[i][j + 1];
+    let idx = 0; if (a > level) idx |= 1; if (b > level) idx |= 2; if (c > level) idx |= 4; if (d > level) idx |= 8;
+    if (idx === 0 || idx === 15) continue;
+    const x0 = i * step, y0 = j * step, x1 = (i + 1) * step, y1 = (j + 1) * step;
+    const top = [x0 + step * frac(a, b), y0], right = [x1, y0 + step * frac(b, c)], bottom = [x0 + step * frac(d, c), y1], left = [x0, y0 + step * frac(a, d)];
+    const draw = (p, q) => { seg += `M${p[0].toFixed(1)} ${p[1].toFixed(1)} L${q[0].toFixed(1)} ${q[1].toFixed(1)} `; };
+    switch (idx) { case 1: case 14: draw(top, left); break; case 2: case 13: draw(top, right); break; case 3: case 12: draw(left, right); break; case 4: case 11: draw(right, bottom); break; case 5: draw(top, left); draw(right, bottom); break; case 6: case 9: draw(top, bottom); break; case 7: case 8: draw(left, bottom); break; case 10: draw(top, right); draw(left, bottom); break; }
+  }
+  return `<path d="${seg}"/>`;
+}
+function regenerateTopo() { designState.topoSeed = String(Math.floor(Math.random() * 1000000)); applyDesign(designState); }
+function isColorDark(hex) { const c = String(hex || '').replace('#', ''); if (c.length !== 6) return false; return (0.299 * parseInt(c.slice(0, 2), 16) + 0.587 * parseInt(c.slice(2, 4), 16) + 0.114 * parseInt(c.slice(4, 6), 16)) < 128; }
+function findPaletteById(id) { return PALETTES.find(p => p.id === id) || PALETTES[0]; }
+
+function setColorPair(id, v) { $(id).value = v; $(id + '-text').value = v; }
+function openDesignModal() {
+  designStateBackup = { ...designState };
+  $('palette-options').innerHTML = PALETTES.map(p => `<div class="palette-option ${designState.palette === p.id ? 'active' : ''}" data-palette="${p.id}" onclick="selectPalette('${p.id}')">
+      <div class="palette-swatches"><div class="palette-swatch" style="background:${p.bg}"></div><div class="palette-swatch" style="background:${p.ink}"></div><div class="palette-swatch" style="background:${p.accent}"></div><div class="palette-swatch" style="background:${p.cardBg}"></div><div class="palette-swatch" style="background:${p.muted}"></div></div>
+      <div class="palette-name">${p.name}</div></div>`).join('');
+  $('design-advanced-toggle').checked = designState.custom; $('advanced-colors').style.display = designState.custom ? 'block' : 'none';
+  setColorPair('dc-bg', designState.bg); setColorPair('dc-ink', designState.ink); setColorPair('dc-accent', designState.accent); setColorPair('dc-card-bg', designState.cardBg); setColorPair('dc-muted', designState.muted);
+  $('dc-font-heading').value = designState.fontHeading; $('dc-font-body').value = designState.fontBody;
+  $('dc-base-size').value = designState.baseFontSize; $('dc-base-size-display').textContent = designState.baseFontSize + 'px';
+  $('dc-page-width').value = designState.pageWidth; $('dc-page-width-display').textContent = designState.pageWidth + 'px';
+  $('dc-measure').value = designState.measure; $('dc-measure-display').textContent = designState.measure + 'px';
+  $('dc-section-y').value = designState.sectionPaddingY; $('dc-section-y-display').textContent = designState.sectionPaddingY + 'rem';
+  $('dc-slideshow-height').value = designState.slideshowHeight; $('dc-slideshow-height-display').textContent = designState.slideshowHeight + 'px';
+  $('dc-radius').value = designState.borderRadius; $('dc-radius-display').textContent = designState.borderRadius + 'px';
+  $('dc-card-size').value = designState.cardSize; $('dc-card-aspect').value = designState.cardAspect; $('dc-card-divider').value = designState.cardDivider;
+  $('dc-bg-pattern').value = designState.bgPattern || ''; $('topo-controls').style.display = designState.bgPattern === 'topo' ? 'block' : 'none';
+  setColorPair('dc-topo-line', designState.topoLine || designState.accent); setColorPair('dc-topo-bg', designState.topoBg || designState.bg);
+  $('dc-topo-opacity').value = designState.topoOpacity; $('dc-topo-opacity-display').textContent = (+designState.topoOpacity).toFixed(2);
+  $('dc-topo-density').value = designState.topoDensity; $('dc-topo-density-display').textContent = designState.topoDensity;
+  $('dc-topo-scale').value = designState.topoScale; $('dc-topo-scale-display').textContent = designState.topoScale + 'px';
+  $('dc-topo-thickness').value = designState.topoThickness; $('dc-topo-thickness-display').textContent = (+designState.topoThickness).toFixed(1);
+  openModal('design-modal');
+}
+function switchDesignTab(event) {
+  const tab = event.target.dataset.tab;
+  document.querySelectorAll('.design-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.design-tab-panel').forEach(p => { p.style.display = p.id === 'design-panel-' + tab ? 'block' : 'none'; });
+}
+function selectPalette(id) {
+  const p = findPaletteById(id);
+  Object.assign(designState, { palette: id, ink: p.ink, muted: p.muted, bg: p.bg, cardBg: p.cardBg, accent: p.accent, custom: false });
+  document.querySelectorAll('.palette-option').forEach(el => el.classList.toggle('active', el.dataset.palette === id));
+  setColorPair('dc-bg', p.bg); setColorPair('dc-ink', p.ink); setColorPair('dc-accent', p.accent); setColorPair('dc-card-bg', p.cardBg); setColorPair('dc-muted', p.muted);
+  $('design-advanced-toggle').checked = false; $('advanced-colors').style.display = 'none';
+  if (designState.bgPattern === 'topo') { designState.topoBg = p.bg; setColorPair('dc-topo-bg', p.bg); }
+  applyDesign(designState);
+}
+function toggleAdvancedColors() { const on = $('design-advanced-toggle').checked; $('advanced-colors').style.display = on ? 'block' : 'none'; designState.custom = on; }
+function syncColorInput(colorPickerId, textInput) { const v = textInput.value.trim(); if (/^#[0-9a-fA-F]{6}$/.test(v)) { $(colorPickerId).value = v; previewDesign(); } }
+function previewDesign() {
+  designState.bg = $('dc-bg').value; designState.ink = $('dc-ink').value; designState.accent = $('dc-accent').value; designState.cardBg = $('dc-card-bg').value; designState.muted = $('dc-muted').value;
+  ['dc-bg', 'dc-ink', 'dc-accent', 'dc-card-bg', 'dc-muted'].forEach(id => { $(id + '-text').value = $(id).value; });
+  designState.fontHeading = $('dc-font-heading').value; designState.fontBody = $('dc-font-body').value; designState.baseFontSize = $('dc-base-size').value;
+  designState.pageWidth = $('dc-page-width').value; designState.measure = $('dc-measure').value; designState.sectionPaddingY = $('dc-section-y').value;
+  designState.slideshowHeight = $('dc-slideshow-height').value; designState.borderRadius = $('dc-radius').value;
+  designState.cardSize = $('dc-card-size').value; designState.cardAspect = $('dc-card-aspect').value; designState.cardDivider = $('dc-card-divider').value;
+  designState.custom = $('design-advanced-toggle').checked;
+  designState.bgPattern = $('dc-bg-pattern').value; $('topo-controls').style.display = designState.bgPattern === 'topo' ? 'block' : 'none';
+  designState.topoLine = $('dc-topo-line').value; designState.topoBg = $('dc-topo-bg').value; $('dc-topo-line-text').value = designState.topoLine; $('dc-topo-bg-text').value = designState.topoBg;
+  designState.topoOpacity = $('dc-topo-opacity').value; designState.topoDensity = $('dc-topo-density').value; designState.topoScale = $('dc-topo-scale').value; designState.topoThickness = $('dc-topo-thickness').value;
+  applyDesign(designState);
+}
+function cancelDesign() { if (designStateBackup) { designState = { ...designStateBackup }; applyDesign(designState); } closeModal('design-modal'); }
+async function saveDesign() {
+  previewDesign();
+  const btn = $('save-design-btn'); btn.disabled = true; btn.textContent = 'Saving…';
+  const { error } = await sb.from('site_content').upsert({ key: '_design', value: JSON.stringify(designState) });
+  btn.disabled = false; btn.textContent = 'Save';
+  if (error) { toast('Could not save: ' + error.message, true); return; }
+  state.text._design = JSON.stringify(designState); designStateBackup = null; closeModal('design-modal'); toast('Design saved');
+}
+async function resetDesign() {
+  if (!confirm('Reset the design to the default look?')) return;
+  designState = { palette: 'default', custom: false, ...DESIGN_DEFAULTS }; applyDesign(designState);
+  const { error } = await sb.from('site_content').upsert({ key: '_design', value: JSON.stringify(designState) });
+  if (error) { toast('Reset locally but could not save', true); return; }
+  state.text._design = JSON.stringify(designState); designStateBackup = null; closeModal('design-modal'); toast('Design reset');
+}
+function loadDesignFromSiteContent() {
+  const raw = state.text._design;
+  if (raw) { try { designState = { ...DESIGN_DEFAULTS, palette: 'default', custom: false, ...JSON.parse(raw) }; } catch (e) { console.warn('Could not parse design settings', e); } }
+  applyDesign(designState);
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+(async function init() {
+  try {
+    await checkSession();
+    await loadCatalogue();
+    loadDesignFromSiteContent();
+    renderChrome();
+    render();
+    if (sb) sb.auth.onAuthStateChange((_event, session) => {
+      const was = isAdmin(); state.session = session; state.role = roleFromSession(session);
+      document.body.classList.toggle('admin-mode', isAdmin());
+      if (was !== isAdmin()) reloadCatalogue();
+    });
+  } catch (e) {
+    console.error(e);
+    $('view').innerHTML = `<section class="page"><h1 class="page-title">${escapeHTML(getText('unavailableTitle'))}</h1><p>${escapeHTML(getText('unavailableBody'))}</p></section>`;
+  } finally {
+    $('loading').classList.add('hidden');
+  }
+})();
+</script>
+</body>
+</html>
