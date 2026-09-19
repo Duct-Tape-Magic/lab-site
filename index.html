@@ -501,6 +501,18 @@
   .lt-g-empty { font-size: 13px; fill: var(--muted); }
   .lt-graph-fit { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted); margin-top: 0.4rem; }
   .lt-graph-caption { font-size: 12px; color: var(--muted); margin-top: 0.3rem; }
+  .stat-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; }
+  .stat-tile { border: 0.5px solid var(--rule-strong); padding: 0.9rem 1rem; }
+  .stat-num { font-family: var(--font-heading); font-size: 2rem; line-height: 1; }
+  .stat-label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-top: 0.4rem; }
+  .stats-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .stats-table th, .stats-table td { text-align: left; padding: 0.5rem 0.6rem; border-bottom: 0.5px solid var(--rule); vertical-align: top; }
+  .stats-table th { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 400; }
+  .stats-table .stats-row { cursor: pointer; }
+  .stats-table .stats-row:hover { background: var(--card-bg); }
+  .stats-table.inner { margin: 0.25rem 0 0.5rem; width: auto; min-width: 320px; }
+  .btn-small.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .review-banner { background: var(--card-bg); border: 0.5px solid var(--rule-strong); padding: 0.7rem 1rem; margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; font-size: 13px; max-width: var(--measure); }
   .lt-error { background: #fde3e3; color: #6b1e1e; padding: 0.6rem 0.8rem; font-size: 13px; margin: 0.6rem 0; }
   .lt-markup { width: 100%; min-height: 340px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; line-height: 1.5; border: 0.5px solid var(--rule-strong); padding: 0.75rem; background: var(--bg); color: var(--ink); resize: vertical; outline: none; border-radius: 4px; }
   .lt-markup:focus { border-color: var(--ink); }
@@ -557,6 +569,7 @@
     <button onclick="openFolderModal()">+ Folder</button>
     <button onclick="openSiteTextModal()">Site text</button>
     <button onclick="openDesignModal()">Design</button>
+    <button onclick="openStatsModal()">Stats</button>
     <button onclick="openAdminsModal()">Admins</button>
     <button onclick="logoutAdmin()">Log out</button>
   </div>
@@ -874,6 +887,20 @@
       <button class="btn" onclick="cancelDesign()">Cancel</button>
       <button class="btn btn-danger" onclick="resetDesign()" style="margin-left:auto;">Reset to default</button>
     </div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="modal-backdrop" id="stats-modal">
+  <div class="modal modal-wide">
+    <button class="modal-close" onclick="closeModal('stats-modal')">×</button>
+    <h2>Stats</h2>
+    <div id="stats-tabs" style="display:flex; gap:1rem; margin-bottom:1.5rem; border-bottom:0.5px solid var(--rule); padding-bottom:0.5rem; flex-wrap:wrap;">
+      <button type="button" class="design-tab active" data-tab="overview" onclick="switchStatsTab('overview')">Activity</button>
+      <button type="button" class="design-tab" data-tab="students" onclick="switchStatsTab('students')">Students</button>
+      <button type="button" class="design-tab" data-tab="results" onclick="switchStatsTab('results')">Results</button>
+    </div>
+    <div id="stats-body"></div>
   </div>
 </div>
 
@@ -1357,7 +1384,7 @@ function parseRoute() {
   return { view: 'notfound' };
 }
 function navigate(hash) { if (location.hash === hash) render(); else location.hash = hash; }
-window.addEventListener('hashchange', () => render());
+window.addEventListener('hashchange', () => { if (state.reviewing && !location.hash.startsWith('#/lab/')) state.reviewing = null; render(); });
 
 function submitSearch(e) {
   e.preventDefault();
@@ -1633,7 +1660,8 @@ async function renderLab(view) {
 
   const area = $('lab-content-area');
   let entry = null, cloud = null;
-  try { [entry, cloud] = await Promise.all([getLabContent(lab), ltFetchCloud(lab.id)]); }
+  const reviewing = isAdmin() && state.reviewing && state.reviewing.lab_id === lab.id ? state.reviewing : null;
+  try { [entry, cloud] = await Promise.all([getLabContent(lab), reviewing ? Promise.resolve({ data: reviewing.data, updated_at: reviewing.updated_at }) : ltFetchCloud(lab.id)]); }
   catch (e) { console.warn('Lab content failed:', e.message || e); }
   if (state.route.view !== 'lab' || state.route.slug !== lab.slug) return; // navigated away meanwhile
 
@@ -1646,11 +1674,12 @@ async function renderLab(view) {
     }
     return;
   }
-  renderLabContent(area, lab, entry, cloud);
+  renderLabContent(area, lab, entry, cloud, !!reviewing);
+  if (reviewing) area.insertAdjacentHTML('afterbegin', `<div class="review-banner"><span style="flex:1;">Viewing <strong>${escapeHTML(reviewing.name)}</strong>'s entries (read-only), last saved ${escapeHTML(formatDate(reviewing.updated_at))}.</span><button type="button" class="btn-small" onclick="exitReview()">Exit</button></div>`);
   logEvent('view', { lab_id: lab.id, folder_id: lab.folder_id, path: location.hash });
 }
 
-function renderLabContent(area, lab, entry, cloud = null) {
+function renderLabContent(area, lab, entry, cloud = null, readOnly = false) {
   const media = (entry.media || []).map(parseMediaEntry).filter(Boolean);
   const attachments = entry.attachments || [];
   let html = '';
@@ -1685,7 +1714,7 @@ function renderLabContent(area, lab, entry, cloud = null) {
   </div>`;
   area.innerHTML = html;
   if (media.length) renderSlideshow(media, $('lab-media-wrap'));
-  if (isTags) ltBind(area, lab.id, cloud);
+  if (isTags) ltBind(area, lab.id, cloud, readOnly);
   renderMathIn([$('lab-body')]);
   // Make YouTube embeds inside rich text privacy-friendly and lazy
   area.querySelectorAll('.embed-youtube iframe').forEach(f => { f.setAttribute('loading', 'lazy'); f.setAttribute('allowfullscreen', 'true'); });
@@ -2468,6 +2497,124 @@ async function removeAdmin(email) {
 $('admin-email').addEventListener('keydown', e => { if (e.key === 'Enter') addAdmin(); });
 
 /* ============================================================
+   STATS PANEL (admin): activity, students, results
+   ============================================================ */
+let statsRange = 30, statsTab = 'overview', statsCache = {};
+async function openStatsModal() {
+  openModal('stats-modal');
+  statsCache = {};
+  switchStatsTab(statsTab);
+}
+function switchStatsTab(tab) {
+  statsTab = tab;
+  document.querySelectorAll('#stats-tabs .design-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  const body = $('stats-body'); body.innerHTML = '<p style="color:var(--muted);">Loading…</p>';
+  ({ overview: renderStatsOverview, students: renderStatsStudents, results: renderStatsResults })[tab]().catch(e => { body.innerHTML = `<div class="lt-error">${escapeHTML(e.message || String(e))}</div>`; });
+}
+function setStatsRange(n) { statsRange = n; statsCache = {}; switchStatsTab('overview'); }
+function labTitle(id) { const l = state.labs.find(x => x.id === id); return l ? l.title : id; }
+function fmtDay(d) { try { return new Date(d + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } catch (e) { return d; } }
+function barChart(rows, key, label) {
+  if (!rows.length) return `<div class="empty-state" style="padding:1.5rem;">No activity in this period.</div>`;
+  const W = 640, H = 200, mL = 36, mB = 28, mT = 10, max = Math.max(1, ...rows.map(r => +r[key]));
+  const bw = (W - mL - 10) / rows.length;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" class="lt-graph-svg" style="max-width:100%;">`;
+  [0, 0.5, 1].forEach(f => { const y = H - mB - f * (H - mB - mT); svg += `<line x1="${mL}" x2="${W - 10}" y1="${y}" y2="${y}" class="lt-g-grid"/><text x="${mL - 6}" y="${y + 4}" text-anchor="end" class="lt-g-tick">${Math.round(max * f)}</text>`; });
+  rows.forEach((r, i) => {
+    const h = (+r[key] / max) * (H - mB - mT), x = mL + i * bw;
+    svg += `<rect x="${x + 1}" y="${H - mB - h}" width="${Math.max(1, bw - 2)}" height="${h}" fill="var(--accent)"><title>${escapeHTML(fmtDay(r.day))}: ${r[key]} ${label}</title></rect>`;
+    if (rows.length <= 14 || i % Math.ceil(rows.length / 10) === 0) svg += `<text x="${x + bw / 2}" y="${H - 8}" text-anchor="middle" class="lt-g-tick">${escapeHTML(fmtDay(r.day))}</text>`;
+  });
+  return svg + '</svg>';
+}
+async function rpc(name, args) { const { data, error } = await sb.rpc(name, args); if (error) throw error; return data; }
+async function renderStatsOverview() {
+  const body = $('stats-body'); const n = statsRange;
+  const [summary, daily, top, labDaily] = await Promise.all([
+    rpc('stats_summary', { n_days: n }), rpc('stats_daily', { n_days: n }), rpc('stats_top_labs', { n_days: n, lim: 100 }),
+    rpc('stats_lab_daily', { n_days: n }).catch(e => ({ error: e.message }))
+  ]);
+  const tiles = [['Lab views', summary.views], ['Unique visitors', summary.visitors], ['File downloads', summary.downloads], ['Unlocks', summary.unlocks]]
+    .map(([k, v]) => `<div class="stat-tile"><div class="stat-num">${v ?? 0}</div><div class="stat-label">${k}</div></div>`).join('');
+  const devices = Object.entries(summary.devices || {}).map(([k, v]) => `${k}: ${v}`).join(' · ') || 'no data';
+  const perLab = {};
+  if (Array.isArray(labDaily)) labDaily.forEach(r => { (perLab[r.lab_id] = perLab[r.lab_id] || []).push(r); });
+  body.innerHTML = `
+    <div class="lt-toolbar" style="margin-bottom:1rem;">${[7, 30, 90].map(d => `<button type="button" class="btn-small ${statsRange === d ? 'active' : ''}" onclick="setStatsRange(${d})">Last ${d} days</button>`).join('')}<span class="hint" style="margin:0 0 0 auto;">Devices: ${escapeHTML(devices)}</span></div>
+    <div class="stat-tiles">${tiles}</div>
+    <p class="text-group-label" style="margin:1.25rem 0 0.5rem;">Lab views per day</p>
+    ${barChart(daily || [], 'views', 'views')}
+    <p class="text-group-label" style="margin:1.5rem 0 0.5rem;">Visitors per lab (click a lab for the day-by-day numbers)</p>
+    ${(top || []).length ? `<table class="stats-table"><thead><tr><th>Lab</th><th>Views</th><th>Unique visitors</th><th>Downloads</th></tr></thead><tbody>${(top || []).map(r => `
+      <tr class="stats-row" onclick="toggleLabDays('${r.lab_id}')"><td>${escapeHTML(labTitle(r.lab_id))}</td><td>${r.views}</td><td>${r.visitors}</td><td>${r.downloads}</td></tr>
+      <tr id="labdays-${r.lab_id}" hidden><td colspan="4">${perLab[r.lab_id] ? `<table class="stats-table inner"><thead><tr><th>Day</th><th>Views</th><th>Unique visitors</th></tr></thead><tbody>${perLab[r.lab_id].map(d => `<tr><td>${escapeHTML(fmtDay(d.day))}</td><td>${d.views}</td><td>${d.visitors}</td></tr>`).join('')}</tbody></table>` : `<span class="hint">${labDaily && labDaily.error ? 'Day-by-day numbers need the stats_lab_daily function (see schema.sql).' : 'No data.'}</span>`}</td></tr>`).join('')}</tbody></table>` : `<div class="empty-state" style="padding:1.5rem;">No lab views in this period.</div>`}
+    <p class="hint" style="margin-top:1rem;">Visitors are counted per browser, not per account, and your own admin visits are never counted.</p>`;
+}
+function toggleLabDays(id) { const el = $('labdays-' + id); if (el) el.hidden = !el.hidden; }
+async function loadStudentsAndEntries() {
+  if (statsCache.students) return statsCache;
+  const [s, e] = await Promise.all([sb.from('students').select('*').order('created_at'), sb.from('lab_entries').select('user_id, lab_id, updated_at')]);
+  if (s.error) throw s.error; if (e.error) throw e.error;
+  statsCache.students = s.data || []; statsCache.entries = e.data || [];
+  return statsCache;
+}
+async function renderStatsStudents() {
+  const body = $('stats-body'); const { students, entries } = await loadStudentsAndEntries();
+  const adminIds = new Set(); try { (await rpc('list_admins')).forEach(a => adminIds.add(a.user_id)); } catch (e) { /* ignore */ }
+  const list = students.filter(s => !adminIds.has(s.user_id));
+  const byUser = {}; entries.forEach(e => { (byUser[e.user_id] = byUser[e.user_id] || []).push(e); });
+  body.innerHTML = `
+    <div class="lt-toolbar" style="margin-bottom:1rem;"><span class="hint" style="margin:0;">${list.length} student account${list.length === 1 ? '' : 's'}</span><button type="button" class="btn-small" style="margin-left:auto;" onclick="exportStudentsCsv()">Export CSV</button></div>
+    ${list.length ? `<table class="stats-table"><thead><tr><th>Name</th><th>Email</th><th>Joined</th><th>Labs with entries</th><th>Last activity</th></tr></thead><tbody>${list.map(s => {
+      const es = byUser[s.user_id] || []; const last = es.length ? es.map(e => e.updated_at).sort().pop() : null;
+      return `<tr class="stats-row" onclick="showStudentLabs('${s.user_id}')"><td>${escapeHTML(s.full_name || '')}</td><td>${escapeHTML(s.email)}</td><td>${escapeHTML(formatDate(s.created_at))}</td><td>${es.length}</td><td>${last ? escapeHTML(formatDate(last)) : '—'}</td></tr>
+      <tr id="studentlabs-${s.user_id}" hidden><td colspan="5">${es.length ? es.map(e => `<div style="display:flex; gap:0.75rem; align-items:center; padding:0.3rem 0;"><span style="flex:1;">${escapeHTML(labTitle(e.lab_id))}</span><span class="hint" style="margin:0;">${escapeHTML(formatDate(e.updated_at))}</span><button type="button" class="btn-small" onclick="event.stopPropagation(); reviewEntries('${s.user_id}', '${e.lab_id}')">View entries</button></div>`).join('') : '<span class="hint">No saved entries yet.</span>'}</td></tr>`;
+    }).join('')}</tbody></table>` : `<div class="empty-state" style="padding:1.5rem;">No student accounts yet. Students create one with the Log in button.</div>`}`;
+}
+function showStudentLabs(uid) { const el = $('studentlabs-' + uid); if (el) el.hidden = !el.hidden; }
+async function renderStatsResults() {
+  const body = $('stats-body'); const { students, entries } = await loadStudentsAndEntries();
+  const labIds = [...new Set(entries.map(e => e.lab_id))].filter(id => state.labs.some(l => l.id === id));
+  const current = statsCache.resultsLab || labIds[0];
+  const rows = entries.filter(e => e.lab_id === current);
+  const byUser = Object.fromEntries(students.map(s => [s.user_id, s]));
+  body.innerHTML = `
+    <div class="form-row"><label>Lab</label><select id="stats-lab" onchange="statsCache.resultsLab = this.value; switchStatsTab('results')">${labIds.length ? labIds.map(id => `<option value="${id}" ${id === current ? 'selected' : ''}>${escapeHTML(labTitle(id))}</option>`).join('') : '<option value="">No entries saved yet</option>'}</select></div>
+    ${current ? `<div class="lt-toolbar" style="margin-bottom:1rem;"><span class="hint" style="margin:0;">${rows.length} student${rows.length === 1 ? '' : 's'} with entries</span><button type="button" class="btn-small" style="margin-left:auto;" onclick="exportLabEntriesCsv('${current}')">Export all entries (CSV)</button></div>
+    <table class="stats-table"><thead><tr><th>Student</th><th>Email</th><th>Last saved</th><th></th></tr></thead><tbody>${rows.map(e => { const s = byUser[e.user_id] || {}; return `<tr><td>${escapeHTML(s.full_name || '')}</td><td>${escapeHTML(s.email || e.user_id)}</td><td>${escapeHTML(formatDate(e.updated_at))}</td><td><button type="button" class="btn-small" onclick="reviewEntries('${e.user_id}', '${current}')">View entries</button></td></tr>`; }).join('')}</tbody></table>` : ''}
+    <p class="hint" style="margin-top:1rem;">"View entries" opens the lab filled in with that student's answers, read-only. Photos students add stay on their own device and are not included.</p>`;
+}
+async function reviewEntries(userId, labId) {
+  const { data, error } = await sb.from('lab_entries').select('data, updated_at').eq('user_id', userId).eq('lab_id', labId).maybeSingle();
+  if (error || !data) { toast('Could not load those entries', true); return; }
+  const { students } = await loadStudentsAndEntries();
+  const s = students.find(x => x.user_id === userId) || {};
+  state.reviewing = { lab_id: labId, user_id: userId, name: s.full_name || s.email || 'student', data: data.data || {}, updated_at: data.updated_at };
+  closeModal('stats-modal');
+  const lab = state.labs.find(l => l.id === labId);
+  if (lab) navigate('#/lab/' + encodeURIComponent(lab.slug));
+}
+function exitReview() { state.reviewing = null; render(); }
+function csvEscape(v) { const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+function downloadCsv(name, rows) {
+  const csv = rows.map(r => r.map(csvEscape).join(',')).join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv' })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+async function exportStudentsCsv() {
+  const { students, entries } = await loadStudentsAndEntries();
+  const byUser = {}; entries.forEach(e => { (byUser[e.user_id] = byUser[e.user_id] || []).push(e); });
+  downloadCsv('students.csv', [['Name', 'Email', 'Joined', 'Labs with entries', 'Last activity'], ...students.map(s => { const es = byUser[s.user_id] || []; return [s.full_name || '', s.email, s.created_at, es.length, es.length ? es.map(e => e.updated_at).sort().pop() : '']; })]);
+}
+async function exportLabEntriesCsv(labId) {
+  const { data, error } = await sb.from('lab_entries').select('user_id, data, updated_at').eq('lab_id', labId);
+  if (error) { toast(error.message, true); return; }
+  const { students } = await loadStudentsAndEntries(); const byUser = Object.fromEntries(students.map(s => [s.user_id, s]));
+  const fields = [...new Set((data || []).flatMap(r => Object.keys(r.data || {}).filter(k => !k.startsWith('_'))))].sort();
+  const rows = [['Student', 'Email', 'Last saved', ...fields], ...(data || []).map(r => { const s = byUser[r.user_id] || {}; return [s.full_name || '', s.email || r.user_id, r.updated_at, ...fields.map(f => r.data?.[f] ?? '')]; })];
+  downloadCsv(`${slugify(labTitle(labId))}-entries.csv`, rows);
+}
+
+/* ============================================================
    MODALS
    ============================================================ */
 function openModal(id) { $(id).classList.add('open'); }
@@ -2834,15 +2981,18 @@ async function ltFetchCloud(labId) {
   try { const { data } = await sb.from('lab_entries').select('data, updated_at').eq('lab_id', labId).maybeSingle(); return data || null; }
   catch (e) { return null; }
 }
-function ltBind(area, labId, cloud = null) {
-  let entries = ltLoad(labId);
-  // Merge with the student's account copy: newer side wins; the older side is brought up to date.
-  const useCloud = !!(cloud && cloud.data && (!entries._savedAt || new Date(cloud.updated_at) > new Date(entries._savedAt)));
-  if (useCloud) { entries = { ...cloud.data, _savedAt: cloud.updated_at }; ltStore(labId, entries); }
-  else if (cloud !== null && entries._savedAt && (!cloud || new Date(entries._savedAt) > new Date(cloud.updated_at))) ltPushCloud(labId, entries);
+function ltBind(area, labId, cloud = null, readOnly = false) {
+  let entries = readOnly ? { ...(cloud?.data || {}) } : ltLoad(labId);
+  if (!readOnly) {
+    // Merge with the student's account copy: newer side wins; the older side is brought up to date.
+    const useCloud = !!(cloud && cloud.data && (!entries._savedAt || new Date(cloud.updated_at) > new Date(entries._savedAt)));
+    if (useCloud) { entries = { ...cloud.data, _savedAt: cloud.updated_at }; ltStore(labId, entries); }
+    else if (cloud !== null && entries._savedAt && (!cloud || new Date(entries._savedAt) > new Date(cloud.updated_at))) ltPushCloud(labId, entries);
+  }
   let timer = null, cloudTimer = null;
   const flash = () => { const el = area.querySelector('.lt-saved'); if (!el) return; el.classList.add('show'); clearTimeout(flash._t); flash._t = setTimeout(() => el.classList.remove('show'), 1200); };
   const save = () => {
+    if (readOnly) return;
     clearTimeout(timer); timer = setTimeout(() => { entries._savedAt = new Date().toISOString(); ltStore(labId, entries); flash(); }, 300);
     if (isStudent()) { clearTimeout(cloudTimer); cloudTimer = setTimeout(() => ltPushCloud(labId, entries), 1500); }
   };
@@ -2875,7 +3025,7 @@ function ltBind(area, labId, cloud = null) {
     cb.checked = !!entries[cb.dataset.check];
     cb.addEventListener('change', () => { entries[cb.dataset.check] = cb.checked ? 1 : 0; save(); });
   });
-  area.querySelectorAll('.lt-photo').forEach(async box => {
+  if (!readOnly) area.querySelectorAll('.lt-photo').forEach(async box => {
     const key = `${labId}|${box.dataset.photo}`, prev = box.querySelector('.lt-photo-preview');
     const input = box.querySelector('input[type="file"]'), addLbl = box.querySelector('.lt-photo-add'), rm = box.querySelector('.lt-photo-remove');
     const show = url => { prev.innerHTML = url ? `<img src="${url}" alt=""/>` : ''; box.classList.toggle('has-photo', !!url); rm.hidden = !url; addLbl.firstChild.textContent = getText(url ? 'photoChange' : 'photoAdd'); };
@@ -2888,6 +3038,11 @@ function ltBind(area, labId, cloud = null) {
     rm.addEventListener('click', async () => { await ltPhotoDel(key); show(null); });
   });
   ltBindGraphs(area);
+  if (readOnly) {
+    area.querySelectorAll('[contenteditable]').forEach(el => el.setAttribute('contenteditable', 'false'));
+    area.querySelectorAll('[data-check]').forEach(cb => { cb.disabled = true; });
+    area.querySelectorAll('.lt-photo-actions, .lt-table-add, .lt-clear, .lt-saved').forEach(el => { el.hidden = true; });
+  }
   const clearBtn = area.querySelector('.lt-clear');
   if (clearBtn) clearBtn.addEventListener('click', async () => {
     if (!confirm(getText('entriesClearConfirm'))) return;

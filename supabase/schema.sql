@@ -463,3 +463,16 @@ revoke execute on function public.list_admins() from public, anon;
 grant execute on function public.list_admins() to authenticated;
 revoke execute on function public.set_admin(text, boolean) from public, anon;
 grant execute on function public.set_admin(text, boolean) to authenticated;
+
+-- Per-lab daily views and unique visitors (Stats panel)
+create or replace function public.stats_lab_daily(n_days int default 30)
+returns table(lab_id text, day date, views bigint, visitors bigint)
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'admin only'; end if;
+  return query
+    select e.lab_id, e.ts::date, count(*) filter (where e.type = 'view'), count(distinct e.visitor_id)
+    from events e
+    where e.lab_id is not null and e.ts >= now() - make_interval(days => n_days)
+    group by e.lab_id, e.ts::date order by e.lab_id, e.ts::date;
+end $$;
