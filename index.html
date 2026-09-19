@@ -491,6 +491,16 @@
   .lt-pagebreak { display: none; }
   .rich-content li.task-list-item { list-style: none; margin-left: -1.4rem; }
   .rich-content li.task-list-item input { accent-color: var(--accent); margin-right: 0.45rem; transform: scale(1.1); }
+  .lt-graph { margin: 1.4rem 0; max-width: 680px; }
+  .lt-graph-svg { width: 100%; height: auto; display: block; background: var(--bg); border: 0.5px solid var(--rule); font-family: var(--font-body); }
+  .lt-g-grid { stroke: var(--rule); stroke-width: 0.5; }
+  .lt-g-frame { fill: none; stroke: var(--rule-strong); stroke-width: 0.5; }
+  .lt-g-tick { font-size: 11px; fill: var(--muted); }
+  .lt-g-label { font-size: 12px; fill: var(--ink); }
+  .lt-g-title { font-size: 14px; fill: var(--ink); font-family: var(--font-heading); }
+  .lt-g-empty { font-size: 13px; fill: var(--muted); }
+  .lt-graph-fit { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted); margin-top: 0.4rem; }
+  .lt-graph-caption { font-size: 12px; color: var(--muted); margin-top: 0.3rem; }
   .lt-error { background: #fde3e3; color: #6b1e1e; padding: 0.6rem 0.8rem; font-size: 13px; margin: 0.6rem 0; }
   .lt-markup { width: 100%; min-height: 340px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; line-height: 1.5; border: 0.5px solid var(--rule-strong); padding: 0.75rem; background: var(--bg); color: var(--ink); resize: vertical; outline: none; border-radius: 4px; }
   .lt-markup:focus { border-color: var(--ink); }
@@ -532,7 +542,7 @@
     .lt-field, .lt-table td.lt-cell { background: white !important; border-color: #888 !important; box-shadow: none !important; }
     .lt-pagebreak { display: block; page-break-before: always; break-before: page; }
     .lt-notes:not([open]) { display: none; }
-    .lt-callout { break-inside: avoid; }
+    .lt-callout, .lt-graph { break-inside: avoid; }
   }
 </style>
 </head>
@@ -1020,7 +1030,8 @@ const DEFAULTS = {
   calloutInfo: 'Note',
   calloutTip: 'Tip',
   calloutHint: 'Hint',
-  figurePending: 'Figure not uploaded yet'
+  figurePending: 'Figure not uploaded yet',
+  graphEmpty: 'Enter data in the table above to draw the graph'
 };
 
 const SITE_TEXT_GROUPS = [
@@ -1032,7 +1043,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Lab page', keys: ['labMinutes', 'labUpdated', 'labFilesLabel', 'labOpenFile', 'labDownloadFile', 'labViewInline', 'labPrint', 'labCopyLink', 'labLinkCopied', 'labPrev', 'labNext', 'labNoContent'] },
   { label: 'Locked labs', keys: ['lockPasswordTitle', 'lockPasswordPrompt', 'lockPasswordPlaceholder', 'lockPasswordButton', 'lockPasswordWrong', 'lockTooMany', 'lockAccountsTitle', 'lockAccountsPrompt', 'lockNotAllowed', 'lockAdminOnly', 'lockUnavailable'] },
   { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'privacyLink', 'privacyTitle'] },
-  { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending'] },
+  { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
 ];
 
@@ -1055,7 +1066,7 @@ const TEXT_LABELS = {
   entriesInfo: 'Autosave notice', entriesSaved: 'Saved flash', entriesClear: 'Clear entries button', entriesClearConfirm: 'Clear entries confirmation',
   notesLabel: 'Notes toggle', notesPlaceholder: 'Notes placeholder', answerPlaceholder: 'Answer placeholder', tableAddRow: 'Add row button',
   photoAdd: 'Add photo button', photoChange: 'Change photo button', photoRemove: 'Remove photo button',
-  calloutSafety: 'Safety box label', calloutWarning: 'Caution box label', calloutInfo: 'Note box label', calloutTip: 'Tip box label', calloutHint: 'Hint box label', figurePending: 'Missing figure text'
+  calloutSafety: 'Safety box label', calloutWarning: 'Caution box label', calloutInfo: 'Note box label', calloutTip: 'Tip box label', calloutHint: 'Hint box label', figurePending: 'Missing figure text', graphEmpty: 'Empty graph message'
 };
 
 /* ============================================================
@@ -2602,9 +2613,9 @@ function loadDesignFromSiteContent() {
    LAB TAGS — markdown + LaTeX-style commands for interactive lab reports.
    Spec for authors (and for Claude converting PDFs): docs/LAB-FORMAT.md
    ============================================================ */
-const LT_TAGS = new Set(['title', 'summary', 'tags', 'minutes', 'video', 'datatable', 'answer', 'notes', 'photo', 'input', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak']);
+const LT_TAGS = new Set(['title', 'summary', 'tags', 'minutes', 'video', 'datatable', 'answer', 'notes', 'photo', 'input', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph']);
 const LT_META = new Set(['title', 'summary', 'tags', 'minutes']);
-const LT_BLOCK = new Set(['video', 'datatable', 'answer', 'notes', 'photo', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak']);
+const LT_BLOCK = new Set(['video', 'datatable', 'answer', 'notes', 'photo', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph']);
 
 if (window.marked) marked.use({ gfm: true, breaks: false, mangle: false, headerIds: false });
 
@@ -2735,6 +2746,10 @@ function ltWidget(name, o, body, ctx, widgets) {
       return `<figure class="lt-figure"><img src="${escapeHTML(fileUrl(src))}" alt="${escapeHTML(o.caption || '')}" loading="lazy"/>${cap}</figure>`;
     }
     case 'pagebreak': return `<div class="lt-pagebreak"></div>`;
+    case 'graph': {
+      const opts = { ...o }; if (body && body.trim()) opts.caption = body.trim(); if (!opts.table) opts.table = 'table1';
+      return `<div class="lt-graph" data-graph="${id}" data-opts="${escapeHTML(JSON.stringify(opts))}"></div>`;
+    }
   }
   return '';
 }
@@ -2872,6 +2887,7 @@ function ltBind(area, labId, cloud = null) {
     });
     rm.addEventListener('click', async () => { await ltPhotoDel(key); show(null); });
   });
+  ltBindGraphs(area);
   const clearBtn = area.querySelector('.lt-clear');
   if (clearBtn) clearBtn.addEventListener('click', async () => {
     if (!confirm(getText('entriesClearConfirm'))) return;
@@ -2886,6 +2902,110 @@ async function ltPushCloud(labId, entries) {
   const data = { ...entries }; delete data._savedAt;
   const { error } = await sb.from('lab_entries').upsert({ user_id: state.session.user.id, lab_id: labId, data, updated_at: entries._savedAt || new Date().toISOString() });
   if (error) console.warn('cloud save failed:', error.message);
+}
+
+/* ---------- \graph: live charts from data tables ---------- */
+// Expression: column refs c1, c2 … (1-based), numbers, + - * / ^, parentheses, ln log exp sqrt abs.
+function ltCompileExpr(src) {
+  let e = String(src || '').trim();
+  if (/^\d+$/.test(e)) e = 'c' + e;                       // plain column number
+  if (!/^[\sc\d.+\-*/^()a-z]*$/i.test(e)) return null;
+  const tokens = e.match(/c\d+|\d+(?:\.\d+)?|ln|log10|log|exp|sqrt|abs|pi|[-+*/^()]/gi) || [];
+  if (tokens.join('') !== e.replace(/\s+/g, '')) return null;
+  const js = tokens.map(t => {
+    if (/^c\d+$/i.test(t)) return `(r[${parseInt(t.slice(1), 10) - 1}])`;
+    if (/^\d/.test(t)) return t;
+    if (t === '^') return '**';
+    if (t === 'ln') return 'Math.log'; if (t === 'log10' || t === 'log') return 'Math.log10';
+    if (t === 'exp') return 'Math.exp'; if (t === 'sqrt') return 'Math.sqrt'; if (t === 'abs') return 'Math.abs'; if (t === 'pi') return 'Math.PI';
+    return t;
+  }).join('');
+  try { return new Function('r', `try { const v = ${js}; return Number.isFinite(v) ? v : NaN; } catch (e) { return NaN; }`); } catch (e) { return null; }
+}
+function ltTableRows(area, tableId) {
+  const wrap = area.querySelector(`.lt-table-wrap[data-table="${tableId}"]`); if (!wrap) return { header: [], rows: [] };
+  const header = Array.from(wrap.querySelectorAll('thead th')).map(th => th.textContent.trim());
+  const rows = Array.from(wrap.querySelectorAll('tbody tr')).map(tr => Array.from(tr.children).map(td => parseFloat(String(td.textContent).replace(/,/g, '').trim())));
+  return { header, rows };
+}
+function ltNiceTicks(min, max, count = 5) {
+  if (!(max > min)) { max = min + 1; }
+  const span = max - min, raw = span / count, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => span / s <= count + 1) || mag * 10;
+  const lo = Math.floor(min / step) * step, hi = Math.ceil(max / step) * step;
+  const ticks = []; for (let v = lo; v <= hi + step / 2; v += step) ticks.push(+v.toFixed(10));
+  return { lo, hi, ticks };
+}
+function ltFmtNum(v) { if (!Number.isFinite(v)) return ''; const a = Math.abs(v); if (a !== 0 && (a < 0.001 || a >= 1e6)) return v.toExponential(2); return String(+v.toPrecision(4)); }
+function ltLinearFit(pts) {
+  const n = pts.length; if (n < 2) return null;
+  const sx = pts.reduce((a, p) => a + p[0], 0), sy = pts.reduce((a, p) => a + p[1], 0);
+  const mx = sx / n, my = sy / n;
+  let sxx = 0, sxy = 0, syy = 0;
+  pts.forEach(([x, y]) => { sxx += (x - mx) ** 2; sxy += (x - mx) * (y - my); syy += (y - my) ** 2; });
+  if (sxx === 0) return null;
+  const m = sxy / sxx, b = my - m * mx, r2 = syy === 0 ? 1 : (sxy * sxy) / (sxx * syy);
+  return { m, b, r2 };
+}
+const LT_SERIES_COLORS = ['var(--accent)', '#b3261e', '#2e7d32', '#b26a00', '#6a1b9a'];
+function ltRenderGraph(area, box) {
+  const o = JSON.parse(box.dataset.opts || '{}');
+  const { header, rows } = ltTableRows(area, o.table);
+  const fx = ltCompileExpr(o.x || 'c1');
+  const ySpecs = String(o.y || 'c2').split(/[;|]/).map(s => s.trim()).filter(Boolean);
+  const fys = ySpecs.map(ltCompileExpr);
+  if (!fx || fys.some(f => !f)) { box.innerHTML = `<div class="lt-error">Graph: could not read the x or y expression.</div>`; return; }
+  const series = fys.map((fy, i) => ({
+    name: o.series ? String(o.series).split(/[;|]/)[i] || ySpecs[i] : (/^c?\d+$/i.test(ySpecs[i]) && header[parseInt(ySpecs[i].replace(/^c/i, ''), 10) - 1]) || ySpecs[i],
+    pts: rows.map(r => [fx(r), fy(r)]).filter(p => Number.isFinite(p[0]) && Number.isFinite(p[1])).sort((a, b) => a[0] - b[0])
+  }));
+  const all = series.flatMap(s => s.pts);
+  const W = 640, H = 380, mL = 64, mR = 20, mT = o.title ? 40 : 20, mB = 56;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" class="lt-graph-svg" role="img" aria-label="${escapeHTML(o.title || 'Graph')}">`;
+  if (o.title) svg += `<text x="${W / 2}" y="22" text-anchor="middle" class="lt-g-title">${escapeHTML(o.title)}</text>`;
+  if (!all.length) {
+    svg += `<text x="${W / 2}" y="${H / 2}" text-anchor="middle" class="lt-g-empty">${escapeHTML(getText('graphEmpty'))}</text></svg>`;
+    box.innerHTML = svg; return;
+  }
+  const xs = all.map(p => p[0]), ys = all.map(p => p[1]);
+  let xmin = Math.min(...xs), xmax = Math.max(...xs), ymin = Math.min(...ys), ymax = Math.max(...ys);
+  if (o.xmin !== undefined) xmin = +o.xmin; if (o.xmax !== undefined) xmax = +o.xmax; if (o.ymin !== undefined) ymin = +o.ymin; if (o.ymax !== undefined) ymax = +o.ymax;
+  if (xmin === xmax) { xmin -= 1; xmax += 1; } if (ymin === ymax) { ymin -= 1; ymax += 1; }
+  const tx = ltNiceTicks(xmin, xmax), ty = ltNiceTicks(ymin, ymax);
+  const X = v => mL + (v - tx.lo) / (tx.hi - tx.lo) * (W - mL - mR), Y = v => H - mB - (v - ty.lo) / (ty.hi - ty.lo) * (H - mT - mB);
+  // grid + axes
+  ty.ticks.forEach(v => { svg += `<line x1="${mL}" x2="${W - mR}" y1="${Y(v)}" y2="${Y(v)}" class="lt-g-grid"/><text x="${mL - 8}" y="${Y(v) + 4}" text-anchor="end" class="lt-g-tick">${ltFmtNum(v)}</text>`; });
+  tx.ticks.forEach(v => { svg += `<line y1="${mT}" y2="${H - mB}" x1="${X(v)}" x2="${X(v)}" class="lt-g-grid"/><text y="${H - mB + 18}" x="${X(v)}" text-anchor="middle" class="lt-g-tick">${ltFmtNum(v)}</text>`; });
+  svg += `<rect x="${mL}" y="${mT}" width="${W - mL - mR}" height="${H - mT - mB}" class="lt-g-frame"/>`;
+  if (o.xlabel) svg += `<text x="${(mL + W - mR) / 2}" y="${H - 14}" text-anchor="middle" class="lt-g-label">${escapeHTML(o.xlabel)}</text>`;
+  if (o.ylabel) svg += `<text transform="translate(16 ${(mT + H - mB) / 2}) rotate(-90)" text-anchor="middle" class="lt-g-label">${escapeHTML(o.ylabel)}</text>`;
+  const type = (o.type || 'scatter').toLowerCase();
+  const fitNotes = [];
+  series.forEach((s, i) => {
+    const color = LT_SERIES_COLORS[i % LT_SERIES_COLORS.length];
+    if ((type === 'line' || type === 'both') && s.pts.length > 1) svg += `<polyline fill="none" stroke="${color}" stroke-width="2" points="${s.pts.map(p => `${X(p[0])},${Y(p[1])}`).join(' ')}"/>`;
+    if (type !== 'line') s.pts.forEach(p => { svg += `<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="4" fill="${color}"/>`; });
+    else s.pts.forEach(p => { svg += `<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="3" fill="${color}"/>`; });
+    if (o.fit && String(o.fit).toLowerCase() !== 'none') {
+      const f = ltLinearFit(s.pts);
+      if (f) {
+        const x0 = tx.lo, x1 = tx.hi;
+        svg += `<line x1="${X(x0)}" y1="${Y(f.m * x0 + f.b)}" x2="${X(x1)}" y2="${Y(f.m * x1 + f.b)}" stroke="${color}" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.8"/>`;
+        fitNotes.push(`${series.length > 1 ? s.name + ': ' : ''}y = ${ltFmtNum(f.m)}x ${f.b < 0 ? '−' : '+'} ${ltFmtNum(Math.abs(f.b))},  R² = ${ltFmtNum(f.r2)}`);
+      }
+    }
+  });
+  if (series.length > 1) series.forEach((s, i) => { svg += `<circle cx="${mL + 10 + i * 150}" cy="${mT - 10}" r="4" fill="${LT_SERIES_COLORS[i % LT_SERIES_COLORS.length]}"/><text x="${mL + 20 + i * 150}" y="${mT - 6}" class="lt-g-tick">${escapeHTML(s.name)}</text>`; });
+  svg += `</svg>`;
+  box.innerHTML = svg + (fitNotes.length ? `<div class="lt-graph-fit">${fitNotes.map(escapeHTML).join('<br>')}</div>` : '') + (o.caption ? `<div class="lt-graph-caption">${escapeHTML(o.caption)}</div>` : '');
+}
+function ltBindGraphs(area) {
+  const boxes = Array.from(area.querySelectorAll('.lt-graph')); if (!boxes.length) return;
+  const redraw = () => boxes.forEach(b => { try { ltRenderGraph(area, b); } catch (e) { console.warn('graph', e); } });
+  redraw();
+  let t = null;
+  area.addEventListener('input', e => { if (e.target.closest('.lt-table-wrap')) { clearTimeout(t); t = setTimeout(redraw, 150); } });
+  area.addEventListener('click', e => { if (e.target.closest('.lt-table-add')) setTimeout(redraw, 50); });
 }
 
 /* ---------- Editor integration ---------- */

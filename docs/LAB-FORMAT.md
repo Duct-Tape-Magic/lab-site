@@ -33,6 +33,7 @@ Headings (`#`, `##`, `###`), paragraphs, **bold**, *italic*, numbered lists (`1.
 | `\video{YouTube link}` | Embeds the video (any YouTube link, including unlisted). |
 | `\figure[caption=…]{path or IMAGE_n}` | A figure. Use `IMAGE_1`, `IMAGE_2`… for pictures from the PDF that the teacher must upload. |
 | `\safety{…}` `\warning{…}` `\info{…}` `\tip{…}` `\hint{…}` | Highlighted callout boxes. Markdown works inside. `[label=…]` overrides the box label. |
+| `\graph[table=…, x=…, y=…, type=…, fit=linear, title=…, xlabel=…, ylabel=…]{Optional caption}` | A live graph drawn from a `\datatable`. It redraws as the student types. See "Graphs" below. |
 | `\pagebreak` | Starts a new page when printed. |
 
 Notes on syntax:
@@ -40,6 +41,34 @@ Notes on syntax:
 - Content goes in curly braces and may span many lines. Braces must balance (LaTeX inside is fine).
 - Commands that stand alone (`\datatable`, `\answer`, `\photo`, `\video`, `\figure`, callouts, `\procedure`) go on their own line. `\input` sits inside a sentence.
 - Anything inside `$…$`, `$$…$$`, `\ce{…}` or backticks is left alone, so LaTeX like `\frac{}` never conflicts with commands.
+
+## Graphs
+
+Whenever the lab asks students to plot their data, add a `\graph` right after the table (or after the analysis question that refers to it). Options:
+
+- `table=` the `id` of the `\datatable` to read (required).
+- `x=` and `y=` which columns to plot, as `c1`, `c2`, … (1-based). Simple formulas are allowed: `x="1/(c1+273.15)"`, `y="ln(c2)"`, `y="c3-c2"`. Functions: `ln`, `log` (base 10), `exp`, `sqrt`, `abs`; operators `+ - * / ^`. Quote any value containing commas or spaces.
+- Several y series: `y="c2;c3"`, with optional names `series="Trial 1;Trial 2"`.
+- `type=scatter` (default), `line` (points joined), or `both`.
+- `fit=linear` adds a least-squares line and prints its equation and R².
+- `title=`, `xlabel=`, `ylabel=` for labels; `xmin/xmax/ymin/ymax` to fix axis ranges (otherwise automatic).
+- Caption in the braces.
+
+Rows with a blank or non-numeric x or y are skipped, so the graph simply grows as the student fills the table.
+
+```
+\datatable[id=visc, addrows]{
+| Temperature (°C) | Viscosity (mPa·s) |
+|---|---|
+| 20 | ___ |
+| 40 | ___ |
+| 60 | ___ |
+}
+
+\graph[table=visc, x=c1, y=c2, type=both, title="Viscosity vs temperature", xlabel="Temperature (°C)", ylabel="Viscosity (mPa·s)"]{Viscosity falls as temperature rises.}
+
+\graph[table=visc, x="1/(c1+273.15)", y="ln(c2)", fit=linear, xlabel="1/T (K⁻¹)", ylabel="ln η"]{Arrhenius plot: the slope gives Eₐ/R.}
+```
 
 ## Example
 
