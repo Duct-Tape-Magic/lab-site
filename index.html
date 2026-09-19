@@ -486,8 +486,8 @@
   .lt-figure figcaption { font-size: 12px; color: var(--muted); margin-top: 0.4rem; }
   .lt-figure-pending { border: 1.5px dashed var(--rule-strong); padding: 2rem; text-align: center; color: var(--muted); font-size: 13px; }
   .lt-status { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; font-size: 12px; color: var(--muted); margin: 0 0 1.5rem; padding: 0.6rem 0; border-top: 0.5px solid var(--rule); border-bottom: 0.5px solid var(--rule); max-width: var(--measure); }
-  .lt-status .lt-saved { color: var(--accent); opacity: 0; transition: opacity 0.3s; }
-  .lt-status .lt-saved.show { opacity: 1; }
+  .lt-saved { color: var(--accent); opacity: 0; transition: opacity 0.3s; }
+  .lt-saved.show { opacity: 1 !important; }
   .lt-pagebreak { display: none; }
   .rich-content li.task-list-item { list-style: none; margin-left: -1.4rem; }
   .rich-content li.task-list-item input { accent-color: var(--accent); margin-right: 0.45rem; transform: scale(1.1); }
@@ -1006,7 +1006,7 @@ const DEFAULTS = {
   entriesInfo: 'Your entries save automatically on this device. Print or save as PDF to hand them in.',
   entriesSaved: 'Saved',
   entriesClear: 'Clear my entries',
-  entriesClearConfirm: 'Erase everything you typed into this lab on this device?',
+  entriesClearConfirm: 'This will permanently erase everything you have typed into this lab, including any photos you added. There is no undo. Erase it all?',
   notesLabel: 'My notes',
   notesPlaceholder: 'Type your notes…',
   answerPlaceholder: 'Type your answer…',
@@ -1032,7 +1032,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Lab page', keys: ['labMinutes', 'labUpdated', 'labFilesLabel', 'labOpenFile', 'labDownloadFile', 'labViewInline', 'labPrint', 'labCopyLink', 'labLinkCopied', 'labPrev', 'labNext', 'labNoContent'] },
   { label: 'Locked labs', keys: ['lockPasswordTitle', 'lockPasswordPrompt', 'lockPasswordPlaceholder', 'lockPasswordButton', 'lockPasswordWrong', 'lockTooMany', 'lockAccountsTitle', 'lockAccountsPrompt', 'lockNotAllowed', 'lockAdminOnly', 'lockUnavailable'] },
   { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'privacyLink', 'privacyTitle'] },
-  { label: 'Interactive labs', keys: ['entriesInfo', 'entriesSaved', 'entriesClear', 'entriesClearConfirm', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending'] },
+  { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
 ];
 
@@ -1646,7 +1646,6 @@ function renderLabContent(area, lab, entry, cloud = null) {
   const isTags = entry.format === 'labtags';
   if (isTags) {
     const r = ltRender(entry.content || '');
-    html += `<div class="lt-status"><span>${escapeHTML(isStudent() ? getText('accountSyncOn') : getText('entriesInfo'))}</span><span class="lt-saved">${escapeHTML(getText('entriesSaved'))}</span><button type="button" class="btn-small lt-clear" style="margin-left:auto;">${escapeHTML(getText('entriesClear'))}</button></div>`;
     html += `<div class="lab-body rich-content" id="lab-body">${r.html || `<p style="color:var(--muted)">${escapeHTML(getText('labNoContent'))}</p>`}</div>`;
   } else {
     html += `<div class="lab-body rich-content" id="lab-body">${entry.content && entry.content !== '<p><br></p>' ? entry.content : `<p style="color:var(--muted)">${escapeHTML(getText('labNoContent'))}</p>`}</div>`;
@@ -1668,9 +1667,10 @@ function renderLabContent(area, lab, entry, cloud = null) {
         </li>`;
       }).join('') + `</ul>`;
   }
-  html += `<div class="lab-toolbar" style="margin-top:2rem; max-width:var(--measure);">
+  html += `<div class="lab-toolbar" style="margin-top:2rem; max-width:var(--measure); align-items:center;">
     <button class="btn-small" onclick="printLab('${lab.id}')">${escapeHTML(getText('labPrint'))}</button>
     <button class="btn-small" onclick="copyLabLink()">${escapeHTML(getText('labCopyLink'))}</button>
+    ${isTags ? `<button type="button" class="btn-small lt-clear" style="margin-left:auto; color:var(--danger); border-color:var(--danger);">${escapeHTML(getText('entriesClear'))}</button><span class="lt-saved" style="font-size:12px; color:var(--accent); opacity:0; transition:opacity 0.3s;">${escapeHTML(getText('entriesSaved'))}</span>` : ''}
   </div>`;
   area.innerHTML = html;
   if (media.length) renderSlideshow(media, $('lab-media-wrap'));
