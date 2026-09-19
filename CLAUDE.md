@@ -58,6 +58,8 @@ Done: Phase 0 files (schema, vendoring, snapshot workflow, docs), Phase 1 core (
 
 Verified so far only against the snapshot fallback (no Supabase project yet). First run against a real project must exercise: admin login, role check, lab save/delete, uploads to `lab-files-public`, RLS visibility of drafts vs published.
 
+Added 2026-09-19: Google sign-in (Supabase Google provider; Google Cloud project `ohs-chem-labs`, OAuth client "OHS Chem Labs website", app published to production; consent screen support email whclark09@gmail.com). Student accounts: `#/signin` page with "Continue with Google" (creates the account on first use), `students` row auto-created by trigger `on_auth_user_created`, per-student `lab_entries` (user_id, lab_id, data jsonb, updated_at) synced by `ltFetchCloud`/`ltPushCloud` (newer side wins; photos stay local), `delete_my_account()` RPC. Any non-admin session is a student (`isStudent()`). Admins panel: `list_admins()` / `set_admin(email, bool)` RPCs; a person must have signed in once before being made admin; role lives in `app_metadata.role` so it takes effect on next sign-in. Editable `#/privacy` page (`privacyBody`) linked from the footer and from the Google consent screen.
+
 Decided 2026-09-18: grading stays in Canvas (students print / save PDF from the site); public comments are on hold.
 
 Not built yet: Phase 3 access control (Edge Functions, private bucket flow, password prompt wiring, student sign-in, Accounts panel), Phase 4 (Organize drag-and-drop, Save-as-copy, revision restore UI, QR codes, announcement editor UI, full-text search RPC), Phase 5 (Activity dashboard), Phase 6 polish, Phase 7 (export/import, orphan finder, load test, encrypted snapshot option, owner guide completion), Quill table module decision.
