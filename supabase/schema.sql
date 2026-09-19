@@ -60,8 +60,10 @@ create trigger labs_updated_at before update on public.labs
 create table if not exists public.lab_content (
   lab_id  text primary key references public.labs(id) on delete cascade,
   media   text[] not null default '{}',
-  content text
+  content text,
+  format  text not null default 'html'   -- 'html' (rich text editor) | 'labtags' (markdown + \commands, see docs/LAB-FORMAT.md)
 );
+alter table public.lab_content add column if not exists format text not null default 'html';
 
 create table if not exists public.attachments (
   id         text primary key,

@@ -13,6 +13,7 @@
 <script src="vendor/supabase.js"></script>
 <link href="vendor/quill.snow.css" rel="stylesheet">
 <script src="vendor/quill.js"></script>
+<script src="vendor/marked.umd.js"></script>
 <link rel="stylesheet" href="vendor/katex/katex.min.css">
 <script defer src="vendor/katex/katex.min.js"></script>
 <script defer src="vendor/katex/mhchem.min.js"></script>
@@ -444,6 +445,57 @@
   input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   input[type="range"] { width: 100%; accent-color: var(--accent); }
 
+  /* ---------- Lab tags (interactive lab reports) ---------- */
+  .lt-field { border: 0.5px solid var(--rule-strong); background: var(--card-bg); padding: 0.4rem 0.6rem; min-height: 2em; outline: none; border-radius: var(--border-radius); font-family: var(--font-body); font-size: 0.95em; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+  .lt-field:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(47,93,138,0.12); background: var(--bg); }
+  .lt-field:empty::before { content: attr(data-placeholder); color: var(--muted); opacity: 0.7; pointer-events: none; }
+  .lt-inline { display: inline-flex; align-items: baseline; gap: 0.35rem; margin: 0 0.15rem; vertical-align: baseline; }
+  .lt-inline-field { display: inline-block; min-width: 6em; min-height: 1.6em; padding: 0.05rem 0.5rem; }
+  .lt-label, .lt-unit { font-size: 0.85em; color: var(--muted); }
+  .lt-table-wrap { margin: 1.2rem 0; overflow-x: auto; }
+  .lt-table-title { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; }
+  .lt-table { border-collapse: collapse; width: 100%; font-size: 0.95em; }
+  .lt-table th, .lt-table td { border: 0.5px solid var(--rule-strong); padding: 0.35rem 0.5rem; vertical-align: top; text-align: left; }
+  .lt-table th { background: var(--card-bg); font-weight: 500; font-size: 0.9em; }
+  .lt-table td.lt-cell { background: rgba(47,93,138,0.05); min-width: 4.5em; cursor: text; outline: none; white-space: pre-wrap; }
+  .lt-table td.lt-cell:focus { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--bg); }
+  .lt-table-add { margin-top: 0.4rem; }
+  .lt-answer { margin: 1rem 0 1.4rem; }
+  .lt-prompt { font-size: 0.95em; margin-bottom: 0.4rem; }
+  .lt-notes { margin: 0.5rem 0 1rem; }
+  .lt-notes summary { cursor: pointer; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); user-select: none; }
+  .lt-notes summary:hover { color: var(--ink); }
+  .lt-notes .lt-field { margin-top: 0.4rem; }
+  .lt-step-notes { margin: 0.3rem 0 0.7rem; }
+  .lt-callout { border-left: 3px solid var(--accent); background: var(--card-bg); padding: 0.8rem 1rem; margin: 1.2rem 0; }
+  .lt-callout-label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.3rem; color: var(--accent); }
+  .lt-callout p:last-child, .lt-callout ul:last-child, .lt-callout ol:last-child { margin-bottom: 0; }
+  .lt-safety { border-color: #b3261e; } .lt-safety .lt-callout-label { color: #b3261e; }
+  .lt-warning { border-color: #b26a00; } .lt-warning .lt-callout-label { color: #b26a00; }
+  .lt-tip { border-color: #2e7d32; } .lt-tip .lt-callout-label { color: #2e7d32; }
+  .lt-photo { border: 1.5px dashed var(--rule-strong); padding: 1rem; margin: 1.2rem 0; display: flex; flex-direction: column; gap: 0.6rem; }
+  .lt-photo img { max-width: 100%; max-height: 440px; object-fit: contain; display: block; }
+  .lt-photo-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .lt-photo-actions input[type="file"] { display: none; }
+  .lt-figure { margin: 1.5rem 0; }
+  .lt-figure img { max-width: 100%; display: block; }
+  .lt-figure figcaption { font-size: 12px; color: var(--muted); margin-top: 0.4rem; }
+  .lt-figure-pending { border: 1.5px dashed var(--rule-strong); padding: 2rem; text-align: center; color: var(--muted); font-size: 13px; }
+  .lt-status { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; font-size: 12px; color: var(--muted); margin: 0 0 1.5rem; padding: 0.6rem 0; border-top: 0.5px solid var(--rule); border-bottom: 0.5px solid var(--rule); max-width: var(--measure); }
+  .lt-status .lt-saved { color: var(--accent); opacity: 0; transition: opacity 0.3s; }
+  .lt-status .lt-saved.show { opacity: 1; }
+  .lt-pagebreak { display: none; }
+  .rich-content li.task-list-item { list-style: none; margin-left: -1.4rem; }
+  .rich-content li.task-list-item input { accent-color: var(--accent); margin-right: 0.45rem; transform: scale(1.1); }
+  .lt-error { background: #fde3e3; color: #6b1e1e; padding: 0.6rem 0.8rem; font-size: 13px; margin: 0.6rem 0; }
+  .lt-markup { width: 100%; min-height: 340px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; line-height: 1.5; border: 0.5px solid var(--rule-strong); padding: 0.75rem; background: var(--bg); color: var(--ink); resize: vertical; outline: none; border-radius: 4px; }
+  .lt-markup:focus { border-color: var(--ink); }
+  .lt-preview { border: 0.5px solid var(--rule); padding: 1rem 1.25rem; margin-top: 0.75rem; max-height: 520px; overflow: auto; background: var(--bg); }
+  .lt-toolbar { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 0.6rem; }
+  .lt-toolbar input[type="file"] { display: none; }
+  .media-item-copy { position: absolute; top: 4px; left: 4px; background: rgba(255,255,255,0.95); border: none; font-size: 10px; padding: 2px 6px; cursor: pointer; border-radius: 2px; font-family: var(--font-body); display: none; }
+  .media-item:hover .media-item-copy { display: block; }
+
   @media (max-width: 768px) {
     nav { padding: 0.9rem 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
     .nav-right { width: 100%; justify-content: space-between; }
@@ -472,6 +524,11 @@
     .slideshow-slide.active { display: block; }
     .slideshow-slide iframe, .embed-youtube { display: none; }
     .pdf-frame { display: none; }
+    .lt-status, .lt-photo-actions, .lt-table-add, .lt-photo:not(.has-photo) { display: none !important; }
+    .lt-field, .lt-table td.lt-cell { background: white !important; border-color: #888 !important; box-shadow: none !important; }
+    .lt-pagebreak { display: block; page-break-before: always; break-before: page; }
+    .lt-notes:not([open]) { display: none; }
+    .lt-callout { break-inside: avoid; }
   }
 </style>
 </head>
@@ -575,8 +632,34 @@
       <div class="media-manager" id="lab-media-manager"></div>
     </div>
     <div class="form-row">
+      <label>Procedure format</label>
+      <select id="lab-format" onchange="onLabFormatChange()">
+        <option value="html">Rich text editor</option>
+        <option value="labtags">Lab file with tags (markdown + \commands)</option>
+      </select>
+      <div class="hint">Lab files are written by hand or converted from a PDF by Claude using <code>docs/LAB-FORMAT.md</code>. They can include tables students fill in, photo slots, notes, questions, videos and figures.</div>
+    </div>
+    <div class="form-row" id="lab-quill-row">
       <label>Procedure</label>
       <div id="lab-content-editor" class="quill-container"></div>
+    </div>
+    <div class="form-row" id="lab-markup-row" style="display:none;">
+      <label>Lab file</label>
+      <div class="lt-toolbar">
+        <label class="btn-small">Import file… <input type="file" id="lab-markup-file" accept=".md,.txt,.tex,text/plain,text/markdown" onchange="importLabMarkupFile(this)"/></label>
+        <button type="button" class="btn-small" onclick="applyLabMarkupMeta(true)">Apply header to fields</button>
+        <button type="button" class="btn-small" onclick="previewLabMarkup(true)">Refresh preview</button>
+        <span class="hint" style="margin:0;">Paste the file below, or import it. The preview updates as you type.</span>
+      </div>
+      <textarea id="lab-markup" class="lt-markup" spellcheck="false" placeholder="\title{Determination of Ka for Weak Acids}
+\summary{One or two sentences for the card.}
+\tags{acids, Ka}
+\minutes{90}
+
+# Objectives
+..." oninput="previewLabMarkup()"></textarea>
+      <div id="lab-markup-errors"></div>
+      <div id="lab-markup-preview" class="lt-preview rich-content"></div>
     </div>
     <div class="form-row">
       <label>Files (PDF, Word, Excel, PowerPoint, CSV — up to 50 MB each)</label>
@@ -888,7 +971,25 @@ const DEFAULTS = {
   loadingText: 'Loading…',
   draftBadge: 'Draft',
   scheduledBadge: 'Scheduled',
-  hiddenBadge: 'Unlisted'
+  hiddenBadge: 'Unlisted',
+  entriesInfo: 'Your entries save automatically on this device. Print or save as PDF to hand them in.',
+  entriesSaved: 'Saved',
+  entriesClear: 'Clear my entries',
+  entriesClearConfirm: 'Erase everything you typed into this lab on this device?',
+  notesLabel: 'My notes',
+  notesPlaceholder: 'Type your notes…',
+  answerPlaceholder: 'Type your answer…',
+  cellPlaceholder: '',
+  tableAddRow: '+ Add row',
+  photoAdd: 'Add photo',
+  photoChange: 'Change photo',
+  photoRemove: 'Remove',
+  calloutSafety: 'Safety',
+  calloutWarning: 'Caution',
+  calloutInfo: 'Note',
+  calloutTip: 'Tip',
+  calloutHint: 'Hint',
+  figurePending: 'Figure not uploaded yet'
 };
 
 const SITE_TEXT_GROUPS = [
@@ -900,6 +1001,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Lab page', keys: ['labMinutes', 'labUpdated', 'labFilesLabel', 'labOpenFile', 'labDownloadFile', 'labViewInline', 'labPrint', 'labCopyLink', 'labLinkCopied', 'labPrev', 'labNext', 'labNoContent'] },
   { label: 'Locked labs', keys: ['lockPasswordTitle', 'lockPasswordPrompt', 'lockPasswordPlaceholder', 'lockPasswordButton', 'lockPasswordWrong', 'lockTooMany', 'lockAccountsTitle', 'lockAccountsPrompt', 'lockNotAllowed', 'lockAdminOnly', 'lockUnavailable'] },
   { label: 'Student sign in', keys: ['signInLink', 'signOutLink', 'signInTitle', 'signInEmail', 'signInPassword', 'signInButton', 'signInForgot', 'signInResetSent', 'signInError', 'signInComingSoon'] },
+  { label: 'Interactive labs', keys: ['entriesInfo', 'entriesSaved', 'entriesClear', 'entriesClearConfirm', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
 ];
 
@@ -918,7 +1020,11 @@ const TEXT_LABELS = {
   signInLink: 'Sign-in link', signOutLink: 'Sign-out link', signInTitle: 'Sign-in title', signInEmail: 'Email field', signInPassword: 'Password field', signInButton: 'Sign-in button',
   signInForgot: 'Forgot password link', signInResetSent: 'Reset email sent message', signInError: 'Sign-in error', signInComingSoon: 'Accounts not enabled message',
   notFoundTitle: 'Not found title', notFoundBody: 'Not found text', notFoundHome: 'Not found home link', unavailableTitle: 'Unavailable title', unavailableBody: 'Unavailable text',
-  fallbackBanner: 'Saved-copy banner', errorBanner: 'Error banner'
+  fallbackBanner: 'Saved-copy banner', errorBanner: 'Error banner',
+  entriesInfo: 'Autosave notice', entriesSaved: 'Saved flash', entriesClear: 'Clear entries button', entriesClearConfirm: 'Clear entries confirmation',
+  notesLabel: 'Notes toggle', notesPlaceholder: 'Notes placeholder', answerPlaceholder: 'Answer placeholder', tableAddRow: 'Add row button',
+  photoAdd: 'Add photo button', photoChange: 'Change photo button', photoRemove: 'Remove photo button',
+  calloutSafety: 'Safety box label', calloutWarning: 'Caution box label', calloutInfo: 'Note box label', calloutTip: 'Tip box label', calloutHint: 'Hint box label', figurePending: 'Missing figure text'
 };
 
 /* ============================================================
@@ -1106,7 +1212,7 @@ function applyCatalogue(data) {
     const attachByLab = {};
     (data.attachments || []).forEach(a => { (attachByLab[a.lab_id] = attachByLab[a.lab_id] || []).push(a); });
     data.lab_content.forEach(c => {
-      state.content[c.lab_id] = { media: c.media || [], content: c.content || '', attachments: attachByLab[c.lab_id] || [] };
+      state.content[c.lab_id] = { media: c.media || [], content: c.content || '', format: c.format || 'html', attachments: attachByLab[c.lab_id] || [] };
     });
   }
 }
@@ -1145,7 +1251,7 @@ async function getLabContent(lab) {
     ]), CONFIG.FETCH_TIMEOUT_MS, 'lab content');
     if (c.error) throw c.error;
     if (!c.data) return null; // locked for this viewer (RLS) or missing
-    const entry = { media: c.data.media || [], content: c.data.content || '', attachments: a.data || [] };
+    const entry = { media: c.data.media || [], content: c.data.content || '', format: c.data.format || 'html', attachments: a.data || [] };
     state.content[lab.id] = entry;
     return entry;
   }
@@ -1474,7 +1580,14 @@ function renderLabContent(area, lab, entry) {
   const attachments = entry.attachments || [];
   let html = '';
   if (media.length) html += `<div class="lab-media" id="lab-media-wrap"></div>`;
-  html += `<div class="lab-body rich-content" id="lab-body">${entry.content && entry.content !== '<p><br></p>' ? entry.content : `<p style="color:var(--muted)">${escapeHTML(getText('labNoContent'))}</p>`}</div>`;
+  const isTags = entry.format === 'labtags';
+  if (isTags) {
+    const r = ltRender(entry.content || '');
+    html += `<div class="lt-status"><span>${escapeHTML(getText('entriesInfo'))}</span><span class="lt-saved">${escapeHTML(getText('entriesSaved'))}</span><button type="button" class="btn-small lt-clear" style="margin-left:auto;">${escapeHTML(getText('entriesClear'))}</button></div>`;
+    html += `<div class="lab-body rich-content" id="lab-body">${r.html || `<p style="color:var(--muted)">${escapeHTML(getText('labNoContent'))}</p>`}</div>`;
+  } else {
+    html += `<div class="lab-body rich-content" id="lab-body">${entry.content && entry.content !== '<p><br></p>' ? entry.content : `<p style="color:var(--muted)">${escapeHTML(getText('labNoContent'))}</p>`}</div>`;
+  }
   if (attachments.length) {
     html += `<div class="section-heading" style="max-width:var(--measure);"><span>${escapeHTML(getText('labFilesLabel'))}</span></div><ul class="attachments">` +
       attachments.map(a => {
@@ -1493,6 +1606,7 @@ function renderLabContent(area, lab, entry) {
   }
   area.innerHTML = html;
   if (media.length) renderSlideshow(media, $('lab-media-wrap'));
+  if (isTags) ltBind(area, lab.id);
   renderMathIn([$('lab-body')]);
   // Make YouTube embeds inside rich text privacy-friendly and lazy
   area.querySelectorAll('.embed-youtube iframe').forEach(f => { f.setAttribute('loading', 'lazy'); f.setAttribute('allowfullscreen', 'true'); });
@@ -1890,7 +2004,8 @@ function renderMediaGrid() {
       ? `<div class="media-item-video"><img src="${escapeHTML(youtubeThumb(m.id))}" alt=""/><span class="media-item-video-icon">▶</span></div>`
       : `<img src="${escapeHTML(m.url)}" alt=""/>`;
     const alt = m.type === 'image' ? `<input class="media-item-alt" placeholder="Describe this photo…" value="${escapeHTML(m.alt || '')}" oninput="labMediaItems[${i}].alt = this.value" onmousedown="event.stopPropagation()"/>` : '';
-    return `<div class="media-item" draggable="true" data-index="${i}">${thumb}<span class="media-item-order">${i + 1}</span>${alt}<button type="button" class="media-item-remove" onclick="labMediaItems.splice(${i}, 1); renderMediaGrid();">×</button></div>`;
+    const copy = m.type === 'image' ? `<button type="button" class="media-item-copy" title="Copy the path to use in a lab file: \\figure{…}" onclick="navigator.clipboard.writeText(${JSON.stringify(m.path)}).then(() => toast('Path copied'))">copy path</button>` : '';
+    return `<div class="media-item" draggable="true" data-index="${i}">${thumb}${copy}<span class="media-item-order">${i + 1}</span>${alt}<button type="button" class="media-item-remove" onclick="labMediaItems.splice(${i}, 1); renderMediaGrid();">×</button></div>`;
   }).join('');
   grid.querySelectorAll('.media-item').forEach(item => {
     item.addEventListener('dragstart', e => { item.classList.add('dragging'); e.dataTransfer.setData('text/plain', item.dataset.index); });
@@ -2005,10 +2120,15 @@ async function openLabModal(id) {
   labCoverItem = lab?.cover_path ? parseMediaEntry(lab.cover_path) : null;
   labMediaItems = (entry?.media || []).map(parseMediaEntry).filter(Boolean);
   labAttachmentItems = (entry?.attachments || []).map(a => ({ ...a }));
+  const fmt = entry?.format === 'labtags' ? 'labtags' : 'html';
+  $('lab-format').value = fmt;
+  $('lab-markup').value = fmt === 'labtags' ? (entry?.content || '') : '';
+  $('lab-markup-errors').innerHTML = ''; $('lab-markup-preview').innerHTML = '';
+  onLabFormatChange();
   openModal('lab-modal');
   setTimeout(() => {
     if (!labEditor) labEditor = buildQuillEditor('lab-content-editor', { template: true, uploadFolder: labUploadFolder });
-    labEditor.root.innerHTML = entry?.content || '';
+    labEditor.root.innerHTML = fmt === 'html' ? (entry?.content || '') : '';
     renderCoverManager(); renderMediaManager(); renderAttachmentsManager();
   }, 60);
 }
@@ -2019,6 +2139,8 @@ function referencedPaths(lab, entry) {
   (entry?.media || []).forEach(x => { const m = parseMediaEntry(x); if (m?.type === 'image' && m.path && !/^https?:/.test(m.path)) paths.push(m.path); });
   (entry?.attachments || []).forEach(a => paths.push(a.path));
   paths.push(...imagePathsInHTML(entry?.content));
+  const re = /labs\/l-[A-Za-z0-9._%-]+\/[A-Za-z0-9._%-]+/g; let m;
+  while ((m = re.exec(entry?.content || ''))) { try { paths.push(decodeURIComponent(m[0])); } catch (e) { paths.push(m[0]); } }
   return paths;
 }
 
@@ -2035,8 +2157,9 @@ async function saveLab() {
   const publishAt = status === 'scheduled' && $('lab-publish-at').value ? new Date($('lab-publish-at').value).toISOString() : null;
   if (status === 'scheduled' && !publishAt) { toast('Please choose a publish date and time', true); return; }
 
-  const content = labEditor ? labEditor.root.innerHTML : '';
-  const isEmpty = content === '<p><br></p>' || content === '';
+  const format = $('lab-format').value === 'labtags' ? 'labtags' : 'html';
+  const content = format === 'labtags' ? $('lab-markup').value : (labEditor ? labEditor.root.innerHTML : '');
+  const isEmpty = content === '<p><br></p>' || content.trim() === '';
   const mediaArr = labMediaItems.map(serializeMediaItem);
   if (!labCoverItem) { const firstImg = labMediaItems.find(m => m.type === 'image') || labMediaItems[0]; if (firstImg) labCoverItem = firstImg; }
 
@@ -2058,7 +2181,7 @@ async function saveLab() {
       if (revErr) console.warn('revision not saved:', revErr.message);
     }
     let r = await sb.from('labs').upsert(lab); if (r.error) throw r.error;
-    r = await sb.from('lab_content').upsert({ lab_id: lab.id, media: mediaArr, content: isEmpty ? null : content }); if (r.error) throw r.error;
+    r = await sb.from('lab_content').upsert({ lab_id: lab.id, media: mediaArr, content: isEmpty ? null : content, format }); if (r.error) throw r.error;
     const keepIds = new Set(labAttachmentItems.map(a => a.id));
     const removed = (originalEntry?.attachments || []).filter(a => !keepIds.has(a.id)).map(a => a.id);
     if (removed.length) { r = await sb.from('attachments').delete().in('id', removed); if (r.error) throw r.error; }
@@ -2067,7 +2190,7 @@ async function saveLab() {
       if (r.error) throw r.error;
     }
     // Remove files under this lab's folder that are no longer referenced.
-    const newEntry = { media: mediaArr, content, attachments: labAttachmentItems };
+    const newEntry = { media: mediaArr, content, format, attachments: labAttachmentItems };
     const stillUsed = new Set(referencedPaths(lab, newEntry));
     const previously = referencedPaths(original, originalEntry);
     await removeStoragePaths(previously.filter(p => p.startsWith(`labs/${lab.id}/`) && !stillUsed.has(p)));
@@ -2354,6 +2477,309 @@ function loadDesignFromSiteContent() {
   const raw = state.text._design;
   if (raw) { try { designState = { ...DESIGN_DEFAULTS, palette: 'default', custom: false, ...JSON.parse(raw) }; } catch (e) { console.warn('Could not parse design settings', e); } }
   applyDesign(designState);
+}
+
+/* ============================================================
+   LAB TAGS — markdown + LaTeX-style commands for interactive lab reports.
+   Spec for authors (and for Claude converting PDFs): docs/LAB-FORMAT.md
+   ============================================================ */
+const LT_TAGS = new Set(['title', 'summary', 'tags', 'minutes', 'video', 'datatable', 'answer', 'notes', 'photo', 'input', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak']);
+const LT_META = new Set(['title', 'summary', 'tags', 'minutes']);
+const LT_BLOCK = new Set(['video', 'datatable', 'answer', 'notes', 'photo', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak']);
+
+if (window.marked) marked.use({ gfm: true, breaks: false, mangle: false, headerIds: false });
+
+function ltParseOptions(str) {
+  const opts = {};
+  if (!str) return opts;
+  const parts = []; let cur = '', q = null;
+  for (const ch of str) {
+    if (q) { if (ch === q) q = null; else cur += ch; }
+    else if (ch === '"' || ch === "'") q = ch;
+    else if (ch === ',') { parts.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  parts.push(cur);
+  parts.map(p => p.trim()).filter(Boolean).forEach(p => {
+    const eq = p.indexOf('=');
+    if (eq === -1) opts[p] = true; else opts[p.slice(0, eq).trim()] = p.slice(eq + 1).trim();
+  });
+  return opts;
+}
+function ltBalanced(text, open) {
+  // text[open] === '{'; returns index of the matching '}' or -1
+  let depth = 0;
+  for (let i = open; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '\\') { i++; continue; }
+    if (ch === '{') depth++;
+    else if (ch === '}') { depth--; if (depth === 0) return i; }
+  }
+  return -1;
+}
+function ltSafeId(s) { return String(s || '').replace(/[^a-zA-Z0-9_.-]/g, '-'); }
+
+// Shared context per render: protected math/code, id counters, metadata, errors, widgets that need DOM binding
+function ltNewContext() { return { math: [], meta: {}, counters: {}, errors: [] }; }
+function ltNextId(ctx, kind) { ctx.counters[kind] = (ctx.counters[kind] || 0) + 1; return `${kind}${ctx.counters[kind]}`; }
+function ltProtect(text, ctx) {
+  const stash = s => { ctx.math.push(s); return `LTMATH${ctx.math.length - 1}X`; };
+  return text
+    .replace(/```[\s\S]*?```/g, stash)                 // fenced code
+    .replace(/\$\$[\s\S]*?\$\$/g, stash)               // display math
+    .replace(/\\\[[\s\S]*?\\\]/g, stash)
+    .replace(/\\\([\s\S]*?\\\)/g, stash)
+    .replace(/(^|[^\\$])\$(?!\s)([^\n$]+?)(?<!\s)\$(?!\d)/g, (m, pre, body) => pre + stash('$' + body + '$'))
+    .replace(/\\(?:ce|pu)\{[^\n]*?\}(?=[^}]*)/g, m => { // bare chemistry outside $: wrap as inline math
+      const close = ltBalanced(m, m.indexOf('{')); return close === -1 ? m : stash('$' + m.slice(0, close + 1) + '$') + m.slice(close + 1);
+    })
+    .replace(/`[^`\n]+`/g, stash);                     // inline code
+}
+function ltRestore(html, ctx) {
+  return html.replace(/LTMATH(\d+)X/g, (m, i) => {
+    const raw = ctx.math[+i];
+    if (raw.startsWith('```')) { const body = raw.replace(/^```[^\n]*\n?/, '').replace(/```$/, ''); return `<pre><code>${escapeHTML(body)}</code></pre>`; }
+    if (raw.startsWith('`')) return `<code>${escapeHTML(raw.slice(1, -1))}</code>`;
+    return escapeHTML(raw);
+  });
+}
+
+// Replace \commands with placeholders; returns { text, widgets }
+function ltExtractTags(text, ctx, widgets) {
+  let out = '', i = 0;
+  const re = /\\([a-zA-Z]+)/g; let m;
+  while ((m = re.exec(text))) {
+    const name = m[1];
+    if (!LT_TAGS.has(name)) continue;
+    let pos = m.index + m[0].length, opts = '', body = null;
+    if (text[pos] === '[') { const end = text.indexOf(']', pos); if (end !== -1) { opts = text.slice(pos + 1, end); pos = end + 1; } }
+    if (text[pos] === '{') { const end = ltBalanced(text, pos); if (end === -1) { ctx.errors.push(`Missing closing } for \\${name}`); continue; } body = text.slice(pos + 1, end); pos = end + 1; }
+    out += text.slice(i, m.index);
+    const o = ltParseOptions(opts);
+    if (LT_META.has(name)) { ctx.meta[name] = (body || '').trim(); }
+    else {
+      const html = ltWidget(name, o, body, ctx, widgets);
+      const token = `LTTAG${widgets.length}X`;
+      widgets.push({ html, block: LT_BLOCK.has(name) });
+      out += LT_BLOCK.has(name) ? `\n\n${token}\n\n` : token;
+    }
+    i = pos; re.lastIndex = pos;
+  }
+  return out + text.slice(i);
+}
+function ltInner(md, ctx) { // render nested markdown that may itself contain tags
+  const widgets = [];
+  const t = ltExtractTags(md, ctx, widgets);
+  return ltInject(marked.parse(t), widgets);
+}
+function ltInline(md, ctx) { const widgets = []; const t = ltExtractTags(md, ctx, widgets); return ltInject(marked.parseInline(t), widgets); }
+function ltInject(html, widgets) {
+  return html.replace(/<p>\s*(LTTAG\d+X)\s*<\/p>/g, '$1').replace(/LTTAG(\d+)X/g, (m, i) => widgets[+i] ? widgets[+i].html : '');
+}
+
+function ltWidget(name, o, body, ctx, widgets) {
+  const id = ltSafeId(o.id || ltNextId(ctx, { datatable: 'table', answer: 'q', notes: 'notes', photo: 'photo', input: 'field', procedure: 'proc' }[name] || name));
+  switch (name) {
+    case 'video': {
+      const yt = extractYoutubeId((body || '').trim());
+      if (yt) return `<div class="embed-youtube"><iframe src="${escapeHTML(youtubeEmbed(yt))}" allowfullscreen loading="lazy" title="Video"></iframe></div>`;
+      return `<p><a href="${escapeHTML((body || '').trim())}" target="_blank" rel="noopener">${escapeHTML((body || '').trim())}</a></p>`;
+    }
+    case 'datatable': return ltDataTable(id, o, body || '', ctx);
+    case 'answer': {
+      const lines = Math.max(1, parseInt(o.lines, 10) || 3);
+      return `<div class="lt-answer">${body ? `<div class="lt-prompt">${ltInline(body.trim(), ctx)}</div>` : ''}<div class="lt-field" contenteditable="plaintext-only" data-field="${id}" data-placeholder="${escapeHTML(getText('answerPlaceholder'))}" style="min-height:${(lines * 1.6 + 0.8).toFixed(1)}em"></div></div>`;
+    }
+    case 'notes': return `<details class="lt-notes"><summary>${body ? ltInline(body.trim(), ctx) : escapeHTML(getText('notesLabel'))}</summary><div class="lt-field" contenteditable="plaintext-only" data-field="${id}" data-placeholder="${escapeHTML(getText('notesPlaceholder'))}"></div></details>`;
+    case 'photo': return `<div class="lt-photo" data-photo="${id}">${body ? `<div class="lt-prompt">${ltInline(body.trim(), ctx)}</div>` : ''}<div class="lt-photo-preview"></div><div class="lt-photo-actions"><label class="btn-small lt-photo-add">${escapeHTML(getText('photoAdd'))}<input type="file" accept="image/*" capture="environment"/></label><button type="button" class="btn-small lt-photo-remove" hidden>${escapeHTML(getText('photoRemove'))}</button></div></div>`;
+    case 'input': return `<span class="lt-inline">${o.label ? `<span class="lt-label">${escapeHTML(o.label)}</span>` : ''}<span class="lt-field lt-inline-field" contenteditable="plaintext-only" data-field="${id}" data-placeholder="${escapeHTML(o.placeholder || '')}"></span>${o.unit ? `<span class="lt-unit">${escapeHTML(o.unit)}</span>` : ''}</span>`;
+    case 'procedure': {
+      const inner = ltInner(body || '', ctx);
+      const tpl = document.createElement('template'); tpl.innerHTML = inner;
+      let n = 0;
+      tpl.content.querySelectorAll('ol > li').forEach(li => {
+        n++;
+        const d = document.createElement('details'); d.className = 'lt-notes lt-step-notes';
+        d.innerHTML = `<summary>${escapeHTML(getText('notesLabel'))}</summary><div class="lt-field" contenteditable="plaintext-only" data-field="${id}.step${n}" data-placeholder="${escapeHTML(getText('notesPlaceholder'))}"></div>`;
+        li.appendChild(d);
+      });
+      return `<div class="lt-procedure">${tpl.innerHTML}</div>`;
+    }
+    case 'safety': case 'warning': case 'info': case 'tip': case 'hint': {
+      const label = o.label || getText({ safety: 'calloutSafety', warning: 'calloutWarning', info: 'calloutInfo', tip: 'calloutTip', hint: 'calloutHint' }[name]);
+      return `<div class="lt-callout lt-${name}"><div class="lt-callout-label">${escapeHTML(label)}</div>${ltInner(body || '', ctx)}</div>`;
+    }
+    case 'figure': {
+      const src = (body || '').trim().replace(/^img:/, '');
+      const cap = o.caption ? `<figcaption>${ltInline(o.caption, ctx)}</figcaption>` : '';
+      if (!src || /^(IMAGE|FIGURE)[_-]?\w*$/i.test(src)) return `<figure class="lt-figure"><div class="lt-figure-pending">${escapeHTML(getText('figurePending'))}${src ? ` (${escapeHTML(src)})` : ''}</div>${cap}</figure>`;
+      return `<figure class="lt-figure"><img src="${escapeHTML(fileUrl(src))}" alt="${escapeHTML(o.caption || '')}" loading="lazy"/>${cap}</figure>`;
+    }
+    case 'pagebreak': return `<div class="lt-pagebreak"></div>`;
+  }
+  return '';
+}
+
+function ltDataTable(id, o, body, ctx) {
+  const rows = body.split('\n').map(l => l.trim()).filter(l => l.startsWith('|'));
+  const cells = line => line.replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim());
+  const isSep = line => /^\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?$/.test(line);
+  const header = rows.length ? cells(rows[0]) : [];
+  const bodyRows = rows.slice(1).filter(l => !isSep(l)).map(cells);
+  const cols = Math.max(header.length, ...bodyRows.map(r => r.length), 1);
+  const cellHtml = (c, r, ci) => /^_{3,}$/.test(c)
+    ? `<td class="lt-cell" contenteditable="plaintext-only" data-field="${id}.r${r}c${ci}"></td>`
+    : `<td>${ltInline(c, ctx)}</td>`;
+  let html = `<div class="lt-table-wrap" data-table="${id}" data-cols="${cols}">`;
+  if (o.title) html += `<div class="lt-table-title">${escapeHTML(o.title)}</div>`;
+  html += `<table class="lt-table">`;
+  if (header.length) html += `<thead><tr>${header.map(h => `<th>${ltInline(h, ctx)}</th>`).join('')}</tr></thead>`;
+  html += `<tbody>${bodyRows.map((r, ri) => `<tr>${Array.from({ length: cols }, (_, ci) => cellHtml(r[ci] ?? '', ri + 1, ci + 1)).join('')}</tr>`).join('')}</tbody></table>`;
+  if (o.addrows) html += `<button type="button" class="btn-small lt-table-add" data-base="${bodyRows.length}">${escapeHTML(getText('tableAddRow'))}</button>`;
+  return html + `</div>`;
+}
+
+// Full document → { html, meta, errors }
+function ltRender(source) {
+  const ctx = ltNewContext();
+  if (!window.marked) return { html: '<p>Markdown library missing.</p>', meta: {}, errors: ['marked not loaded'] };
+  try {
+    const protectedText = ltProtect(source || '', ctx);
+    const widgets = [];
+    const text = ltExtractTags(protectedText, ctx, widgets);
+    let html = ltInject(marked.parse(text), widgets);
+    html = ltRestore(html, ctx);
+    // task lists → persistent checkboxes
+    const tpl = document.createElement('template'); tpl.innerHTML = html; let n = 0;
+    tpl.content.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.removeAttribute('disabled'); cb.dataset.check = 'check' + (++n); });
+    tpl.content.querySelectorAll('a[href^="http"]').forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
+    // The page already has the lab title as its h1, so demote the file's headings one level
+    if (tpl.content.querySelector('h1')) [5, 4, 3, 2, 1].forEach(n => tpl.content.querySelectorAll('h' + n).forEach(h => { const d = document.createElement('h' + (n + 1)); d.innerHTML = h.innerHTML; h.replaceWith(d); }));
+    return { html: tpl.innerHTML, meta: ctx.meta, errors: ctx.errors };
+  } catch (e) {
+    console.error(e);
+    return { html: `<div class="lt-error">Could not render this lab file: ${escapeHTML(e.message)}</div>`, meta: ctx.meta, errors: [e.message] };
+  }
+}
+function ltParseMeta(source) { // quick header read for the importer
+  const ctx = ltNewContext(); const widgets = [];
+  try { ltExtractTags(ltProtect(source || '', ctx), ctx, widgets); } catch (e) { /* ignore */ }
+  return ctx.meta;
+}
+
+/* ---------- Student entries: localStorage for text, IndexedDB for photos ---------- */
+const LT_STORE = 'labsite.entries.';
+function ltLoad(labId) { try { return JSON.parse(localStorage.getItem(LT_STORE + labId) || '{}'); } catch (e) { return {}; } }
+function ltStore(labId, entries) { try { localStorage.setItem(LT_STORE + labId, JSON.stringify(entries)); return true; } catch (e) { return false; } }
+function idb() {
+  if (idb._p) return idb._p;
+  idb._p = new Promise((res, rej) => {
+    if (!window.indexedDB) return rej(new Error('no idb'));
+    const r = indexedDB.open('labsite', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('photos');
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+  return idb._p;
+}
+async function idbOp(mode, fn) { const db = await idb(); return new Promise((res, rej) => { const tx = db.transaction('photos', mode); const req = fn(tx.objectStore('photos')); tx.oncomplete = () => res(req && req.result); tx.onerror = () => rej(tx.error); }); }
+const ltPhotoGet = key => idbOp('readonly', s => s.get(key)).catch(() => null);
+const ltPhotoSet = (key, val) => idbOp('readwrite', s => s.put(val, key));
+const ltPhotoDel = key => idbOp('readwrite', s => s.delete(key)).catch(() => null);
+async function ltPhotoKeys(prefix) { try { const keys = await idbOp('readonly', s => s.getAllKeys()); return (keys || []).filter(k => String(k).startsWith(prefix)); } catch (e) { return []; } }
+
+async function fileToDataUrl(file, maxEdge = 1400, quality = 0.8) {
+  let bitmap; try { bitmap = await createImageBitmap(file); } catch (e) { throw new Error('Could not read that image. Please use a JPG or PNG.'); }
+  const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
+  const c = document.createElement('canvas'); c.width = Math.round(bitmap.width * scale); c.height = Math.round(bitmap.height * scale);
+  c.getContext('2d').drawImage(bitmap, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', quality);
+}
+
+function ltBind(area, labId) {
+  const entries = ltLoad(labId);
+  let timer = null;
+  const flash = () => { const el = area.querySelector('.lt-saved'); if (!el) return; el.classList.add('show'); clearTimeout(flash._t); flash._t = setTimeout(() => el.classList.remove('show'), 1200); };
+  const save = () => { clearTimeout(timer); timer = setTimeout(() => { ltStore(labId, entries); flash(); }, 300); };
+
+  // extra table rows first, so their fields exist before restore
+  area.querySelectorAll('.lt-table-wrap').forEach(wrap => {
+    const id = wrap.dataset.table, cols = +wrap.dataset.cols, btn = wrap.querySelector('.lt-table-add');
+    const tbody = wrap.querySelector('tbody');
+    const addRow = () => {
+      const r = tbody.children.length + 1;
+      const tr = document.createElement('tr');
+      tr.innerHTML = Array.from({ length: cols }, (_, ci) => `<td class="lt-cell" contenteditable="plaintext-only" data-field="${id}.r${r}c${ci + 1}"></td>`).join('');
+      tbody.appendChild(tr); return tr;
+    };
+    const extra = parseInt(entries[id + '.rows'], 10) || 0;
+    for (let k = 0; k < extra; k++) addRow();
+    if (btn) btn.addEventListener('click', () => { const tr = addRow(); entries[id + '.rows'] = (parseInt(entries[id + '.rows'], 10) || 0) + 1; bindField(tr.querySelector('.lt-cell')); tr.querySelectorAll('.lt-cell').forEach(bindField); save(); });
+  });
+
+  function bindField(el) {
+    if (!el || el.dataset.bound) return; el.dataset.bound = '1';
+    const id = el.dataset.field;
+    if (entries[id]) el.textContent = entries[id];
+    el.addEventListener('input', () => { entries[id] = el.textContent; save(); });
+    el.addEventListener('paste', e => { e.preventDefault(); document.execCommand('insertText', false, (e.clipboardData || window.clipboardData).getData('text')); });
+    const det = el.closest('details.lt-notes'); if (det && entries[id]) det.open = true;
+  }
+  area.querySelectorAll('[data-field]').forEach(bindField);
+  area.querySelectorAll('[data-check]').forEach(cb => {
+    cb.checked = !!entries[cb.dataset.check];
+    cb.addEventListener('change', () => { entries[cb.dataset.check] = cb.checked ? 1 : 0; save(); });
+  });
+  area.querySelectorAll('.lt-photo').forEach(async box => {
+    const key = `${labId}|${box.dataset.photo}`, prev = box.querySelector('.lt-photo-preview');
+    const input = box.querySelector('input[type="file"]'), addLbl = box.querySelector('.lt-photo-add'), rm = box.querySelector('.lt-photo-remove');
+    const show = url => { prev.innerHTML = url ? `<img src="${url}" alt=""/>` : ''; box.classList.toggle('has-photo', !!url); rm.hidden = !url; addLbl.firstChild.textContent = getText(url ? 'photoChange' : 'photoAdd'); };
+    show(await ltPhotoGet(key));
+    input.addEventListener('change', async () => {
+      const f = input.files[0]; if (!f) return;
+      try { const url = await fileToDataUrl(f); await ltPhotoSet(key, url); show(url); flash(); } catch (e) { toast(e.message, true); }
+      input.value = '';
+    });
+    rm.addEventListener('click', async () => { await ltPhotoDel(key); show(null); });
+  });
+  const clearBtn = area.querySelector('.lt-clear');
+  if (clearBtn) clearBtn.addEventListener('click', async () => {
+    if (!confirm(getText('entriesClearConfirm'))) return;
+    try { localStorage.removeItem(LT_STORE + labId); } catch (e) { /* ignore */ }
+    for (const k of await ltPhotoKeys(labId + '|')) await ltPhotoDel(k);
+    render();
+  });
+}
+
+/* ---------- Editor integration ---------- */
+function onLabFormatChange() {
+  const fmt = $('lab-format').value;
+  $('lab-quill-row').style.display = fmt === 'labtags' ? 'none' : '';
+  $('lab-markup-row').style.display = fmt === 'labtags' ? '' : 'none';
+  if (fmt === 'labtags') previewLabMarkup(true);
+}
+function importLabMarkupFile(input) {
+  const f = input.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => { $('lab-markup').value = String(r.result || ''); applyLabMarkupMeta(true); previewLabMarkup(true); toast('Lab file imported'); };
+  r.readAsText(f); input.value = '';
+}
+function applyLabMarkupMeta(force) {
+  const meta = ltParseMeta($('lab-markup').value);
+  if (meta.title && (force || !$('lab-title').value)) { $('lab-title').value = meta.title; if (!labSlugTouched || force) { labSlugTouched = false; onLabTitleInput(); } }
+  if (meta.summary && (force || !$('lab-summary').value)) $('lab-summary').value = meta.summary;
+  if (meta.tags && (force || !$('lab-tags').value)) $('lab-tags').value = meta.tags;
+  if (meta.minutes && (force || !$('lab-minutes').value)) $('lab-minutes').value = parseInt(meta.minutes, 10) || '';
+}
+let ltPreviewTimer = null;
+function previewLabMarkup(now) {
+  clearTimeout(ltPreviewTimer);
+  const run = () => {
+    const { html, errors } = ltRender($('lab-markup').value);
+    $('lab-markup-errors').innerHTML = errors.map(e => `<div class="lt-error">${escapeHTML(e)}</div>`).join('');
+    const pv = $('lab-markup-preview'); pv.innerHTML = html;
+    ltBind(pv, 'preview'); renderMathIn([pv]);
+  };
+  now ? run() : (ltPreviewTimer = setTimeout(run, 400));
 }
 
 /* ============================================================

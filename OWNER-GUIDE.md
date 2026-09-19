@@ -24,6 +24,13 @@
 - **Look and feel:** admin bar → Design.
 - **Share a lab:** open it and click Copy link. Links look like `…/#/lab/lab-3-titration` and never change unless you rename the link name.
 
+## Interactive labs from a PDF
+
+1. Give Claude the PDF and the file `docs/LAB-FORMAT.md`, and say: "Convert this lab to a lab file following LAB-FORMAT.md. Keep the original structure and wording." Save what it returns as a `.md` file.
+2. On the site: + Lab → Procedure format → "Lab file with tags" → Import file. The title, summary, tags and minutes fill in from the file's header, and a preview appears under the text box. You can edit the text right there; the preview updates as you type.
+3. If the file lists "Figures needed" at the end, upload those pictures in the Photos & videos box, hover a thumbnail, click "copy path", and paste the path into the matching `\figure{…}` line.
+4. Publish. Students see tables they can type into, answer boxes, notes on each step, photo slots and checklists. Their entries save in their own browser and print with the lab (Print → Save as PDF) for hand-in through Canvas.
+
 ## Media rules of thumb
 
 - Photos: JPG or PNG straight from a phone are fine; the site shrinks them. iPhone HEIC photos need "Most Compatible" format in Camera settings.

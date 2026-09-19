@@ -17,6 +17,7 @@ A website where students open lab procedures (rich text, photos, YouTube video, 
 | `scripts/snapshot.mjs` + `.github/workflows/snapshot.yml` | Hourly GitHub Action copies all public content to `data/snapshot.json` (the outage fallback) and keeps a weekly heartbeat commit. Needs repo secrets `SUPABASE_URL`, `SUPABASE_ANON_KEY`. |
 | `data/snapshot.json` | Fallback content, maintained by the Action. `data/snapshot.sample.json` is demo content for local previews (copy it over `snapshot.json` temporarily, never commit that). |
 | `docs/PLAN.md` | The implementation plan (architecture, schema, features, phases, decisions). |
+| `docs/LAB-FORMAT.md` | The lab file format: Markdown + LaTeX-style `\commands` for interactive labs. The owner hands this file to Claude together with a PDF to convert it. |
 | `OWNER-GUIDE.md` | Setup and day-to-day instructions for the owner. |
 | `.claude/launch.json` | `lab-static`: python http.server on port 8766 for browser previews. |
 
@@ -28,7 +29,8 @@ Students load `index.html` from GitHub Pages. The page fetches the catalogue (fo
 
 - IDs: `f-<ts>` folders, `l-<ts>` labs, `att-<ts>-<rand>` attachments, `g-<ts>` groups.
 - Slugs are unique per table and form the URLs: `#/f/<slug>`, `#/lab/<slug>`, `#/search?q=`, `#/signin`.
-- `labs` is the catalogue (safe to list). Procedure HTML and media live in `lab_content`; files in `attachments`. Never put content in `labs`.
+- `labs` is the catalogue (safe to list). Procedure content and media live in `lab_content` (`format` = `html` from Quill, or `labtags` = a lab file rendered by `ltRender()`); files in `attachments`. Never put content in `labs`.
+- Lab files: parsing is `ltProtect` (stash code/math) → `ltExtractTags` (replace `\commands` with placeholders, build widget HTML) → `marked.parse` → `ltInject` → `ltRestore`. Widgets carry `data-field` / `data-check` / `data-photo` ids; `ltBind(area, labId)` restores and autosaves student entries to localStorage (`labsite.entries.<labId>`) and photos to IndexedDB (`labsite` / `photos`). Field ids are stable as long as the author sets `id=`; auto ids are sequential per type in document order. Cloud sync of entries is planned once student accounts exist.
 - Media entries in `lab_content.media`: `img:<bucket path>|<alt text>` or `youtube:<id>`. `labs.cover_path` uses the same form (alt dropped). Full `http(s)` URLs are tolerated for legacy/external images.
 - Storage paths: `labs/<lab-id>/<timestamp>-<rand>-<safe-name>.<ext>`; site-level uploads under `site/`. Records store bucket-relative paths; `fileUrl(path)` builds the public URL. Rich-text images inside Quill HTML are stored as full public URLs (Quill needs a `src`); `imagePathsInHTML()` maps them back for cleanup.
 - Access levels on folders and labs: `inherit | public | password | accounts | admin`. `effectiveAccess(lab)` (client) mirrors `resolve_access()` (SQL); the SQL is authoritative.
@@ -50,9 +52,13 @@ Students load `index.html` from GitHub Pages. The page fetches the catalogue (fo
 
 ## Status (updated 2026-09-18)
 
+Deployed 2026-09-18 at https://duct-tape-magic.github.io/lab-site/ (repo Duct-Tape-Magic/lab-site, Supabase project `nioebkjtrweyxvboajyv` "AP Chem" in the Pro org "OHS Student Labs"; admin whclark09@gmail.com). Snapshot workflow runs hourly. Added 2026-09-18: interactive lab files (`docs/LAB-FORMAT.md`, `ltRender`, `ltBind`, editor import panel, `lab_content.format`).
+
 Done: Phase 0 files (schema, vendoring, snapshot workflow, docs), Phase 1 core (routing, home/folder/lab/search/not-found views, folders + labs CRUD with cover/media/attachments, Quill with LaTeX/mhchem/YouTube/lab template, click-to-edit intro and title, site text panel, design panel, print stylesheet, fallback chain, event logging, revisions insert). Phase 2 items already included: image compression, attachments with inline PDF viewer, storage cleanup.
 
 Verified so far only against the snapshot fallback (no Supabase project yet). First run against a real project must exercise: admin login, role check, lab save/delete, uploads to `lab-files-public`, RLS visibility of drafts vs published.
+
+Decided 2026-09-18: grading stays in Canvas (students print / save PDF from the site); public comments are on hold.
 
 Not built yet: Phase 3 access control (Edge Functions, private bucket flow, password prompt wiring, student sign-in, Accounts panel), Phase 4 (Organize drag-and-drop, Save-as-copy, revision restore UI, QR codes, announcement editor UI, full-text search RPC), Phase 5 (Activity dashboard), Phase 6 polish, Phase 7 (export/import, orphan finder, load test, encrypted snapshot option, owner guide completion), Quill table module decision.
 
