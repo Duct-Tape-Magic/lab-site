@@ -1615,10 +1615,6 @@ async function renderLab(view) {
     <header class="lab-header">
       <h1 class="lab-title">${escapeHTML(lab.title)} <span class="admin-inline"><button class="btn-small" onclick="openLabModal('${lab.id}')">Edit lab</button></span></h1>
       <div class="lab-meta">${labBadges(lab)}${meta.join('')}</div>
-      <div class="lab-toolbar">
-        <button class="btn-small" onclick="printLab('${lab.id}')">${escapeHTML(getText('labPrint'))}</button>
-        <button class="btn-small" onclick="copyLabLink()">${escapeHTML(getText('labCopyLink'))}</button>
-      </div>
     </header>
     <div id="lab-content-area"><p style="color:var(--muted);">${escapeHTML(getText('loadingText'))}</p></div>
     ${labFooterNavHTML(lab)}
@@ -1647,7 +1643,6 @@ function renderLabContent(area, lab, entry, cloud = null) {
   const media = (entry.media || []).map(parseMediaEntry).filter(Boolean);
   const attachments = entry.attachments || [];
   let html = '';
-  if (media.length) html += `<div class="lab-media" id="lab-media-wrap"></div>`;
   const isTags = entry.format === 'labtags';
   if (isTags) {
     const r = ltRender(entry.content || '');
@@ -1656,6 +1651,7 @@ function renderLabContent(area, lab, entry, cloud = null) {
   } else {
     html += `<div class="lab-body rich-content" id="lab-body">${entry.content && entry.content !== '<p><br></p>' ? entry.content : `<p style="color:var(--muted)">${escapeHTML(getText('labNoContent'))}</p>`}</div>`;
   }
+  if (media.length) html += `<div class="lab-media" id="lab-media-wrap" style="max-width:var(--measure); margin-top:2.5rem;"></div>`;
   if (attachments.length) {
     html += `<div class="section-heading" style="max-width:var(--measure);"><span>${escapeHTML(getText('labFilesLabel'))}</span></div><ul class="attachments">` +
       attachments.map(a => {
@@ -1672,6 +1668,10 @@ function renderLabContent(area, lab, entry, cloud = null) {
         </li>`;
       }).join('') + `</ul>`;
   }
+  html += `<div class="lab-toolbar" style="margin-top:2rem; max-width:var(--measure);">
+    <button class="btn-small" onclick="printLab('${lab.id}')">${escapeHTML(getText('labPrint'))}</button>
+    <button class="btn-small" onclick="copyLabLink()">${escapeHTML(getText('labCopyLink'))}</button>
+  </div>`;
   area.innerHTML = html;
   if (media.length) renderSlideshow(media, $('lab-media-wrap'));
   if (isTags) ltBind(area, lab.id, cloud);
