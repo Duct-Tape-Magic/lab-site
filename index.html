@@ -112,6 +112,9 @@
     font-size: 15px; opacity: 0.35; transition: opacity 0.2s;
   }
   .nav-admin:hover { opacity: 1; }
+  .nav-login { padding: 0.5rem 1.1rem; border-color: var(--ink); white-space: nowrap; }
+  .login-admin summary { cursor: pointer; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 1.5rem 0 1rem; user-select: none; }
+  .login-admin summary:hover { color: var(--ink); }
 
   main { min-height: calc(100vh - 160px); }
 
@@ -560,8 +563,8 @@
       <input type="search" id="search-input" placeholder="Search labs…" aria-label="Search"/>
       <button type="submit" id="search-btn">Search</button>
     </form>
-    <a class="nav-link" id="nav-signin" href="#/signin" hidden>Student sign in</a>
-    <button class="nav-admin" onclick="openAdminLogin()" title="Admin" aria-label="Admin login">⚙</button>
+    <a class="nav-link" id="nav-signin" href="#/signin" hidden>Hi</a>
+    <button class="btn-small nav-login" id="nav-login" onclick="openLogin()">Log in</button>
   </div>
 </nav>
 
@@ -572,17 +575,20 @@
   <span style="display:flex; gap:1.25rem;"><a href="#/privacy" id="footer-privacy">Privacy</a><a href="#/signin" id="footer-signin" hidden>Student sign in</a></span>
 </footer>
 
-<!-- Admin login -->
+<!-- Log in (students and admins) -->
 <div class="modal-backdrop" id="login-modal">
-  <div class="modal modal-narrow" style="max-width:400px;">
+  <div class="modal modal-narrow" style="max-width:420px;">
     <button class="modal-close" onclick="closeModal('login-modal')">×</button>
-    <h2>Admin login</h2>
-    <div class="form-row"><label>Email</label><input type="email" id="login-email" autocomplete="email"/></div>
-    <div class="form-row"><label>Password</label><input type="password" id="login-password" autocomplete="current-password"/></div>
-    <div class="modal-actions"><button class="btn" onclick="tryLogin()" id="login-btn">Sign in</button></div>
-    <div style="display:flex; align-items:center; gap:0.75rem; margin:1.5rem 0 1rem; color:var(--muted); font-size:11px; letter-spacing:0.12em; text-transform:uppercase;"><span style="flex:1; height:0.5px; background:var(--rule);"></span>or<span style="flex:1; height:0.5px; background:var(--rule);"></span></div>
-    <button type="button" class="btn google-btn" onclick="signInWithGoogle()" id="google-login-btn"><svg viewBox="0 0 48 48" width="16" height="16" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.6 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.3l7.8 6C12.3 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17z"/><path fill="#FBBC05" d="M10.4 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.8-6C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.7l7.8-6z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.7-4.1-13.6-9.8l-7.8 6C6.5 42.6 14.6 48 24 48z"/></svg>Sign in with Google</button>
-    <p style="font-size:12px; color:var(--muted); margin-top:1.5rem; line-height:1.6;">Admins only. Use the admin email and password, or a Google account that has been made an admin. Students sign in from the "Student sign in" link instead.</p>
+    <h2 id="login-title">Log in</h2>
+    <p id="login-intro" style="font-size:13px; color:var(--muted); margin-bottom:1.25rem; line-height:1.6;"></p>
+    <button type="button" class="btn google-btn" onclick="signInWithGoogle()" id="google-login-btn"><svg viewBox="0 0 48 48" width="16" height="16" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.6 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.3l7.8 6C12.3 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17z"/><path fill="#FBBC05" d="M10.4 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.8-6C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.7l7.8-6z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.7-4.1-13.6-9.8l-7.8 6C6.5 42.6 14.6 48 24 48z"/></svg><span id="login-google-label">Continue with Google</span></button>
+    <p id="login-hint" style="font-size:12px; color:var(--muted); margin-top:0.75rem; line-height:1.6;"></p>
+    <details class="login-admin">
+      <summary id="login-admin-toggle">Admin email and password</summary>
+      <div class="form-row"><label>Email</label><input type="email" id="login-email" autocomplete="email"/></div>
+      <div class="form-row"><label>Password</label><input type="password" id="login-password" autocomplete="current-password"/></div>
+      <button class="btn" onclick="tryLogin()" id="login-btn">Sign in</button>
+    </details>
   </div>
 </div>
 
@@ -967,9 +973,11 @@ const DEFAULTS = {
   lockNotAllowed: 'This lab is not available to your account.',
   lockAdminOnly: 'This lab is not available.',
   lockUnavailable: 'Locked labs cannot be opened right now because the content server is unreachable. Please try again shortly.',
-  signInLink: 'Student sign in',
+  signInLink: 'Log in',
+  loginTitle: 'Log in',
+  loginAdminToggle: 'Admin email and password',
   signOutLink: 'Sign out',
-  signInTitle: 'Student sign in',
+  signInTitle: 'Log in',
   signInIntro: 'Sign in to keep your lab entries with you on any device. An account is optional: everything works without one, and your entries then stay on this device only.',
   signInGoogle: 'Continue with Google',
   signInCreateHint: 'No account yet? Continuing with Google creates one using only your name and email.',
@@ -1023,7 +1031,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Cards', keys: ['cardMinutes', 'cardUpdated', 'lockedBadge', 'signInRequiredBadge', 'draftBadge', 'scheduledBadge', 'hiddenBadge'] },
   { label: 'Lab page', keys: ['labMinutes', 'labUpdated', 'labFilesLabel', 'labOpenFile', 'labDownloadFile', 'labViewInline', 'labPrint', 'labCopyLink', 'labLinkCopied', 'labPrev', 'labNext', 'labNoContent'] },
   { label: 'Locked labs', keys: ['lockPasswordTitle', 'lockPasswordPrompt', 'lockPasswordPlaceholder', 'lockPasswordButton', 'lockPasswordWrong', 'lockTooMany', 'lockAccountsTitle', 'lockAccountsPrompt', 'lockNotAllowed', 'lockAdminOnly', 'lockUnavailable'] },
-  { label: 'Student accounts', keys: ['signInLink', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'privacyLink', 'privacyTitle'] },
+  { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'privacyLink', 'privacyTitle'] },
   { label: 'Interactive labs', keys: ['entriesInfo', 'entriesSaved', 'entriesClear', 'entriesClearConfirm', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
 ];
@@ -1040,7 +1048,7 @@ const TEXT_LABELS = {
   lockPasswordTitle: 'Password lock title', lockPasswordPrompt: 'Password lock prompt', lockPasswordPlaceholder: 'Password field placeholder', lockPasswordButton: 'Unlock button',
   lockPasswordWrong: 'Wrong password message', lockTooMany: 'Too many attempts message', lockAccountsTitle: 'Account lock title', lockAccountsPrompt: 'Account lock prompt',
   lockNotAllowed: 'Not allowed message', lockAdminOnly: 'Admin-only message', lockUnavailable: 'Lock server unavailable message',
-  signInLink: 'Sign-in link', signOutLink: 'Sign-out link', signInTitle: 'Sign-in title', signInIntro: 'Sign-in explanation', signInGoogle: 'Google button', signInCreateHint: 'Creates-an-account note', signInError: 'Sign-in error',
+  signInLink: 'Log in button / link', loginTitle: 'Log-in box title', loginAdminToggle: 'Admin fields toggle', signOutLink: 'Sign-out link', signInTitle: 'Sign-in title', signInIntro: 'Sign-in explanation', signInGoogle: 'Google button', signInCreateHint: 'Creates-an-account note', signInError: 'Sign-in error',
   accountTitle: 'Account page title', accountSignedInAs: 'Signed-in-as line', accountSyncOn: 'Syncing note', accountHello: 'Greeting in the menu', accountDelete: 'Delete account button', accountDeleteConfirm: 'Delete account confirmation', accountDeleted: 'Account deleted message', privacyLink: 'Privacy link', privacyTitle: 'Privacy page title', privacyBody: 'Privacy page text',
   notFoundTitle: 'Not found title', notFoundBody: 'Not found text', notFoundHome: 'Not found home link', unavailableTitle: 'Unavailable title', unavailableBody: 'Unavailable text',
   fallbackBanner: 'Saved-copy banner', errorBanner: 'Error banner',
@@ -1356,9 +1364,13 @@ function renderChrome() {
   $('footer-text').innerHTML = fmt('footerText');
   $('search-input').placeholder = getText('searchPlaceholder');
   $('search-btn').textContent = getText('searchButton');
-  const label = isStudent() ? fmt('accountHello', { name: studentFirstName() }) : getText('signInLink');
-  $('nav-signin').innerHTML = label; $('footer-signin').innerHTML = label;
-  $('nav-signin').hidden = isAdmin(); $('footer-signin').hidden = isAdmin();
+  $('nav-login').textContent = getText('signInLink'); $('nav-login').hidden = !!state.session;
+  const greet = fmt('accountHello', { name: studentFirstName() });
+  $('nav-signin').innerHTML = greet; $('nav-signin').hidden = !isStudent();
+  $('footer-signin').innerHTML = isStudent() ? greet : getText('signInLink'); $('footer-signin').hidden = isAdmin();
+  $('login-title').textContent = getText('loginTitle'); $('login-intro').textContent = getText('signInIntro');
+  $('login-google-label').textContent = getText('signInGoogle'); $('login-hint').textContent = getText('signInCreateHint');
+  $('login-admin-toggle').textContent = getText('loginAdminToggle');
   $('footer-privacy').textContent = getText('privacyLink');
   $('announce-dismiss').textContent = 'Dismiss';
   renderAnnouncement();
@@ -1802,12 +1814,14 @@ async function checkSession() {
   } catch (e) { console.warn('session check failed', e); }
   document.body.classList.toggle('admin-mode', isAdmin());
 }
-function openAdminLogin() {
+function openLogin() {
   if (!sb) { toast('This copy of the site is not connected to Supabase yet (see CONFIG in index.html).', true); return; }
-  if (isAdmin()) { toast('Already logged in'); return; }
+  if (state.session) { navigate('#/signin'); return; }
   $('login-email').value = ''; $('login-password').value = '';
-  openModal('login-modal'); setTimeout(() => $('login-email').focus(), 100);
+  document.querySelector('.login-admin').open = false;
+  openModal('login-modal');
 }
+const openAdminLogin = openLogin;
 async function tryLogin() {
   const email = $('login-email').value.trim(), password = $('login-password').value;
   if (!email || !password) { toast('Please enter email and password', true); return; }
