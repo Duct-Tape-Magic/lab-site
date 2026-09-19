@@ -604,7 +604,7 @@
       <div class="form-row"><label>Link name (slug)</label><input type="text" id="lab-slug" placeholder="lab-3-titration" oninput="labSlugTouched = true"/><div class="hint">Becomes the address: <span id="lab-slug-preview">#/lab/…</span></div></div>
     </div>
     <div class="form-row"><label>Folder</label><select id="lab-folder"></select></div>
-    <div class="form-row"><label>Summary (one or two sentences, shown on cards and in search)</label><textarea id="lab-summary" style="min-height:56px;"></textarea></div>
+    <div class="form-row"><label>Summary (one or two sentences, shown only on the lab card and in search)</label><textarea id="lab-summary" style="min-height:56px;"></textarea></div>
     <div class="form-grid-3">
       <div class="form-row"><label>Search tags (comma separated, never shown to students)</label><input type="text" id="lab-tags" placeholder="chemistry, acids"/></div>
       <div class="form-row"><label>Estimated minutes</label><input type="number" id="lab-minutes" min="0" step="5"/></div>
@@ -1615,7 +1615,6 @@ async function renderLab(view) {
     <header class="lab-header">
       <h1 class="lab-title">${escapeHTML(lab.title)} <span class="admin-inline"><button class="btn-small" onclick="openLabModal('${lab.id}')">Edit lab</button></span></h1>
       <div class="lab-meta">${labBadges(lab)}${meta.join('')}</div>
-      ${lab.summary ? `<p class="lab-summary">${escapeHTML(lab.summary)}</p>` : ''}
       <div class="lab-toolbar">
         <button class="btn-small" onclick="printLab('${lab.id}')">${escapeHTML(getText('labPrint'))}</button>
         <button class="btn-small" onclick="copyLabLink()">${escapeHTML(getText('labCopyLink'))}</button>
