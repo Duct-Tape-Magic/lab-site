@@ -569,7 +569,7 @@
 
 <footer>
   <span id="footer-text" class="editable" data-edit="footerText" onclick="handleEditableClick(event, 'footerText')">© Labs</span>
-  <a href="#/signin" id="footer-signin" hidden>Student sign in</a>
+  <span style="display:flex; gap:1.25rem;"><a href="#/privacy" id="footer-privacy">Privacy</a><a href="#/signin" id="footer-signin" hidden>Student sign in</a></span>
 </footer>
 
 <!-- Admin login -->
@@ -981,6 +981,9 @@ const DEFAULTS = {
   accountDelete: 'Delete my account',
   accountDeleteConfirm: 'Delete your account and every saved entry? This cannot be undone.',
   accountDeleted: 'Your account has been deleted.',
+  privacyLink: 'Privacy',
+  privacyTitle: 'Privacy',
+  privacyBody: '<p>This site publishes lab procedures for students. You can use it without an account.</p><p>If you choose to sign in with Google, the site stores only your name and email address so your lab entries can follow you between devices. Your entries are visible to you and to the site administrators (your teachers). Nothing is sold or shared with anyone else, and no advertising is shown.</p><p>You can delete your account and every saved entry at any time from the account page. Anonymous usage statistics (which labs are opened, on what kind of device) are collected without any personal information.</p>',
   notFoundTitle: 'Page not found',
   notFoundBody: 'That link does not go anywhere. It may have been moved or unpublished.',
   notFoundHome: 'Go to the home page',
@@ -1020,7 +1023,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Cards', keys: ['cardMinutes', 'cardUpdated', 'lockedBadge', 'signInRequiredBadge', 'draftBadge', 'scheduledBadge', 'hiddenBadge'] },
   { label: 'Lab page', keys: ['labMinutes', 'labUpdated', 'labFilesLabel', 'labOpenFile', 'labDownloadFile', 'labViewInline', 'labPrint', 'labCopyLink', 'labLinkCopied', 'labPrev', 'labNext', 'labNoContent'] },
   { label: 'Locked labs', keys: ['lockPasswordTitle', 'lockPasswordPrompt', 'lockPasswordPlaceholder', 'lockPasswordButton', 'lockPasswordWrong', 'lockTooMany', 'lockAccountsTitle', 'lockAccountsPrompt', 'lockNotAllowed', 'lockAdminOnly', 'lockUnavailable'] },
-  { label: 'Student accounts', keys: ['signInLink', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted'] },
+  { label: 'Student accounts', keys: ['signInLink', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'privacyLink', 'privacyTitle'] },
   { label: 'Interactive labs', keys: ['entriesInfo', 'entriesSaved', 'entriesClear', 'entriesClearConfirm', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
 ];
@@ -1038,7 +1041,7 @@ const TEXT_LABELS = {
   lockPasswordWrong: 'Wrong password message', lockTooMany: 'Too many attempts message', lockAccountsTitle: 'Account lock title', lockAccountsPrompt: 'Account lock prompt',
   lockNotAllowed: 'Not allowed message', lockAdminOnly: 'Admin-only message', lockUnavailable: 'Lock server unavailable message',
   signInLink: 'Sign-in link', signOutLink: 'Sign-out link', signInTitle: 'Sign-in title', signInIntro: 'Sign-in explanation', signInGoogle: 'Google button', signInCreateHint: 'Creates-an-account note', signInError: 'Sign-in error',
-  accountTitle: 'Account page title', accountSignedInAs: 'Signed-in-as line', accountSyncOn: 'Syncing note', accountHello: 'Greeting in the menu', accountDelete: 'Delete account button', accountDeleteConfirm: 'Delete account confirmation', accountDeleted: 'Account deleted message',
+  accountTitle: 'Account page title', accountSignedInAs: 'Signed-in-as line', accountSyncOn: 'Syncing note', accountHello: 'Greeting in the menu', accountDelete: 'Delete account button', accountDeleteConfirm: 'Delete account confirmation', accountDeleted: 'Account deleted message', privacyLink: 'Privacy link', privacyTitle: 'Privacy page title', privacyBody: 'Privacy page text',
   notFoundTitle: 'Not found title', notFoundBody: 'Not found text', notFoundHome: 'Not found home link', unavailableTitle: 'Unavailable title', unavailableBody: 'Unavailable text',
   fallbackBanner: 'Saved-copy banner', errorBanner: 'Error banner',
   entriesInfo: 'Autosave notice', entriesSaved: 'Saved flash', entriesClear: 'Clear entries button', entriesClearConfirm: 'Clear entries confirmation',
@@ -1331,6 +1334,7 @@ function parseRoute() {
   if (parts[0] === 'lab' && parts[1]) return { view: 'lab', slug: parts[1] };
   if (parts[0] === 'search') return { view: 'search', q: params.get('q') || '' };
   if (parts[0] === 'signin') return { view: 'signin' };
+  if (parts[0] === 'privacy') return { view: 'privacy' };
   return { view: 'notfound' };
 }
 function navigate(hash) { if (location.hash === hash) render(); else location.hash = hash; }
@@ -1355,6 +1359,7 @@ function renderChrome() {
   const label = isStudent() ? fmt('accountHello', { name: studentFirstName() }) : getText('signInLink');
   $('nav-signin').innerHTML = label; $('footer-signin').innerHTML = label;
   $('nav-signin').hidden = isAdmin(); $('footer-signin').hidden = isAdmin();
+  $('footer-privacy').textContent = getText('privacyLink');
   $('announce-dismiss').textContent = 'Dismiss';
   renderAnnouncement();
 }
@@ -1401,6 +1406,7 @@ function render() {
       case 'lab': renderLab(view); break;
       case 'search': renderSearch(view); break;
       case 'signin': renderSignIn(view); break;
+      case 'privacy': renderPrivacy(view); break;
       default: renderNotFound(view);
     }
   } catch (e) {
@@ -1567,6 +1573,11 @@ function renderSignIn(view) {
       <div style="margin:1.5rem 0 0.75rem;"><button type="button" class="btn google-btn" onclick="signInWithGoogle('#/signin')">${GOOGLE_SVG}${escapeHTML(getText('signInGoogle'))}</button></div>
       <p style="color:var(--muted); font-size:13px;">${escapeHTML(getText('signInCreateHint'))}</p>
     </div></section>`;
+}
+function renderPrivacy(view) {
+  document.title = `${getText('privacyTitle')} · ${getText('siteTitle')}`;
+  view.innerHTML = `<section class="page"><h1 class="page-title">${escapeHTML(getText('privacyTitle'))}</h1>
+    <div class="home-intro rich-content editable" data-edit="privacyBody" data-rich="true" onclick="handleEditableClick(event, 'privacyBody', true)">${getText('privacyBody')}</div></section>`;
 }
 async function signOutStudent() { await sb.auth.signOut(); state.session = null; state.role = null; renderChrome(); navigate('#/'); }
 async function deleteMyAccount() {
