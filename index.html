@@ -324,6 +324,7 @@
   .btn-accent:hover { background: var(--accent); color: var(--bg); }
   .btn-danger { border-color: var(--danger); color: var(--danger); }
   .btn-danger:hover { background: var(--danger); color: white; }
+  .google-btn { display: inline-flex; align-items: center; gap: 0.6rem; width: 100%; justify-content: center; text-transform: none; letter-spacing: 0.02em; font-size: 14px; }
 
   /* ---------- Admin bar ---------- */
   .admin-bar {
@@ -578,7 +579,9 @@
     <div class="form-row"><label>Email</label><input type="email" id="login-email" autocomplete="email"/></div>
     <div class="form-row"><label>Password</label><input type="password" id="login-password" autocomplete="current-password"/></div>
     <div class="modal-actions"><button class="btn" onclick="tryLogin()" id="login-btn">Sign in</button></div>
-    <p style="font-size:12px; color:var(--muted); margin-top:1.5rem; line-height:1.6;">Use the admin email and password set up in Supabase Authentication.</p>
+    <div style="display:flex; align-items:center; gap:0.75rem; margin:1.5rem 0 1rem; color:var(--muted); font-size:11px; letter-spacing:0.12em; text-transform:uppercase;"><span style="flex:1; height:0.5px; background:var(--rule);"></span>or<span style="flex:1; height:0.5px; background:var(--rule);"></span></div>
+    <button type="button" class="btn google-btn" onclick="signInWithGoogle()" id="google-login-btn"><svg viewBox="0 0 48 48" width="16" height="16" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.6 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.3l7.8 6C12.3 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17z"/><path fill="#FBBC05" d="M10.4 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.8-6C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.7l7.8-6z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.7-4.1-13.6-9.8l-7.8 6C6.5 42.6 14.6 48 24 48z"/></svg>Sign in with Google</button>
+    <p style="font-size:12px; color:var(--muted); margin-top:1.5rem; line-height:1.6;">Admins only. Use the admin email and password, or the Google account with the same email.</p>
   </div>
 </div>
 
@@ -1766,6 +1769,18 @@ async function tryLogin() {
   await reloadCatalogue();
   toast('Welcome back');
 }
+async function signInWithGoogle() {
+  if (!sb) { toast('This copy of the site is not connected to Supabase yet.', true); return; }
+  const btn = $('google-login-btn'); btn.disabled = true;
+  const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
+  if (error) { btn.disabled = false; toast('Google sign-in failed: ' + error.message, true); }
+}
+// After an OAuth round trip the URL carries ?code=… (handled by supabase-js) or ?error=…; tidy it up.
+(function handleOAuthReturn() {
+  const q = new URLSearchParams(location.search);
+  if (q.has('error') || q.has('error_description')) setTimeout(() => toast('Sign-in failed: ' + (q.get('error_description') || q.get('error')), true), 500);
+  if (q.has('code') || q.has('error')) history.replaceState(null, '', location.pathname + location.hash);
+})();
 async function logoutAdmin() {
   await sb.auth.signOut();
   state.session = null; state.role = null; state.content = {};
@@ -2812,10 +2827,16 @@ function previewLabMarkup(now) {
     loadDesignFromSiteContent();
     renderChrome();
     render();
-    if (sb) sb.auth.onAuthStateChange((_event, session) => {
+    if (sb) sb.auth.onAuthStateChange((event, session) => {
       const was = isAdmin(); state.session = session; state.role = roleFromSession(session);
+      if (event === 'SIGNED_IN' && session && !isAdmin()) {
+        // Until student accounts exist, only admins may hold a session on this site.
+        sb.auth.signOut(); state.session = null; state.role = null;
+        toast('That Google account is not an admin account.', true);
+        return;
+      }
       document.body.classList.toggle('admin-mode', isAdmin());
-      if (was !== isAdmin()) reloadCatalogue();
+      if (was !== isAdmin()) { closeModal('login-modal'); reloadCatalogue(); if (isAdmin() && event === 'SIGNED_IN') toast('Welcome back'); }
     });
   } catch (e) {
     console.error(e);
