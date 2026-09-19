@@ -2032,6 +2032,10 @@ function renderAttachmentsManager() {
     </label>
     <ul class="attach-list" id="attach-list"></ul>`;
   setupDropzone('attach-dropzone', 'attach-file-input', async files => {
+    const labFile = files.find(isLabFile);
+    if (labFile && confirm(`"${labFile.name}" looks like a lab file. Import it as the procedure instead of attaching it for download?`)) {
+      loadLabMarkupFromFile(labFile); files = files.filter(f => f !== labFile);
+    }
     for (const file of files) {
       try { toast(`Uploading ${file.name}…`); const up = await uploadFile(file, labUploadFolder(), { compress: false }); labAttachmentItems.push({ id: 'att-' + Date.now() + '-' + Math.random().toString(36).slice(2, 5), name: file.name, path: up.path, mime: up.mime, size_bytes: up.size }); renderAttachList(); }
       catch (e) { toast('Upload failed: ' + e.message, true); }
@@ -2751,18 +2755,34 @@ function ltBind(area, labId) {
 }
 
 /* ---------- Editor integration ---------- */
+(() => { const m = $('lab-modal');
+  m.addEventListener('dragover', e => { if (e.dataTransfer?.types?.includes('Files')) e.preventDefault(); });
+  m.addEventListener('drop', e => {
+    if (e.target.closest('.media-dropzone') || e.target.id === 'lab-markup') return; // handled by those boxes
+    const f = Array.from(e.dataTransfer.files || []).find(isLabFile); if (!f) return;
+    e.preventDefault(); loadLabMarkupFromFile(f);
+  }); })();
 function onLabFormatChange() {
   const fmt = $('lab-format').value;
   $('lab-quill-row').style.display = fmt === 'labtags' ? 'none' : '';
   $('lab-markup-row').style.display = fmt === 'labtags' ? '' : 'none';
   if (fmt === 'labtags') previewLabMarkup(true);
 }
-function importLabMarkupFile(input) {
-  const f = input.files[0]; if (!f) return;
+function isLabFile(f) { return /\.(md|markdown|txt|tex)$/i.test(f.name) || (f.type || '').startsWith('text/'); }
+function loadLabMarkupFromFile(f) {
   const r = new FileReader();
-  r.onload = () => { $('lab-markup').value = String(r.result || ''); applyLabMarkupMeta(true); previewLabMarkup(true); toast('Lab file imported'); };
-  r.readAsText(f); input.value = '';
+  r.onload = () => {
+    $('lab-format').value = 'labtags'; onLabFormatChange();
+    $('lab-markup').value = String(r.result || ''); applyLabMarkupMeta(true); previewLabMarkup(true);
+    toast('Lab file imported'); $('lab-markup-row').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  r.readAsText(f);
 }
+function importLabMarkupFile(input) { const f = input.files[0]; if (f) loadLabMarkupFromFile(f); input.value = ''; }
+// The lab-file text box accepts a dropped .md file too
+(() => { const ta = $('lab-markup'); ['dragenter', 'dragover'].forEach(ev => ta.addEventListener(ev, e => { e.preventDefault(); ta.style.borderColor = 'var(--accent)'; }));
+  ['dragleave', 'drop'].forEach(ev => ta.addEventListener(ev, e => { e.preventDefault(); ta.style.borderColor = ''; }));
+  ta.addEventListener('drop', e => { const f = Array.from(e.dataTransfer.files).find(isLabFile); if (f) loadLabMarkupFromFile(f); }); })();
 function applyLabMarkupMeta(force) {
   const meta = ltParseMeta($('lab-markup').value);
   if (meta.title && (force || !$('lab-title').value)) { $('lab-title').value = meta.title; if (!labSlugTouched || force) { labSlugTouched = false; onLabTitleInput(); } }
