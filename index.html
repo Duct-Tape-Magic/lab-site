@@ -606,7 +606,7 @@
     <div class="form-row"><label>Folder</label><select id="lab-folder"></select></div>
     <div class="form-row"><label>Summary (one or two sentences, shown on cards and in search)</label><textarea id="lab-summary" style="min-height:56px;"></textarea></div>
     <div class="form-grid-3">
-      <div class="form-row"><label>Tags (comma separated)</label><input type="text" id="lab-tags" placeholder="chemistry, acids"/></div>
+      <div class="form-row"><label>Search tags (comma separated, never shown to students)</label><input type="text" id="lab-tags" placeholder="chemistry, acids"/></div>
       <div class="form-row"><label>Estimated minutes</label><input type="number" id="lab-minutes" min="0" step="5"/></div>
       <div class="form-row"><label>Order within folder</label><input type="number" id="lab-order" step="1" value="0"/><div class="hint">Lower numbers come first.</div></div>
     </div>
@@ -957,8 +957,6 @@ const DEFAULTS = {
   labDownloadFile: 'Download',
   labViewInline: 'View here',
   labPrint: 'Print',
-  labDownloadPdf: 'Download PDF',
-  labPdfHint: 'In the print window, choose “Save as PDF” as the destination.',
   labCopyLink: 'Copy link',
   labLinkCopied: 'Link copied',
   labPrev: '← Previous',
@@ -1031,7 +1029,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Home page', keys: ['homeFoldersLabel', 'homeLabsLabel', 'homeEmpty'] },
   { label: 'Folder pages', keys: ['folderSectionsLabel', 'folderLabsLabel', 'folderEmpty'] },
   { label: 'Cards', keys: ['cardMinutes', 'cardUpdated', 'lockedBadge', 'signInRequiredBadge', 'draftBadge', 'scheduledBadge', 'hiddenBadge'] },
-  { label: 'Lab page', keys: ['labMinutes', 'labUpdated', 'labFilesLabel', 'labOpenFile', 'labDownloadFile', 'labViewInline', 'labPrint', 'labDownloadPdf', 'labPdfHint', 'labCopyLink', 'labLinkCopied', 'labPrev', 'labNext', 'labNoContent'] },
+  { label: 'Lab page', keys: ['labMinutes', 'labUpdated', 'labFilesLabel', 'labOpenFile', 'labDownloadFile', 'labViewInline', 'labPrint', 'labCopyLink', 'labLinkCopied', 'labPrev', 'labNext', 'labNoContent'] },
   { label: 'Locked labs', keys: ['lockPasswordTitle', 'lockPasswordPrompt', 'lockPasswordPlaceholder', 'lockPasswordButton', 'lockPasswordWrong', 'lockTooMany', 'lockAccountsTitle', 'lockAccountsPrompt', 'lockNotAllowed', 'lockAdminOnly', 'lockUnavailable'] },
   { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'privacyLink', 'privacyTitle'] },
   { label: 'Interactive labs', keys: ['entriesInfo', 'entriesSaved', 'entriesClear', 'entriesClearConfirm', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending'] },
@@ -1046,7 +1044,7 @@ const TEXT_LABELS = {
   cardMinutes: 'Minutes on cards', cardUpdated: 'Updated date on cards', lockedBadge: 'Locked badge', signInRequiredBadge: 'Sign-in badge',
   draftBadge: 'Draft badge (admins)', scheduledBadge: 'Scheduled badge (admins)', hiddenBadge: 'Unlisted badge (admins)',
   labMinutes: 'Minutes line', labUpdated: 'Updated line', labFilesLabel: 'Files heading', labOpenFile: 'Open button', labDownloadFile: 'Download button', labViewInline: 'View-here button',
-  labPrint: 'Print button', labDownloadPdf: 'Download PDF button', labPdfHint: 'Download PDF hint', labCopyLink: 'Copy link button', labLinkCopied: 'Link copied message', labPrev: 'Previous lab link', labNext: 'Next lab link', labNoContent: 'No procedure text message',
+  labPrint: 'Print button', labCopyLink: 'Copy link button', labLinkCopied: 'Link copied message', labPrev: 'Previous lab link', labNext: 'Next lab link', labNoContent: 'No procedure text message',
   lockPasswordTitle: 'Password lock title', lockPasswordPrompt: 'Password lock prompt', lockPasswordPlaceholder: 'Password field placeholder', lockPasswordButton: 'Unlock button',
   lockPasswordWrong: 'Wrong password message', lockTooMany: 'Too many attempts message', lockAccountsTitle: 'Account lock title', lockAccountsPrompt: 'Account lock prompt',
   lockNotAllowed: 'Not allowed message', lockAdminOnly: 'Admin-only message', lockUnavailable: 'Lock server unavailable message',
@@ -1611,7 +1609,6 @@ async function renderLab(view) {
   const meta = [];
   if (lab.estimated_minutes) meta.push(`<span>${fmt('labMinutes', { n: lab.estimated_minutes })}</span>`);
   if (lab.updated_at) meta.push(`<span>${fmt('labUpdated', { date: formatDate(lab.updated_at) })}</span>`);
-  (lab.tags || []).forEach(t => meta.push(`<span class="tag">${escapeHTML(t)}</span>`));
 
   view.innerHTML = `<section class="page lab-page">
     ${breadcrumbHTML(lab.folder_id)}
@@ -1621,7 +1618,6 @@ async function renderLab(view) {
       ${lab.summary ? `<p class="lab-summary">${escapeHTML(lab.summary)}</p>` : ''}
       <div class="lab-toolbar">
         <button class="btn-small" onclick="printLab('${lab.id}')">${escapeHTML(getText('labPrint'))}</button>
-        <button class="btn-small" onclick="downloadLabPdf('${lab.id}')">${escapeHTML(getText('labDownloadPdf'))}</button>
         <button class="btn-small" onclick="copyLabLink()">${escapeHTML(getText('labCopyLink'))}</button>
       </div>
     </header>
@@ -1733,11 +1729,6 @@ function labFooterNavHTML(lab) {
 }
 
 function printLab(labId) { logEvent('print', { lab_id: labId, path: location.hash }); window.print(); }
-function downloadLabPdf(labId) {
-  logEvent('print', { lab_id: labId, path: location.hash });
-  toast(getText('labPdfHint'));
-  setTimeout(() => window.print(), 400);
-}
 async function copyLabLink() {
   try { await navigator.clipboard.writeText(location.href); toast(getText('labLinkCopied')); }
   catch (e) { prompt('Copy this link:', location.href); }
