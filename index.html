@@ -544,6 +544,7 @@
     <button onclick="openFolderModal()">+ Folder</button>
     <button onclick="openSiteTextModal()">Site text</button>
     <button onclick="openDesignModal()">Design</button>
+    <button onclick="openAdminsModal()">Admins</button>
     <button onclick="logoutAdmin()">Log out</button>
   </div>
 </div>
@@ -581,7 +582,7 @@
     <div class="modal-actions"><button class="btn" onclick="tryLogin()" id="login-btn">Sign in</button></div>
     <div style="display:flex; align-items:center; gap:0.75rem; margin:1.5rem 0 1rem; color:var(--muted); font-size:11px; letter-spacing:0.12em; text-transform:uppercase;"><span style="flex:1; height:0.5px; background:var(--rule);"></span>or<span style="flex:1; height:0.5px; background:var(--rule);"></span></div>
     <button type="button" class="btn google-btn" onclick="signInWithGoogle()" id="google-login-btn"><svg viewBox="0 0 48 48" width="16" height="16" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.6 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.3l7.8 6C12.3 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17z"/><path fill="#FBBC05" d="M10.4 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.8-6C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.7l7.8-6z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.7-4.1-13.6-9.8l-7.8 6C6.5 42.6 14.6 48 24 48z"/></svg>Sign in with Google</button>
-    <p style="font-size:12px; color:var(--muted); margin-top:1.5rem; line-height:1.6;">Admins only. Use the admin email and password, or the Google account with the same email.</p>
+    <p style="font-size:12px; color:var(--muted); margin-top:1.5rem; line-height:1.6;">Admins only. Use the admin email and password, or a Google account that has been made an admin. Students sign in from the "Student sign in" link instead.</p>
   </div>
 </div>
 
@@ -860,6 +861,18 @@
   </div>
 </div>
 
+<!-- Admins -->
+<div class="modal-backdrop" id="admins-modal">
+  <div class="modal modal-narrow">
+    <button class="modal-close" onclick="closeModal('admins-modal')">×</button>
+    <h2>Admins</h2>
+    <p style="font-size:13px; color:var(--muted); margin-bottom:1.25rem; line-height:1.6;">Admins can edit everything on the site and add or remove other admins. A person must have signed in to the site with Google at least once before they can be made an admin, and they need to sign out and back in for the change to take effect.</p>
+    <ul class="attach-list" id="admins-list"></ul>
+    <div class="media-add-row" style="margin-top:1rem;"><input type="email" id="admin-email" placeholder="email@example.com"/><button type="button" onclick="addAdmin()">Make admin</button></div>
+    <div class="modal-actions"><button class="btn" onclick="closeModal('admins-modal')">Close</button></div>
+  </div>
+</div>
+
 <!-- LaTeX -->
 <div class="modal-backdrop" id="latex-modal">
   <div class="modal modal-narrow">
@@ -957,13 +970,17 @@ const DEFAULTS = {
   signInLink: 'Student sign in',
   signOutLink: 'Sign out',
   signInTitle: 'Student sign in',
-  signInEmail: 'Email',
-  signInPassword: 'Password',
-  signInButton: 'Sign in',
-  signInForgot: 'Forgot password?',
-  signInResetSent: 'Check your email for a link to set a new password.',
-  signInError: 'Could not sign in. Check your email and password.',
-  signInComingSoon: 'Student accounts are not enabled yet.',
+  signInIntro: 'Sign in to keep your lab entries with you on any device. An account is optional: everything works without one, and your entries then stay on this device only.',
+  signInGoogle: 'Continue with Google',
+  signInCreateHint: 'No account yet? Continuing with Google creates one using only your name and email.',
+  signInError: 'Could not sign in. Please try again.',
+  accountTitle: 'Your account',
+  accountSignedInAs: 'Signed in as {name}',
+  accountSyncOn: 'Your lab entries are saved to your account and follow you to any device.',
+  accountHello: 'Hi, {name}',
+  accountDelete: 'Delete my account',
+  accountDeleteConfirm: 'Delete your account and every saved entry? This cannot be undone.',
+  accountDeleted: 'Your account has been deleted.',
   notFoundTitle: 'Page not found',
   notFoundBody: 'That link does not go anywhere. It may have been moved or unpublished.',
   notFoundHome: 'Go to the home page',
@@ -1003,7 +1020,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Cards', keys: ['cardMinutes', 'cardUpdated', 'lockedBadge', 'signInRequiredBadge', 'draftBadge', 'scheduledBadge', 'hiddenBadge'] },
   { label: 'Lab page', keys: ['labMinutes', 'labUpdated', 'labFilesLabel', 'labOpenFile', 'labDownloadFile', 'labViewInline', 'labPrint', 'labCopyLink', 'labLinkCopied', 'labPrev', 'labNext', 'labNoContent'] },
   { label: 'Locked labs', keys: ['lockPasswordTitle', 'lockPasswordPrompt', 'lockPasswordPlaceholder', 'lockPasswordButton', 'lockPasswordWrong', 'lockTooMany', 'lockAccountsTitle', 'lockAccountsPrompt', 'lockNotAllowed', 'lockAdminOnly', 'lockUnavailable'] },
-  { label: 'Student sign in', keys: ['signInLink', 'signOutLink', 'signInTitle', 'signInEmail', 'signInPassword', 'signInButton', 'signInForgot', 'signInResetSent', 'signInError', 'signInComingSoon'] },
+  { label: 'Student accounts', keys: ['signInLink', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted'] },
   { label: 'Interactive labs', keys: ['entriesInfo', 'entriesSaved', 'entriesClear', 'entriesClearConfirm', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
 ];
@@ -1020,8 +1037,8 @@ const TEXT_LABELS = {
   lockPasswordTitle: 'Password lock title', lockPasswordPrompt: 'Password lock prompt', lockPasswordPlaceholder: 'Password field placeholder', lockPasswordButton: 'Unlock button',
   lockPasswordWrong: 'Wrong password message', lockTooMany: 'Too many attempts message', lockAccountsTitle: 'Account lock title', lockAccountsPrompt: 'Account lock prompt',
   lockNotAllowed: 'Not allowed message', lockAdminOnly: 'Admin-only message', lockUnavailable: 'Lock server unavailable message',
-  signInLink: 'Sign-in link', signOutLink: 'Sign-out link', signInTitle: 'Sign-in title', signInEmail: 'Email field', signInPassword: 'Password field', signInButton: 'Sign-in button',
-  signInForgot: 'Forgot password link', signInResetSent: 'Reset email sent message', signInError: 'Sign-in error', signInComingSoon: 'Accounts not enabled message',
+  signInLink: 'Sign-in link', signOutLink: 'Sign-out link', signInTitle: 'Sign-in title', signInIntro: 'Sign-in explanation', signInGoogle: 'Google button', signInCreateHint: 'Creates-an-account note', signInError: 'Sign-in error',
+  accountTitle: 'Account page title', accountSignedInAs: 'Signed-in-as line', accountSyncOn: 'Syncing note', accountHello: 'Greeting in the menu', accountDelete: 'Delete account button', accountDeleteConfirm: 'Delete account confirmation', accountDeleted: 'Account deleted message',
   notFoundTitle: 'Not found title', notFoundBody: 'Not found text', notFoundHome: 'Not found home link', unavailableTitle: 'Unavailable title', unavailableBody: 'Unavailable text',
   fallbackBanner: 'Saved-copy banner', errorBanner: 'Error banner',
   entriesInfo: 'Autosave notice', entriesSaved: 'Saved flash', entriesClear: 'Clear entries button', entriesClearConfirm: 'Clear entries confirmation',
@@ -1335,10 +1352,9 @@ function renderChrome() {
   $('footer-text').innerHTML = fmt('footerText');
   $('search-input').placeholder = getText('searchPlaceholder');
   $('search-btn').textContent = getText('searchButton');
-  $('nav-signin').textContent = getText('signInLink');
-  $('footer-signin').textContent = getText('signInLink');
-  $('nav-signin').hidden = true;      // shown once student accounts are enabled (Phase 3)
-  $('footer-signin').hidden = true;
+  const label = isStudent() ? fmt('accountHello', { name: studentFirstName() }) : getText('signInLink');
+  $('nav-signin').innerHTML = label; $('footer-signin').innerHTML = label;
+  $('nav-signin').hidden = isAdmin(); $('footer-signin').hidden = isAdmin();
   $('announce-dismiss').textContent = 'Dismiss';
   renderAnnouncement();
 }
@@ -1527,10 +1543,39 @@ function renderNotFound(view) {
     <p style="margin-top:1.5rem;"><a class="btn" href="#/">${escapeHTML(getText('notFoundHome'))}</a></p></section>`;
 }
 
+function isStudent() { return !!state.session && !isAdmin(); }
+function studentName() { const u = state.session?.user; return u?.user_metadata?.full_name || u?.user_metadata?.name || u?.email || ''; }
+function studentFirstName() { return studentName().split(/[\s@]/)[0] || ''; }
+const GOOGLE_SVG = '<svg viewBox="0 0 48 48" width="16" height="16" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.6 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.3l7.8 6C12.3 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17z"/><path fill="#FBBC05" d="M10.4 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.8-6C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.7l7.8-6z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.7-4.1-13.6-9.8l-7.8 6C6.5 42.6 14.6 48 24 48z"/></svg>';
 function renderSignIn(view) {
   document.title = `${getText('signInTitle')} · ${getText('siteTitle')}`;
+  if (isStudent()) {
+    view.innerHTML = `<section class="page"><h1 class="page-title">${escapeHTML(getText('accountTitle'))}</h1>
+      <div style="max-width:var(--measure);">
+        <p>${fmt('accountSignedInAs', { name: studentName() })}</p>
+        <p style="color:var(--muted); font-size:14px; margin-top:0.5rem;">${escapeHTML(getText('accountSyncOn'))}</p>
+        <div class="lab-toolbar" style="margin-top:1.5rem;">
+          <button class="btn" onclick="signOutStudent()">${escapeHTML(getText('signOutLink'))}</button>
+          <button class="btn btn-danger" onclick="deleteMyAccount()">${escapeHTML(getText('accountDelete'))}</button>
+        </div>
+      </div></section>`;
+    return;
+  }
   view.innerHTML = `<section class="page"><h1 class="page-title">${escapeHTML(getText('signInTitle'))}</h1>
-    <p style="max-width:var(--measure); color:var(--muted);">${escapeHTML(getText('signInComingSoon'))}</p></section>`;
+    <div style="max-width:480px;">
+      <p style="color:var(--muted); font-size:15px;">${escapeHTML(getText('signInIntro'))}</p>
+      <div style="margin:1.5rem 0 0.75rem;"><button type="button" class="btn google-btn" onclick="signInWithGoogle('#/signin')">${GOOGLE_SVG}${escapeHTML(getText('signInGoogle'))}</button></div>
+      <p style="color:var(--muted); font-size:13px;">${escapeHTML(getText('signInCreateHint'))}</p>
+    </div></section>`;
+}
+async function signOutStudent() { await sb.auth.signOut(); state.session = null; state.role = null; renderChrome(); navigate('#/'); }
+async function deleteMyAccount() {
+  if (!confirm(getText('accountDeleteConfirm'))) return;
+  const { error } = await sb.rpc('delete_my_account');
+  if (error) { toast(error.message, true); return; }
+  try { Object.keys(localStorage).filter(k => k.startsWith(LT_STORE)).forEach(k => localStorage.removeItem(k)); } catch (e) { /* ignore */ }
+  await sb.auth.signOut(); state.session = null; state.role = null;
+  renderChrome(); navigate('#/'); toast(getText('accountDeleted'));
 }
 
 /* ---------- Lab page ---------- */
@@ -1560,8 +1605,8 @@ async function renderLab(view) {
   </section>`;
 
   const area = $('lab-content-area');
-  let entry = null;
-  try { entry = await getLabContent(lab); }
+  let entry = null, cloud = null;
+  try { [entry, cloud] = await Promise.all([getLabContent(lab), ltFetchCloud(lab.id)]); }
   catch (e) { console.warn('Lab content failed:', e.message || e); }
   if (state.route.view !== 'lab' || state.route.slug !== lab.slug) return; // navigated away meanwhile
 
@@ -1574,11 +1619,11 @@ async function renderLab(view) {
     }
     return;
   }
-  renderLabContent(area, lab, entry);
+  renderLabContent(area, lab, entry, cloud);
   logEvent('view', { lab_id: lab.id, folder_id: lab.folder_id, path: location.hash });
 }
 
-function renderLabContent(area, lab, entry) {
+function renderLabContent(area, lab, entry, cloud = null) {
   const media = (entry.media || []).map(parseMediaEntry).filter(Boolean);
   const attachments = entry.attachments || [];
   let html = '';
@@ -1586,7 +1631,7 @@ function renderLabContent(area, lab, entry) {
   const isTags = entry.format === 'labtags';
   if (isTags) {
     const r = ltRender(entry.content || '');
-    html += `<div class="lt-status"><span>${escapeHTML(getText('entriesInfo'))}</span><span class="lt-saved">${escapeHTML(getText('entriesSaved'))}</span><button type="button" class="btn-small lt-clear" style="margin-left:auto;">${escapeHTML(getText('entriesClear'))}</button></div>`;
+    html += `<div class="lt-status"><span>${escapeHTML(isStudent() ? getText('accountSyncOn') : getText('entriesInfo'))}</span><span class="lt-saved">${escapeHTML(getText('entriesSaved'))}</span><button type="button" class="btn-small lt-clear" style="margin-left:auto;">${escapeHTML(getText('entriesClear'))}</button></div>`;
     html += `<div class="lab-body rich-content" id="lab-body">${r.html || `<p style="color:var(--muted)">${escapeHTML(getText('labNoContent'))}</p>`}</div>`;
   } else {
     html += `<div class="lab-body rich-content" id="lab-body">${entry.content && entry.content !== '<p><br></p>' ? entry.content : `<p style="color:var(--muted)">${escapeHTML(getText('labNoContent'))}</p>`}</div>`;
@@ -1609,7 +1654,7 @@ function renderLabContent(area, lab, entry) {
   }
   area.innerHTML = html;
   if (media.length) renderSlideshow(media, $('lab-media-wrap'));
-  if (isTags) ltBind(area, lab.id);
+  if (isTags) ltBind(area, lab.id, cloud);
   renderMathIn([$('lab-body')]);
   // Make YouTube embeds inside rich text privacy-friendly and lazy
   area.querySelectorAll('.embed-youtube iframe').forEach(f => { f.setAttribute('loading', 'lazy'); f.setAttribute('allowfullscreen', 'true'); });
@@ -1769,11 +1814,11 @@ async function tryLogin() {
   await reloadCatalogue();
   toast('Welcome back');
 }
-async function signInWithGoogle() {
+async function signInWithGoogle(returnHash) {
   if (!sb) { toast('This copy of the site is not connected to Supabase yet.', true); return; }
-  const btn = $('google-login-btn'); btn.disabled = true;
-  const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
-  if (error) { btn.disabled = false; toast('Google sign-in failed: ' + error.message, true); }
+  const btn = $('google-login-btn'); if (btn) btn.disabled = true;
+  const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname + (returnHash || '') } });
+  if (error) { if (btn) btn.disabled = false; toast(getText('signInError') + ' ' + error.message, true); }
 }
 // After an OAuth round trip the URL carries ?code=… (handled by supabase-js) or ?error=…; tidy it up.
 (function handleOAuthReturn() {
@@ -2357,6 +2402,39 @@ async function saveSiteText() {
 }
 
 /* ============================================================
+   ADMINS PANEL (any admin may add or remove admins)
+   ============================================================ */
+async function openAdminsModal() {
+  openModal('admins-modal'); $('admin-email').value = '';
+  await renderAdminsList();
+  setTimeout(() => $('admin-email').focus(), 100);
+}
+async function renderAdminsList() {
+  const ul = $('admins-list'); ul.innerHTML = '<li style="color:var(--muted);">Loading…</li>';
+  const { data, error } = await sb.rpc('list_admins');
+  if (error) { ul.innerHTML = `<li class="lt-error">${escapeHTML(error.message)}</li>`; return; }
+  const me = state.session?.user?.id;
+  ul.innerHTML = (data || []).map(a => `<li><span style="flex:1;">${escapeHTML(a.email)}${a.user_id === me ? ' <span class="badge">you</span>' : ''}</span>
+    ${a.user_id === me ? '' : `<button type="button" class="remove" onclick="removeAdmin('${escapeHTML(a.email)}')">Remove</button>`}</li>`).join('') || '<li style="color:var(--muted);">No admins found.</li>';
+}
+async function addAdmin() {
+  const email = $('admin-email').value.trim();
+  if (!email) { toast('Enter an email address', true); return; }
+  const { data, error } = await sb.rpc('set_admin', { p_email: email, p_admin: true });
+  if (error) { toast(error.message, true); return; }
+  if (data === 'not_found') { toast('No account with that email yet. Ask them to sign in with Google once, then try again.', true); return; }
+  $('admin-email').value = ''; toast(`${email} is now an admin (takes effect after they sign in again)`); renderAdminsList();
+}
+async function removeAdmin(email) {
+  if (!confirm(`Remove admin access from ${email}?`)) return;
+  const { data, error } = await sb.rpc('set_admin', { p_email: email, p_admin: false });
+  if (error) { toast(error.message, true); return; }
+  if (data !== 'ok') { toast(data, true); return; }
+  toast('Admin access removed'); renderAdminsList();
+}
+$('admin-email').addEventListener('keydown', e => { if (e.key === 'Enter') addAdmin(); });
+
+/* ============================================================
    MODALS
    ============================================================ */
 function openModal(id) { $(id).classList.add('open'); }
@@ -2714,11 +2792,23 @@ async function fileToDataUrl(file, maxEdge = 1400, quality = 0.8) {
   return c.toDataURL('image/jpeg', quality);
 }
 
-function ltBind(area, labId) {
-  const entries = ltLoad(labId);
-  let timer = null;
+async function ltFetchCloud(labId) {
+  if (!sb || !isStudent() || state.source !== 'live') return null;
+  try { const { data } = await sb.from('lab_entries').select('data, updated_at').eq('lab_id', labId).maybeSingle(); return data || null; }
+  catch (e) { return null; }
+}
+function ltBind(area, labId, cloud = null) {
+  let entries = ltLoad(labId);
+  // Merge with the student's account copy: newer side wins; the older side is brought up to date.
+  const useCloud = !!(cloud && cloud.data && (!entries._savedAt || new Date(cloud.updated_at) > new Date(entries._savedAt)));
+  if (useCloud) { entries = { ...cloud.data, _savedAt: cloud.updated_at }; ltStore(labId, entries); }
+  else if (cloud !== null && entries._savedAt && (!cloud || new Date(entries._savedAt) > new Date(cloud.updated_at))) ltPushCloud(labId, entries);
+  let timer = null, cloudTimer = null;
   const flash = () => { const el = area.querySelector('.lt-saved'); if (!el) return; el.classList.add('show'); clearTimeout(flash._t); flash._t = setTimeout(() => el.classList.remove('show'), 1200); };
-  const save = () => { clearTimeout(timer); timer = setTimeout(() => { ltStore(labId, entries); flash(); }, 300); };
+  const save = () => {
+    clearTimeout(timer); timer = setTimeout(() => { entries._savedAt = new Date().toISOString(); ltStore(labId, entries); flash(); }, 300);
+    if (isStudent()) { clearTimeout(cloudTimer); cloudTimer = setTimeout(() => ltPushCloud(labId, entries), 1500); }
+  };
 
   // extra table rows first, so their fields exist before restore
   area.querySelectorAll('.lt-table-wrap').forEach(wrap => {
@@ -2767,6 +2857,13 @@ function ltBind(area, labId) {
     for (const k of await ltPhotoKeys(labId + '|')) await ltPhotoDel(k);
     render();
   });
+}
+
+async function ltPushCloud(labId, entries) {
+  if (!sb || !isStudent() || state.source !== 'live') return;
+  const data = { ...entries }; delete data._savedAt;
+  const { error } = await sb.from('lab_entries').upsert({ user_id: state.session.user.id, lab_id: labId, data, updated_at: entries._savedAt || new Date().toISOString() });
+  if (error) console.warn('cloud save failed:', error.message);
 }
 
 /* ---------- Editor integration ---------- */
@@ -2829,14 +2926,9 @@ function previewLabMarkup(now) {
     render();
     if (sb) sb.auth.onAuthStateChange((event, session) => {
       const was = isAdmin(); state.session = session; state.role = roleFromSession(session);
-      if (event === 'SIGNED_IN' && session && !isAdmin()) {
-        // Until student accounts exist, only admins may hold a session on this site.
-        sb.auth.signOut(); state.session = null; state.role = null;
-        toast('That Google account is not an admin account.', true);
-        return;
-      }
       document.body.classList.toggle('admin-mode', isAdmin());
       if (was !== isAdmin()) { closeModal('login-modal'); reloadCatalogue(); if (isAdmin() && event === 'SIGNED_IN') toast('Welcome back'); }
+      else if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') { renderChrome(); render(); }
     });
   } catch (e) {
     console.error(e);

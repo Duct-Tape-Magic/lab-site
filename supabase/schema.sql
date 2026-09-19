@@ -390,3 +390,76 @@ end $$;
 --   where email = 'YOUR-ADMIN-EMAIL';
 -- Then sign out and back in on the site so the new role is in the session.
 -- ------------------------------------------------------------
+-- Student accounts (Google sign-in) and per-student lab entries
+create table if not exists public.lab_entries (
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  lab_id     text not null,
+  data       jsonb not null default '{}',
+  updated_at timestamptz not null default now(),
+  primary key (user_id, lab_id)
+);
+alter table public.lab_entries enable row level security;
+drop policy if exists "own entries" on public.lab_entries;
+create policy "own entries" on public.lab_entries for all
+  using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists "admin reads entries" on public.lab_entries;
+create policy "admin reads entries" on public.lab_entries for select using (is_admin());
+
+-- Every new auth user gets a students row (name/email from Google); admins are skipped later via role
+create or replace function public.handle_new_user() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.students (user_id, email, full_name)
+  values (new.id, coalesce(new.email, ''), coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name'))
+  on conflict (user_id) do update set email = excluded.email, full_name = coalesce(excluded.full_name, students.full_name);
+  return new;
+end $$;
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+-- Students may update their own display name
+drop policy if exists "student updates self" on public.students;
+create policy "student updates self" on public.students for update
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- A student can delete their own account (cascades to students, lab_entries, group_members)
+create or replace function public.delete_my_account() returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null then raise exception 'not signed in'; end if;
+  if is_admin() then raise exception 'admin accounts cannot be deleted from the site'; end if;
+  delete from auth.users where id = auth.uid();
+end $$;
+revoke execute on function public.delete_my_account() from public, anon;
+grant execute on function public.delete_my_account() to authenticated;
+
+
+-- Admin management: any admin may grant or revoke the admin role by email (used by the Admins panel)
+create or replace function public.list_admins() returns table(email text, user_id uuid, created_at timestamptz)
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'admin only'; end if;
+  return query select u.email::text, u.id, u.created_at from auth.users u
+    where coalesce(u.raw_app_meta_data->>'role', '') = 'admin' order by u.created_at;
+end $$;
+
+create or replace function public.set_admin(p_email text, p_admin boolean) returns text
+language plpgsql security definer set search_path = public as $$
+declare v_id uuid; v_email text := lower(trim(p_email));
+begin
+  if not is_admin() then raise exception 'admin only'; end if;
+  select id into v_id from auth.users where lower(email) = v_email;
+  if v_id is null then return 'not_found'; end if;
+  if v_id = auth.uid() and not p_admin then return 'cannot_remove_self'; end if;
+  if p_admin then
+    update auth.users set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || '{"role":"admin"}'::jsonb where id = v_id;
+  else
+    update auth.users set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) - 'role' where id = v_id;
+  end if;
+  return 'ok';
+end $$;
+revoke execute on function public.list_admins() from public, anon;
+grant execute on function public.list_admins() to authenticated;
+revoke execute on function public.set_admin(text, boolean) from public, anon;
+grant execute on function public.set_admin(text, boolean) to authenticated;
