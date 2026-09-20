@@ -327,6 +327,7 @@
   .btn-accent:hover { background: var(--accent); color: var(--bg); }
   .btn-danger { border-color: var(--danger); color: var(--danger); }
   .btn-danger:hover { background: var(--danger); color: white; }
+  .google-btn-host { min-height: 44px; display: flex; justify-content: center; }
   .google-btn { display: inline-flex; align-items: center; gap: 0.6rem; width: 100%; justify-content: center; text-transform: none; letter-spacing: 0.02em; font-size: 14px; }
 
   /* ---------- Admin bar ---------- */
@@ -616,7 +617,8 @@
     <button class="modal-close" onclick="closeModal('login-modal')">×</button>
     <h2 id="login-title">Log in</h2>
     <p id="login-intro" style="font-size:13px; color:var(--muted); margin-bottom:1.25rem; line-height:1.6;"></p>
-    <button type="button" class="btn google-btn" onclick="signInWithGoogle()" id="google-login-btn"><svg viewBox="0 0 48 48" width="16" height="16" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.6 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.3l7.8 6C12.3 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17z"/><path fill="#FBBC05" d="M10.4 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.8-6C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.7l7.8-6z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.7-4.1-13.6-9.8l-7.8 6C6.5 42.6 14.6 48 24 48z"/></svg><span id="login-google-label">Continue with Google</span></button>
+    <div id="google-btn-modal" class="google-btn-host"></div>
+    <button type="button" class="btn google-btn" onclick="signInWithGoogle()" id="google-login-btn" hidden><svg viewBox="0 0 48 48" width="16" height="16" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.6 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.3l7.8 6C12.3 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17z"/><path fill="#FBBC05" d="M10.4 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.8-6C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.7l7.8-6z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.7-4.1-13.6-9.8l-7.8 6C6.5 42.6 14.6 48 24 48z"/></svg><span id="login-google-label">Continue with Google</span></button>
     <p id="login-hint" style="font-size:12px; color:var(--muted); margin-top:0.75rem; line-height:1.6;"></p>
     <details class="login-admin">
       <summary id="login-admin-toggle">Admin email and password</summary>
@@ -969,6 +971,7 @@
 const CONFIG = {
   SUPABASE_URL: 'https://nioebkjtrweyxvboajyv.supabase.co',
   SUPABASE_KEY: 'sb_publishable_jN60UhZRWeZupyJKAgVvSQ_ba9u6OYt',
+  GOOGLE_CLIENT_ID: '670094637088-pkgtj3soa53ak3l46fhht7bqaaqvap6e.apps.googleusercontent.com',
   PUBLIC_BUCKET: 'lab-files-public',
   PRIVATE_BUCKET: 'lab-files-private',
   SNAPSHOT_URL: 'data/snapshot.json',
@@ -1634,9 +1637,10 @@ function renderSignIn(view) {
   view.innerHTML = `<section class="page"><h1 class="page-title">${escapeHTML(getText('signInTitle'))}</h1>
     <div style="max-width:480px;">
       <p style="color:var(--muted); font-size:15px;">${escapeHTML(getText('signInIntro'))}</p>
-      <div style="margin:1.5rem 0 0.75rem;"><button type="button" class="btn google-btn" onclick="signInWithGoogle('#/signin')">${GOOGLE_SVG}${escapeHTML(getText('signInGoogle'))}</button></div>
+      <div style="margin:1.5rem 0 0.75rem;"><div id="google-btn-page" class="google-btn-host" style="justify-content:flex-start;"></div><button type="button" class="btn google-btn" id="google-page-btn" onclick="signInWithGoogle('#/signin')" hidden>${GOOGLE_SVG}${escapeHTML(getText('signInGoogle'))}</button></div>
       <p style="color:var(--muted); font-size:13px;">${escapeHTML(getText('signInCreateHint'))}</p>
     </div></section>`;
+  mountGoogleButton($('google-btn-page'), $('google-page-btn'), '#/signin');
 }
 function renderPrivacy(view) {
   document.title = `${getText('privacyTitle')} · ${getText('siteTitle')}`;
@@ -1872,6 +1876,7 @@ function openLogin() {
   $('login-email').value = ''; $('login-password').value = '';
   document.querySelector('.login-admin').open = false;
   openModal('login-modal');
+  mountGoogleButton($('google-btn-modal'), $('google-login-btn'), null);
 }
 const openAdminLogin = openLogin;
 async function tryLogin() {
@@ -1890,6 +1895,44 @@ async function tryLogin() {
   closeModal('login-modal');
   await reloadCatalogue();
   toast('Welcome back');
+}
+/* Google Identity Services: Google's own button on our page, so the account chooser names this site
+   rather than the Supabase server. Falls back to the redirect flow if Google's script cannot load. */
+let gisLoad = null;
+function loadGis() {
+  if (window.google?.accounts?.id) return Promise.resolve();
+  if (gisLoad) return gisLoad;
+  gisLoad = new Promise((res, rej) => {
+    const el = document.createElement('script'); el.src = 'https://accounts.google.com/gsi/client'; el.async = true; el.defer = true;
+    el.onload = () => res(); el.onerror = () => { gisLoad = null; rej(new Error('Google sign-in script did not load')); };
+    document.head.appendChild(el);
+  });
+  return gisLoad;
+}
+async function sha256hex(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+async function mountGoogleButton(host, fallbackBtn, returnHash) {
+  if (!host) return;
+  if (!sb || !CONFIG.GOOGLE_CLIENT_ID || !window.crypto?.subtle) { host.hidden = true; if (fallbackBtn) fallbackBtn.hidden = false; return; }
+  try {
+    await loadGis();
+    const nonce = crypto.randomUUID(), hashed = await sha256hex(nonce);
+    google.accounts.id.initialize({
+      client_id: CONFIG.GOOGLE_CLIENT_ID, nonce: hashed, ux_mode: 'popup', use_fedcm_for_prompt: false, itp_support: true,
+      callback: async resp => {
+        const { error } = await sb.auth.signInWithIdToken({ provider: 'google', token: resp.credential, nonce });
+        if (error) { toast(getText('signInError') + ' ' + error.message, true); return; }
+        closeModal('login-modal');
+        if (returnHash) navigate(returnHash);
+      }
+    });
+    host.innerHTML = ''; host.hidden = false; if (fallbackBtn) fallbackBtn.hidden = true;
+    google.accounts.id.renderButton(host, { theme: 'outline', size: 'large', text: 'continue_with', shape: 'rectangular', logo_alignment: 'left', width: Math.min(360, Math.max(240, host.clientWidth || 320)) });
+  } catch (e) {
+    console.warn(e); host.hidden = true; if (fallbackBtn) fallbackBtn.hidden = false;
+  }
 }
 async function signInWithGoogle(returnHash) {
   if (!sb) { toast('This copy of the site is not connected to Supabase yet.', true); return; }
