@@ -485,6 +485,10 @@
   .lt-figure img { max-width: 100%; display: block; }
   .lt-figure figcaption { font-size: 12px; color: var(--muted); margin-top: 0.4rem; }
   .lt-figure-pending { border: 1.5px dashed var(--rule-strong); padding: 2rem; text-align: center; color: var(--muted); font-size: 13px; }
+  .lt-figure-upload-hint { display: none; margin-top: 0.4rem; color: var(--accent); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .lt-preview .lt-figure-pending { cursor: pointer; }
+  .lt-preview .lt-figure-pending:hover { border-color: var(--accent); color: var(--accent); }
+  .lt-preview .lt-figure-upload-hint { display: block; }
   .lt-status { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; font-size: 12px; color: var(--muted); margin: 0 0 1.5rem; padding: 0.6rem 0; border-top: 0.5px solid var(--rule); border-bottom: 0.5px solid var(--rule); max-width: var(--measure); }
   .lt-saved { color: var(--accent); opacity: 0; transition: opacity 0.3s; }
   .lt-saved.show { opacity: 1 !important; }
@@ -2890,7 +2894,7 @@ function ltWidget(name, o, body, ctx, widgets) {
     case 'figure': {
       const src = (body || '').trim().replace(/^img:/, '');
       const cap = o.caption ? `<figcaption>${ltInline(o.caption, ctx)}</figcaption>` : '';
-      if (!src || /^(IMAGE|FIGURE)[_-]?\w*$/i.test(src)) return `<figure class="lt-figure"><div class="lt-figure-pending">${escapeHTML(getText('figurePending'))}${src ? ` (${escapeHTML(src)})` : ''}</div>${cap}</figure>`;
+      if (!src || /^(IMAGE|FIGURE)[_-]?\w*$/i.test(src)) return `<figure class="lt-figure"><div class="lt-figure-pending" data-pending="${escapeHTML(src)}">${escapeHTML(getText('figurePending'))}${src ? ` (${escapeHTML(src)})` : ''}<span class="lt-figure-upload-hint">Click to upload this picture</span></div>${cap}</figure>`;
       return `<figure class="lt-figure"><img src="${escapeHTML(fileUrl(src))}" alt="${escapeHTML(o.caption || '')}" loading="lazy"/>${cap}</figure>`;
     }
     case 'pagebreak': return `<div class="lt-pagebreak"></div>`;
@@ -3190,6 +3194,26 @@ function loadLabMarkupFromFile(f) {
   r.readAsText(f);
 }
 function importLabMarkupFile(input) { const f = input.files[0]; if (f) loadLabMarkupFromFile(f); input.value = ''; }
+function uploadPendingFigure(token) {
+  const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*';
+  input.onchange = async () => {
+    const f = input.files[0]; if (!f) return;
+    try {
+      toast('Uploading image…');
+      const up = await uploadFile(f, labUploadFolder());
+      const ta = $('lab-markup');
+      if (token) {
+        // Replace every {IMAGE_n} reference to this placeholder with the uploaded path
+        const re = new RegExp('\\{\\s*' + token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\}', 'g');
+        ta.value = ta.value.replace(re, '{' + up.path + '}');
+      } else {
+        ta.value = ta.value.replace(/\\figure(\[[^\]]*\])?\{\s*\}/, (m, o) => `\\figure${o || ''}{${up.path}}`);
+      }
+      previewLabMarkup(true); toast('Picture added to the lab file');
+    } catch (e) { toast('Upload failed: ' + e.message, true); }
+  };
+  input.click();
+}
 async function insertLabMarkupImage(input) {
   const f = input.files[0]; input.value = ''; if (!f) return;
   try {
@@ -3221,6 +3245,7 @@ function previewLabMarkup(now) {
     $('lab-markup-errors').innerHTML = errors.map(e => `<div class="lt-error">${escapeHTML(e)}</div>`).join('');
     const pv = $('lab-markup-preview'); pv.innerHTML = html;
     ltBind(pv, 'preview'); renderMathIn([pv]);
+    pv.querySelectorAll('.lt-figure-pending').forEach(box => box.addEventListener('click', () => uploadPendingFigure(box.dataset.pending || '')));
   };
   now ? run() : (ltPreviewTimer = setTimeout(run, 400));
 }
