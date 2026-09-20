@@ -694,9 +694,9 @@
       <label>Lab file</label>
       <div class="lt-toolbar">
         <label class="btn-small">Import file… <input type="file" id="lab-markup-file" accept=".md,.txt,.tex,text/plain,text/markdown" onchange="importLabMarkupFile(this)"/></label>
-        <button type="button" class="btn-small" onclick="applyLabMarkupMeta(true)">Apply header to fields</button>
+        <button type="button" class="btn-small" onclick="applyLabMarkupMeta(true)" title="Copy the file's \\title, \\summary, \\tags and \\minutes into the fields above (asks before replacing anything you typed)">Apply header to fields</button>
         <button type="button" class="btn-small" onclick="previewLabMarkup(true)">Refresh preview</button>
-        <span class="hint" style="margin:0;">Paste the file below, or import it. The preview updates as you type.</span>
+        <span class="hint" style="margin:0;">Paste or import the file. Importing fills only empty fields above; your own summary, tags and time are kept.</span>
       </div>
       <textarea id="lab-markup" class="lt-markup" spellcheck="false" placeholder="\title{Determination of Ka for Weak Acids}
 \summary{One or two sentences for the card.}
@@ -3242,7 +3242,7 @@ function loadLabMarkupFromFile(f) {
   const r = new FileReader();
   r.onload = () => {
     $('lab-format').value = 'labtags'; onLabFormatChange();
-    $('lab-markup').value = String(r.result || ''); applyLabMarkupMeta(true); previewLabMarkup(true);
+    $('lab-markup').value = String(r.result || ''); applyLabMarkupMeta(false); previewLabMarkup(true);
     toast('Lab file imported'); $('lab-markup-row').scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
   r.readAsText(f);
@@ -3332,6 +3332,11 @@ function uploadPendingFigure(token) {
   ta.addEventListener('drop', e => { const f = Array.from(e.dataTransfer.files).find(isLabFile); if (f) loadLabMarkupFromFile(f); }); })();
 function applyLabMarkupMeta(force) {
   const meta = ltParseMeta($('lab-markup').value);
+  if (force) {
+    const filled = [['title', $('lab-title').value], ['summary', $('lab-summary').value], ['tags', $('lab-tags').value], ['minutes', $('lab-minutes').value]]
+      .filter(([k, v]) => v && meta[k] !== undefined && String(meta[k]) !== String(v)).map(([k]) => k);
+    if (filled.length && !confirm(`Replace what you typed for ${filled.join(', ')} with the values from the lab file's header?`)) return;
+  }
   if (meta.title && (force || !$('lab-title').value)) { $('lab-title').value = meta.title; if (!labSlugTouched || force) { labSlugTouched = false; onLabTitleInput(); } }
   if (meta.summary && (force || !$('lab-summary').value)) $('lab-summary').value = meta.summary;
   if (meta.tags && (force || !$('lab-tags').value)) $('lab-tags').value = meta.tags;
