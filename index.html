@@ -1012,7 +1012,6 @@ const DEFAULTS = {
   labMinutes: 'About {n} minutes',
   labUpdated: 'Last updated {date}',
   labFilesLabel: 'Files',
-  labOpenFile: 'Open',
   labDownloadFile: 'Download',
   labViewInline: 'View here',
   labPrint: 'Print',
@@ -1089,7 +1088,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Home page', keys: ['homeFoldersLabel', 'homeLabsLabel', 'homeEmpty'] },
   { label: 'Folder pages', keys: ['folderSectionsLabel', 'folderLabsLabel', 'folderEmpty'] },
   { label: 'Cards', keys: ['cardMinutes', 'cardUpdated', 'lockedBadge', 'signInRequiredBadge', 'draftBadge', 'scheduledBadge', 'hiddenBadge'] },
-  { label: 'Lab page', keys: ['labMinutes', 'labUpdated', 'labFilesLabel', 'labOpenFile', 'labDownloadFile', 'labViewInline', 'labPrint', 'labCopyLink', 'labLinkCopied', 'labPrev', 'labNext', 'labNoContent'] },
+  { label: 'Lab page', keys: ['labMinutes', 'labUpdated', 'labFilesLabel', 'labDownloadFile', 'labViewInline', 'labPrint', 'labCopyLink', 'labLinkCopied', 'labPrev', 'labNext', 'labNoContent'] },
   { label: 'Locked labs', keys: ['lockPasswordTitle', 'lockPasswordPrompt', 'lockPasswordPlaceholder', 'lockPasswordButton', 'lockPasswordWrong', 'lockTooMany', 'lockAccountsTitle', 'lockAccountsPrompt', 'lockNotAllowed', 'lockAdminOnly', 'lockUnavailable'] },
   { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'privacyLink', 'privacyTitle'] },
   { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
@@ -1103,7 +1102,7 @@ const TEXT_LABELS = {
   folderSectionsLabel: 'Sub-folders heading', folderLabsLabel: 'Labs heading', folderEmpty: 'Empty folder message',
   cardMinutes: 'Minutes on cards', cardUpdated: 'Updated date on cards', lockedBadge: 'Locked badge', signInRequiredBadge: 'Sign-in badge',
   draftBadge: 'Draft badge (admins)', scheduledBadge: 'Scheduled badge (admins)', hiddenBadge: 'Unlisted badge (admins)',
-  labMinutes: 'Minutes line', labUpdated: 'Updated line', labFilesLabel: 'Files heading', labOpenFile: 'Open button', labDownloadFile: 'Download button', labViewInline: 'View-here button',
+  labMinutes: 'Minutes line', labUpdated: 'Updated line', labFilesLabel: 'Files heading', labDownloadFile: 'Download button', labViewInline: 'View-here button',
   labPrint: 'Print button', labCopyLink: 'Copy link button', labLinkCopied: 'Link copied message', labPrev: 'Previous lab link', labNext: 'Next lab link', labNoContent: 'No procedure text message',
   lockPasswordTitle: 'Password lock title', lockPasswordPrompt: 'Password lock prompt', lockPasswordPlaceholder: 'Password field placeholder', lockPasswordButton: 'Unlock button',
   lockPasswordWrong: 'Wrong password message', lockTooMany: 'Too many attempts message', lockAccountsTitle: 'Account lock title', lockAccountsPrompt: 'Account lock prompt',
@@ -1724,8 +1723,8 @@ function renderLabContent(area, lab, entry, cloud = null, readOnly = false) {
           <div class="file-icon">${escapeHTML(ext)}</div>
           <div class="file-name">${escapeHTML(a.name)}<span>${escapeHTML(humanSize(a.size_bytes))}</span></div>
           <div class="file-actions">
+            <a class="btn-small" href="${escapeHTML(url)}?download=${encodeURIComponent(a.name)}" download="${escapeHTML(a.name)}" onclick="logEvent('download', { lab_id: '${lab.id}', path: '${escapeHTML(a.path)}' })">${escapeHTML(getText('labDownloadFile'))}</a>
             ${isPdf ? `<button class="btn-small" onclick="toggleInlinePdf(this, '${escapeHTML(url)}')">${escapeHTML(getText('labViewInline'))}</button>` : ''}
-            <a class="btn-small" href="${escapeHTML(url)}" target="_blank" rel="noopener" onclick="logEvent('download', { lab_id: '${lab.id}', path: '${escapeHTML(a.path)}' })">${escapeHTML(getText(isPdf ? 'labOpenFile' : 'labDownloadFile'))}</a>
           </div>
         </li>`;
       }).join('') + `</ul>`;
