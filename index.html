@@ -3242,7 +3242,7 @@ function renderFiguresManager() {
     ${paths.length ? `<div class="fig-list">${paths.map(p => `<div class="fig-item ${used.includes(p) ? '' : 'unused'}">
         <img src="${escapeHTML(fileUrl(p))}" alt=""/>
         <div class="fig-name" title="${escapeHTML(p)}">${escapeHTML(p.split('/').pop())}${used.includes(p) ? '' : ' (not in the text yet)'}</div>
-        <div class="fig-actions"><button type="button" onclick="insertFigureRef(${JSON.stringify(p)})">Insert</button><button type="button" class="danger" onclick="removeFigure(${JSON.stringify(p)})">Remove</button></div>
+        <div class="fig-actions"><button type="button" onclick="insertFigureRef('${escapeHTML(p)}')">Insert</button><button type="button" class="danger" onclick="removeFigure('${escapeHTML(p)}')">Remove</button></div>
       </div>`).join('')}</div>` : ''}`;
   setupDropzone('fig-dropzone', 'fig-file-input', async files => {
     for (const f of files) {
