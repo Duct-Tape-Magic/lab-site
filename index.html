@@ -489,6 +489,14 @@
   .lt-preview .lt-figure-pending { cursor: pointer; }
   .lt-preview .lt-figure-pending:hover { border-color: var(--accent); color: var(--accent); }
   .lt-preview .lt-figure-upload-hint { display: block; }
+  .fig-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.6rem; }
+  .fig-item { border: 0.5px solid var(--rule); padding: 0.4rem; font-size: 11px; }
+  .fig-item img { width: 100%; height: 90px; object-fit: cover; display: block; background: var(--card-bg); }
+  .fig-item .fig-name { margin: 0.35rem 0; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fig-item .fig-actions { display: flex; gap: 0.3rem; }
+  .fig-item .fig-actions button { flex: 1; background: none; border: 0.5px solid var(--rule-strong); cursor: pointer; font-family: inherit; font-size: 10px; padding: 3px 4px; color: var(--ink); letter-spacing: 0.04em; text-transform: uppercase; }
+  .fig-item .fig-actions button.danger { color: var(--danger); }
+  .fig-item.unused { border-style: dashed; }
   .lt-status { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; font-size: 12px; color: var(--muted); margin: 0 0 1.5rem; padding: 0.6rem 0; border-top: 0.5px solid var(--rule); border-bottom: 0.5px solid var(--rule); max-width: var(--measure); }
   .lt-saved { color: var(--accent); opacity: 0; transition: opacity 0.3s; }
   .lt-saved.show { opacity: 1 !important; }
@@ -686,7 +694,6 @@
         <label class="btn-small">Import file… <input type="file" id="lab-markup-file" accept=".md,.txt,.tex,text/plain,text/markdown" onchange="importLabMarkupFile(this)"/></label>
         <button type="button" class="btn-small" onclick="applyLabMarkupMeta(true)">Apply header to fields</button>
         <button type="button" class="btn-small" onclick="previewLabMarkup(true)">Refresh preview</button>
-        <label class="btn-small">Insert image… <input type="file" id="lab-markup-image" accept="image/*" onchange="insertLabMarkupImage(this)"/></label>
         <span class="hint" style="margin:0;">Paste the file below, or import it. The preview updates as you type.</span>
       </div>
       <textarea id="lab-markup" class="lt-markup" spellcheck="false" placeholder="\title{Determination of Ka for Weak Acids}
@@ -697,6 +704,9 @@
 # Objectives
 ..." oninput="previewLabMarkup()"></textarea>
       <div id="lab-markup-errors"></div>
+      <div style="margin:1rem 0 0.4rem; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted);">Figures in this lab file</div>
+      <div class="media-manager" id="lab-figures-manager"></div>
+      <div style="margin:1rem 0 0.4rem; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted);">Preview</div>
       <div id="lab-markup-preview" class="lt-preview rich-content"></div>
     </div>
     <div class="form-row">
@@ -2232,6 +2242,7 @@ async function openLabModal(id) {
     if (!entry) entry = { media: [], content: '', attachments: [] };
   }
   editingLabId = lab ? lab.id : 'l-' + Date.now();
+  labFigureUploads = [];
   labSlugTouched = !!lab;
   $('lab-modal-title').textContent = lab ? 'Edit lab' : 'Add a lab';
   $('delete-lab-btn').style.display = lab ? 'inline-block' : 'none';
@@ -3194,37 +3205,83 @@ function loadLabMarkupFromFile(f) {
   r.readAsText(f);
 }
 function importLabMarkupFile(input) { const f = input.files[0]; if (f) loadLabMarkupFromFile(f); input.value = ''; }
+let labFigureUploads = [];   // paths uploaded during this editing session (may not be referenced yet)
+function labFilePaths(text) {
+  const re = /labs\/l-[A-Za-z0-9._%-]+\/[A-Za-z0-9._%-]+/g; const out = []; let m;
+  while ((m = re.exec(text || ''))) out.push(m[0]);
+  return [...new Set(out)];
+}
+function insertLineAtCursor(ta, line) {
+  // Insert on its own line after the line the cursor is on, never splitting a sentence.
+  const v = ta.value, pos = ta.selectionStart ?? v.length;
+  let end = v.indexOf('\n', pos); if (end === -1) end = v.length;
+  const before = v.slice(0, end), after = v.slice(end);
+  const sep1 = before === '' ? '' : (before.endsWith('\n\n') ? '' : (before.endsWith('\n') ? '\n' : '\n\n'));
+  const sep2 = after.startsWith('\n\n') ? '' : (after.startsWith('\n') ? '\n' : '\n\n');
+  ta.value = before + sep1 + line + sep2 + after;
+  const caret = (before + sep1 + line).length; ta.selectionStart = ta.selectionEnd = caret;
+}
+async function uploadFigureFile(f) {
+  toast('Uploading image…');
+  const up = await uploadFile(f, labUploadFolder());
+  labFigureUploads.push(up.path);
+  return up.path;
+}
+function renderFiguresManager() {
+  const c = $('lab-figures-manager'); if (!c) return;
+  const text = $('lab-markup').value;
+  const used = labFilePaths(text);
+  const paths = [...new Set([...used, ...labFigureUploads])].filter(p => /\.(png|jpe?g|gif|webp|svg)$/i.test(p));
+  const placeholders = [...new Set((text.match(/\{\s*(IMAGE|FIGURE)[_-]?\w*\s*\}/gi) || []).map(t => t.replace(/[{}\s]/g, '')))];
+  c.innerHTML = `
+    <label class="media-dropzone" id="fig-dropzone" style="padding:1rem;">
+      <input type="file" accept="image/*" multiple id="fig-file-input"/>
+      <div>Drop pictures here, or <u>click to choose</u>. Each one goes on its own line just below where your cursor is in the text.</div>
+      ${placeholders.length ? `<div style="font-size:11px; margin-top:0.4rem; opacity:0.8;">Waiting for a picture: ${placeholders.map(escapeHTML).join(', ')}. Click the dashed box in the preview to fill one.</div>` : ''}
+    </label>
+    ${paths.length ? `<div class="fig-list">${paths.map(p => `<div class="fig-item ${used.includes(p) ? '' : 'unused'}">
+        <img src="${escapeHTML(fileUrl(p))}" alt=""/>
+        <div class="fig-name" title="${escapeHTML(p)}">${escapeHTML(p.split('/').pop())}${used.includes(p) ? '' : ' (not in the text yet)'}</div>
+        <div class="fig-actions"><button type="button" onclick="insertFigureRef(${JSON.stringify(p)})">Insert</button><button type="button" class="danger" onclick="removeFigure(${JSON.stringify(p)})">Remove</button></div>
+      </div>`).join('')}</div>` : ''}`;
+  setupDropzone('fig-dropzone', 'fig-file-input', async files => {
+    for (const f of files) {
+      try { const path = await uploadFigureFile(f); insertLineAtCursor($('lab-markup'), `\\figure[caption=]{${path}}`); }
+      catch (e) { toast('Upload failed: ' + e.message, true); }
+    }
+    previewLabMarkup(true);
+  }, f => f.type.startsWith('image/'));
+}
+function insertFigureRef(path) { insertLineAtCursor($('lab-markup'), `\\figure[caption=]{${path}}`); previewLabMarkup(true); toast('Figure inserted below the current line'); }
+async function removeFigure(path) {
+  if (!confirm('Remove this picture from the lab file and delete the uploaded file?')) return;
+  const ta = $('lab-markup');
+  const esc = path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  ta.value = ta.value
+    .replace(new RegExp('^[ \\t]*\\\\figure(\\[[^\\]]*\\])?\\{\\s*(img:)?' + esc + '\\s*\\}[ \\t]*\\n?', 'gm'), '')
+    .replace(new RegExp('!\\[[^\\]]*\\]\\(\\s*(img:)?' + esc + '\\s*\\)', 'g'), '');
+  ta.value = ta.value.replace(/\n{3,}/g, '\n\n');
+  labFigureUploads = labFigureUploads.filter(p => p !== path);
+  await removeStoragePaths([path]);
+  previewLabMarkup(true); toast('Picture removed');
+}
 function uploadPendingFigure(token) {
   const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*';
   input.onchange = async () => {
     const f = input.files[0]; if (!f) return;
     try {
-      toast('Uploading image…');
-      const up = await uploadFile(f, labUploadFolder());
+      const path = await uploadFigureFile(f);
       const ta = $('lab-markup');
       if (token) {
-        // Replace every {IMAGE_n} reference to this placeholder with the uploaded path
         const re = new RegExp('\\{\\s*' + token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\}', 'g');
-        ta.value = ta.value.replace(re, '{' + up.path + '}');
+        ta.value = ta.value.replace(re, '{' + path + '}');
       } else {
-        ta.value = ta.value.replace(/\\figure(\[[^\]]*\])?\{\s*\}/, (m, o) => `\\figure${o || ''}{${up.path}}`);
+        ta.value = ta.value.replace(/\\figure(\[[^\]]*\])?\{\s*\}/, (m, o) => `\\figure${o || ''}{${path}}`);
       }
-      previewLabMarkup(true); toast('Picture added to the lab file');
+      previewLabMarkup(true); toast('Picture added');
     } catch (e) { toast('Upload failed: ' + e.message, true); }
   };
   input.click();
-}
-async function insertLabMarkupImage(input) {
-  const f = input.files[0]; input.value = ''; if (!f) return;
-  try {
-    toast('Uploading image…');
-    const up = await uploadFile(f, labUploadFolder());
-    const ta = $('lab-markup'); const pos = ta.selectionStart ?? ta.value.length;
-    const line = `\n\\figure[caption=]{${up.path}}\n`;
-    ta.value = ta.value.slice(0, pos) + line + ta.value.slice(pos);
-    ta.focus(); ta.selectionStart = ta.selectionEnd = pos + line.indexOf('caption=') + 8;
-    previewLabMarkup(true); toast('Image inserted — add a caption if you like');
-  } catch (e) { toast('Upload failed: ' + e.message, true); }
 }
 // The lab-file text box accepts a dropped .md file too
 (() => { const ta = $('lab-markup'); ['dragenter', 'dragover'].forEach(ev => ta.addEventListener(ev, e => { e.preventDefault(); ta.style.borderColor = 'var(--accent)'; }));
@@ -3246,6 +3303,7 @@ function previewLabMarkup(now) {
     const pv = $('lab-markup-preview'); pv.innerHTML = html;
     ltBind(pv, 'preview'); renderMathIn([pv]);
     pv.querySelectorAll('.lt-figure-pending').forEach(box => box.addEventListener('click', () => uploadPendingFigure(box.dataset.pending || '')));
+    renderFiguresManager();
   };
   now ? run() : (ltPreviewTimer = setTimeout(run, 400));
 }
