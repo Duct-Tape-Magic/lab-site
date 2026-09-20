@@ -3236,10 +3236,13 @@ function previewLabMarkup(now) {
     renderChrome();
     render();
     if (sb) sb.auth.onAuthStateChange((event, session) => {
+      // The library fires SIGNED_IN / TOKEN_REFRESHED whenever the tab regains focus; only react when the user actually changes.
+      const prevUser = state.session?.user?.id || null, nextUser = session?.user?.id || null;
       const was = isAdmin(); state.session = session; state.role = roleFromSession(session);
+      if (prevUser === nextUser) return;
       document.body.classList.toggle('admin-mode', isAdmin());
       if (was !== isAdmin()) { closeModal('login-modal'); reloadCatalogue(); if (isAdmin() && event === 'SIGNED_IN') toast('Welcome back'); }
-      else if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') { renderChrome(); render(); }
+      else { renderChrome(); render(); }
     });
   } catch (e) {
     console.error(e);
