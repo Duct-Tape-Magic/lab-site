@@ -31,7 +31,7 @@ Headings (`#`, `##`, `###`), paragraphs, **bold**, *italic*, numbered lists (`1.
 | `\procedure{ numbered list }` | Wraps a numbered list of steps; every step gets its own collapsible notes box automatically. |
 | `\photo[id=…]{Instruction}` | A place for the student to add a photo from their phone or computer, e.g. `\photo[id=setup]{Photograph your titration setup before starting.}` |
 | `\video{YouTube link}` | Embeds the video (any YouTube link, including unlisted). |
-| `\figure[caption=…]{path or IMAGE_n}` | A figure. Use `IMAGE_1`, `IMAGE_2`… for pictures from the PDF that the teacher must upload. |
+| `\figure[caption=…]{path or IMAGE_n}` | A figure. Use `IMAGE_1`, `IMAGE_2`… for pictures from the PDF that the teacher must upload; the teacher replaces them with the site's "Insert image…" button, which uploads a PNG or JPG and writes the `\figure` line. Markdown images `![caption](path)` also work. |
 | `\safety{…}` `\warning{…}` `\info{…}` `\tip{…}` `\hint{…}` | Highlighted callout boxes. Markdown works inside. `[label=…]` overrides the box label. |
 | `\graph[table=…, x=…, y=…, type=…, fit=linear, title=…, xlabel=…, ylabel=…]{Optional caption}` | A live graph drawn from a `\datatable`. It redraws as the student types. See "Graphs" below. |
 | `\pagebreak` | Starts a new page when printed. |

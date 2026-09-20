@@ -682,6 +682,7 @@
         <label class="btn-small">Import file… <input type="file" id="lab-markup-file" accept=".md,.txt,.tex,text/plain,text/markdown" onchange="importLabMarkupFile(this)"/></label>
         <button type="button" class="btn-small" onclick="applyLabMarkupMeta(true)">Apply header to fields</button>
         <button type="button" class="btn-small" onclick="previewLabMarkup(true)">Refresh preview</button>
+        <label class="btn-small">Insert image… <input type="file" id="lab-markup-image" accept="image/*" onchange="insertLabMarkupImage(this)"/></label>
         <span class="hint" style="margin:0;">Paste the file below, or import it. The preview updates as you type.</span>
       </div>
       <textarea id="lab-markup" class="lt-markup" spellcheck="false" placeholder="\title{Determination of Ka for Weak Acids}
@@ -2934,6 +2935,7 @@ function ltRender(source) {
     const tpl = document.createElement('template'); tpl.innerHTML = html; let n = 0;
     tpl.content.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.removeAttribute('disabled'); cb.dataset.check = 'check' + (++n); });
     tpl.content.querySelectorAll('a[href^="http"]').forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
+    tpl.content.querySelectorAll('img').forEach(img => { const src = img.getAttribute('src') || ''; if (src && !/^(https?:|data:|blob:)/.test(src)) img.setAttribute('src', fileUrl(src.replace(/^img:/, ''))); });
     // The page already has the lab title as its h1, so demote the file's headings one level
     if (tpl.content.querySelector('h1')) [5, 4, 3, 2, 1].forEach(n => tpl.content.querySelectorAll('h' + n).forEach(h => { const d = document.createElement('h' + (n + 1)); d.innerHTML = h.innerHTML; h.replaceWith(d); }));
     return { html: tpl.innerHTML, meta: ctx.meta, errors: ctx.errors };
@@ -3188,6 +3190,18 @@ function loadLabMarkupFromFile(f) {
   r.readAsText(f);
 }
 function importLabMarkupFile(input) { const f = input.files[0]; if (f) loadLabMarkupFromFile(f); input.value = ''; }
+async function insertLabMarkupImage(input) {
+  const f = input.files[0]; input.value = ''; if (!f) return;
+  try {
+    toast('Uploading image…');
+    const up = await uploadFile(f, labUploadFolder());
+    const ta = $('lab-markup'); const pos = ta.selectionStart ?? ta.value.length;
+    const line = `\n\\figure[caption=]{${up.path}}\n`;
+    ta.value = ta.value.slice(0, pos) + line + ta.value.slice(pos);
+    ta.focus(); ta.selectionStart = ta.selectionEnd = pos + line.indexOf('caption=') + 8;
+    previewLabMarkup(true); toast('Image inserted — add a caption if you like');
+  } catch (e) { toast('Upload failed: ' + e.message, true); }
+}
 // The lab-file text box accepts a dropped .md file too
 (() => { const ta = $('lab-markup'); ['dragenter', 'dragover'].forEach(ev => ta.addEventListener(ev, e => { e.preventDefault(); ta.style.borderColor = 'var(--accent)'; }));
   ['dragleave', 'drop'].forEach(ev => ta.addEventListener(ev, e => { e.preventDefault(); ta.style.borderColor = ''; }));
