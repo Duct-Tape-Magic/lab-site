@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Volumetric flask: narrow neck, round bulb, flat base, calibration mark, blue liquid -->
+  <defs>
+    <clipPath id="bulb">
+      <path d="M27 6 h10 v22 c9 4 13 11 13 18 c0 7 -5 11 -10 12 h-16 c-5 -1 -10 -5 -10 -12 c0 -7 4 -14 13 -18 z"/>
+    </clipPath>
+  </defs>
+  <!-- liquid -->
+  <g clip-path="url(#bulb)">
+    <rect x="8" y="36" width="48" height="26" fill="#2f5d8a"/>
+    <ellipse cx="32" cy="36" rx="20" ry="3" fill="#3f73a6"/>
+    <circle cx="24" cy="49" r="2.5" fill="#ffffff" opacity="0.5"/>
+    <circle cx="38" cy="53" r="1.6" fill="#ffffff" opacity="0.5"/>
+  </g>
+  <!-- glass outline -->
+  <path d="M27 6 h10 v22 c9 4 13 11 13 18 c0 7 -5 11 -10 12 h-16 c-5 -1 -10 -5 -10 -12 c0 -7 4 -14 13 -18 z"
+        fill="none" stroke="#1a1a18" stroke-width="3" stroke-linejoin="round"/>
+  <!-- calibration mark and stopper lip -->
+  <line x1="27" y1="21" x2="37" y2="21" stroke="#1a1a18" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="25" y1="6" x2="39" y2="6" stroke="#1a1a18" stroke-width="3" stroke-linecap="round"/>
+</svg>
