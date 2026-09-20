@@ -812,59 +812,12 @@
     <p style="font-size:13px; color:var(--muted); margin-bottom:1.5rem; line-height:1.6;">Changes preview live. Save to publish them, or Cancel to discard.</p>
     <div style="display:flex; gap:1rem; margin-bottom:2rem; border-bottom:0.5px solid var(--rule); padding-bottom:0.5rem; flex-wrap:wrap;">
       <button type="button" class="design-tab active" data-tab="palette" onclick="switchDesignTab(event)">Palette</button>
-      <button type="button" class="design-tab" data-tab="typography" onclick="switchDesignTab(event)">Typography</button>
-      <button type="button" class="design-tab" data-tab="layout" onclick="switchDesignTab(event)">Layout</button>
       <button type="button" class="design-tab" data-tab="cards" onclick="switchDesignTab(event)">Cards</button>
-      <button type="button" class="design-tab" data-tab="background" onclick="switchDesignTab(event)">Background</button>
     </div>
 
     <div class="design-tab-panel" id="design-panel-palette">
       <p class="text-group-label" style="margin-bottom:0.75rem;">Choose a palette</p>
       <div id="palette-options" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:0.75rem; margin-bottom:2rem;"></div>
-      <div style="margin-top:1.5rem; padding-top:1.5rem; border-top:0.5px solid var(--rule);">
-        <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:13px;"><input type="checkbox" id="design-advanced-toggle" onchange="toggleAdvancedColors()"/> Advanced — pick custom colors</label>
-      </div>
-      <div id="advanced-colors" style="display:none; margin-top:1.5rem;">
-        <div class="form-row"><label>Background color</label><div style="display:flex; gap:0.5rem; align-items:center;"><input type="color" id="dc-bg" onchange="previewDesign()"/><input type="text" id="dc-bg-text" oninput="syncColorInput('dc-bg', this)" style="flex:1;"/></div></div>
-        <div class="form-row"><label>Text color</label><div style="display:flex; gap:0.5rem; align-items:center;"><input type="color" id="dc-ink" onchange="previewDesign()"/><input type="text" id="dc-ink-text" oninput="syncColorInput('dc-ink', this)" style="flex:1;"/></div></div>
-        <div class="form-row"><label>Accent color (links, highlights)</label><div style="display:flex; gap:0.5rem; align-items:center;"><input type="color" id="dc-accent" onchange="previewDesign()"/><input type="text" id="dc-accent-text" oninput="syncColorInput('dc-accent', this)" style="flex:1;"/></div></div>
-        <div class="form-row"><label>Card background</label><div style="display:flex; gap:0.5rem; align-items:center;"><input type="color" id="dc-card-bg" onchange="previewDesign()"/><input type="text" id="dc-card-bg-text" oninput="syncColorInput('dc-card-bg', this)" style="flex:1;"/></div></div>
-        <div class="form-row"><label>Muted text (captions, labels)</label><div style="display:flex; gap:0.5rem; align-items:center;"><input type="color" id="dc-muted" onchange="previewDesign()"/><input type="text" id="dc-muted-text" oninput="syncColorInput('dc-muted', this)" style="flex:1;"/></div></div>
-      </div>
-    </div>
-
-    <div class="design-tab-panel" id="design-panel-typography" style="display:none;">
-      <div class="form-row"><label>Heading font</label>
-        <select id="dc-font-heading" onchange="previewDesign()">
-          <option value="'Cormorant Garamond', serif">Cormorant Garamond (default — refined serif)</option>
-          <option value="'Playfair Display', serif">Playfair Display (high contrast serif)</option>
-          <option value="'EB Garamond', serif">EB Garamond (classic book serif)</option>
-          <option value="'Cardo', serif">Cardo (warm transitional)</option>
-          <option value="'DM Serif Display', serif">DM Serif Display (bold modern serif)</option>
-          <option value="'Inter', sans-serif">Inter (clean sans)</option>
-          <option value="'DM Sans', sans-serif">DM Sans (matches body)</option>
-          <option value="'Space Grotesk', sans-serif">Space Grotesk (geometric sans)</option>
-          <option value="'IBM Plex Mono', monospace">IBM Plex Mono (typewriter)</option>
-        </select></div>
-      <div class="form-row"><label>Body font</label>
-        <select id="dc-font-body" onchange="previewDesign()">
-          <option value="'DM Sans', sans-serif">DM Sans (default — clean modern sans)</option>
-          <option value="'Inter', sans-serif">Inter (very readable sans)</option>
-          <option value="'Work Sans', sans-serif">Work Sans (warm sans)</option>
-          <option value="'Source Sans 3', sans-serif">Source Sans (technical sans)</option>
-          <option value="'Lora', serif">Lora (readable serif)</option>
-          <option value="'Crimson Pro', serif">Crimson Pro (book serif)</option>
-          <option value="'IBM Plex Mono', monospace">IBM Plex Mono (monospace)</option>
-        </select></div>
-      <div class="form-row"><label>Base text size: <span id="dc-base-size-display">16px</span></label><input type="range" id="dc-base-size" min="13" max="20" step="1" oninput="document.getElementById('dc-base-size-display').textContent = this.value + 'px'; previewDesign();"/></div>
-    </div>
-
-    <div class="design-tab-panel" id="design-panel-layout" style="display:none;">
-      <div class="form-row"><label>Page width: <span id="dc-page-width-display">1100px</span></label><input type="range" id="dc-page-width" min="900" max="1600" step="50" oninput="document.getElementById('dc-page-width-display').textContent = this.value + 'px'; previewDesign();"/></div>
-      <div class="form-row"><label>Reading width for lab text: <span id="dc-measure-display">760px</span></label><input type="range" id="dc-measure" min="600" max="1100" step="20" oninput="document.getElementById('dc-measure-display').textContent = this.value + 'px'; previewDesign();"/></div>
-      <div class="form-row"><label>Section vertical spacing: <span id="dc-section-y-display">3.5rem</span></label><input type="range" id="dc-section-y" min="1.5" max="7" step="0.5" oninput="document.getElementById('dc-section-y-display').textContent = this.value + 'rem'; previewDesign();"/></div>
-      <div class="form-row"><label>Slideshow height: <span id="dc-slideshow-height-display">480px</span></label><input type="range" id="dc-slideshow-height" min="300" max="720" step="20" oninput="document.getElementById('dc-slideshow-height-display').textContent = this.value + 'px'; previewDesign();"/></div>
-      <div class="form-row"><label>Corner roundness: <span id="dc-radius-display">0px</span></label><input type="range" id="dc-radius" min="0" max="20" step="1" oninput="document.getElementById('dc-radius-display').textContent = this.value + 'px'; previewDesign();"/></div>
     </div>
 
     <div class="design-tab-panel" id="design-panel-cards" style="display:none;">
@@ -887,20 +840,6 @@
           <option value="">Tight grid with dividers (default)</option>
           <option value="cards-no-divider">Separated cards with spacing</option>
         </select></div>
-    </div>
-
-    <div class="design-tab-panel" id="design-panel-background" style="display:none;">
-      <div class="form-row"><label>Background pattern</label>
-        <select id="dc-bg-pattern" onchange="previewDesign()"><option value="">None (solid color)</option><option value="topo">Topographic lines</option></select></div>
-      <div id="topo-controls" style="display:none;">
-        <div class="form-row"><label>Line color</label><div style="display:flex; gap:0.5rem; align-items:center;"><input type="color" id="dc-topo-line" onchange="previewDesign()"/><input type="text" id="dc-topo-line-text" oninput="syncColorInput('dc-topo-line', this)" style="flex:1;"/></div></div>
-        <div class="form-row"><label>Pattern background color</label><div style="display:flex; gap:0.5rem; align-items:center;"><input type="color" id="dc-topo-bg" onchange="previewDesign()"/><input type="text" id="dc-topo-bg-text" oninput="syncColorInput('dc-topo-bg', this)" style="flex:1;"/></div></div>
-        <div class="form-row"><label>Opacity: <span id="dc-topo-opacity-display">0.18</span></label><input type="range" id="dc-topo-opacity" min="0.04" max="0.6" step="0.02" oninput="document.getElementById('dc-topo-opacity-display').textContent = (+this.value).toFixed(2); previewDesign();"/></div>
-        <div class="form-row"><label>Line density: <span id="dc-topo-density-display">12</span></label><input type="range" id="dc-topo-density" min="5" max="22" step="1" oninput="document.getElementById('dc-topo-density-display').textContent = this.value; previewDesign();"/></div>
-        <div class="form-row"><label>Scale: <span id="dc-topo-scale-display">600px</span></label><input type="range" id="dc-topo-scale" min="320" max="1000" step="40" oninput="document.getElementById('dc-topo-scale-display').textContent = this.value + 'px'; previewDesign();"/></div>
-        <div class="form-row"><label>Line thickness: <span id="dc-topo-thickness-display">1.0</span></label><input type="range" id="dc-topo-thickness" min="0.5" max="2.5" step="0.1" oninput="document.getElementById('dc-topo-thickness-display').textContent = (+this.value).toFixed(1); previewDesign();"/></div>
-        <div style="margin-top:1rem;"><button type="button" class="btn" onclick="regenerateTopo()">↻ Roll new pattern</button></div>
-      </div>
     </div>
 
     <div class="modal-actions">
@@ -2742,22 +2681,7 @@ function openDesignModal() {
   $('palette-options').innerHTML = PALETTES.map(p => `<div class="palette-option ${designState.palette === p.id ? 'active' : ''}" data-palette="${p.id}" onclick="selectPalette('${p.id}')">
       <div class="palette-swatches"><div class="palette-swatch" style="background:${p.bg}"></div><div class="palette-swatch" style="background:${p.ink}"></div><div class="palette-swatch" style="background:${p.accent}"></div><div class="palette-swatch" style="background:${p.cardBg}"></div><div class="palette-swatch" style="background:${p.muted}"></div></div>
       <div class="palette-name">${p.name}</div></div>`).join('');
-  $('design-advanced-toggle').checked = designState.custom; $('advanced-colors').style.display = designState.custom ? 'block' : 'none';
-  setColorPair('dc-bg', designState.bg); setColorPair('dc-ink', designState.ink); setColorPair('dc-accent', designState.accent); setColorPair('dc-card-bg', designState.cardBg); setColorPair('dc-muted', designState.muted);
-  $('dc-font-heading').value = designState.fontHeading; $('dc-font-body').value = designState.fontBody;
-  $('dc-base-size').value = designState.baseFontSize; $('dc-base-size-display').textContent = designState.baseFontSize + 'px';
-  $('dc-page-width').value = designState.pageWidth; $('dc-page-width-display').textContent = designState.pageWidth + 'px';
-  $('dc-measure').value = designState.measure; $('dc-measure-display').textContent = designState.measure + 'px';
-  $('dc-section-y').value = designState.sectionPaddingY; $('dc-section-y-display').textContent = designState.sectionPaddingY + 'rem';
-  $('dc-slideshow-height').value = designState.slideshowHeight; $('dc-slideshow-height-display').textContent = designState.slideshowHeight + 'px';
-  $('dc-radius').value = designState.borderRadius; $('dc-radius-display').textContent = designState.borderRadius + 'px';
   $('dc-card-size').value = designState.cardSize; $('dc-card-aspect').value = designState.cardAspect; $('dc-card-divider').value = designState.cardDivider;
-  $('dc-bg-pattern').value = designState.bgPattern || ''; $('topo-controls').style.display = designState.bgPattern === 'topo' ? 'block' : 'none';
-  setColorPair('dc-topo-line', designState.topoLine || designState.accent); setColorPair('dc-topo-bg', designState.topoBg || designState.bg);
-  $('dc-topo-opacity').value = designState.topoOpacity; $('dc-topo-opacity-display').textContent = (+designState.topoOpacity).toFixed(2);
-  $('dc-topo-density').value = designState.topoDensity; $('dc-topo-density-display').textContent = designState.topoDensity;
-  $('dc-topo-scale').value = designState.topoScale; $('dc-topo-scale-display').textContent = designState.topoScale + 'px';
-  $('dc-topo-thickness').value = designState.topoThickness; $('dc-topo-thickness-display').textContent = (+designState.topoThickness).toFixed(1);
   openModal('design-modal');
 }
 function switchDesignTab(event) {
@@ -2767,26 +2691,12 @@ function switchDesignTab(event) {
 }
 function selectPalette(id) {
   const p = findPaletteById(id);
-  Object.assign(designState, { palette: id, ink: p.ink, muted: p.muted, bg: p.bg, cardBg: p.cardBg, accent: p.accent, custom: false });
+  Object.assign(designState, { palette: id, ink: p.ink, muted: p.muted, bg: p.bg, cardBg: p.cardBg, accent: p.accent, custom: false, topoBg: p.bg });
   document.querySelectorAll('.palette-option').forEach(el => el.classList.toggle('active', el.dataset.palette === id));
-  setColorPair('dc-bg', p.bg); setColorPair('dc-ink', p.ink); setColorPair('dc-accent', p.accent); setColorPair('dc-card-bg', p.cardBg); setColorPair('dc-muted', p.muted);
-  $('design-advanced-toggle').checked = false; $('advanced-colors').style.display = 'none';
-  if (designState.bgPattern === 'topo') { designState.topoBg = p.bg; setColorPair('dc-topo-bg', p.bg); }
   applyDesign(designState);
 }
-function toggleAdvancedColors() { const on = $('design-advanced-toggle').checked; $('advanced-colors').style.display = on ? 'block' : 'none'; designState.custom = on; }
-function syncColorInput(colorPickerId, textInput) { const v = textInput.value.trim(); if (/^#[0-9a-fA-F]{6}$/.test(v)) { $(colorPickerId).value = v; previewDesign(); } }
 function previewDesign() {
-  designState.bg = $('dc-bg').value; designState.ink = $('dc-ink').value; designState.accent = $('dc-accent').value; designState.cardBg = $('dc-card-bg').value; designState.muted = $('dc-muted').value;
-  ['dc-bg', 'dc-ink', 'dc-accent', 'dc-card-bg', 'dc-muted'].forEach(id => { $(id + '-text').value = $(id).value; });
-  designState.fontHeading = $('dc-font-heading').value; designState.fontBody = $('dc-font-body').value; designState.baseFontSize = $('dc-base-size').value;
-  designState.pageWidth = $('dc-page-width').value; designState.measure = $('dc-measure').value; designState.sectionPaddingY = $('dc-section-y').value;
-  designState.slideshowHeight = $('dc-slideshow-height').value; designState.borderRadius = $('dc-radius').value;
   designState.cardSize = $('dc-card-size').value; designState.cardAspect = $('dc-card-aspect').value; designState.cardDivider = $('dc-card-divider').value;
-  designState.custom = $('design-advanced-toggle').checked;
-  designState.bgPattern = $('dc-bg-pattern').value; $('topo-controls').style.display = designState.bgPattern === 'topo' ? 'block' : 'none';
-  designState.topoLine = $('dc-topo-line').value; designState.topoBg = $('dc-topo-bg').value; $('dc-topo-line-text').value = designState.topoLine; $('dc-topo-bg-text').value = designState.topoBg;
-  designState.topoOpacity = $('dc-topo-opacity').value; designState.topoDensity = $('dc-topo-density').value; designState.topoScale = $('dc-topo-scale').value; designState.topoThickness = $('dc-topo-thickness').value;
   applyDesign(designState);
 }
 function cancelDesign() { if (designStateBackup) { designState = { ...designStateBackup }; applyDesign(designState); } closeModal('design-modal'); }
