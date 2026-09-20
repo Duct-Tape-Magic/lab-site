@@ -52,7 +52,7 @@ Students load `index.html` from GitHub Pages. The page fetches the catalogue (fo
 
 ## Status (updated 2026-09-18)
 
-Deployed 2026-09-18 at https://duct-tape-magic.github.io/lab-site/ (repo Duct-Tape-Magic/lab-site, Supabase project `nioebkjtrweyxvboajyv` "AP Chem" in the Pro org "OHS Student Labs"; admin whclark09@gmail.com). Snapshot workflow runs hourly. Added 2026-09-18: interactive lab files (`docs/LAB-FORMAT.md`, `ltRender`, `ltBind`, editor import panel, `lab_content.format`).
+Deployed 2026-09-18; custom domain https://ohschemlabs.com/ since 2026-09-20 (DNS at Squarespace: four A records to GitHub Pages + CNAME www → duct-tape-magic.github.io; the old duct-tape-magic.github.io/lab-site address redirects) (repo Duct-Tape-Magic/lab-site, Supabase project `nioebkjtrweyxvboajyv` "AP Chem" in the Pro org "OHS Student Labs"; admin whclark09@gmail.com). Snapshot workflow runs hourly. Added 2026-09-18: interactive lab files (`docs/LAB-FORMAT.md`, `ltRender`, `ltBind`, editor import panel, `lab_content.format`).
 
 Done: Phase 0 files (schema, vendoring, snapshot workflow, docs), Phase 1 core (routing, home/folder/lab/search/not-found views, folders + labs CRUD with cover/media/attachments, Quill with LaTeX/mhchem/YouTube/lab template, click-to-edit intro and title, site text panel, design panel, print stylesheet, fallback chain, event logging, revisions insert). Phase 2 items already included: image compression, attachments with inline PDF viewer, storage cleanup.
 
