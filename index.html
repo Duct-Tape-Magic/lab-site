@@ -740,6 +740,7 @@
     </div>
     <div class="form-row"><label>Inside</label><select id="folder-parent"></select></div>
     <div class="form-row"><label>Description (optional)</label><textarea id="folder-description" style="min-height:56px;"></textarea></div>
+    <div class="form-row"><label>Cover photo (optional)</label><div class="media-manager" id="folder-cover-manager"></div></div>
     <div class="form-grid-3">
       <div class="form-row"><label>Order</label><input type="number" id="folder-order" step="1" value="0"/></div>
       <div class="form-row">
@@ -1097,6 +1098,7 @@ let labEditor = null, richTextEditor = null;
 let labMediaItems = [], labCoverItem = null, labAttachmentItems = [];
 let labSlugTouched = false, folderSlugTouched = false;
 let editingLabId = null; // id used for upload paths while the lab modal is open
+let editingFolderId = null, folderCoverItem = null;
 
 /* ============================================================
    SMALL HELPERS
@@ -1479,7 +1481,7 @@ function folderCardHTML(f) {
         <button onclick="openFolderModal('${f.id}')">Edit</button>
         <button class="delete" onclick="confirmDeleteFolder('${f.id}')">Delete</button>
       </div>
-      <div class="card-img"><span class="folder-glyph">▤</span></div>
+      <div class="card-img">${f.cover_path ? `<img src="${escapeHTML(fileUrl(f.cover_path))}" alt="" loading="lazy"/>` : '<span class="folder-glyph">▤</span>'}</div>
       <div class="card-title">${escapeHTML(f.name)}</div>
       ${f.description ? `<div class="card-summary">${escapeHTML(f.description)}</div>` : ''}
       <div class="card-meta">${badges.join('')}<span>${count} ${count === 1 ? 'item' : 'items'}</span></div>
@@ -2342,6 +2344,20 @@ async function deleteLabFromModal() { const id = $('lab-id').value; if (id && aw
    FOLDER CRUD
    ============================================================ */
 function onFolderNameInput() { if (!folderSlugTouched) $('folder-slug').value = slugify($('folder-name').value); }
+function renderFolderCoverManager() {
+  const c = $('folder-cover-manager');
+  c.innerHTML = `
+    <label class="media-dropzone" id="folder-cover-dropzone" style="${folderCoverItem ? 'display:none;' : ''}">
+      <input type="file" accept="image/*" id="folder-cover-input"/>
+      <div>Drop a cover photo here, or <u>click to choose</u></div>
+    </label>
+    <div class="media-grid" id="folder-cover-preview" style="${folderCoverItem ? '' : 'display:none;'}"></div>`;
+  setupDropzone('folder-cover-dropzone', 'folder-cover-input', async files => {
+    try { toast('Uploading…'); const up = await uploadFile(files[0], `folders/${editingFolderId}`); folderCoverItem = up.path; renderFolderCoverManager(); toast('Cover set'); }
+    catch (e) { toast('Upload failed: ' + e.message, true); }
+  }, f => f.type.startsWith('image/'));
+  if (folderCoverItem) $('folder-cover-preview').innerHTML = `<div class="media-item" style="cursor:default;"><img src="${escapeHTML(fileUrl(folderCoverItem))}" alt=""/><button type="button" class="media-item-remove" onclick="folderCoverItem = null; renderFolderCoverManager();">×</button></div>`;
+}
 function openFolderModal(id) {
   if (!isAdmin()) return;
   const f = id ? folderById(id) : null;
@@ -2356,6 +2372,9 @@ function openFolderModal(id) {
   $('folder-order').value = f?.sort_order ?? 0;
   $('folder-access').value = f?.access || 'inherit';
   $('folder-listed').checked = f ? f.listed !== false : true;
+  editingFolderId = f ? f.id : 'f-' + Date.now();
+  folderCoverItem = f?.cover_path || null;
+  renderFolderCoverManager();
   openModal('folder-modal');
   setTimeout(() => $('folder-name').focus(), 100);
 }
@@ -2367,8 +2386,9 @@ async function saveFolder() {
   if (existingId && parentId) { // prevent moving a folder inside itself
     if (folderChain(parentId).some(f => f.id === existingId)) { toast('A folder cannot be moved inside itself', true); return; }
   }
+  const original = existingId ? folderById(existingId) : null;
   const folder = {
-    id: existingId || ('f-' + Date.now()), name,
+    id: existingId || editingFolderId, name, cover_path: folderCoverItem || null,
     slug: uniqueSlug(slugify($('folder-slug').value || name), null, existingId || null, state.folders),
     parent_id: parentId, description: $('folder-description').value.trim() || null,
     sort_order: parseInt($('folder-order').value, 10) || 0,
@@ -2378,6 +2398,7 @@ async function saveFolder() {
   const { error } = await sb.from('folders').upsert(folder);
   btn.disabled = false; btn.textContent = 'Save';
   if (error) { toast('Could not save: ' + error.message, true); return; }
+  if (original?.cover_path && original.cover_path !== folder.cover_path) await removeStoragePaths([original.cover_path]);
   closeModal('folder-modal');
   await reloadCatalogue();
   toast(existingId ? 'Folder updated' : 'Folder added');
@@ -2390,6 +2411,7 @@ async function deleteFolderById(id) {
   if (!confirm(`Delete the folder "${f.name}"?`)) return false;
   const { error } = await sb.from('folders').delete().eq('id', id);
   if (error) { toast('Could not delete: ' + error.message, true); return false; }
+  await removeStoragePaths(await listStorageFolder(`folders/${id}`));
   return true;
 }
 async function confirmDeleteFolder(id) { if (await deleteFolderById(id)) { await reloadCatalogue(); toast('Folder deleted'); if (state.route.view === 'folder') navigate('#/'); } }

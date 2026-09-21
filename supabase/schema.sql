@@ -31,8 +31,10 @@ create table if not exists public.folders (
   listed      boolean not null default true,
   access      text not null default 'inherit'
               check (access in ('inherit','public','password','accounts','admin')),
+  cover_path  text,
   created_at  timestamptz not null default now()
 );
+alter table public.folders add column if not exists cover_path text;
 
 create table if not exists public.labs (
   id                text primary key,
