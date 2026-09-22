@@ -38,7 +38,7 @@ Students load `index.html` from GitHub Pages. The page fetches the catalogue (fo
 - `site_content` holds every student-facing string (keys mirror `DEFAULTS`), plus JSON blobs `_design`, `_announcement` (`{text, link, expires}`), `_settings`.
 - Every save of an existing lab inserts a `lab_revisions` row first (restore UI comes in Phase 4).
 - Storage cleanup on save/delete: files under the lab's own folder that are no longer referenced are removed (`referencedPaths`, `removeStoragePaths`, `listStorageFolder`). Reference counting across labs is needed once "Save as copy" exists.
-- Analytics: `logEvent()` inserts anonymous rows into `events` only when live and not admin; views deduplicated per lab per browser session; visitor id is a random UUID in localStorage.
+- Analytics: `logEvent()` inserts rows into `events` ONLY for signed-in students (owner's rule since 2026-09-22: visitors without an account must send nothing to the server); `visitor_id` is the student's user id; views deduplicated per lab per browser session; admins are never logged.
 
 ## JS conventions
 

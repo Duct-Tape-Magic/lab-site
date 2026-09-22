@@ -1772,15 +1772,10 @@ document.addEventListener('keydown', e => {
 /* ============================================================
    ACTIVITY EVENTS (anonymous; never logged for admins; fire-and-forget)
    ============================================================ */
-function visitorId() {
-  try {
-    let v = localStorage.getItem('labsite.visitor');
-    if (!v) { v = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2)); localStorage.setItem('labsite.visitor', v); }
-    return v;
-  } catch (e) { return null; }
-}
+// Activity is recorded only for signed-in students. Visitors without an account send nothing.
+function visitorId() { return state.session?.user?.id || null; }
 function logEvent(type, fields = {}) {
-  if (!sb || state.source !== 'live' || isAdmin()) return;
+  if (!sb || state.source !== 'live' || !isStudent()) return;
   try {
     if (type === 'view' && fields.lab_id) {
       const k = 'labsite.viewed.' + fields.lab_id;
@@ -2550,7 +2545,7 @@ async function renderStatsOverview() {
     rpc('stats_summary', { n_days: n }), rpc('stats_daily', { n_days: n }), rpc('stats_top_labs', { n_days: n, lim: 100 }),
     rpc('stats_lab_daily', { n_days: n }).catch(e => ({ error: e.message }))
   ]);
-  const tiles = [['Lab views', summary.views], ['Unique visitors', summary.visitors], ['File downloads', summary.downloads], ['Unlocks', summary.unlocks]]
+  const tiles = [['Lab views', summary.views], ['Students', summary.visitors], ['File downloads', summary.downloads], ['Unlocks', summary.unlocks]]
     .map(([k, v]) => `<div class="stat-tile"><div class="stat-num">${v ?? 0}</div><div class="stat-label">${k}</div></div>`).join('');
   const devices = Object.entries(summary.devices || {}).map(([k, v]) => `${k}: ${v}`).join(' · ') || 'no data';
   const perLab = {};
@@ -2561,10 +2556,10 @@ async function renderStatsOverview() {
     <p class="text-group-label" style="margin:1.25rem 0 0.5rem;">Lab views per day</p>
     ${barChart(daily || [], 'views', 'views')}
     <p class="text-group-label" style="margin:1.5rem 0 0.5rem;">Visitors per lab (click a lab for the day-by-day numbers)</p>
-    ${(top || []).length ? `<table class="stats-table"><thead><tr><th>Lab</th><th>Views</th><th>Unique visitors</th><th>Downloads</th></tr></thead><tbody>${(top || []).map(r => `
+    ${(top || []).length ? `<table class="stats-table"><thead><tr><th>Lab</th><th>Views</th><th>Students</th><th>Downloads</th></tr></thead><tbody>${(top || []).map(r => `
       <tr class="stats-row" onclick="toggleLabDays('${r.lab_id}')"><td>${escapeHTML(labTitle(r.lab_id))}</td><td>${r.views}</td><td>${r.visitors}</td><td>${r.downloads}</td></tr>
-      <tr id="labdays-${r.lab_id}" hidden><td colspan="4">${perLab[r.lab_id] ? `<table class="stats-table inner"><thead><tr><th>Day</th><th>Views</th><th>Unique visitors</th></tr></thead><tbody>${perLab[r.lab_id].map(d => `<tr><td>${escapeHTML(fmtDay(d.day))}</td><td>${d.views}</td><td>${d.visitors}</td></tr>`).join('')}</tbody></table>` : `<span class="hint">${labDaily && labDaily.error ? 'Day-by-day numbers need the stats_lab_daily function (see schema.sql).' : 'No data.'}</span>`}</td></tr>`).join('')}</tbody></table>` : `<div class="empty-state" style="padding:1.5rem;">No lab views in this period.</div>`}
-    <p class="hint" style="margin-top:1rem;">Visitors are counted per browser, not per account, and your own admin visits are never counted.</p>`;
+      <tr id="labdays-${r.lab_id}" hidden><td colspan="4">${perLab[r.lab_id] ? `<table class="stats-table inner"><thead><tr><th>Day</th><th>Views</th><th>Students</th></tr></thead><tbody>${perLab[r.lab_id].map(d => `<tr><td>${escapeHTML(fmtDay(d.day))}</td><td>${d.views}</td><td>${d.visitors}</td></tr>`).join('')}</tbody></table>` : `<span class="hint">${labDaily && labDaily.error ? 'Day-by-day numbers need the stats_lab_daily function (see schema.sql).' : 'No data.'}</span>`}</td></tr>`).join('')}</tbody></table>` : `<div class="empty-state" style="padding:1.5rem;">No lab views in this period.</div>`}
+    <p class="hint" style="margin-top:1rem;">Only signed-in students are counted. Visitors without an account, and your own admin visits, are never recorded.</p>`;
 }
 function toggleLabDays(id) { const el = $('labdays-' + id); if (el) el.hidden = !el.hidden; }
 async function loadStudentsAndEntries() {
