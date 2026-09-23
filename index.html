@@ -530,6 +530,32 @@
   .stats-table.inner { margin: 0.25rem 0 0.5rem; width: auto; min-width: 320px; }
   .btn-small.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
   .review-banner { background: var(--card-bg); border: 0.5px solid var(--rule-strong); padding: 0.7rem 1rem; margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; font-size: 13px; max-width: var(--measure); }
+  /* ---------- Report tab ---------- */
+  .lab-tabs { display: flex; gap: 1.5rem; border-bottom: 0.5px solid var(--rule); margin: 0.5rem 0 2rem; max-width: var(--measure); }
+  .lab-tab { background: none; border: none; border-bottom: 1.5px solid transparent; margin-bottom: -0.5px; padding: 0.6rem 0; font-family: var(--font-body); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); cursor: pointer; }
+  .lab-tab.active { color: var(--ink); border-bottom-color: var(--ink); }
+  .lab-tab:hover { color: var(--ink); }
+  .rp-toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; align-items: flex-start; max-width: var(--measure); margin-bottom: 1.5rem; }
+  .rp-style { flex: 1 1 100%; }
+  .rp-style summary { cursor: pointer; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .rp-style-body { border-left: 3px solid var(--rule-strong); padding: 0.5rem 1rem; margin-top: 0.6rem; font-size: 0.92em; }
+  .rp-section { margin: 0 0 2rem; }
+  .rp-title { font-family: var(--font-heading); font-weight: 400; font-size: 1.4rem; margin: 0 0 0.4rem; }
+  .rp-prompt { font-size: 0.95em; color: var(--ink); opacity: 0.9; margin-bottom: 0.6rem; }
+  .rp-prompt p:last-child { margin-bottom: 0; }
+  .rp-hint { margin: 0 0 0.6rem; }
+  .rp-hint-body { font-size: 0.9em; color: var(--muted); padding: 0.4rem 0 0; }
+  .rp-field { min-height: 8em; }
+  .rp-meter { font-size: 11px; color: var(--muted); margin-top: 0.3rem; letter-spacing: 0.04em; }
+  .rp-meter.low, .rp-meter.high { color: var(--warn); }
+  .rp-meter.empty { color: var(--muted); font-style: italic; }
+  .rp-mirror { margin: 1rem 0 1.6rem; }
+  .rp-table td.rp-cell { background: transparent; cursor: default; }
+  .rp-caption { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-top: 0.4rem; }
+  .rp-doc-header { display: none; }
+  body.report-print .rp-doc-header { display: block; margin-bottom: 1.5rem; border-bottom: 1px solid #000; padding-bottom: 0.6rem; }
+  .rp-doc-title { font-family: var(--font-heading); font-size: 1.8rem; }
+  .rp-doc-meta { font-size: 12px; color: #444; margin-top: 0.2rem; }
   .lt-error { background: #fde3e3; color: #6b1e1e; padding: 0.6rem 0.8rem; font-size: 13px; margin: 0.6rem 0; }
   .lt-markup { width: 100%; min-height: 340px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; line-height: 1.5; border: 0.5px solid var(--rule-strong); padding: 0.75rem; background: var(--bg); color: var(--ink); resize: vertical; outline: none; border-radius: 4px; }
   .lt-markup:focus { border-color: var(--ink); }
@@ -572,6 +598,15 @@
     .lt-pagebreak { display: block; page-break-before: always; break-before: page; }
     .lt-notes:not([open]) { display: none; }
     .lt-callout, .lt-graph { break-inside: avoid; }
+    body.report-print #lab-pane-procedure, body.report-print .lab-tabs, body.report-print .rp-toolbar, body.report-print .rp-prompt, body.report-print .rp-hint, body.report-print .rp-meter,
+    body.report-print .lab-media, body.report-print .attachments, body.report-print .section-heading, body.report-print .lab-toolbar, body.report-print .lab-footer-nav, body.report-print .breadcrumb, body.report-print .lab-header, body.report-print .review-banner { display: none !important; }
+    body.report-print #lab-pane-report { display: block !important; }
+    body.report-print .rp-field { border: none !important; padding: 0 !important; background: white !important; min-height: 0 !important; font-size: 12pt; }
+    body.report-print .rp-field:empty::before { content: ''; }
+    body.report-print .rp-section { break-inside: avoid; margin-bottom: 1.2rem; }
+    body.report-print .rp-title { font-size: 14pt; }
+    body.report-print .rp-title .badge { display: none; }
+    body.report-print .rp-caption { color: #000; text-transform: none; letter-spacing: 0; font-size: 10pt; font-style: italic; }
   }
 </style>
 </head>
@@ -1019,7 +1054,20 @@ const DEFAULTS = {
   calloutTip: 'Tip',
   calloutHint: 'Hint',
   figurePending: 'Figure not uploaded yet',
-  graphEmpty: 'Enter data in the table above to draw the graph'
+  graphEmpty: 'Enter data in the table above to draw the graph',
+  procedureTab: 'Procedure',
+  reportTab: 'Report',
+  reportPreview: 'Preview report',
+  reportStyleTitle: 'Style guide',
+  reportRequired: 'Required',
+  reportHint: 'Show hint',
+  reportPlaceholder: 'Write here…',
+  reportWords: '{n} words',
+  reportWordsAim: 'aim for {min}–{max}',
+  reportEmptyRequired: 'This section is required and is still empty.',
+  reportTableLabel: 'Table',
+  reportFigureLabel: 'Figure',
+  reportMissingRef: 'Nothing in the procedure matches'
 };
 
 const SITE_TEXT_GROUPS = [
@@ -1032,6 +1080,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Locked labs', keys: ['lockPasswordTitle', 'lockPasswordPrompt', 'lockPasswordPlaceholder', 'lockPasswordButton', 'lockPasswordWrong', 'lockTooMany', 'lockAccountsTitle', 'lockAccountsPrompt', 'lockNotAllowed', 'lockAdminOnly', 'lockUnavailable'] },
   { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'privacyLink', 'privacyTitle'] },
   { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
+  { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportPlaceholder', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
 ];
 
@@ -1054,7 +1103,8 @@ const TEXT_LABELS = {
   entriesInfo: 'Autosave notice', entriesSaved: 'Saved flash', entriesClear: 'Clear entries button', entriesClearConfirm: 'Clear entries confirmation',
   notesLabel: 'Notes toggle', notesPlaceholder: 'Notes placeholder', answerPlaceholder: 'Answer placeholder', tableAddRow: 'Add row button',
   photoAdd: 'Add photo button', photoChange: 'Change photo button', photoRemove: 'Remove photo button',
-  calloutSafety: 'Safety box label', calloutWarning: 'Caution box label', calloutInfo: 'Note box label', calloutTip: 'Tip box label', calloutHint: 'Hint box label', figurePending: 'Missing figure text', graphEmpty: 'Empty graph message'
+  calloutSafety: 'Safety box label', calloutWarning: 'Caution box label', calloutInfo: 'Note box label', calloutTip: 'Tip box label', calloutHint: 'Hint box label', figurePending: 'Missing figure text', graphEmpty: 'Empty graph message',
+  procedureTab: 'Procedure tab label', reportTab: 'Report tab label', reportPreview: 'Preview report button', reportStyleTitle: 'Style guide heading', reportRequired: 'Required badge', reportHint: 'Hint toggle', reportPlaceholder: 'Report box placeholder', reportWords: 'Word count', reportWordsAim: 'Word range hint', reportEmptyRequired: 'Empty required section note', reportTableLabel: 'Table caption word', reportFigureLabel: 'Figure caption word', reportMissingRef: 'Missing table/graph message'
 };
 
 /* ============================================================
@@ -1640,9 +1690,11 @@ function renderLabContent(area, lab, entry, cloud = null, readOnly = false) {
   const attachments = entry.attachments || [];
   let html = '';
   const isTags = entry.format === 'labtags';
+  let hasReport = false;
   if (isTags) {
     const r = ltRender(entry.content || '');
-    html += `<div class="lab-body rich-content" id="lab-body">${r.html || `<p style="color:var(--muted)">${escapeHTML(getText('labNoContent'))}</p>`}</div>`;
+    hasReport = !!r.report;
+    html += buildLabTagsHTML(r, lab);
   } else {
     html += `<div class="lab-body rich-content" id="lab-body">${entry.content && entry.content !== '<p><br></p>' ? entry.content : `<p style="color:var(--muted)">${escapeHTML(getText('labNoContent'))}</p>`}</div>`;
   }
@@ -1670,10 +1722,101 @@ function renderLabContent(area, lab, entry, cloud = null, readOnly = false) {
   </div>`;
   area.innerHTML = html;
   if (media.length) renderSlideshow(media, $('lab-media-wrap'));
+  if (hasReport) rpPrepare(area);
   if (isTags) ltBind(area, lab.id, cloud, readOnly);
-  renderMathIn([$('lab-body')]);
+  if (hasReport) rpBind(area, lab);
+  renderMathIn([$('lab-body'), area.querySelector('.rp-body')]);
   // Make YouTube embeds inside rich text privacy-friendly and lazy
   area.querySelectorAll('.embed-youtube iframe').forEach(f => { f.setAttribute('loading', 'lazy'); f.setAttribute('allowfullscreen', 'true'); });
+}
+
+/* ---------- Report tab (per-lab write-up skeleton from \report{…} in the lab file) ---------- */
+function buildLabTagsHTML(r, lab) {
+  const body = `<div class="lab-body rich-content" id="lab-body">${r.html || `<p style="color:var(--muted)">${escapeHTML(getText('labNoContent'))}</p>`}</div>`;
+  if (!r.report) return body;
+  const saved = (() => { try { return sessionStorage.getItem('labsite.tab.' + (lab ? lab.id : 'preview')); } catch (e) { return null; } })();
+  const reportFirst = saved === 'report';
+  return `
+    <div class="lab-tabs" role="tablist">
+      <button type="button" class="lab-tab ${reportFirst ? '' : 'active'}" data-tab="procedure" onclick="switchLabTab('procedure')">${escapeHTML(getText('procedureTab'))}</button>
+      <button type="button" class="lab-tab ${reportFirst ? 'active' : ''}" data-tab="report" onclick="switchLabTab('report')">${escapeHTML(getText('reportTab'))}</button>
+    </div>
+    <div class="lab-pane" id="lab-pane-procedure" ${reportFirst ? 'hidden' : ''}>${body}</div>
+    <div class="lab-pane" id="lab-pane-report" ${reportFirst ? '' : 'hidden'}>
+      <div class="rp-doc-header"><div class="rp-doc-title">${escapeHTML(lab ? lab.title : '')}</div><div class="rp-doc-meta"></div></div>
+      <div class="rp-toolbar">
+        <button type="button" class="btn-small" onclick="previewReport()">${escapeHTML(getText('reportPreview'))}</button>
+        ${r.style ? `<details class="rp-style"><summary>${escapeHTML(getText('reportStyleTitle'))}</summary><div class="rich-content rp-style-body">${r.style}</div></details>` : ''}
+      </div>
+      <div class="lab-body rich-content rp-body">${r.report}</div>
+    </div>`;
+}
+function switchLabTab(name) {
+  document.querySelectorAll('.lab-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.lab-pane').forEach(p => { p.hidden = p.id !== 'lab-pane-' + name; });
+  const lab = state.route.view === 'lab' ? labBySlug(state.route.slug) : null;
+  try { sessionStorage.setItem('labsite.tab.' + (lab ? lab.id : 'preview'), name); } catch (e) { /* ignore */ }
+  if (name === 'report') rpRefreshMirrors(document.getElementById('lab-content-area') || document.getElementById('lab-markup-preview'));
+}
+// Before ltBind: create mirror graph boxes (real .lt-graph elements so the live-graph code redraws them) and empty table clones.
+function rpPrepare(area) {
+  area.querySelectorAll('.rp-mirror[data-mirror-graph]').forEach(box => {
+    const src = area.querySelector(`#lab-pane-procedure .lt-graph[data-graph="${box.dataset.mirrorGraph}"]`);
+    if (!src) { box.innerHTML = `<div class="lt-error">${escapeHTML(getText('reportMissingRef'))} \\usegraph{${escapeHTML(box.dataset.mirrorGraph)}}</div>`; return; }
+    const g = document.createElement('div'); g.className = 'lt-graph rp-graph'; g.dataset.graph = src.dataset.graph + '-report'; g.dataset.opts = src.dataset.opts;
+    box.innerHTML = ''; box.appendChild(g);
+  });
+}
+function rpRefreshMirrors(area) {
+  if (!area) return;
+  area.querySelectorAll('.rp-mirror[data-mirror-table]').forEach(box => {
+    const src = area.querySelector(`#lab-pane-procedure .lt-table-wrap[data-table="${box.dataset.mirrorTable}"]`);
+    if (!src) { box.innerHTML = `<div class="lt-error">${escapeHTML(getText('reportMissingRef'))} \\usetable{${escapeHTML(box.dataset.mirrorTable)}}</div>`; return; }
+    const clone = src.cloneNode(true);
+    clone.classList.add('rp-table'); clone.removeAttribute('data-table');
+    clone.querySelectorAll('[contenteditable]').forEach(td => { td.removeAttribute('contenteditable'); td.removeAttribute('data-field'); td.removeAttribute('data-bound'); td.classList.add('rp-cell'); });
+    clone.querySelectorAll('.lt-table-add').forEach(b => b.remove());
+    const cap = box.querySelector('.rp-caption'); box.innerHTML = ''; box.appendChild(clone); if (cap) box.appendChild(cap);
+  });
+  // captions: Table n / Figure n in document order
+  let t = 0, f = 0;
+  area.querySelectorAll('.rp-body .rp-mirror').forEach(box => {
+    let cap = box.querySelector('.rp-caption');
+    if (!cap) { cap = document.createElement('div'); cap.className = 'rp-caption'; box.appendChild(cap); }
+    cap.textContent = box.dataset.mirrorTable ? `${getText('reportTableLabel')} ${++t}` : `${getText('reportFigureLabel')} ${++f}`;
+  });
+}
+function rpWordCount(text) { return (String(text || '').trim().match(/\S+/g) || []).length; }
+function rpUpdateMeter(sec) {
+  const field = sec.querySelector('.rp-field'), meter = sec.querySelector('.rp-meter'); if (!field || !meter) return;
+  const n = rpWordCount(field.textContent);
+  const [lo, hi] = String(sec.dataset.words || '').split('-').map(v => parseInt(v, 10));
+  let txt = fmt('reportWords', { n }), cls = '';
+  if (!isNaN(lo) || !isNaN(hi)) {
+    txt += ` · ${fmt('reportWordsAim', { min: isNaN(lo) ? '' : lo, max: isNaN(hi) ? '' : hi }).replace(/^\s*[–-]\s*|\s*[–-]\s*$/g, m => m.trim() === '' ? '' : m)}`;
+    if (!isNaN(lo) && n < lo) cls = 'low'; if (!isNaN(hi) && n > hi) cls = 'high';
+  }
+  if (n === 0 && sec.dataset.required) { txt = getText('reportEmptyRequired'); cls = 'empty'; }
+  meter.textContent = txt; meter.className = 'rp-meter ' + cls;
+}
+function rpBind(area, lab) {
+  rpRefreshMirrors(area);
+  let t = null;
+  area.addEventListener('input', e => {
+    if (e.target.closest('#lab-pane-procedure .lt-table-wrap')) { clearTimeout(t); t = setTimeout(() => rpRefreshMirrors(area), 200); }
+    const sec = e.target.closest('.rp-section'); if (sec) rpUpdateMeter(sec);
+  });
+  area.addEventListener('click', e => { if (e.target.closest('#lab-pane-procedure .lt-table-add')) setTimeout(() => rpRefreshMirrors(area), 100); });
+  area.querySelectorAll('.rp-section').forEach(rpUpdateMeter);
+  const meta = area.querySelector('.rp-doc-meta');
+  if (meta) meta.textContent = [isStudent() ? studentName() : '', new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })].filter(Boolean).join(' · ');
+}
+function previewReport() {
+  switchLabTab('report');
+  document.body.classList.add('report-print');
+  const done = () => { document.body.classList.remove('report-print'); window.removeEventListener('afterprint', done); };
+  window.addEventListener('afterprint', done);
+  setTimeout(() => { window.print(); setTimeout(done, 2000); }, 150);
 }
 
 function toggleInlinePdf(btn, url) {
@@ -2742,9 +2885,9 @@ function loadDesignFromSiteContent() {
    LAB TAGS — markdown + LaTeX-style commands for interactive lab reports.
    Spec for authors (and for Claude converting PDFs): docs/LAB-FORMAT.md
    ============================================================ */
-const LT_TAGS = new Set(['title', 'summary', 'tags', 'minutes', 'video', 'datatable', 'answer', 'notes', 'photo', 'input', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph']);
-const LT_META = new Set(['title', 'summary', 'tags', 'minutes']);
-const LT_BLOCK = new Set(['video', 'datatable', 'answer', 'notes', 'photo', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph']);
+const LT_TAGS = new Set(['title', 'summary', 'tags', 'minutes', 'video', 'datatable', 'answer', 'notes', 'photo', 'input', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'report', 'style', 'section', 'usetable', 'usegraph']);
+const LT_META = new Set(['title', 'summary', 'tags', 'minutes', 'report', 'style']);   // stored on ctx, not rendered in place
+const LT_BLOCK = new Set(['video', 'datatable', 'answer', 'notes', 'photo', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'section', 'usetable', 'usegraph']);
 
 if (window.marked) marked.use({ gfm: true, breaks: false, mangle: false, headerIds: false });
 
@@ -2815,7 +2958,7 @@ function ltExtractTags(text, ctx, widgets) {
     if (text[pos] === '{') { const end = ltBalanced(text, pos); if (end === -1) { ctx.errors.push(`Missing closing } for \\${name}`); continue; } body = text.slice(pos + 1, end); pos = end + 1; }
     out += text.slice(i, m.index);
     const o = ltParseOptions(opts);
-    if (LT_META.has(name)) { ctx.meta[name] = (body || '').trim(); }
+    if (LT_META.has(name)) { ctx.meta[name] = (body || '').trim(); if (name === 'report' || name === 'style') out = out.replace(/\n*$/, '\n\n'); }
     else {
       const html = ltWidget(name, o, body, ctx, widgets);
       const token = `LTTAG${widgets.length}X`;
@@ -2875,6 +3018,19 @@ function ltWidget(name, o, body, ctx, widgets) {
       return `<figure class="lt-figure"><img src="${escapeHTML(fileUrl(src))}" alt="${escapeHTML(o.caption || '')}" loading="lazy"/>${cap}</figure>`;
     }
     case 'pagebreak': return `<div class="lt-pagebreak"></div>`;
+    case 'section': {
+      const lines = Math.max(3, parseInt(o.lines, 10) || 6);
+      const title = o.title || id;
+      return `<section class="rp-section" data-section="${id}" ${o.required ? 'data-required="1"' : ''} data-words="${escapeHTML(String(o.words || ''))}">
+        <h3 class="rp-title">${escapeHTML(title)}${o.required ? ` <span class="badge">${escapeHTML(getText('reportRequired'))}</span>` : ''}</h3>
+        ${body && body.trim() ? `<div class="rp-prompt">${ltInner(body.trim(), ctx)}</div>` : ''}
+        ${o.hint ? `<details class="lt-notes rp-hint"><summary>${escapeHTML(getText('reportHint'))}</summary><div class="rp-hint-body">${ltInline(String(o.hint), ctx)}</div></details>` : ''}
+        <div class="lt-field rp-field" contenteditable="plaintext-only" data-field="report.${id}" data-placeholder="${escapeHTML(getText('reportPlaceholder'))}" style="min-height:${(lines * 1.6 + 0.8).toFixed(1)}em"></div>
+        <div class="rp-meter"></div>
+      </section>`;
+    }
+    case 'usetable': return `<div class="rp-mirror" data-mirror-table="${ltSafeId((body || '').trim())}"></div>`;
+    case 'usegraph': return `<div class="rp-mirror" data-mirror-graph="${ltSafeId((body || '').trim())}"></div>`;
     case 'graph': {
       const opts = { ...o }; if (body && body.trim()) opts.caption = body.trim(); if (!opts.table) opts.table = 'table1';
       return `<div class="lt-graph" data-graph="${id}" data-opts="${escapeHTML(JSON.stringify(opts))}"></div>`;
@@ -2919,10 +3075,21 @@ function ltRender(source) {
     tpl.content.querySelectorAll('img').forEach(img => { const src = img.getAttribute('src') || ''; if (src && !/^(https?:|data:|blob:)/.test(src)) img.setAttribute('src', fileUrl(src.replace(/^img:/, ''))); });
     // The page already has the lab title as its h1, so demote the file's headings one level
     if (tpl.content.querySelector('h1')) [5, 4, 3, 2, 1].forEach(n => tpl.content.querySelectorAll('h' + n).forEach(h => { const d = document.createElement('h' + (n + 1)); d.innerHTML = h.innerHTML; h.replaceWith(d); }));
-    return { html: tpl.innerHTML, meta: ctx.meta, errors: ctx.errors };
+    let reportHtml = '';
+    if (ctx.meta.report && ctx.meta.report.trim()) {
+      const rctx = ltNewContext(); rctx.counters = { ...ctx.counters };
+      const rw = []; const rt = ltExtractTags(ltProtect(ctx.meta.report, rctx), rctx, rw);
+      reportHtml = ltRestore(ltInject(marked.parse(rt), rw), rctx);
+      const rtpl = document.createElement('template'); rtpl.innerHTML = reportHtml;
+      rtpl.content.querySelectorAll('img').forEach(img => { const src = img.getAttribute('src') || ''; if (src && !/^(https?:|data:|blob:)/.test(src)) img.setAttribute('src', fileUrl(src.replace(/^img:/, ''))); });
+      reportHtml = rtpl.innerHTML; ctx.errors.push(...rctx.errors);
+    }
+    let styleHtml = '';
+    if (ctx.meta.style && ctx.meta.style.trim()) { const sctx = ltNewContext(); styleHtml = ltRestore(marked.parse(ltProtect(ctx.meta.style, sctx)), sctx); }
+    return { html: tpl.innerHTML, meta: ctx.meta, errors: ctx.errors, report: reportHtml, style: styleHtml };
   } catch (e) {
     console.error(e);
-    return { html: `<div class="lt-error">Could not render this lab file: ${escapeHTML(e.message)}</div>`, meta: ctx.meta, errors: [e.message] };
+    return { html: `<div class="lt-error">Could not render this lab file: ${escapeHTML(e.message)}</div>`, meta: ctx.meta, errors: [e.message], report: '', style: '' };
   }
 }
 function ltParseMeta(source) { // quick header read for the importer
@@ -3269,10 +3436,13 @@ let ltPreviewTimer = null;
 function previewLabMarkup(now) {
   clearTimeout(ltPreviewTimer);
   const run = () => {
-    const { html, errors } = ltRender($('lab-markup').value);
-    $('lab-markup-errors').innerHTML = errors.map(e => `<div class="lt-error">${escapeHTML(e)}</div>`).join('');
-    const pv = $('lab-markup-preview'); pv.innerHTML = html;
-    ltBind(pv, 'preview'); renderMathIn([pv]);
+    const r = ltRender($('lab-markup').value);
+    $('lab-markup-errors').innerHTML = r.errors.map(e => `<div class="lt-error">${escapeHTML(e)}</div>`).join('');
+    const pv = $('lab-markup-preview'); pv.innerHTML = buildLabTagsHTML(r, null);
+    if (r.report) rpPrepare(pv);
+    ltBind(pv, 'preview');
+    if (r.report) rpBind(pv, null);
+    renderMathIn([pv]);
     pv.querySelectorAll('.lt-figure-pending').forEach(box => box.addEventListener('click', () => uploadPendingFigure(box.dataset.pending || '')));
     renderFiguresManager();
   };
