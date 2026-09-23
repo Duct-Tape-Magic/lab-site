@@ -4,6 +4,8 @@ This document tells you how to write a **lab file** for the OHS lab website. Giv
 
 A lab file is plain text: **Markdown for the writing**, plus a small set of **LaTeX-style commands** (`\command[options]{content}`) that mark the places where the website should embed something interactive — a data table students fill in, a place to add a photo, a video, a question with an answer box, and so on. The website reads the file and renders a clean, interactive report. Students' entries save automatically in their own browser and print with the lab.
 
+**You do not have to write this format by hand.** The site's lab editor opens in **Builder** mode by default: a block-based, form-driven editor (headings, text, numbered steps, data tables, questions, graphs, callouts, pictures, report sections…) that produces exactly this format. Builder and the **Lab file** view are two views of the same text and you can switch between them at any time; anything the Builder has no form for is kept as a "Raw" block and round-trips untouched. Importing a `.md` file written by hand or converted by Claude opens it as blocks. This document remains the reference for the stored format and for converting PDFs.
+
 ## Rules for converting a PDF
 
 1. **Keep the lab's own structure.** Same sections, same order, same headings, same step numbering, same wording. Do not reorganize, summarize, shorten, or add content. Fix only obvious typos.

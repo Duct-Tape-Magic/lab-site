@@ -565,7 +565,98 @@
   .media-item-copy { position: absolute; top: 4px; left: 4px; background: rgba(255,255,255,0.95); border: none; font-size: 10px; padding: 2px 6px; cursor: pointer; border-radius: 2px; font-family: var(--font-body); display: none; }
   .media-item:hover .media-item-copy { display: block; }
 
+  /* ---------- Builder mode (modules/builder.css) — inlined before the @media (max-width: 768px) rule ---------- */
+  .bu-root { font-size: 13px; }
+  .bu-root [hidden] { display: none !important; }
+  .bu-help { font-size: 11px; color: var(--muted); line-height: 1.5; margin: 0 0 0.75rem; }
+  .bu-help-inline { font-size: 11px; color: var(--muted); letter-spacing: 0; text-transform: none; margin-left: 0.5rem; }
+  .bu-section-title { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 1.5rem 0 0.4rem; }
+  .bu-note, .bu-root .hint { font-size: 11px; color: var(--muted); line-height: 1.5; margin-top: 0.35rem; }
+  .bu-err { color: #6b1e1e; font-size: 11px; line-height: 1.5; margin-top: 0.35rem; }
+  .bu-warnings .bu-warn, .bu-header .bu-warn { color: var(--warn, #8a6d1f); background: rgba(138, 109, 31, 0.08); font-size: 12px; line-height: 1.5; padding: 0.5rem 0.7rem; margin: 0.4rem 0; }
+  .bu-warnings .bu-err-block { background: #fde3e3; color: #6b1e1e; padding: 0.6rem 0.8rem; font-size: 13px; margin: 0.6rem 0; }
+  .bu-warn .bu-tools { margin-top: 0.4rem; }
+  .bu-link { background: none; border: none; color: var(--accent); cursor: pointer; font: inherit; font-size: 11px; text-decoration: underline; padding: 0 0.2rem; }
+  .bu-templates { border: 0.5px dashed var(--rule-strong); padding: 1rem; margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+  .bu-templates .bu-note { width: 100%; margin: 0 0 0.25rem; }
+  .bu-list { display: flex; flex-direction: column; gap: 0.6rem; min-height: 32px; }
+  .bu-list:empty { outline: 0.5px dashed var(--rule-strong); }
+  .bu-card { border: 0.5px solid var(--rule-strong); background: var(--bg); border-radius: var(--border-radius, 4px); outline: none; }
+  .bu-card:focus-within { outline: 1px solid var(--accent); }
+  .bu-card.dragging { opacity: 0.4; }
+  .bu-card[data-type="raw"] { border-left: 3px solid var(--warn, #8a6d1f); }
+  .bu-card-head { display: flex; gap: 0.5rem; align-items: center; padding: 0.4rem 0.6rem; cursor: pointer; font-size: 12px; min-width: 0; }
+  .bu-handle { cursor: grab; color: var(--muted); user-select: none; letter-spacing: -0.2em; padding-right: 0.2em; }
+  .bu-handle:active { cursor: grabbing; }
+  .bu-toggle { background: none; border: none; color: var(--muted); cursor: pointer; font: inherit; padding: 0 0.2rem; }
+  .bu-kind { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); min-width: 7em; white-space: nowrap; }
+  .bu-summary { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bu-idtag { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); white-space: nowrap; }
+  .bu-actions { display: inline-flex; gap: 0.25rem; }
+  .bu-actions button, .bu-step-tools button, .bu-rowtools button, .bu-coltools button, .bu-chip button { background: none; border: 0.5px solid var(--rule-strong); color: var(--ink); cursor: pointer; font-family: inherit; font-size: 11px; padding: 1px 6px; line-height: 1.6; border-radius: var(--border-radius, 4px); }
+  .bu-actions button:hover, .bu-step-tools button:hover, .bu-rowtools button:hover, .bu-coltools button:hover { border-color: var(--ink); background: var(--card-bg); }
+  .bu-actions button:disabled, .bu-step-tools button:disabled, .bu-rowtools button:disabled, .bu-coltools button:disabled, .bu-palette button:disabled { opacity: 0.35; cursor: default; }
+  .bu-actions button.danger, .bu-step-tools button.danger, .bu-rowtools button.danger, .bu-coltools button.danger { color: var(--danger); }
+  .bu-card-body { padding: 0.6rem 0.8rem 1rem; border-top: 0.5px solid var(--rule); position: relative; }
+  .bu-card-body .form-row { margin-bottom: 0.7rem; }
+  .bu-card-body .form-row label { margin-bottom: 0.3rem; }
+  .bu-card-body textarea { min-height: 48px; font-size: 13px; line-height: 1.5; resize: vertical; }
+  .bu-card-body input[type="text"], .bu-card-body input[type="number"], .bu-card-body select { font-size: 13px; padding: 0.35rem 0; }
+  .bu-card-body .bu-narrow input { max-width: 8em; }
+  .bu-card-body .bu-inline { display: flex; align-items: center; gap: 0.5rem; font-size: 13px; }
+  .bu-card-body .bu-inline input { width: 5em; }
+  textarea.bu-mono { font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+  .bu-check { display: flex; align-items: center; gap: 0.5rem; text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--ink); cursor: pointer; }
+  .bu-idrow { margin-top: 0.75rem; }
+  .bu-idrow summary { cursor: pointer; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); user-select: none; }
+  .bu-idrow .form-row, .bu-idrow .bu-note { margin-top: 0.5rem; }
+  .bu-tools { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.4rem 0; align-items: center; }
+  .bu-tools .btn-small { padding: 0.3rem 0.7rem; }
+  .bu-palette { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.4rem 0 1rem; align-items: center; }
+  .bu-palette .btn-small { font-size: 11px; padding: 4px 8px; }
+  .bu-insert { margin: 0 0.6rem 0.6rem 2rem; padding: 0.5rem 0.6rem; border: 0.5px dashed var(--rule-strong); }
+  .bu-drop-line { height: 2px; background: var(--accent); margin: -1px 0; pointer-events: none; }
+  .bu-sheet-wrap { overflow-x: auto; margin: 0.5rem 0; }
+  .bu-sheet { border-collapse: collapse; width: auto; min-width: 100%; }
+  .bu-sheet .bu-cell { min-width: 6em; padding: 0; border: 0.5px solid var(--rule-strong); vertical-align: top; position: relative; }
+  .bu-sheet .bu-cell.head { background: var(--card-bg); }
+  .bu-sheet .bu-cell input { width: 100%; border: none; background: transparent; font-size: 12px; padding: 4px 6px; margin: 0; }
+  .bu-sheet .bu-cell.head input { font-weight: 500; }
+  .bu-sheet .bu-cell.fill button { width: 100%; border: 1.5px dashed var(--accent); background: transparent; color: var(--accent); font-family: inherit; font-size: 11px; padding: 4px 6px; cursor: pointer; border-radius: 0; }
+  .bu-cell-blank { position: absolute; right: 2px; bottom: 1px; background: none; border: none; color: var(--muted); font-family: inherit; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; opacity: 0.55; padding: 0 2px; }
+  .bu-cell:hover .bu-cell-blank, .bu-cell:focus-within .bu-cell-blank { opacity: 1; }
+  .bu-sheet .bu-coltools th { padding: 0 0 3px; text-align: left; white-space: nowrap; }
+  .bu-sheet .bu-rowtools { padding: 2px 0 2px 4px; white-space: nowrap; vertical-align: middle; }
+  .bu-sheet .bu-coltools button, .bu-sheet .bu-rowtools button { font-size: 10px; padding: 0 4px; }
+  .bu-steps { display: flex; flex-direction: column; gap: 0.4rem; margin: 0.25rem 0; }
+  .bu-step { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 0.4rem; align-items: start; }
+  .bu-step-n { font-size: 12px; color: var(--muted); padding-top: 0.45rem; text-align: right; }
+  .bu-step textarea { min-height: 40px; }
+  .bu-step-tools { display: inline-flex; gap: 0.2rem; padding-top: 0.3rem; }
+  .bu-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; margin: 0.4rem 0; }
+  .bu-chip { display: inline-flex; border: 0.5px solid var(--rule-strong); border-radius: 999px; overflow: hidden; }
+  .bu-chip button { border: none; border-radius: 0; font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 1px 8px; }
+  .bu-chip button + button { border-left: 0.5px solid var(--rule-strong); font-family: inherit; color: var(--accent); }
+  .bu-chip.unnamed button:first-child { color: var(--warn, #8a6d1f); font-style: italic; }
+  .bu-popover { position: absolute; z-index: 20; background: var(--bg); border: 0.5px solid var(--rule-strong); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12); padding: 0.75rem 0.9rem; max-width: 360px; width: calc(100% - 1rem); border-radius: var(--border-radius, 4px); }
+  .bu-popover-title { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+  .bu-dropzone { display: block; border: 1.5px dashed var(--rule-strong); padding: 1.5rem; text-align: center; color: var(--muted); font-size: 13px; cursor: pointer; transition: all 0.2s; margin-bottom: 0.5rem; border-radius: 4px; }
+  .bu-dropzone:hover, .bu-dropzone.dragover { border-color: var(--accent); color: var(--accent); background: rgba(47, 93, 138, 0.05); }
+  .bu-root input[type="file"] { display: none; }
+  .bu-figure { display: flex; gap: 0.8rem; align-items: flex-start; margin-bottom: 0.6rem; }
+  .bu-figure img { width: 140px; max-height: 110px; object-fit: contain; background: var(--card-bg); border: 0.5px solid var(--rule); }
+  .bu-axis { border-left: 2px solid var(--rule); padding-left: 0.7rem; margin: 0.6rem 0 0.9rem; }
+  .bu-axis-title { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; }
+  .bu-series + .bu-series { border-top: 0.5px dashed var(--rule); padding-top: 0.5rem; }
+  .bu-tip { font-size: 11px; color: var(--warn, #8a6d1f); margin-top: 0.25rem; }
+  option.bu-missing { color: var(--danger); }
+  .bu-flash { outline: 2px solid var(--accent); outline-offset: 2px; transition: outline-color 1.2s ease-out; }
+  .bu-card-style .bu-card-head { cursor: default; }
+  .lt-subhead { margin: 1rem 0 0.4rem; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; align-items: center; }
+  .lt-note { background: rgba(138, 109, 31, 0.08); color: var(--warn, #8a6d1f); padding: 0.5rem 0.8rem; font-size: 12px; line-height: 1.5; margin: 0.4rem 0; }
+
   @media (max-width: 768px) {
+    .bu-card-head { flex-wrap: wrap; } .bu-actions { width: 100%; } .bu-kind { min-width: 0; } .bu-sheet-wrap { overflow-x: auto; } .bu-step { grid-template-columns: 2.2em 1fr; } .bu-step-tools { grid-column: 2; padding-top: 0; }
     nav { padding: 0.9rem 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
     .nav-right { width: 100%; justify-content: space-between; }
     .search-form { max-width: none; }
@@ -720,14 +811,23 @@
     <div class="form-row">
       <label>Procedure format</label>
       <select id="lab-format" onchange="onLabFormatChange()">
+        <option value="builder">Builder — build the lab from blocks</option>
+        <option value="labtags">Lab file — the same lab as plain text (paste or import here)</option>
         <option value="html">Rich text editor</option>
-        <option value="labtags">Lab file with tags (markdown + \commands)</option>
       </select>
-      <div class="hint">Lab files are written by hand or converted from a PDF by Claude using <code>docs/LAB-FORMAT.md</code>. They can include tables students fill in, photo slots, notes, questions, videos and figures.</div>
+      <div class="hint">Builder and Lab file are the same lab seen two ways; switch freely. Rich text is a separate editor and does not convert. Lab files can also be written by hand or converted from a PDF by Claude using <code>docs/LAB-FORMAT.md</code>.</div>
     </div>
     <div class="form-row" id="lab-quill-row">
       <label>Procedure</label>
       <div id="lab-content-editor" class="quill-container"></div>
+    </div>
+    <div class="form-row" id="lab-builder-row" style="display:none;">
+      <label>Procedure</label>
+      <div class="lt-toolbar">
+        <label class="btn-small">Import file… <input type="file" id="lab-builder-file" accept=".md,.txt,.tex,text/plain,text/markdown" onchange="importLabMarkupFile(this)"/></label>
+        <span class="hint" style="margin:0;">Have a lab file already? Import it (or drop it anywhere in this window) and it opens as blocks.</span>
+      </div>
+      <div id="lab-builder"></div>
     </div>
     <div class="form-row" id="lab-markup-row" style="display:none;">
       <label>Lab file</label>
@@ -744,10 +844,12 @@
 
 # Objectives
 ..." oninput="previewLabMarkup()"></textarea>
+    </div>
+    <div class="form-row" id="lab-preview-row" style="display:none;">
       <div id="lab-markup-errors"></div>
-      <div style="margin:1rem 0 0.4rem; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted);">Figures in this lab file</div>
+      <div class="lt-subhead" id="lab-figures-head">Figures in this lab file</div>
       <div class="media-manager" id="lab-figures-manager"></div>
-      <div style="margin:1rem 0 0.4rem; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted);">Preview</div>
+      <div class="lt-subhead">Preview — what students will see <button type="button" class="btn-small" onclick="previewLabMarkup(true)">Refresh</button></div>
       <div id="lab-markup-preview" class="lt-preview rich-content"></div>
     </div>
     <div class="form-row">
@@ -1905,7 +2007,7 @@ function applySlide() {
   const cap = $('slide-caption'); if (cap && state.currentSlideMedia) cap.textContent = state.currentSlideMedia[state.currentSlide].alt || '';
 }
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') document.querySelectorAll('.modal-backdrop.open').forEach(m => m.classList.remove('open'));
+  if (e.key === 'Escape' && !e.defaultPrevented) document.querySelectorAll('.modal-backdrop.open').forEach(m => m.classList.remove('open'));   // the builder's own Escape (popover / palette) stays inside the lab modal
   if (state.route.view === 'lab' && !document.querySelector('.modal-backdrop.open') && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
     if (e.key === 'ArrowLeft') changeSlide(-1);
     if (e.key === 'ArrowRight') changeSlide(1);
@@ -2380,9 +2482,10 @@ async function openLabModal(id) {
   labCoverItem = lab?.cover_path ? parseMediaEntry(lab.cover_path) : null;
   labMediaItems = (entry?.media || []).map(parseMediaEntry).filter(Boolean);
   labAttachmentItems = (entry?.attachments || []).map(a => ({ ...a }));
-  const fmt = entry?.format === 'labtags' ? 'labtags' : 'html';
-  $('lab-format').value = fmt;
-  $('lab-markup').value = fmt === 'labtags' ? (entry?.content || '') : '';
+  // New labs and existing lab files open in the Builder; rich-text labs keep their editor.
+  const fmt = entry?.format === 'labtags' ? 'builder' : (lab ? 'html' : 'builder');
+  $('lab-format').value = fmt; buLabFormatPrev = null; buLabModel = null; buLastSerialized = null; builderDestroy();
+  $('lab-markup').value = entry?.format === 'labtags' ? (entry?.content || '') : '';
   $('lab-markup-errors').innerHTML = ''; $('lab-markup-preview').innerHTML = '';
   onLabFormatChange();
   openModal('lab-modal');
@@ -2417,7 +2520,13 @@ async function saveLab() {
   const publishAt = status === 'scheduled' && $('lab-publish-at').value ? new Date($('lab-publish-at').value).toISOString() : null;
   if (status === 'scheduled' && !publishAt) { toast('Please choose a publish date and time', true); return; }
 
-  const format = $('lab-format').value === 'labtags' ? 'labtags' : 'html';
+  const sel = $('lab-format').value;
+  const format = sel === 'html' ? 'html' : 'labtags';           // the Builder is a view of a lab file, so it saves as 'labtags'
+  if (sel === 'builder') {
+    const live = buLabLive();   // the model the builder shows (a template or "give permanent names" may have swapped it)
+    if (!live || bmIsEmpty(live)) $('lab-markup').value = '';   // an empty builder saves as an empty lab (content null), as today
+    else { live.header = buHeaderFromFields(); buLabModel = live; $('lab-markup').value = builderSerialize(live); }   // the fields are the authority for the file's header
+  }
   const content = format === 'labtags' ? $('lab-markup').value : (labEditor ? labEditor.root.innerHTML : '');
   const isEmpty = content === '<p><br></p>' || content.trim() === '';
   const mediaArr = labMediaItems.map(serializeMediaItem);
@@ -2459,6 +2568,7 @@ async function saveLab() {
     toast('Could not save: ' + (e.message || e), true); return;
   }
   btn.disabled = false; btn.textContent = 'Save';
+  if (sel === 'builder' && buLabLive()) { bmFreezeAll(buLabLive()); buLastSerialized = $('lab-markup').value; }   // saved ids are now permanent
   closeModal('lab-modal');
   delete state.content[lab.id];
   await reloadCatalogue();
@@ -2924,6 +3034,7 @@ function ltSafeId(s) { return String(s || '').replace(/[^a-zA-Z0-9_.-]/g, '-'); 
 // Shared context per render: protected math/code, id counters, metadata, errors, widgets that need DOM binding
 function ltNewContext() { return { math: [], meta: {}, counters: {}, errors: [] }; }
 function ltNextId(ctx, kind) { ctx.counters[kind] = (ctx.counters[kind] || 0) + 1; return `${kind}${ctx.counters[kind]}`; }
+// mirrored by bmProtect in the builder; the builder test guards drift
 function ltProtect(text, ctx) {
   const stash = s => { ctx.math.push(s); return `LTMATH${ctx.math.length - 1}X`; };
   return text
@@ -3032,7 +3143,11 @@ function ltWidget(name, o, body, ctx, widgets) {
     case 'usetable': return `<div class="rp-mirror" data-mirror-table="${ltSafeId((body || '').trim())}"></div>`;
     case 'usegraph': return `<div class="rp-mirror" data-mirror-graph="${ltSafeId((body || '').trim())}"></div>`;
     case 'graph': {
-      const opts = { ...o }; if (body && body.trim()) opts.caption = body.trim(); if (!opts.table) opts.table = 'table1';
+      // Options go into a JSON attribute: put the raw math/code back first (JSON.stringify escapes its backslashes), otherwise
+      // ltRestore would later drop unescaped "\eta" into the JSON string and the graph would never draw.
+      const raw = s => String(s).replace(/LTMATH(\d+)X/g, (m, i) => ctx.math[+i] ?? m);
+      const opts = {}; for (const k of Object.keys(o)) opts[k] = typeof o[k] === 'string' ? raw(o[k]) : o[k];
+      if (body && body.trim()) opts.caption = raw(body.trim()); if (!opts.table) opts.table = 'table1';
       return `<div class="lt-graph" data-graph="${id}" data-opts="${escapeHTML(JSON.stringify(opts))}"></div>`;
     }
   }
@@ -3077,7 +3192,7 @@ function ltRender(source) {
     if (tpl.content.querySelector('h1')) [5, 4, 3, 2, 1].forEach(n => tpl.content.querySelectorAll('h' + n).forEach(h => { const d = document.createElement('h' + (n + 1)); d.innerHTML = h.innerHTML; h.replaceWith(d); }));
     let reportHtml = '';
     if (ctx.meta.report && ctx.meta.report.trim()) {
-      const rctx = ltNewContext(); rctx.counters = { ...ctx.counters };
+      const rctx = ltNewContext(); rctx.counters = { ...ctx.counters }; rctx.math = ctx.math;   // the report body was protected with ctx, so its math tokens index ctx.math
       const rw = []; const rt = ltExtractTags(ltProtect(ctx.meta.report, rctx), rctx, rw);
       reportHtml = ltRestore(ltInject(marked.parse(rt), rw), rctx);
       const rtpl = document.createElement('template'); rtpl.innerHTML = reportHtml;
@@ -3085,17 +3200,20 @@ function ltRender(source) {
       reportHtml = rtpl.innerHTML; ctx.errors.push(...rctx.errors);
     }
     let styleHtml = '';
-    if (ctx.meta.style && ctx.meta.style.trim()) { const sctx = ltNewContext(); styleHtml = ltRestore(marked.parse(ltProtect(ctx.meta.style, sctx)), sctx); }
+    if (ctx.meta.style && ctx.meta.style.trim()) { const sctx = ltNewContext(); sctx.math = ctx.math; styleHtml = ltRestore(marked.parse(ltProtect(ctx.meta.style, sctx)), sctx); }
     return { html: tpl.innerHTML, meta: ctx.meta, errors: ctx.errors, report: reportHtml, style: styleHtml };
   } catch (e) {
     console.error(e);
     return { html: `<div class="lt-error">Could not render this lab file: ${escapeHTML(e.message)}</div>`, meta: ctx.meta, errors: [e.message], report: '', style: '' };
   }
 }
-function ltParseMeta(source) { // quick header read for the importer
+function ltParseMeta(source) { // quick header read for the importer: title/summary/tags/minutes exactly as typed
   const ctx = ltNewContext(); const widgets = [];
-  try { ltExtractTags(ltProtect(source || '', ctx), ctx, widgets); } catch (e) { /* ignore */ }
-  return ctx.meta;
+  // bmProtect (the builder's mirror of ltProtect) stashes chemistry as typed, where ltProtect wraps bare \ce{} in $…$ for rendering
+  try { ltExtractTags(bmProtect(String(source || '').replace(/\r\n?/g, '\n'), ctx), ctx, widgets); } catch (e) { /* ignore */ }
+  const meta = {};
+  for (const k of ['title', 'summary', 'tags', 'minutes']) if (ctx.meta[k] !== undefined) meta[k] = bmRestore(ctx.meta[k], ctx);
+  return meta;
 }
 
 /* ---------- Student entries: localStorage for text, IndexedDB for photos ---------- */
@@ -3254,7 +3372,7 @@ function ltLinearFit(pts) {
 }
 const LT_SERIES_COLORS = ['var(--accent)', '#b3261e', '#2e7d32', '#b26a00', '#6a1b9a'];
 function ltRenderGraph(area, box) {
-  const o = JSON.parse(box.dataset.opts || '{}');
+  let o; try { o = JSON.parse(box.dataset.opts || '{}'); } catch (e) { box.innerHTML = `<div class="lt-error">Graph: could not read the graph options.</div>`; return; }
   const { header, rows } = ltTableRows(area, o.table);
   const fx = ltCompileExpr(o.x || 'c1');
   const ySpecs = String(o.y || 'c2').split(/[;|]/).map(s => s.trim()).filter(Boolean);
@@ -3317,22 +3435,42 @@ function ltBindGraphs(area) {
 (() => { const m = $('lab-modal');
   m.addEventListener('dragover', e => { if (e.dataTransfer?.types?.includes('Files')) e.preventDefault(); });
   m.addEventListener('drop', e => {
-    if (e.target.closest('.media-dropzone') || e.target.id === 'lab-markup') return; // handled by those boxes
+    if (e.target.closest('.media-dropzone, .bu-dropzone') || e.target.id === 'lab-markup') return; // handled by those boxes
     const f = Array.from(e.dataTransfer.files || []).find(isLabFile); if (!f) return;
     e.preventDefault(); loadLabMarkupFromFile(f);
   }); })();
 function onLabFormatChange() {
+  // Three views: Builder (blocks) and Lab file (plain text) are the same lab; Rich text is a separate editor.
   const fmt = $('lab-format').value;
-  $('lab-quill-row').style.display = fmt === 'labtags' ? 'none' : '';
-  $('lab-markup-row').style.display = fmt === 'labtags' ? '' : 'none';
-  if (fmt === 'labtags') previewLabMarkup(true);
+  $('lab-quill-row').style.display   = fmt === 'html'    ? '' : 'none';
+  $('lab-builder-row').style.display = fmt === 'builder' ? '' : 'none';
+  $('lab-markup-row').style.display  = fmt === 'labtags' ? '' : 'none';
+  $('lab-preview-row').style.display = fmt === 'html'    ? 'none' : '';
+  $('lab-figures-head').style.display = fmt === 'labtags' ? '' : 'none';   // pictures are added through Picture blocks in the Builder
+  if (fmt === 'builder') {
+    const text = $('lab-markup').value;
+    if (!buLabModel || text !== buLastSerialized) buLabLoad(text);   // first open, or the text was hand-edited: re-parse (ids in the text are now explicit)
+    // else: a peek at Lab file / Rich text and back → keep the model, so fresh ids keep following their titles
+    previewLabMarkup(true);
+  } else if (fmt === 'labtags') {
+    previewLabMarkup(true);   // the textarea already holds the latest serialization
+  }
+  buLabFormatPrev = fmt;
 }
 function isLabFile(f) { return /\.(md|markdown|txt|tex)$/i.test(f.name) || (f.type || '').startsWith('text/'); }
 function loadLabMarkupFromFile(f) {
   const r = new FileReader();
   r.onload = () => {
-    $('lab-format').value = 'labtags'; onLabFormatChange();
-    $('lab-markup').value = String(r.result || ''); applyLabMarkupMeta(false); previewLabMarkup(true);
+    const text = String(r.result || '');
+    if (builderActive()) {   // stays in the Builder: the file becomes blocks
+      const live = buLabLive();
+      if (live && !bmIsEmpty(live) && !confirm('Replace the blocks you have built with this file?')) return;
+      $('lab-markup').value = text; applyLabMarkupMeta(false); buLabLoad(text); previewLabMarkup(true);
+      toast('Lab file imported'); $('lab-builder-row').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    $('lab-markup').value = text; $('lab-format').value = 'labtags'; onLabFormatChange();
+    applyLabMarkupMeta(false); previewLabMarkup(true);
     toast('Lab file imported'); $('lab-markup-row').scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
   r.readAsText(f);
@@ -3362,6 +3500,7 @@ async function uploadFigureFile(f) {
 }
 function renderFiguresManager() {
   const c = $('lab-figures-manager'); if (!c) return;
+  if (builderActive()) { c.innerHTML = ''; return; }   // Builder mode: pictures live in Picture blocks
   const text = $('lab-markup').value;
   const used = labFilePaths(text);
   const paths = [...new Set([...used, ...labFigureUploads])].filter(p => /\.(png|jpe?g|gif|webp|svg)$/i.test(p));
@@ -3405,12 +3544,20 @@ function uploadPendingFigure(token) {
     try {
       const path = await uploadFigureFile(f);
       const ta = $('lab-markup');
+      const live = builderActive() ? buLabLive() : null;
+      if (live) {
+        // Patch the Picture block that holds the placeholder; fall back to the text replacement when it sits inside a raw/text block.
+        const clean = p => String(p || '').replace(/^img:/, '').trim();
+        const fb = [...live.procedure, ...live.report].find(b => b.type === 'figure' && clean(b.path) === (token || ''));
+        if (fb) { fb.path = path; builderSetModel(live); buLabOnChange(live, { structural: true }); toast('Picture added'); return; }
+      }
       if (token) {
         const re = new RegExp('\\{\\s*' + token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\}', 'g');
         ta.value = ta.value.replace(re, '{' + path + '}');
       } else {
         ta.value = ta.value.replace(/\\figure(\[[^\]]*\])?\{\s*\}/, (m, o) => `\\figure${o || ''}{${path}}`);
       }
+      if (builderActive()) buLabLoad(ta.value);   // the placeholder lived in plain text: re-read the blocks from the text
       previewLabMarkup(true); toast('Picture added');
     } catch (e) { toast('Upload failed: ' + e.message, true); }
   };
@@ -3437,7 +3584,10 @@ function previewLabMarkup(now) {
   clearTimeout(ltPreviewTimer);
   const run = () => {
     const r = ltRender($('lab-markup').value);
-    $('lab-markup-errors').innerHTML = r.errors.map(e => `<div class="lt-error">${escapeHTML(e)}</div>`).join('');
+    let errs = r.errors.map(e => `<div class="lt-error">${escapeHTML(e)}</div>`).join('');
+    const live = builderActive() ? buLabLive() : null;
+    if (live && (live.warnings || []).length) errs += live.warnings.map(w => `<div class="lt-note">${escapeHTML(w)}</div>`).join('');   // gentle notes about parts kept as raw text
+    $('lab-markup-errors').innerHTML = errs;
     const pv = $('lab-markup-preview'); pv.innerHTML = buildLabTagsHTML(r, null);
     if (r.report) rpPrepare(pv);
     ltBind(pv, 'preview');
@@ -3448,6 +3598,2315 @@ function previewLabMarkup(now) {
   };
   now ? run() : (ltPreviewTimer = setTimeout(run, 400));
 }
+
+// BUILDER-MODEL-BEGIN  (verbatim copy of modules/builder-model.js; the builder test guards drift)
+/* ============================================================
+   BUILDER MODEL — block model for the lab-file Builder mode.
+   Pure JS: no DOM, no globals of the page. Runs in Node (tests) and inlined in index.html.
+
+   Mirrors of renderer functions in index.html (kept in sync by the drift-guard test in
+   modules/builder-model.test.js, section E.1.6 of the spec):
+     bmParseOptions = ltParseOptions      bmBalanced = ltBalanced      bmSafeId = ltSafeId
+     bmSlugify      = slugify (without the 'item' fallback)
+     bmProtect      = ltProtect (same token text; stashes the raw source slice instead of html)
+     BM_TAGS / BM_META / BM_BLOCK = LT_TAGS / LT_META / LT_BLOCK
+   Public globals: builderParse, builderSerialize, builderNewBlock, builderTemplates (+ bm* helpers, BM_* constants).
+   ============================================================ */
+
+const BM_TAGS = new Set(['title', 'summary', 'tags', 'minutes', 'video', 'datatable', 'answer', 'notes', 'photo', 'input', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'report', 'style', 'section', 'usetable', 'usegraph']);
+const BM_META = new Set(['title', 'summary', 'tags', 'minutes', 'report', 'style']);
+const BM_BLOCK = new Set(['video', 'datatable', 'answer', 'notes', 'photo', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'section', 'usetable', 'usegraph']);
+const BM_CALLOUT_KINDS = ['safety', 'warning', 'info', 'tip', 'hint'];
+const BM_HEADER_KEYS = ['title', 'summary', 'tags', 'minutes'];
+
+const BM_TYPES = {
+  heading:   { label: 'Heading',          list: 'both' },
+  text:      { label: 'Text',             list: 'both' },
+  comment:   { label: 'Note to self',     list: 'both' },
+  raw:       { label: 'Raw',              list: 'both' },
+  steps:     { tag: 'procedure', label: 'Numbered steps',  list: 'procedure', kind: 'proc',  idBase: 'steps',    known: ['id'] },
+  table:     { tag: 'datatable', label: 'Data table',      list: 'procedure', kind: 'table', idBase: 'table',    known: ['id', 'title', 'addrows'], nameOf: b => b.opts.title },
+  answer:    { tag: 'answer',    label: 'Question',        list: 'procedure', kind: 'q',     idBase: 'question', known: ['id', 'lines'] },
+  notes:     { tag: 'notes',     label: 'Notes box',       list: 'procedure', kind: 'notes', idBase: 'notes',    known: ['id'], nameOf: b => b.label },
+  photo:     { tag: 'photo',     label: 'Photo slot',      list: 'procedure', kind: 'photo', idBase: 'photo',    known: ['id'] },
+  video:     { tag: 'video',     label: 'Video',           list: 'procedure', known: [] },
+  figure:    { tag: 'figure',    label: 'Picture',         list: 'procedure', known: ['caption'] },
+  callout:   { tag: null,        label: 'Callout',         list: 'procedure', known: ['label'] },
+  graph:     { tag: 'graph',     label: 'Graph',           list: 'procedure', kind: 'graph', idBase: 'graph',    known: ['id', 'table', 'x', 'y', 'series', 'type', 'fit', 'title', 'xlabel', 'ylabel', 'xmin', 'xmax', 'ymin', 'ymax'], nameOf: b => b.opts.title },
+  pagebreak: { tag: 'pagebreak', label: 'Page break',      list: 'procedure', known: [] },
+  section:   { tag: 'section',   label: 'Report section',  list: 'report',    kind: 'section', idBase: 'section', known: ['id', 'title', 'required', 'words', 'hint', 'lines'], nameOf: b => b.opts.title },
+  usetable:  { tag: 'usetable',  label: 'Include a table', list: 'report' },
+  usegraph:  { tag: 'usegraph',  label: 'Include a graph', list: 'report' },
+};
+const BM_TAG_TYPE = { procedure: 'steps', datatable: 'table', answer: 'answer', notes: 'notes', photo: 'photo', video: 'video', figure: 'figure', graph: 'graph', pagebreak: 'pagebreak', section: 'section', usetable: 'usetable', usegraph: 'usegraph', safety: 'callout', warning: 'callout', info: 'callout', tip: 'callout', hint: 'callout' };
+const BM_KIND = { datatable: 'table', answer: 'q', notes: 'notes', photo: 'photo', input: 'field', procedure: 'proc' };
+const BM_RESERVED_ID = /^(table|q|notes|photo|field|proc|graph|section|figure|video|pagebreak|safety|warning|info|tip|hint|usetable|usegraph)\d*$/;
+const BM_ID_TYPES = new Set(['steps', 'table', 'answer', 'notes', 'photo', 'graph', 'section']);
+const BM_INPUT_KNOWN = ['id', 'label', 'unit', 'placeholder'];
+const BM_FILL = /^_{3,}$/;
+const BM_PIN_KINDS = new Set(['table', 'q', 'notes', 'photo', 'field', 'proc', 'section', 'graph']);   // widgets whose id matters (entries, references)
+
+/* ---------- mirrors of renderer helpers ---------- */
+function bmParseOptions(str) {
+  const opts = {};
+  if (!str) return opts;
+  const parts = []; let cur = '', q = null;
+  for (const ch of str) {
+    if (q) { if (ch === q) q = null; else cur += ch; }
+    else if (ch === '"' || ch === "'") q = ch;
+    else if (ch === ',') { parts.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  parts.push(cur);
+  parts.map(p => p.trim()).filter(Boolean).forEach(p => {
+    const eq = p.indexOf('=');
+    if (eq === -1) opts[p] = true; else opts[p.slice(0, eq).trim()] = p.slice(eq + 1).trim();
+  });
+  return opts;
+}
+function bmBalanced(text, open) {
+  let depth = 0;
+  for (let i = open; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '\\') { i++; continue; }
+    if (ch === '{') depth++;
+    else if (ch === '}') { depth--; if (depth === 0) return i; }
+  }
+  return -1;
+}
+function bmSafeId(s) { return String(s || '').replace(/[^a-zA-Z0-9_.-]/g, '-'); }
+function bmSlugify(s) {
+  return String(s || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
+}
+function bmProtect(text, ctx) {
+  const stash = s => { ctx.math.push(s); return `LTMATH${ctx.math.length - 1}X`; };
+  return text
+    .replace(/```[\s\S]*?```/g, stash)
+    .replace(/\$\$[\s\S]*?\$\$/g, stash)
+    .replace(/\\\[[\s\S]*?\\\]/g, stash)
+    .replace(/\\\([\s\S]*?\\\)/g, stash)
+    .replace(/(^|[^\\$])\$(?!\s)([^\n$]+?)(?<!\s)\$(?!\d)/g, (m, pre, body) => pre + stash('$' + body + '$'))
+    .replace(/\\(?:ce|pu)\{[^\n]*?\}(?=[^}]*)/g, m => {
+      const close = bmBalanced(m, m.indexOf('{')); return close === -1 ? m : stash(m.slice(0, close + 1)) + m.slice(close + 1);
+    })
+    .replace(/`[^`\n]+`/g, stash);
+}
+function bmRestore(s, ctx) { return String(s).replace(/LTMATH(\d+)X/g, (m, i) => ctx.math[+i] ?? m); }
+function bmNewCtx() { return { math: [] }; }
+function bmProtectOnly(text) { const c = bmNewCtx(); return { p: bmProtect(String(text ?? ''), c), ctx: c }; }
+
+/* ---------- small text helpers ---------- */
+function bmTrimBlankLines(s) { return String(s ?? '').replace(/^(?:[ \t]*\n)+/, '').replace(/(?:\n[ \t]*)+$/, ''); }
+function bmMaskComments(p) { return p.replace(/<!--[\s\S]*?-->/g, m => m.replace(/[^\n]/g, '\u0001')); }
+function bmBracesOk(s) {
+  const { p } = bmProtectOnly(s);
+  let depth = 0;
+  for (let i = 0; i < p.length; i++) {
+    const ch = p[i];
+    if (ch === '\\') { i++; continue; }
+    if (ch === '{') depth++; else if (ch === '}') { depth--; if (depth < 0) return false; }
+  }
+  return depth === 0;
+}
+
+// Top-level tag occurrences of a protected string, exactly as ltExtractTags would find them.
+function bmScanTags(p) {
+  const out = []; const re = /\\([a-zA-Z]+)/g; let m;
+  while ((m = re.exec(p))) {
+    const name = m[1];
+    if (!BM_TAGS.has(name)) continue;
+    let pos = m.index + m[0].length, opts = null, body = null;
+    if (p[pos] === '[') { const end = p.indexOf(']', pos); if (end !== -1) { opts = p.slice(pos + 1, end); pos = end + 1; } }
+    if (p[pos] === '{') {
+      const end = bmBalanced(p, pos);
+      if (end === -1) { out.push({ name, start: m.index, end: m.index + m[0].length, opts: null, body: null, broken: true, src: m[0] }); continue; }
+      body = p.slice(pos + 1, end); pos = end + 1;
+    }
+    out.push({ name, start: m.index, end: pos, opts, body, broken: false, src: p.slice(m.index, pos) });
+    re.lastIndex = pos;
+  }
+  return out;
+}
+function bmIsStandalone(p, occ) {
+  const ls = p.lastIndexOf('\n', occ.start - 1) + 1;
+  let le = p.indexOf('\n', occ.end); if (le === -1) le = p.length;
+  return /^[ \t]*$/.test(p.slice(ls, occ.start)) && /^[ \t]*$/.test(p.slice(occ.end, le));
+}
+// Options object from a protected option string, values restored, '' values dropped.
+function bmOptsFromOcc(occ, ctx) {
+  const o = bmParseOptions(occ.opts || ''); const out = {};
+  for (const k of Object.keys(o)) {
+    const v = o[k];
+    if (v === true) out[k] = true;
+    else { const r = bmRestore(v, ctx); if (r !== '') out[k] = r; }
+  }
+  return out;
+}
+// Lenient table split (what the renderer sees): { headers, rows (padded), cols, stray }
+function bmTableCells(Bp) {
+  const all = String(Bp ?? '').split('\n').map(l => l.trim());
+  const stray = all.some(l => l !== '' && !l.startsWith('|'));
+  const rows = all.filter(l => l.startsWith('|'));
+  const cells = line => line.replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim());
+  const isSep = line => /^\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?$/.test(line);
+  const headers = rows.length ? cells(rows[0]) : [];
+  const body = rows.slice(1).filter(l => !isSep(l)).map(cells);
+  const cols = Math.max(headers.length, ...body.map(r => r.length), 1);
+  return { headers, rows: body.map(r => Array.from({ length: cols }, (_, i) => r[i] ?? '')), cols, stray };
+}
+
+/* ---------- parse ---------- */
+let bmKeyCounter = 0;
+function bmKey() { return ++bmKeyCounter; }
+function bmEmptyModel() { return { header: { title: '', summary: '', tags: '', minutes: '' }, style: null, reportPresent: false, procedure: [], report: [], warnings: [] }; }
+
+const BM_W = {
+  midline: 'A command inside a sentence is kept as raw text.',
+  broken: 'A command is missing its closing brace; it is kept as raw text.',
+  table: 'This table has extra text the site ignores; it is kept as a raw block.',
+  steps: 'This procedure is not a simple numbered list; it is kept as a raw block.',
+  pagebreak: 'A page break with text inside it is kept as a raw block.',
+  metaInReport: 'A header command was found inside the report; the site ignores it there. It is kept as a raw block.',
+  fallback: 'The builder could not read this file, so it is shown as one raw block. Nothing was changed.',
+  sectionOutside: 'A report section was found outside the report; it still works but students see it in the procedure.',
+  procedureInReport: 'A procedure block was found inside the report; it still works there.',
+  nestedMeta: 'A report or style guide is tucked inside another block, and the file also has one at the top level. Students only see the tucked-in one, so the whole file is kept as raw text to leave it as it is.',
+  nestedMetaOnly: 'A report or style guide is tucked inside another block; the site still uses it, but the builder cannot edit it as a form.',
+};
+const BM_META_WORDS = { title: 'title', summary: 'summary', tags: 'tags', minutes: 'time', report: 'report', style: 'style guide' };
+// True when a widget body (callout, step, prompt…) hides a \report or \style; the renderer honours those, and the last one wins.
+function bmHasNestedMeta(p, top = true) {
+  for (const occ of bmScanTags(p)) {
+    if (occ.broken) continue;
+    if (!top && (occ.name === 'report' || occ.name === 'style')) return true;
+    if (BM_META.has(occ.name)) continue;
+    if (occ.body != null && bmHasNestedMeta(occ.body, false)) return true;
+  }
+  return false;
+}
+
+function builderParse(text) {
+  const src = String(text ?? '').replace(/\r\n?/g, '\n');
+  try {
+    const ctx = bmNewCtx(); const p = bmProtect(src, ctx);
+    const top = bmParseFlow(p, ctx, { inReport: false });
+    const model = bmEmptyModel();
+    for (const k of BM_HEADER_KEYS) model.header[k] = top.header[k] ?? '';
+    if (bmHasNestedMeta(p)) {
+      if (top.reportPresent || top.style !== null) {
+        // Serializing would move the top-level report/style after the nested one and change which one students see: keep the body verbatim.
+        let body = '', cursor = 0;
+        for (const occ of bmScanTags(p)) {
+          if (occ.broken || !BM_HEADER_KEYS.includes(occ.name)) continue;
+          body += p.slice(cursor, occ.start); cursor = occ.end; if (p[cursor] === '\n') cursor++;
+        }
+        model.procedure = [{ type: 'raw', text: bmTrimBlankLines(bmRestore(body + p.slice(cursor), ctx)), _k: bmKey() }];
+        model.warnings = [BM_W.nestedMeta];
+        return model;
+      }
+      top.warnings.push(BM_W.nestedMetaOnly);
+    }
+    model.style = top.style;
+    model.reportPresent = top.reportPresent;
+    model.procedure = top.blocks;
+    const warnings = top.warnings.slice();
+    if (top.reportBody != null) { const r = bmParseFlow(top.reportBody, ctx, { inReport: true }); model.report = r.blocks; warnings.push(...r.warnings); }
+    for (const b of model.procedure) if (b.type === 'section' || b.type === 'usetable' || b.type === 'usegraph') { warnings.push(BM_W.sectionOutside); break; }
+    for (const b of model.report) if (b.type === 'steps' || b.type === 'table' || b.type === 'graph') { warnings.push(BM_W.procedureInReport); break; }
+    warnings.push(...bmParseWarnings(model));
+    model.warnings = [...new Set(warnings)];
+    for (const b of model.procedure) b._k = bmKey();
+    for (const b of model.report) b._k = bmKey();
+    return model;
+  } catch (e) {
+    if (typeof BM_DEBUG !== 'undefined' && BM_DEBUG) throw e;
+    const model = bmEmptyModel();
+    model.procedure = [{ type: 'raw', text: src, _k: bmKey() }];
+    model.warnings = [BM_W.fallback];
+    return model;
+  }
+}
+
+function bmParseFlow(p, ctx, { inReport }) {
+  const occs = bmScanTags(p);
+  const segs = [], warnings = [], header = {};
+  let buf = '', pieces = [], pending = [], cursor = 0, eat = false;
+  let styleOcc = null, reportOcc = null, reportPresent = false;
+  const lastMeta = {};   // the live \report / \style is the last one in the file; earlier ones stay where they were as raw text
+  if (!inReport) for (const occ of occs) if (!occ.broken && (occ.name === 'report' || occ.name === 'style')) lastMeta[occ.name] = occ;
+  const add = (from, to) => {
+    if (eat) { while (from < to && p[from] === '\n') from++; eat = false; }
+    if (to > from) { pieces.push({ bufStart: buf.length, pStart: from, pEnd: to }); buf += p.slice(from, to); }
+  };
+  const flushRun = () => {
+    if (buf !== '') {
+      const inside = [];
+      for (const occ of pending) {
+        const pc = pieces.find(x => occ.start >= x.pStart && occ.end <= x.pEnd);
+        if (pc) inside.push({ ...occ, start: pc.bufStart + (occ.start - pc.pStart), end: pc.bufStart + (occ.end - pc.pStart) });
+      }
+      segs.push({ run: buf, inside });
+    }
+    buf = ''; pieces = []; pending = [];
+  };
+  const warn = m => { if (!warnings.includes(m)) warnings.push(m); };
+  for (const occ of occs) {
+    if (occ.broken || occ.name === 'input') { pending.push(occ); continue; }
+    const isMeta = BM_META.has(occ.name);
+    if (isMeta && !inReport) {
+      add(cursor, occ.start); cursor = occ.end;
+      if (BM_HEADER_KEYS.includes(occ.name)) {
+        if (header[occ.name] !== undefined) warn(`The file gives its ${BM_META_WORDS[occ.name] || occ.name} twice; only the last one counts.`);
+        header[occ.name] = bmRestore(occ.body ?? '', ctx).trim();
+      } else if (lastMeta[occ.name] !== occ) {   // a superseded part: kept in place as raw text, so the first serialization is already a fixed point
+        flushRun(); segs.push({ raw: bmRestore(p.slice(occ.start, occ.end), ctx) });
+        warn(`The file has two ${BM_META_WORDS[occ.name] || occ.name} parts; the site only shows the last one. The first is kept as raw text.`);
+      } else {
+        buf = buf.replace(/\n*$/, '\n\n'); eat = true;   // the renderer forces a paragraph break here
+        if (occ.name === 'style') styleOcc = occ; else { reportOcc = occ; reportPresent = true; }
+      }
+      continue;
+    }
+    if (isMeta && inReport) {
+      if (bmIsStandalone(p, occ)) { add(cursor, occ.start); flushRun(); segs.push({ raw: bmRestore(p.slice(occ.start, occ.end), ctx) }); cursor = occ.end; warn(BM_W.metaInReport); }
+      else pending.push(occ);
+      continue;
+    }
+    if (BM_BLOCK.has(occ.name) && bmIsStandalone(p, occ)) { add(cursor, occ.start); flushRun(); segs.push({ tag: occ }); cursor = occ.end; }
+    else pending.push(occ);
+  }
+  add(cursor, p.length); flushRun();
+  const blocks = [];
+  for (const s of segs) {
+    if (s.run != null) blocks.push(...bmRunBlocks(s.run, ctx, s.inside, warn));
+    else if (s.raw != null) blocks.push({ type: 'raw', text: s.raw });
+    else { const b = bmBlockFromOcc(s.tag, ctx); if (b._warn) { warn(b._warn); delete b._warn; } blocks.push(b); }
+  }
+  return {
+    blocks, header, warnings,
+    style: styleOcc ? bmTrimBlankLines(bmRestore(styleOcc.body ?? '', ctx)) : null,
+    reportBody: reportOcc ? (reportOcc.body ?? '') : null,
+    reportPresent,
+  };
+}
+
+function bmRunBlocks(run, ctx, inside, warn = () => {}) {
+  const pc = bmMaskComments(run);
+  const lines = []; let off = 0;
+  for (const l of run.split('\n')) { lines.push({ start: off, end: off + l.length, text: l, masked: pc.slice(off, off + l.length) }); off += l.length + 1; }
+  const HEAD = /^(#{1,6})(?:[ \t]+(.*?))?[ \t]*$/;
+  const cls = l => HEAD.test(l.masked) ? 'H' : /^[ \t]*$/.test(l.masked) ? 'B' : 'T';
+  const hits = (a, b) => (inside || []).filter(o => o.start < b && o.end > a && (o.broken || o.name !== 'input'));
+  const out = [];
+  const emitChunks = chunks => {  // chunks: [{start,end}] of one non-heading group, in order
+    let textStart = null, textEnd = null;
+    const flushText = () => {
+      if (textStart == null) return;
+      const piece = run.slice(textStart, textEnd), t = bmTrimBlankLines(piece);
+      if (t !== '') {
+        const h = hits(textStart, textEnd);
+        if (h.length) { out.push({ type: 'raw', text: bmRestore(t, ctx) }); warn(h.some(o => o.broken) ? BM_W.broken : BM_W.midline); }
+        else out.push({ type: 'text', text: bmRestore(t, ctx) });
+      }
+      textStart = textEnd = null;
+    };
+    for (const c of chunks) {
+      const s = run.slice(c.start, c.end).trim();
+      const isComment = /^<!--[\s\S]*-->$/.test(s) && s.indexOf('-->') === s.length - 3 && !hits(c.start, c.end).length;
+      if (isComment) { flushText(); out.push({ type: 'comment', text: bmRestore(s.slice(4, -3), ctx).trim() }); }
+      else { if (textStart == null) textStart = c.start; textEnd = c.end; }
+    }
+    flushText();
+  };
+  let group = [], chunk = null;
+  const endChunk = () => { if (chunk) group.push(chunk); chunk = null; };
+  const endGroup = () => { endChunk(); if (group.length) emitChunks(group); group = []; };
+  for (const l of lines) {
+    const c = cls(l);
+    if (c === 'H') {
+      endGroup();
+      const h = hits(l.start, l.end);
+      if (h.length) { out.push({ type: 'raw', text: bmRestore(l.text, ctx) }); warn(h.some(o => o.broken) ? BM_W.broken : BM_W.midline); continue; }
+      const m = HEAD.exec(l.text) || HEAD.exec(l.masked);
+      out.push({ type: 'heading', level: m[1].length, text: bmRestore((m[2] || '').replace(/[ \t]+#+$/, ''), ctx) });
+    } else if (c === 'B') endChunk();
+    else { if (!chunk) chunk = { start: l.start, end: l.end }; else chunk.end = l.end; }
+  }
+  endGroup();
+  return out;
+}
+
+function bmParseTable(Bp, ctx) {
+  const t = bmTableCells(Bp);
+  if (t.stray) return null;
+  const fix = c => { const r = bmRestore(c, ctx); return BM_FILL.test(r) ? '___' : r; };
+  return { headers: t.headers.map(c => bmRestore(c, ctx)), rows: t.rows.map(r => r.map(fix)) };
+}
+
+const BM_ITEM = /^(\d{1,9})[.)](?:([ \t]+)(.*)|$)/;
+const BM_BLOCK_START = /^(?:\d{1,9}[.)](?:[ \t]|$)|[-+*](?:[ \t]|$)|#{1,6}(?:[ \t]|$)|>|```|~~~|(?:[-*_][ \t]*){3,}$)/;   // a line that would start a new block if it stood alone
+function bmColumns(ws, from = 0) { let col = from; for (const ch of ws) col = ch === '\t' ? (Math.floor(col / 4) + 1) * 4 : col + 1; return col - from; }   // width of leading whitespace, tabs to the next tab stop
+function bmDeindent(line, width) {
+  let col = 0, i = 0;
+  while (i < line.length && col < width) { if (line[i] === ' ') col++; else if (line[i] === '\t') col = (Math.floor(col / 4) + 1) * 4; else break; i++; }
+  return ' '.repeat(Math.max(0, col - width)) + line.slice(i);
+}
+// Nested tag bodies inside a step (\tip{...}, \answer{...}, a \datatable at column 0) are opaque to the list structure, exactly
+// as the renderer extracts them before Markdown runs: each balanced occurrence becomes one single-line token, so its lines are
+// neither split into items nor (re-)indented. `p` is already protected (math/code tokens); the tokens live only inside one call.
+function bmHideNested(p) {
+  const hidden = []; let out = '', cursor = 0;
+  for (const occ of bmScanTags(p)) {
+    if (occ.broken || occ.body == null) continue;
+    out += p.slice(cursor, occ.start) + `\u0002${hidden.length}\u0003`; hidden.push(occ.src); cursor = occ.end;
+  }
+  return { p: out + p.slice(cursor), restore: s => s.replace(/\u0002(\d+)\u0003/g, (m, i) => hidden[+i] ?? m) };
+}
+function bmParseSteps(Bp) {
+  const hid = bmHideNested(bmTrimBlankLines(Bp ?? ''));
+  const body = hid.p;
+  if (body === '') return null;
+  const lines = body.split('\n');
+  if (!BM_ITEM.test(lines[0])) return null;
+  const items = []; let loose = false, pendingBlank = false, cur = null;
+  for (const line of lines) {
+    const m = BM_ITEM.exec(line);
+    if (m) {
+      const marker = m[1].length + 1, gap = m[2] ? bmColumns(m[2], marker) : 1;
+      if (gap > 4) return null;   // five or more spaces after the marker start an indented code block
+      cur = { number: m[1], width: marker + gap, lines: [m[3] ?? ''] }; items.push(cur);
+      if (pendingBlank && items.length > 1) loose = true;
+      pendingBlank = false;
+    } else if (/^[ \t]*$/.test(line)) { pendingBlank = true; cur.lines.push(''); }
+    else {
+      const ws = /^[ \t]*/.exec(line)[0], rest = line.slice(ws.length);
+      if (bmColumns(ws) >= cur.width) cur.lines.push(bmDeindent(line, cur.width));
+      else if (pendingBlank || BM_BLOCK_START.test(rest)) return null;   // under-indented: a new paragraph or a sibling item, so re-indenting would change the list
+      else cur.lines.push(rest);   // lazy continuation of the step's own paragraph
+      pendingBlank = false;
+    }
+  }
+  return { start: parseInt(items[0].number, 10), loose, steps: items.map(it => hid.restore(bmTrimBlankLines(it.lines.join('\n')))) };
+}
+
+function bmBlockFromOcc(occ, ctx) {
+  const o = bmOptsFromOcc(occ, ctx);
+  const Bp = occ.body; const B = Bp == null ? '' : bmRestore(Bp, ctx);
+  const raw = w => ({ type: 'raw', text: bmRestore(occ.src, ctx), _warn: w });
+  const type = BM_TAG_TYPE[occ.name];
+  switch (occ.name) {
+    case 'datatable': { const r = bmParseTable(Bp ?? '', ctx); return r ? { type: 'table', opts: o, headers: r.headers, rows: r.rows } : raw(BM_W.table); }
+    case 'procedure': { const r = bmParseSteps(Bp ?? ''); return r ? { type: 'steps', opts: o, start: r.start, loose: r.loose, steps: r.steps.map(s => bmRestore(s, ctx)) } : raw(BM_W.steps); }
+    case 'answer': case 'photo': case 'section': return { type, opts: o, prompt: B.trim() };
+    case 'notes': return { type: 'notes', opts: o, label: B.trim() };
+    case 'video': return { type: 'video', opts: o, url: B.trim() };
+    case 'figure': return { type: 'figure', opts: o, path: B.trim() };
+    case 'graph': return { type: 'graph', opts: o, caption: B.trim() };
+    case 'pagebreak': return (Bp == null || B.trim() === '') ? { type: 'pagebreak', opts: o } : raw(BM_W.pagebreak);
+    case 'usetable': case 'usegraph': return { type, ref: B.trim() };
+    default: return { type: 'callout', kind: occ.name, opts: o, body: bmTrimBlankLines(B) };
+  }
+}
+
+/* ---------- serialize ---------- */
+function bmOptValue(v) {
+  const c = bmNewCtx();
+  let pv = bmProtect(String(v).replace(/\r?\n/g, ' '), c).replace(/\]/g, ')');
+  if (/^[A-Za-z0-9_.\-]+$/.test(pv)) return bmRestore(pv, c);
+  if (pv.indexOf('"') === -1) pv = '"' + pv + '"';
+  else if (pv.indexOf("'") === -1) pv = "'" + pv + "'";
+  else pv = '"' + pv.replace(/"/g, '\u201d') + '"';
+  return bmRestore(pv, c);
+}
+function bmOptsFor(type, opts) {
+  const known = type === 'input' ? BM_INPUT_KNOWN : (BM_TYPES[type] && BM_TYPES[type].known) || [];
+  const o = opts || {}; const keys = [...known.filter(k => k in o), ...Object.keys(o).filter(k => !known.includes(k))];
+  const parts = [];
+  for (const k of keys) {
+    const v = o[k];
+    if (v === '' || v == null || v === false) continue;
+    parts.push(v === true ? k : `${k}=${bmOptValue(v)}`);
+  }
+  return parts.length ? `[${parts.join(', ')}]` : '';
+}
+function bmOpts(block) { return bmOptsFor(block.type, block.opts); }
+function bmBodyInfo(s) {
+  const c = bmNewCtx(); const p = bmProtect(String(s ?? ''), c);
+  const stack = [], esc = new Set();
+  for (let i = 0; i < p.length; i++) {
+    const ch = p[i];
+    if (ch === '\\') { i++; continue; }
+    if (ch === '{') stack.push(i);
+    else if (ch === '}') { if (stack.length) stack.pop(); else esc.add(i); }
+  }
+  for (const i of stack) esc.add(i);
+  if (!esc.size) return { text: String(s ?? ''), escaped: false };
+  let out = '';
+  for (let i = 0; i < p.length; i++) out += (esc.has(i) ? '\\' : '') + p[i];
+  return { text: bmRestore(out, c), escaped: true };
+}
+function bmBody(s) { return bmBodyInfo(s).text; }
+function bmIndentStep(step, indent) {
+  const c = bmNewCtx(); const hid = bmHideNested(bmProtect(String(step ?? ''), c));   // symmetric with bmParseSteps: nested bodies keep their own lines
+  return bmRestore(hid.restore(hid.p.split('\n').map((l, i) => i === 0 || l === '' ? l : indent + l).join('\n')), c);
+}
+function bmSerializeBlock(b) {
+  const T = BM_TYPES[b.type]; const tag = b.type === 'callout' ? b.kind : (T && T.tag);
+  switch (b.type) {
+    case 'heading': return '#'.repeat(Math.min(6, Math.max(1, b.level || 1))) + (b.text ? ' ' + b.text + (/\s#+$/.test(b.text) ? ' #' : '') : '');
+    case 'text': case 'raw': return String(b.text ?? '');
+    case 'comment': return String(b.text ?? '').indexOf('\n') === -1 ? `<!-- ${b.text ?? ''} -->` : `<!-- ${b.text}\n-->`;
+    case 'steps': {
+      const start = Number.isFinite(+b.start) ? +b.start : 1;
+      const items = (b.steps || []).map((s, k) => { const n = String(start + k); return `${n}. ` + bmIndentStep(bmBody(s), ' '.repeat(n.length + 2)); });
+      return `\\procedure${bmOpts(b)}{\n${items.join(b.loose ? '\n\n' : '\n')}\n}`;
+    }
+    case 'table': {
+      const headers = (b.headers || []).map(bmBody), rows = (b.rows || []).map(r => r.map(bmBody));
+      if (!headers.length && !rows.length) return `\\datatable${bmOpts(b)}{\n}`;
+      const cols = Math.max(headers.length, ...rows.map(r => r.length), 1);
+      const line = r => `| ${Array.from({ length: cols }, (_, i) => r[i] ?? '').join(' | ')} |`;
+      let out = `\\datatable${bmOpts(b)}{\n`;
+      if (headers.length) out += `| ${headers.join(' | ')} |\n`;
+      out += `|${'---|'.repeat(cols)}`;
+      if (rows.length) out += '\n' + rows.map(line).join('\n');
+      return out + '\n}';
+    }
+    case 'answer': case 'photo': case 'section': return `\\${tag}${bmOpts(b)}` + (b.prompt ? `{${bmBody(b.prompt)}}` : '');
+    case 'notes': return `\\notes${bmOpts(b)}` + (b.label ? `{${bmBody(b.label)}}` : '');
+    case 'graph': return `\\graph${bmOpts(b)}` + (b.caption ? `{${bmBody(b.caption)}}` : '');
+    case 'video': return `\\video${bmOpts(b)}{${bmBody(b.url ?? '')}}`;
+    case 'usetable': case 'usegraph': return `\\${tag}{${bmBody(b.ref ?? '')}}`;
+    case 'figure': return `\\figure${bmOpts(b)}{${bmBody(b.path ?? '')}}`;
+    case 'callout': return `\\${BM_CALLOUT_KINDS.includes(b.kind) ? b.kind : 'info'}${bmOpts(b)}{\n${bmBody(b.body ?? '')}\n}`;
+    case 'pagebreak': return `\\pagebreak${bmOpts(b)}`;
+  }
+  return '';
+}
+function builderSerialize(model) {
+  if (!model) return '';
+  const parts = [];
+  const h = model.header || {};
+  const head = BM_HEADER_KEYS.filter(k => h[k] != null && String(h[k]).trim() !== '').map(k => `\\${k}{${bmBody(String(h[k]).trim())}}`);
+  if (head.length) parts.push(head.join('\n'));
+  for (const b of model.procedure || []) parts.push(bmSerializeBlock(b));
+  if (model.style !== null && model.style !== undefined) parts.push(`\\style{\n${model.style}\n}`.replace(/\{\n\n\}$/, '{\n}'));
+  const rep = model.report || [];
+  if (rep.length || model.reportPresent) parts.push(rep.length ? `\\report{\n${rep.map(bmSerializeBlock).join('\n\n')}\n}` : '\\report{\n}');
+  return parts.join('\n\n') + (parts.length ? '\n' : '');
+}
+
+/* ---------- renderer simulation: walker over protected text ----------
+   bmTraverse(p, ctx, handler, st, depth, where) rebuilds `p`; handler(info) may return { id } to give an
+   occurrence that id (options re-emitted with id first). st = { counters, refused, count }.
+   Recursion order mirrors ltWidget (spec A.0.7). Report bodies are deferred by bmWalkDoc. */
+function bmTraverse(p, ctx, handler, st, depth = 0, where = 'body') {
+  let out = '', cursor = 0, changed = false;
+  const sub = (s, w) => bmTraverse(s, ctx, handler, st, depth + 1, w || where);
+  for (const occ of bmScanTags(p)) {
+    if (occ.broken || BM_META.has(occ.name)) continue;
+    const name = occ.name, po = bmParseOptions(occ.opts || ''), o = bmOptsFromOcc(occ, ctx);
+    const kind = BM_KIND[name] || name;
+    const explicit = !!o.id;
+    if (!explicit) st.counters[kind] = (st.counters[kind] || 0) + 1;
+    const id = explicit ? bmSafeId(String(o.id)) : kind + st.counters[kind];
+    const info = { name, kind, id, explicit, opts: o, occ, depth, where };
+    let give = handler(info) || null;
+    if (give && give.id && where === 'option' && occ.opts == null) { st.refused = true; give = null; }
+    let body = occ.body, newBody = body, tableEmit = null;
+    if (body != null) {
+      if (name === 'datatable') {
+        const t = bmTableCells(body); let tchg = false;
+        const hs = t.headers.map(c => { const r = sub(c); if (r !== c) tchg = true; return r; });
+        const rs = t.rows.map(r => r.map(c => { if (BM_FILL.test(c)) return c; const x = sub(c); if (x !== c) tchg = true; return x; }));
+        if (tchg) tableEmit = { headers: hs, rows: rs, cols: t.cols };
+      } else if (name === 'answer' || name === 'notes' || name === 'photo') {
+        const inner = body.trim();
+        if (inner) { const r = sub(inner); if (r !== inner) newBody = body.slice(0, body.indexOf(inner)) + r + body.slice(body.indexOf(inner) + inner.length); }
+      } else if (name === 'procedure' || BM_CALLOUT_KINDS.includes(name)) newBody = sub(body);
+      else if (name === 'section') { if (body.trim()) newBody = sub(body); }
+    }
+    if (name === 'section' && po.hint) sub(String(po.hint), 'option');
+    if (name === 'figure' && po.caption) sub(String(po.caption), 'option');
+    let text;
+    if (give && give.id || newBody !== body || tableEmit) {
+      changed = true;
+      let optStr;
+      if (give && give.id) { const no = { id: give.id }; for (const k of Object.keys(po)) if (k !== 'id') no[k] = po[k]; optStr = bmOptsFor(BM_TAG_TYPE[name] || name, no); }
+      else optStr = occ.opts != null ? `[${occ.opts}]` : '';
+      let b = '';
+      if (tableEmit) {
+        const line = r => `| ${r.join(' | ')} |`;
+        b = '\n' + (tableEmit.headers.length ? line(tableEmit.headers) + '\n' : '') + `|${'---|'.repeat(tableEmit.cols)}` + (tableEmit.rows.length ? '\n' + tableEmit.rows.map(line).join('\n') : '') + '\n';
+      } else if (body != null) b = newBody;
+      text = `\\${name}${optStr}` + (body != null ? `{${b}}` : '');
+    } else text = occ.src;
+    out += p.slice(cursor, occ.start) + text; cursor = occ.end;
+  }
+  if (!changed) return p;
+  return out + p.slice(cursor);
+}
+// Whole document: procedure flow first, then the last \report body with continuing counters (as ltRender does).
+function bmWalkDoc(p, ctx, handler, st) {
+  let out = bmTraverse(p, ctx, handler, st, 0, 'body');
+  const reps = bmScanTags(out).filter(o => o.name === 'report' && !o.broken && o.body != null);
+  const last = reps[reps.length - 1];
+  if (last) {
+    const nb = bmTraverse(last.body, ctx, handler, st, 0, 'report');
+    if (nb !== last.body) out = out.slice(0, last.start) + '\\report' + (last.opts != null ? `[${last.opts}]` : '') + `{${nb}}` + out.slice(last.end);
+  }
+  return out;
+}
+function bmWalk(p, ctx, visit, counters = {}) { bmWalkDoc(p, ctx, info => { visit(info); return null; }, { counters, refused: false, count: 0 }); return counters; }
+
+function bmAutoIds(model) {
+  const byBlock = new Map(), inline = new Map(), all = new Set(), explicit = new Set(), dups = new Set();
+  const st = { counters: {}, refused: false, count: 0 };
+  const lists = [['procedure', model.procedure || []], ['report', model.report || []]];
+  for (const [, blocks] of lists) for (const b of blocks) {
+    const { p, ctx } = bmProtectOnly(bmSerializeBlock(b));
+    const isTag = b.type === 'callout' || !!(BM_TYPES[b.type] && BM_TYPES[b.type].tag);
+    bmTraverse(p, ctx, info => {
+      if (info.explicit) { if (explicit.has(info.id)) dups.add(info.id); explicit.add(info.id); return null; }
+      all.add(info.id);
+      if (isTag && info.depth === 0) { if (BM_ID_TYPES.has(b.type)) byBlock.set(b, info.id); }
+      else { if (!inline.has(b)) inline.set(b, []); inline.get(b).push(info.id); }
+      return null;
+    }, st, 0, 'body');
+  }
+  return { byBlock, inline, all, explicit, dups };
+}
+function bmTakenIds(model) {
+  const a = bmAutoIds(model);
+  const taken = new Set([...a.explicit, ...a.all, 'table1']);
+  for (const b of [...(model.procedure || []), ...(model.report || [])]) if (b.opts && b.opts.id) taken.add(String(b.opts.id));
+  return taken;
+}
+function bmRewriteTags(text, decide) {
+  const { p, ctx } = bmProtectOnly(text);
+  const st = { counters: {}, refused: false, count: 0 };
+  const out = bmWalkDoc(p, ctx, decide, st);
+  return bmRestore(out, ctx);
+}
+function bmPinText(text) {
+  const src = String(text ?? '').replace(/\r\n?/g, '\n');
+  const { p, ctx } = bmProtectOnly(src);
+  const st = { counters: {}, refused: false, count: 0 };
+  const out = bmWalkDoc(p, ctx, info => {
+    if (info.explicit || !BM_PIN_KINDS.has(info.kind)) return null;
+    if (info.where === 'option' && info.occ.opts == null) { st.refused = true; return null; }
+    st.count++; return { id: info.id };
+  }, st);
+  if (st.refused) return { text: src, count: 0, refused: 'A fill-in box sits inside a caption or hint, which cannot be given a permanent name. Move it into the text first.' };
+  return { text: bmRestore(out, ctx), count: st.count, refused: null };
+}
+
+/* ---------- ids and structure ---------- */
+function bmNameOf(b) { const T = BM_TYPES[b.type]; return T && T.nameOf ? String(T.nameOf(b) || '') : ''; }
+function bmNewId(model, name, base, extra) {
+  const n = String(name || '').trim(); let slug = n ? bmSlugify(n) : '';
+  if (slug && BM_RESERVED_ID.test(slug)) slug += '-x';
+  const taken = bmTakenIds(model); if (extra) for (const x of extra) taken.add(x);
+  let id;
+  if (slug) { id = slug; let k = 2; while (taken.has(id)) id = slug + '-' + k++; }
+  else { let k = 1; do { id = (base || 'block') + '-' + k++; } while (taken.has(id)); }
+  return id;
+}
+function bmRenameId(model, oldId, newId) {
+  if (!oldId || oldId === newId) return;
+  for (const b of [...(model.procedure || []), ...(model.report || [])]) {
+    if (b.type === 'graph' && b.opts && b.opts.table === oldId) b.opts.table = newId;
+    if ((b.type === 'usetable' || b.type === 'usegraph') && b.ref === oldId) b.ref = newId;
+  }
+}
+function bmReferencesTo(model, id) {
+  const out = [];
+  for (const b of [...(model.procedure || []), ...(model.report || [])]) {
+    if (b.type === 'graph' && b.opts && b.opts.table === id) out.push({ block: b, field: 'table' });
+    if ((b.type === 'usetable' || b.type === 'usegraph') && b.ref === id) out.push({ block: b, field: 'ref' });
+  }
+  return out;
+}
+function bmRefreshFreshId(model, block) {
+  if (!block || !block._fresh || !BM_ID_TYPES.has(block.type)) return;
+  block.opts = block.opts || {};
+  const old = block.opts.id; delete block.opts.id;
+  const nid = bmNewId(model, bmNameOf(block), BM_TYPES[block.type].idBase);
+  block.opts.id = nid;
+  if (old && nid !== old) bmRenameId(model, old, nid);
+}
+function bmFreezeAll(model) { for (const b of [...(model.procedure || []), ...(model.report || [])]) delete b._fresh; }
+function bmInsertBlock(model, list, index, block) {
+  const arr = model[list]; if (!arr) throw new Error('unknown list ' + list);
+  if (!block._k) block._k = bmKey();
+  const i = Math.max(0, Math.min(index ?? arr.length, arr.length));
+  arr.splice(i, 0, block);
+  if (list === 'report') model.reportPresent = true;
+  if (BM_ID_TYPES.has(block.type)) { block.opts = block.opts || {}; if (!block.opts.id) block.opts.id = bmNewId(model, bmNameOf(block), BM_TYPES[block.type].idBase); }
+  return block;
+}
+function bmRemoveBlock(model, list, index) { const arr = model[list]; return arr.splice(index, 1)[0]; }
+function bmMoveBlock(model, list, from, to) {
+  const arr = model[list]; if (from === to || from < 0 || from >= arr.length) return;
+  const [b] = arr.splice(from, 1); arr.splice(Math.max(0, Math.min(to, arr.length)), 0, b);
+}
+function bmCloneBlock(b) { return JSON.parse(JSON.stringify(b, (k, v) => (k.startsWith('_') ? undefined : v))); }
+function bmMapStrings(b, fn) {   // apply fn to every tag-scannable string field of a block, in place
+  const F = (obj, key) => { if (typeof obj[key] === 'string') obj[key] = fn(obj[key]); };
+  switch (b.type) {
+    case 'text': case 'raw': F(b, 'text'); break;
+    case 'heading': F(b, 'text'); break;
+    case 'steps': b.steps = (b.steps || []).map(fn); break;
+    case 'table': b.headers = (b.headers || []).map(fn); b.rows = (b.rows || []).map(r => r.map(c => (BM_FILL.test(c) ? c : fn(c)))); break;
+    case 'answer': case 'photo': F(b, 'prompt'); break;
+    case 'section': F(b, 'prompt'); if (b.opts) F(b.opts, 'hint'); break;
+    case 'notes': F(b, 'label'); break;
+    case 'callout': F(b, 'body'); break;
+    case 'figure': if (b.opts) F(b.opts, 'caption'); break;
+  }
+}
+function bmDuplicate(model, list, index) {
+  const orig = model[list][index]; if (!orig) return null;
+  const copy = bmCloneBlock(orig); copy._fresh = true; copy._open = true; copy._k = bmKey();
+  if (copy.opts && 'id' in copy.opts) delete copy.opts.id;
+  model[list].splice(index + 1, 0, copy);
+  if (BM_ID_TYPES.has(copy.type)) { copy.opts = copy.opts || {}; copy.opts.id = bmNewId(model, bmNameOf(copy), BM_TYPES[copy.type].idBase); }
+  const extra = new Set();
+  bmMapStrings(copy, s => bmRewriteTags(s, info => {
+    if (!info.explicit) return null;
+    const nid = bmNewId(model, String(info.opts.id), info.kind, extra); extra.add(nid); return { id: nid };
+  }));
+  return copy;
+}
+function bmIsEmpty(model) { return !model || ((model.procedure || []).length === 0 && (model.report || []).length === 0 && (model.style == null) && !model.reportPresent); }
+function bmStrip(model) {
+  const strip = v => {
+    if (Array.isArray(v)) return v.map(strip);
+    if (v && typeof v === 'object') { const o = {}; for (const k of Object.keys(v)) if (!k.startsWith('_')) o[k] = strip(v[k]); return o; }
+    return v;
+  };
+  const m = strip(model); delete m.warnings; return m;
+}
+
+/* ---------- validation ---------- */
+function bmYoutubeId(input) {
+  if (!input) return null; input = String(input).trim();
+  if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+  const m = input.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+function bmEffectiveIds(model, auto) {
+  const eff = new Map();
+  for (const b of [...(model.procedure || []), ...(model.report || [])]) if (BM_ID_TYPES.has(b.type)) eff.set(b, b.opts && b.opts.id ? bmSafeId(String(b.opts.id)) : auto.byBlock.get(b));
+  return eff;
+}
+function bmReferenceProblems(model, auto) {   // shared by builderParse (strings) and bmValidate (with keys)
+  const out = [], eff = bmEffectiveIds(model, auto);
+  const tables = new Set(), graphs = new Set();
+  for (const [b, id] of eff) { if (b.type === 'table') tables.add(id); if (b.type === 'graph') graphs.add(id); }
+  for (const id of auto.dups) out.push({ k: null, msg: `Two blocks are both named '${id}'; students' answers would collide.` });
+  for (const b of [...(model.procedure || []), ...(model.report || [])]) {
+    if (b.type === 'graph') {
+      const t = b.opts && b.opts.table;
+      if (t == null || t === '') { if (!tables.has('table1')) out.push({ k: b._k ?? null, msg: 'This graph has no table chosen, and there is no table it can read by default. Choose a table.' }); }
+      else if (!tables.has(String(t))) out.push({ k: b._k ?? null, msg: `This graph reads a table named '${t}', but no table has that name.` });
+    }
+    if (b.type === 'usetable') {
+      if (!String(b.ref || '').trim()) out.push({ k: b._k ?? null, msg: 'Choose which table this block should show.' });
+      else if (!tables.has(bmSafeId(b.ref))) out.push({ k: b._k ?? null, msg: `The report includes a table named '${b.ref}', but no table has that name.` });
+    }
+    if (b.type === 'usegraph') {
+      if (!String(b.ref || '').trim()) out.push({ k: b._k ?? null, msg: 'Choose which graph this block should show.' });
+      else if (!graphs.has(bmSafeId(b.ref))) out.push({ k: b._k ?? null, msg: `The report includes a graph named '${b.ref}', but no graph has that name.` });
+    }
+  }
+  return out;
+}
+function bmParseWarnings(model) { return bmReferenceProblems(model, bmAutoIds(model)).map(x => x.msg); }
+function bmOptProblems(b) {
+  const out = []; const o = b.opts || {};
+  for (const k of Object.keys(o)) {
+    const v = o[k]; if (typeof v !== 'string') continue;
+    const pv = bmProtect(v, bmNewCtx());
+    if (pv.indexOf(']') !== -1) out.push(`The "${k}" text contains a square bracket, which is shown as a round one.`);
+    if (pv.indexOf('"') !== -1 && pv.indexOf("'") !== -1) out.push(`The "${k}" text mixes both kinds of quote marks; straight double quotes are shown as curly ones.`);
+  }
+  return out;
+}
+function bmValidate(model, auto = bmAutoIds(model)) {
+  const out = [];
+  const push = (b, msg) => out.push({ k: b ? (b._k ?? null) : null, msg });
+  out.push(...bmReferenceProblems(model, auto));
+  for (const b of model.procedure || []) if (b.type === 'section' || b.type === 'usetable' || b.type === 'usegraph') push(b, BM_W.sectionOutside);
+  const braceMsg = 'A curly bracket here has no partner. It is shown as a plain character, which is usually what you want.';
+  for (const b of [...(model.procedure || []), ...(model.report || [])]) {
+    if (b.type === 'table' && !(b.rows || []).some(r => r.some(c => BM_FILL.test(c)))) push(b, 'This table has no blank cells for students to fill in.');
+    if (b.type === 'video' && !bmYoutubeId(b.url)) push(b, b.url ? 'This does not look like a YouTube link; students will see it as a plain link.' : 'Paste a YouTube link.');
+    if (b.type === 'figure') { const src = String(b.path || '').replace(/^img:/, ''); if (!src || /^(IMAGE|FIGURE)[_-]?\w*$/i.test(src)) push(b, 'Waiting for a picture.'); }
+    const bodies = [];
+    if (b.type === 'steps') bodies.push(...(b.steps || []));
+    if (b.type === 'table') bodies.push(...(b.headers || []), ...(b.rows || []).flat());
+    if (b.type === 'answer' || b.type === 'photo' || b.type === 'section') bodies.push(b.prompt);
+    if (b.type === 'notes') bodies.push(b.label);
+    if (b.type === 'graph') bodies.push(b.caption);
+    if (b.type === 'callout') bodies.push(b.body);
+    if (b.type === 'video') bodies.push(b.url);
+    if (b.type === 'figure') bodies.push(b.path);
+    if (b.type === 'usetable' || b.type === 'usegraph') bodies.push(b.ref);
+    if (bodies.some(s => s && bmBodyInfo(s).escaped)) push(b, braceMsg);
+    for (const m of bmOptProblems(b)) push(b, m);
+  }
+  for (const k of BM_HEADER_KEYS) if (model.header && model.header[k] && bmBodyInfo(model.header[k]).escaped) push(null, braceMsg);
+  const self = bmSelfCheck(model); if (self) push(null, self);
+  for (const w of model.warnings || []) push(null, w);
+  const seen = new Set();
+  return out.filter(x => { if (seen.has(x.msg)) return false; seen.add(x.msg); return true; });
+}
+function bmSelfCheck(model) {
+  const m2 = builderParse(builderSerialize(model));
+  const sig = m => JSON.stringify([(m.procedure || []).map(b => b.type), (m.report || []).map(b => b.type), !!m.reportPresent, m.style === null || m.style === undefined]);
+  return sig(m2) === sig(model) ? null : 'Something typed into a text box is swallowing the blocks after it — usually an unclosed math sign or a stray curly bracket. Check the preview.';
+}
+
+/* ---------- widget signature (node proxy for render equivalence) ---------- */
+function bmNormalizeMd(s, inProc = false) {
+  let lines = String(s ?? '').replace(/\r\n?/g, '\n').split('\n').map(l => l.replace(/[ \t]+$/, ''));
+  if (inProc) lines = lines.map(l => l.replace(/^[ \t]+/, ''));
+  lines = lines.map(l => l.replace(/^(#{1,6})[ \t]+(.*?)(?:[ \t]+#+)?$/, (m, h, t) => h + ' ' + t).replace(/^([ \t]*)(\d{1,9})\)(?=[ \t]|$)/, '$1$2.'))
+    .map(l => (/^#{1,6}(?:[ \t]|$)/.test(l) ? '\n' + l + '\n' : l));   // an ATX heading is its own paragraph, blank lines or not
+  return lines.join('\n').replace(/<!--\s*/g, '<!-- ').replace(/\s*-->/g, ' -->').replace(/\n{3,}/g, '\n\n').replace(/^\n+|\n+$/g, '');
+}
+function bmMdOf(p, ctx, inProc) {   // the markdown the renderer would hand to marked (widgets replaced by tokens)
+  let out = '', cursor = 0;
+  for (const occ of bmScanTags(p)) {
+    if (occ.broken) continue;
+    out += p.slice(cursor, occ.start); cursor = occ.end;
+    if (BM_META.has(occ.name)) { if (occ.name === 'report' || occ.name === 'style') out = out.replace(/\n*$/, '\n\n'); }
+    else out += BM_BLOCK.has(occ.name) ? '\n\nWIDGET\n\n' : 'WIDGET';
+  }
+  return bmNormalizeMd(bmRestore(out + p.slice(cursor), ctx), inProc);
+}
+function bmWidgetSignature(text) {
+  const src = String(text ?? '').replace(/\r\n?/g, '\n');
+  const { p, ctx } = bmProtectOnly(src);
+  const widgets = [];
+  const sortedOpts = o => { const r = {}; for (const k of Object.keys(o).sort()) r[k] = o[k]; return r; };
+  bmWalkDoc(p, ctx, info => {
+    const { name, occ } = info; const opts = sortedOpts(info.opts); let shape = null;
+    const body = occ.body;
+    if (name === 'datatable') { const t = bmTableCells(body ?? ''); shape = { headers: t.headers.map(c => bmRestore(c, ctx)), rows: t.rows.map(r => r.map(c => (BM_FILL.test(c) ? '___' : bmRestore(c, ctx)))) }; }
+    else if (name === 'procedure' || BM_CALLOUT_KINDS.includes(name)) shape = bmMdOf(body ?? '', ctx, name === 'procedure');
+    else if (name === 'section') shape = [body && body.trim() ? bmMdOf(body.trim(), ctx) : '', info.opts.hint ? bmNormalizeMd(String(info.opts.hint)) : ''];
+    else if (name === 'answer' || name === 'notes' || name === 'photo') shape = body ? bmMdOf(body.trim(), ctx) : '';
+    else if (name === 'graph') shape = body ? bmRestore(body, ctx).trim() : '';
+    else if (body != null) shape = bmRestore(body, ctx).trim();
+    widgets.push([name, info.id, opts, info.depth, info.where, shape]);
+    return null;
+  }, { counters: {}, refused: false, count: 0 });
+  const meta = {}; let lastReport = null, lastStyle = null;
+  for (const occ of bmScanTags(p)) {
+    if (occ.broken || !BM_META.has(occ.name)) continue;
+    if (occ.name === 'report') lastReport = occ; else if (occ.name === 'style') lastStyle = occ; else meta[occ.name] = bmRestore(occ.body ?? '', ctx).trim();
+  }
+  return {
+    header: BM_HEADER_KEYS.map(k => meta[k] ?? ''),
+    style: lastStyle ? bmNormalizeMd(bmRestore(lastStyle.body ?? '', ctx)) : null,
+    flow: bmMdOf(p, ctx, false),
+    report: lastReport ? bmMdOf(lastReport.body ?? '', ctx, false) : null,
+    widgets,
+  };
+}
+
+/* ---------- new blocks, templates ---------- */
+function builderNewBlock(type) {
+  const d = {
+    heading: { level: 2, text: '' }, text: { text: '' }, comment: { text: '' }, raw: { text: '' },
+    steps: { opts: {}, start: 1, loose: false, steps: ['', '', ''] },
+    table: { opts: {}, headers: ['', ''], rows: [['___', '___'], ['___', '___'], ['___', '___']] },
+    answer: { opts: { lines: '4' }, prompt: '' }, notes: { opts: {}, label: '' }, photo: { opts: {}, prompt: '' },
+    video: { opts: {}, url: '' }, figure: { opts: {}, path: '' }, callout: { kind: 'safety', opts: {}, body: '' },
+    graph: { opts: { fit: 'linear' }, caption: '' }, pagebreak: { opts: {} },
+    section: { opts: {}, prompt: '' }, usetable: { ref: '' }, usegraph: { ref: '' },
+  }[type];
+  if (!d) throw new Error('Unknown block type ' + type);
+  return Object.assign({ type }, JSON.parse(JSON.stringify(d)), { _fresh: true, _open: true, _k: bmKey() });
+}
+
+const BM_STYLE_RULES = `- Write in past tense and third person ("The solution was heated…").
+- Every number carries a unit and the right number of significant figures.
+- Refer to tables and figures by number.`;
+const builderTemplates = {
+  standard: { label: 'Standard lab', text: `# Purpose
+
+By the end of this lab you will be able to…
+
+# Safety
+
+\\safety{
+Wear goggles at all times.
+}
+
+# Materials
+
+- [ ] …
+- [ ] …
+- [ ] …
+
+# Procedure
+
+\\procedure[id=steps]{
+1. …
+2. …
+3. …
+}
+
+\\photo[id=setup-photo]{Take a photo of your setup.}
+
+# Data
+
+\\datatable[id=data, title="Data", addrows]{
+| Trial | Measurement |
+|---|---|
+| 1 | ___ |
+| 2 | ___ |
+| 3 | ___ |
+}
+
+\\graph[id=data-graph, table=data, x=c1, y=c2, title="Data graph"]
+
+# Analysis
+
+\\answer[id=question-1, lines=4]{…}
+
+\\answer[id=question-2, lines=4]{…}
+
+\\notes[id=reflection]{Reflection}
+
+\\style{
+${BM_STYLE_RULES}
+}
+
+\\report{
+\\section[id=purpose, title="Purpose", required, words=30-80]{State the goal of this experiment in your own words.}
+
+\\section[id=results, title="Results", required, words=80-200]{Summarize what the data show. Refer to Table 1 and Figure 1.}
+
+\\usetable{data}
+
+\\usegraph{data-graph}
+
+\\section[id=sources-of-error, title="Sources of error", words=50-150]{Identify two specific sources of error and how each would change your result.}
+
+\\section[id=conclusion, title="Conclusion", required, words=50-150]
+}
+` },
+  data: { label: 'Data collection only', text: `# Data
+
+\\datatable[id=trial-data, title="Trial data", addrows]{
+| Trial | Measurement 1 | Measurement 2 | Notes |
+|---|---|---|---|
+| 1 | ___ | ___ | ___ |
+| 2 | ___ | ___ | ___ |
+| 3 | ___ | ___ | ___ |
+| 4 | ___ | ___ | ___ |
+| 5 | ___ | ___ | ___ |
+}
+
+\\photo[id=setup-photo]{Photograph your setup.}
+
+\\notes[id=observations]{Observations}
+` },
+  report: { label: 'Report only', text: `\\style{
+${BM_STYLE_RULES}
+}
+
+\\report{
+\\section[id=purpose, title="Purpose", required, words=30-80]{State the goal of this experiment in your own words.}
+
+\\section[id=method, title="Method", required]{Describe what you did, in enough detail that a classmate could repeat it.}
+
+\\section[id=results, title="Results", required, words=80-200]{Summarize what the data show.}
+
+\\section[id=discussion, title="Discussion", words=50-150]{Explain what the results mean and what could have affected them.}
+
+\\section[id=conclusion, title="Conclusion", required, words=50-150]
+}
+` },
+};
+function bmApplyTemplate(name) {
+  const t = builderTemplates[name]; if (!t) throw new Error('Unknown template ' + name);
+  const model = builderParse(t.text);
+  for (const b of [...model.procedure, ...model.report]) {
+    if (!BM_ID_TYPES.has(b.type)) continue;
+    b.opts = b.opts || {};
+    const old = b.opts.id; delete b.opts.id;
+    const nid = bmNewId(model, bmNameOf(b), BM_TYPES[b.type].idBase);
+    b.opts.id = nid; if (old && old !== nid) bmRenameId(model, old, nid);
+  }
+  for (const b of [...model.procedure, ...model.report]) { b._fresh = true; b._open = false; }
+  model.warnings = [];
+  return model;
+}
+
+/* ---------- inline inputs ---------- */
+function bmInputsIn(text) {
+  const { p, ctx } = bmProtectOnly(text); const out = []; let i = 0;
+  for (const occ of bmScanTags(p)) {
+    if (occ.name !== 'input' || occ.broken) continue;
+    const opts = bmOptsFromOcc(occ, ctx);
+    out.push({ index: i++, opts, id: typeof opts.id === 'string' ? opts.id : undefined, label: typeof opts.label === 'string' ? opts.label : '', unit: typeof opts.unit === 'string' ? opts.unit : '', raw: bmRestore(occ.src, ctx) });
+  }
+  return out;
+}
+function bmInsertInputText(opts) { return '\\input' + bmOptsFor('input', opts || {}); }
+function bmReplaceInput(text, index, opts) {
+  const { p, ctx } = bmProtectOnly(text); let i = 0, out = '', cursor = 0;
+  for (const occ of bmScanTags(p)) {
+    if (occ.name !== 'input' || occ.broken) continue;
+    if (i++ === index) { out += p.slice(cursor, occ.start) + (opts ? bmInsertInputText(opts) : ''); cursor = occ.end; break; }
+  }
+  return bmRestore(out + p.slice(cursor), ctx);
+}
+
+/* ---------- form views ---------- */
+function bmExprView(expr, defaultCol = 1) {
+  const e = String(expr ?? '').trim();
+  if (e === '') return { mode: 'column', col: defaultCol, transform: '' };
+  if (/^c?\d+$/i.test(e)) return { mode: 'column', col: parseInt(e.replace(/^c/i, ''), 10), transform: '' };
+  const ok = /^[\sc\d.+\-*/^()a-z]*$/i.test(e);
+  const tokens = ok ? (e.match(/c\d+|\d+(?:\.\d+)?|ln|log10|log|exp|sqrt|abs|pi|[-+*/^()]/gi) || []) : [];
+  if (ok && tokens.join('') === e.replace(/\s+/g, '')) {
+    const cols = [...new Set(tokens.filter(t => /^c\d+$/i.test(t)).map(t => t.toLowerCase()))];
+    if (cols.length === 1) return { mode: 'column', col: parseInt(cols[0].slice(1), 10), transform: e.replace(/c\d+/gi, 'v') };
+  }
+  return { mode: 'formula', expr: e };
+}
+function bmExprFromView(view) {
+  if (!view) return '';
+  if (view.mode === 'formula') return String(view.expr ?? '').trim();
+  const col = 'c' + (parseInt(view.col, 10) || 1), tr = String(view.transform ?? '').trim();
+  return tr ? tr.replace(/(?<![A-Za-z])v(?![A-Za-z0-9])/g, col) : col;
+}
+function bmSeriesView(y, series) {
+  const specs = String(y ?? '').split(/[;|]/).map(s => s.trim()).filter(Boolean);
+  const names = series ? String(series).split(/[;|]/) : [];
+  if (!specs.length) specs.push('');
+  return specs.map((s, i) => ({ axis: bmExprView(s, 2), name: (names[i] ?? '').trim() }));
+}
+function bmSeriesFromView(list) {
+  const y = (list || []).map(s => bmExprFromView(s.axis)).join(';');
+  const names = (list || []).map(s => String(s.name ?? '').trim());
+  return names.some(Boolean) ? { y, series: names.join(';') } : { y };
+}
+function bmWordsView(words) {
+  const s = String(words ?? ''); const m = /^\s*(\d*)\s*-?\s*(\d*)\s*$/.exec(s);
+  if (!m || (s.trim() !== '' && m[1] === '' && m[2] === '')) return { min: '', max: '', raw: s };
+  return { min: m[1], max: m[2] };
+}
+function bmWordsFromView(min, max) {
+  const a = String(min ?? '').trim(), b = String(max ?? '').trim();
+  return a && b ? `${a}-${b}` : a ? a : b ? `-${b}` : '';
+}
+// BUILDER-MODEL-END
+// BUILDER-UI-BEGIN  (verbatim copy of modules/builder-ui.js)
+/* ============================================================
+   BUILDER UI — modules/builder-ui.js  (spec section C)
+   Block-based editor for lab files. Plain script, browser only.
+   Depends on the builder-model.js globals (builderParse, builderSerialize,
+   builderNewBlock, builderTemplates, bm* helpers, BM_* constants) and on the
+   `host` object given to builderMount (every entry optional, see buMakeHost).
+   Public globals: builderMount, builderGetModel, builderSetModel, builderDestroy.
+   Everything else is prefixed bu / BU_. CSS classes are prefixed bu-.
+   Every teacher-typed string placed into HTML goes through buEsc.
+   ============================================================ */
+
+let buModel = null, buOnChange = null, buHost = null, buContainer = null;
+let buTimer = null, buAuto = null, buLastStructural = false, buNoticeShown = false, buNoticeDismissed = false;
+let buChangeTimer = null, buChangePending = null;
+let buCellMemory = {};     // { k: { 'r,c': last fixed text } } — runtime only, never in the model
+let buShiftNoted = {};     // { k: true } once the row/column shift sentence was shown for a table
+let buDrag = null;         // { k, list, to } while a handle is being dragged
+let buPopover = null;      // { k, field, index|null, caret } for the fill-in box popover
+let buBound = null;        // { el, pairs } delegated listeners, removed by builderDestroy
+let buDropLine = null;     // the single .bu-drop-line element
+
+const BU_PALETTE = {
+  heading:   'A title for a part of the lab.',
+  text:      'Writing: explanations, materials lists, anything students read. Can include fill-in boxes for single values.',
+  steps:     'Steps students follow; each step gets its own notes box automatically.',
+  table:     'A table students fill in. You choose which cells are blank.',
+  answer:    'A question with an answer box under it.',
+  notes:     'A collapsible box where students keep their own notes.',
+  photo:     'A place for students to add a photo of their work.',
+  video:     'A YouTube video.',
+  figure:    'A picture you upload: a diagram, a setup photo, a graph to read from.',
+  callout:   'A highlighted box: safety, warning, information, tip or hint.',
+  graph:     'A live graph drawn from one of your data tables. It fills in as students type.',
+  pagebreak: 'Starts a new page when the lab is printed.',
+  comment:   'Text only you can see in the file; students never see it.',
+  section:   'One part of the write-up: a title, your instructions, an optional hint, and a writing box.',
+  usetable:  'Shows one of the lab\'s data tables, filled with the student\'s own numbers.',
+  usegraph:  'Shows one of the lab\'s graphs, drawn from the student\'s own data.',
+  style:     'Your writing rules, shown at the top of the Report tab.',
+};
+const BU_PROCEDURE_PALETTE = ['heading', 'text', 'steps', 'table', 'answer', 'notes', 'photo', 'video', 'figure', 'callout', 'graph', 'pagebreak', 'comment'];
+const BU_REPORT_PALETTE = ['section', 'usetable', 'usegraph', 'heading', 'text', 'comment'];
+const BU_ID_TYPES = ['steps', 'table', 'answer', 'notes', 'photo', 'graph', 'section'];
+const BU_CALLOUT_LABELS = { safety: 'Safety', warning: 'Warning', info: 'Information', tip: 'Tip', hint: 'Hint' };
+const BU_LEVELS = [[1, 'Big heading'], [2, 'Heading'], [3, 'Small heading'], [4, 'Level 4'], [5, 'Level 5'], [6, 'Level 6']];
+const BU_BRACE_MSG = 'A curly bracket here has no partner. It is shown as a plain character, which is usually what you want.';
+const BU_EXPR_MSG_FORMULA = 'The site cannot read this formula. Write it with the column codes listed below (c1, c2, …), numbers, + - * / ^, ln, log, exp, sqrt, abs.';
+const BU_EXPR_MSG_TRANSFORM = 'The site cannot read this. Use v for the column value, numbers, + - * / ^, ln, log, exp, sqrt, abs.';
+function buExprMsg(view) { return view && view.mode === 'formula' ? BU_EXPR_MSG_FORMULA : BU_EXPR_MSG_TRANSFORM; }
+const BU_RAW_MSG = 'The builder does not have a form for this part, so here is the text itself. It works as written; you can edit it as plain text.';
+const BU_BLOCK_CMD = /\\(procedure|datatable|answer|notes|photo|video|figure|graph|pagebreak|section|usetable|usegraph|safety|warning|info|tip|hint)\b/;
+
+function buEsc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+function buQ(sel) { return buContainer ? buContainer.querySelector(sel) : null; }
+function buTypeInfo(type) { return (typeof BM_TYPES !== 'undefined' && BM_TYPES[type]) || { label: type }; }
+function buHasId(b) { return BU_ID_TYPES.includes(b.type); }
+function buOptStr(b, key) { const v = b.opts ? b.opts[key] : undefined; return (v === true || v == null) ? '' : String(v); }
+function buYoutubeId(input) {
+  if (!input) return null; input = String(input).trim();
+  if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+  const m = input.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+function buExprOk(src) {
+  // Same acceptance rules as the renderer's ltCompileExpr; uses the real one when present. An empty box is fine (no transform).
+  let e = String(src || '').trim(); if (!e) return true;
+  if (typeof ltCompileExpr === 'function') return !!ltCompileExpr(e);
+  if (/^\d+$/.test(e)) e = 'c' + e;
+  if (!/^[\sc\d.+\-*/^()a-z]*$/i.test(e)) return false;
+  const tokens = e.match(/c\d+|\d+(?:\.\d+)?|ln|log10|log|exp|sqrt|abs|pi|[-+*/^()]/gi) || [];
+  return tokens.join('') === e.replace(/\s+/g, '');
+}
+function buOutsideMath(s, fn) {
+  // Applies fn to the parts of s that are not inside $$…$$, $…$ or `…` (so a | or ] inside math is left alone).
+  return String(s).split(/(\$\$[\s\S]*?\$\$|\$[^$\n]+?\$|`[^`\n]*`)/).map((part, i) => (i % 2 ? part : fn(part))).join('');
+}
+function buCellClean(v) { return buOutsideMath(String(v).replace(/[\r\n]+/g, ' '), p => p.replace(/\|/g, '∣')); }
+function buFirstLine(s, n) { const line = String(s || '').split('\n').find(l => l.trim()) || ''; return line.length > n ? line.slice(0, n) + '…' : line; }
+
+function buMakeHost(h) {
+  h = h || {};
+  return {
+    upload: h.upload || (typeof uploadFigureFile === 'function' ? uploadFigureFile : (() => Promise.reject(new Error('Uploads are not available here')))),
+    fileUrl: h.fileUrl || (typeof fileUrl === 'function' ? fileUrl : (p => p)),
+    youtubeId: h.youtubeId || (typeof extractYoutubeId === 'function' ? extractYoutubeId : buYoutubeId),
+    pictures: h.pictures || (() => {
+      try {
+        const a = typeof labFigureUploads !== 'undefined' ? labFigureUploads : [];
+        const ta = document.getElementById('lab-markup');
+        const b = (typeof labFilePaths === 'function' && ta) ? labFilePaths(ta.value) : [];
+        return [...new Set([...a, ...b])];
+      } catch (e) { return []; }
+    }),
+    fields: h.fields || (() => {
+      if (!document.getElementById('lab-title')) return null;
+      const v = id => { const el = document.getElementById(id); return el ? String(el.value) : ''; };
+      return { title: v('lab-title'), summary: v('lab-summary'), tags: v('lab-tags'), minutes: v('lab-minutes') };
+    }),
+    applyHeaderToFields: h.applyHeaderToFields || (() => { if (typeof applyLabMarkupMeta === 'function') applyLabMarkupMeta(true); }),
+    showInPreview: h.showInPreview || buDefaultShowInPreview,
+    confirm: h.confirm || (m => window.confirm(m)),
+    toast: h.toast || (typeof toast === 'function' ? toast : ((m) => console.log(m))),
+  };
+}
+function buDefaultShowInPreview(t) {
+  const pv = document.getElementById('lab-markup-preview'); if (!pv) return false;
+  let el = null;
+  if (t.attr) el = pv.querySelector(`[${t.attr}="${String(t.value).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"]`);
+  else if (t.selector) el = pv.querySelectorAll(t.selector)[t.nth || 0] || null;
+  if (!el) return false;
+  el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  el.classList.add('bu-flash'); setTimeout(() => el.classList.remove('bu-flash'), 1200);
+  return true;
+}
+
+/* ---------- public API ---------- */
+function builderMount(container, model, onChange, host) {
+  builderDestroy();
+  buContainer = container; buModel = model; buOnChange = onChange; buHost = buMakeHost(host);
+  buNoticeShown = false; buNoticeDismissed = false; buCellMemory = {}; buShiftNoted = {}; buLastStructural = false; buAuto = null;
+  buEnsureKeys();
+  buBind();
+  buRenderAll();
+}
+function builderGetModel() { return buModel; }
+function builderSetModel(model) {
+  buModel = model; buEnsureKeys(); buCellMemory = {}; buShiftNoted = {};
+  if (buContainer) buRenderAll();
+}
+function builderDestroy() {
+  buFlushChange();
+  clearTimeout(buTimer); buTimer = null;
+  if (buBound) { buBound.pairs.forEach(([ev, fn]) => buBound.el.removeEventListener(ev, fn)); buBound = null; }
+  if (buContainer) buContainer.innerHTML = '';
+  buContainer = null; buModel = null; buOnChange = null; buHost = null; buAuto = null; buPopover = null; buDrag = null; buDropLine = null;
+  buCellMemory = {}; buShiftNoted = {};
+}
+function buEnsureKeys() {
+  if (!buModel) return;
+  ['procedure', 'report'].forEach(list => { if (!Array.isArray(buModel[list])) buModel[list] = []; buModel[list].forEach(b => { if (b._k == null) b._k = bmKey(); }); });
+  if (!buModel.header) buModel.header = { title: '', summary: '', tags: '', minutes: '' };
+  if (buModel.style === undefined) buModel.style = null;
+  if (!Array.isArray(buModel.warnings)) buModel.warnings = [];
+}
+function buBind() {
+  const pairs = [
+    ['input', buOnInput], ['change', buOnChangeEvt], ['click', buOnClick], ['dblclick', buOnDblClick], ['keydown', buOnKeydown],
+    ['dragstart', buOnDragStart], ['dragover', buOnDragOver], ['dragleave', buOnDragLeave], ['drop', buOnDrop], ['dragend', buOnDragEnd],
+  ];
+  pairs.forEach(([ev, fn]) => buContainer.addEventListener(ev, fn));
+  buBound = { el: buContainer, pairs };
+}
+
+function buOnDblClick(e) {
+  // Double-clicking a fixed table cell turns it into a box students fill in (same as its "blank" button).
+  const cell = e.target && e.target.closest ? e.target.closest('.bu-sheet td.bu-cell:not(.fill)') : null;
+  const btn = cell && cell.querySelector('.bu-cell-blank');
+  if (btn) { e.preventDefault(); btn.click(); }
+}
+
+/* ---------- model lookups ---------- */
+function buFindBlock(k) {
+  if (!buModel) return null;
+  for (const list of ['procedure', 'report']) {
+    const index = buModel[list].findIndex(b => b._k === k);
+    if (index !== -1) return { block: buModel[list][index], list, index };
+  }
+  return null;
+}
+function buAllBlocks() { return [...buModel.procedure, ...buModel.report]; }
+function buTables() { return buAllBlocks().filter(b => b.type === 'table').map(b => ({ block: b, id: (b.opts && b.opts.id) || '', title: buOptStr(b, 'title') })); }
+function buGraphs() { return buAllBlocks().filter(b => b.type === 'graph').map(b => ({ block: b, id: (b.opts && b.opts.id) || '', title: buOptStr(b, 'title') || buGraphAxesName(b) })); }
+function buGraphAxesName(b) {
+  // Untitled graph: name it by the table headers it plots (never by column codes or formulas).
+  const t = buGraphTable(b), headers = t ? (t.block.headers || []) : [];
+  const name = (expr, def) => { let v = null; try { v = bmExprView(expr, def); } catch (e) { return null; }
+    if (!v || v.mode !== 'column' || v.transform) return null; const h = headers[v.col - 1]; return h && String(h).trim() ? String(h).trim() : null; };
+  const y = buOptStr(b, 'y'); if (/[;|]/.test(y)) return 'Untitled graph';
+  const yn = name(y, 2), xn = name(buOptStr(b, 'x'), 1);
+  return yn && xn ? `${yn} vs ${xn}` : 'Untitled graph';
+}
+function buGetPath(obj, path) { return path.split('.').reduce((o, p) => (o == null ? undefined : o[p]), obj); }
+function buSetPath(obj, path, value) {
+  const parts = path.split('.'); let o = obj;
+  for (let i = 0; i < parts.length - 1; i++) { if (o[parts[i]] == null) o[parts[i]] = /^\d+$/.test(parts[i + 1]) ? [] : {}; o = o[parts[i]]; }
+  o[parts[parts.length - 1]] = value;
+}
+function buSetOpt(b, key, value) {
+  if (!b.opts) b.opts = {};
+  if (value === undefined || value === null || value === '' || value === false) delete b.opts[key]; else b.opts[key] = value;
+}
+function buNameOf(b) {
+  if (typeof bmNameOf === 'function') return bmNameOf(b) || '';
+  const t = buTypeInfo(b.type); return t.nameOf ? (t.nameOf(b) || '') : '';
+}
+function buIsNamingField(b, bind) {
+  return (['table', 'graph', 'section'].includes(b.type) && bind === 'opts.title') || (b.type === 'notes' && bind === 'label');
+}
+
+/* ---------- top-level rendering ---------- */
+function buRenderAll() {
+  if (!buContainer || !buModel) return;
+  const focus = buFocusDescriptor();
+  buContainer.innerHTML = `<div class="bu-root">
+    <p class="bu-help">Add blocks in the order students should see them. Drag the handle or use the arrows to move a block. Everything you type shows in the preview below.</p>
+    <div class="bu-warnings" id="bu-warnings"></div>
+    <div class="bu-header" id="bu-header" hidden></div>
+    <div class="bu-templates" id="bu-templates" hidden></div>
+    <div class="bu-section-title">Procedure</div>
+    <div class="bu-list" id="bu-procedure" data-list="procedure"></div>
+    <div class="bu-palette" id="bu-palette-procedure" data-list="procedure"></div>
+    <div class="bu-section-title">Report tab <span class="bu-help-inline">Optional. If you add anything here, students get a second tab with a guided write-up they can print.</span></div>
+    <div class="bu-style" id="bu-style"></div>
+    <div class="bu-list" id="bu-report" data-list="report"></div>
+    <div class="bu-palette" id="bu-palette-report" data-list="report"></div>
+  </div>`;
+  buDropLine = null;
+  buRenderTemplates();
+  buRenderList('procedure'); buRenderList('report');
+  buRenderPalette('procedure'); buRenderPalette('report');
+  buRenderStyle();
+  buRevalidate(true);
+  buRestoreFocus(focus);
+  buGrowAll(buContainer);
+}
+function buRenderTemplates() {
+  const el = buQ('#bu-templates'); if (!el) return;
+  const empty = typeof bmIsEmpty === 'function' ? bmIsEmpty(buModel) : (!buModel.procedure.length && !buModel.report.length && buModel.style == null);
+  el.hidden = !empty;
+  if (!empty) { el.innerHTML = ''; return; }
+  const tpl = typeof builderTemplates !== 'undefined' ? builderTemplates : {};
+  const label = (n, d) => (tpl[n] && tpl[n].label) || d;
+  el.innerHTML = `<div class="bu-note">Start from a template, or add blocks one at a time below. Every block can be changed or removed afterwards.</div>
+    <button type="button" class="btn-small" data-act="template" data-template="standard">${buEsc(label('standard', 'Standard lab'))}</button>
+    <button type="button" class="btn-small" data-act="template" data-template="data">${buEsc(label('data', 'Data collection only'))}</button>
+    <button type="button" class="btn-small" data-act="template" data-template="report">${buEsc(label('report', 'Report only'))}</button>`;
+}
+function buRenderList(list) {
+  const el = buQ('#bu-' + list); if (!el) return;
+  const blocks = buModel[list];
+  let html = blocks.map((b, i) => buCardHTML(b, list, i)).join('');
+  if (list === 'procedure' && !blocks.length && buModel.report.length) html += `<div class="bu-note">The Procedure tab will be empty. Add a Text block if students should see instructions.</div>`;
+  if (list === 'report' && !blocks.length && buModel.reportPresent) html += `<div class="bu-note">Add a Report section to give students a Report tab.</div>`;
+  el.innerHTML = html;
+}
+function buRenderPalette(list) {
+  const el = buQ('#bu-palette-' + list); if (!el) return;
+  el.innerHTML = buPaletteButtons(list, null);
+}
+function buPaletteButtons(list, afterK) {
+  const types = list === 'procedure' ? BU_PROCEDURE_PALETTE : BU_REPORT_PALETTE;
+  const hasTable = buTables().length > 0, hasGraph = buGraphs().length > 0;
+  let h = afterK != null ? `<span class="bu-note">Add below:</span>` : '';
+  h += types.map(t => {
+    let dis = '', title = BU_PALETTE[t] || '';
+    if ((t === 'graph' || t === 'usetable') && !hasTable) { dis = 'disabled'; title = 'Add a data table first'; }
+    if (t === 'usegraph' && !hasGraph) { dis = 'disabled'; title = 'Add a graph first'; }
+    return `<button type="button" class="btn-small" data-act="palette-add" data-type="${t}" data-list="${list}"${afterK != null ? ` data-after="${afterK}"` : ''} ${dis} title="${buEsc(title)}">${buEsc(buTypeInfo(t).label)}</button>`;
+  }).join('');
+  if (list === 'report') {
+    const has = buModel.style !== null && buModel.style !== undefined;
+    h += `<button type="button" class="btn-small" data-act="add-style" ${has ? 'disabled' : ''} title="${has ? 'There is already a style guide' : buEsc(BU_PALETTE.style)}">Style guide</button>`;
+  }
+  if (afterK != null) h += `<button type="button" class="btn-small" data-act="cancel-insert">Cancel</button>`;
+  return h;
+}
+function buRenderStyle() {
+  const el = buQ('#bu-style'); if (!el) return;
+  if (buModel.style === null || buModel.style === undefined) { el.innerHTML = ''; return; }
+  const info = (!buModel.report.length && !buModel.reportPresent) ? `<div class="bu-note">The style guide only appears once the report has a section.</div>` : '';
+  el.innerHTML = `<div class="bu-card bu-card-style" data-type="style" tabindex="0">
+    <div class="bu-card-head"><span class="bu-kind">Style guide</span><span class="bu-summary">${buEsc(buFirstLine(buModel.style, 80) || 'Your writing rules')}</span>
+      <span class="bu-actions"><button type="button" data-act="remove-style" class="danger" title="Remove the style guide">✕</button></span></div>
+    <div class="bu-card-body"><div class="form-row"><label>Your writing rules</label><textarea data-bind="style" data-kind="style" class="bu-grow" rows="4">${buEsc(buModel.style)}</textarea>
+      <div class="hint">Your writing rules. Students can open them at the top of the Report tab. One rule per line, starting with a dash, reads best.</div></div>${info}
+      <div class="bu-tools"><button type="button" class="btn-small" data-act="remove-style">Remove the style guide</button></div></div></div>`;
+}
+function buRenderHeader() {
+  const el = buQ('#bu-header'); if (!el) return;
+  let f = null; try { f = buHost.fields(); } catch (e) { f = null; }
+  const h = buModel.header || {};
+  const diff = !!f && ['title', 'summary', 'tags', 'minutes'].some(key => String(h[key] || '').trim() && String(h[key] || '').trim() !== String(f[key] || '').trim());
+  el.hidden = !diff;
+  el.innerHTML = diff ? `<div class="bu-warn">This file carries its own title, summary, tags or time, and they differ from the fields above. The fields win when you save. <button type="button" class="btn-small" data-act="apply-header">Use the file's values in the fields</button></div>` : '';
+}
+
+/* ---------- cards ---------- */
+function buKindLabel(b) { return b.type === 'callout' ? 'Callout' : buTypeInfo(b.type).label; }
+function buCardHTML(b, list, i) {
+  const open = !!b._open, n = buModel[list].length;
+  return `<div class="bu-card" data-k="${b._k}" data-type="${buEsc(b.type)}" data-list="${list}" tabindex="0">
+    <div class="bu-card-head">
+      <span class="bu-handle" draggable="true" title="Drag to move">⋮⋮</span>
+      <button type="button" class="bu-toggle" data-act="toggle" aria-expanded="${open}" title="${open ? 'Close' : 'Open'}">${open ? '▾' : '▸'}</button>
+      <span class="bu-kind">${buEsc(buKindLabel(b))}</span>
+      <span class="bu-summary">${buEsc(buSummary(b))}</span>
+      <span class="bu-idtag" title="Permanent name used to keep students' saved entries attached">${buEsc(buIdTag(b))}</span>
+      <span class="bu-actions">
+        <button type="button" data-act="up" title="Move up" ${i === 0 ? 'disabled' : ''}>↑</button>
+        <button type="button" data-act="down" title="Move down" ${i === n - 1 ? 'disabled' : ''}>↓</button>
+        <button type="button" data-act="dup" title="Duplicate">⧉</button>
+        <button type="button" data-act="show" title="Show in preview">👁</button>
+        <button type="button" data-act="add" title="Add a block below">＋</button>
+        <button type="button" data-act="del" class="danger" title="Delete">✕</button>
+      </span>
+    </div>
+    <div class="bu-card-body" ${open ? '' : 'hidden'}>${open ? buForm(b, list) : ''}<div class="bu-card-errors"></div></div>
+    <div class="bu-insert bu-palette" hidden></div>
+  </div>`;
+}
+function buCardEl(k) { return buQ(`.bu-card[data-k="${k}"]`); }
+function buRenderCard(k) {
+  const el = buCardEl(k), found = buFindBlock(k); if (!el || !found) return;
+  const focus = buFocusDescriptor();
+  const tmp = document.createElement('div'); tmp.innerHTML = buCardHTML(found.block, found.list, found.index);
+  const fresh = tmp.firstElementChild; el.replaceWith(fresh);
+  buPaintCardErrors(fresh, found.block);
+  buRestoreFocus(focus);
+  buGrowAll(fresh);
+}
+function buRefreshSummary(k) {
+  const el = buCardEl(k), found = buFindBlock(k); if (!el || !found) return;
+  const s = el.querySelector('.bu-summary'), t = el.querySelector('.bu-idtag');
+  if (s) s.textContent = buSummary(found.block);
+  if (t) t.textContent = buIdTag(found.block);
+}
+function buRefreshAllIdTags() {
+  if (!buContainer) return;
+  buContainer.querySelectorAll('.bu-card[data-k]').forEach(card => { const f = buFindBlock(+card.dataset.k); if (!f) return; const t = card.querySelector('.bu-idtag'); if (t) t.textContent = buIdTag(f.block); const s = card.querySelector('.bu-summary'); if (s) s.textContent = buSummary(f.block); });
+}
+function buIdTag(b) {
+  if (!buHasId(b)) return '';
+  if (b.opts && b.opts.id) return String(b.opts.id);
+  const auto = buAuto && buAuto.byBlock && buAuto.byBlock.get(b);
+  return 'automatic: ' + (auto || '…');
+}
+function buCountInputs(strings) { let n = 0; strings.forEach(s => { try { n += bmInputsIn(String(s || '')).length; } catch (e) {} }); return n; }
+function buPlainInputs(s) {   // "[Mass of sample (g)]" in place of each fill-in command, for summaries only
+  let out = String(s || '');
+  try { for (const i of bmInputsIn(out)) { const name = [i.label, i.unit ? `(${i.unit})` : ''].filter(Boolean).join(' '); out = out.replace(i.raw, `[${name || 'box'}]`); } } catch (e) {}
+  return out;
+}
+function buSummary(b) {
+  const inputsNote = strs => { const n = buCountInputs(strs); return n ? ` · ${n} fill-in ${n === 1 ? 'box' : 'boxes'}` : ''; };
+  switch (b.type) {
+    case 'heading': return b.text || '(empty heading)';
+    case 'text': return (buFirstLine(buPlainInputs(b.text), 80) || '(empty)') + inputsNote([b.text]);
+    case 'raw': case 'comment': return (buFirstLine(b.text, 80) || '(empty)') + inputsNote([b.text]);
+    case 'steps': return `${b.steps.length} ${b.steps.length === 1 ? 'step' : 'steps'}` + inputsNote(b.steps);
+    case 'table': {
+      const cols = Math.max(b.headers.length, ...b.rows.map(r => r.length), 1);
+      const blanks = b.rows.reduce((n, r) => n + r.filter(c => c === '___').length, 0);
+      return `${buOptStr(b, 'title') || 'Untitled'} · ${cols} ${cols === 1 ? 'column' : 'columns'} · ${b.rows.length} ${b.rows.length === 1 ? 'row' : 'rows'} · ${blanks} ${blanks === 1 ? 'blank' : 'blanks'}${b.opts && b.opts.addrows ? ' · students can add rows' : ''}`;
+    }
+    case 'answer': return `${buFirstLine(buPlainInputs(b.prompt), 80) || '(no question text)'} · ${buOptStr(b, 'lines') || '3'} lines`;
+    case 'notes': return b.label || 'My notes';
+    case 'photo': return buFirstLine(buPlainInputs(b.prompt), 80) || '(no instruction)';
+    case 'video': return buHost.youtubeId(b.url) || b.url || '(no link yet)';
+    case 'figure': { const p = String(b.path || '').replace(/^img:/, ''); if (!p) return 'Waiting for a picture'; if (/^(IMAGE|FIGURE)[_-]?\w*$/i.test(p)) return `Waiting for picture ${p}`; return p.split('/').pop(); }
+    case 'callout': return `${buOptStr(b, 'label') || BU_CALLOUT_LABELS[b.kind] || b.kind} · ${buFirstLine(buPlainInputs(b.body), 60)}`;
+    case 'graph': { const t = buTables().find(x => x.id && x.id === buOptStr(b, 'table')); return `${buOptStr(b, 'title') || buGraphAxesName(b)} · from "${t ? (t.title || 'Untitled table') : (buOptStr(b, 'table') || 'first table')}"`; }
+    case 'pagebreak': return 'Page break';
+    case 'section': { const w = buOptStr(b, 'words'); return `${buOptStr(b, 'title') || '(untitled section)'}${b.opts && b.opts.required ? ' · required' : ''}${w ? ` · ${w} words` : ''}`; }
+    case 'usetable': { const t = buTables().find(x => x.id && x.id === b.ref); return t ? (t.title || 'Untitled table') : `Missing: ${b.ref || '(nothing chosen)'}`; }
+    case 'usegraph': { const g = buGraphs().find(x => x.id && x.id === b.ref); return g ? g.title : `Missing: ${b.ref || '(nothing chosen)'}`; }
+    default: return '';
+  }
+}
+
+/* ---------- form building blocks ---------- */
+function buRow(label, inner, help) { return `<div class="form-row"><label>${buEsc(label)}</label>${inner}${help ? `<div class="hint">${buEsc(help)}</div>` : ''}</div>`; }
+function buInput(bind, value, kind, attrs) { return `<input type="text" data-bind="${bind}" data-kind="${kind || 'str'}" value="${buEsc(value)}" ${attrs || ''}/>`; }
+function buNum(bind, value, attrs) { return `<input type="number" data-bind="${bind}" data-kind="num" value="${buEsc(value)}" ${attrs || ''}/>`; }
+function buTextarea(bind, value, kind, attrs) { return `<textarea data-bind="${bind}" data-kind="${kind || 'str'}" class="bu-grow" rows="3" ${attrs || ''}>${buEsc(value)}</textarea>`; }
+function buCheck(bind, checked, label, kind) { return `<label class="bu-check"><input type="checkbox" data-bind="${bind}" data-kind="${kind || 'flag'}" ${checked ? 'checked' : ''}/> ${buEsc(label)}</label>`; }
+function buBraceLine(s) { let ok = true; try { ok = typeof bmBracesOk === 'function' ? bmBracesOk(String(s || '')) : true; } catch (e) {} return `<div class="bu-err bu-brace" ${ok ? 'hidden' : ''}>${BU_BRACE_MSG}</div>`; }
+function buIdRow(b) {
+  if (!buHasId(b)) return '';
+  const id = b.opts && b.opts.id;
+  if (id) {
+    return `<details class="bu-idrow"><summary>Permanent name</summary><div class="form-row"><input type="text" data-bind="opts.id" data-kind="id" value="${buEsc(id)}" spellcheck="false" autocomplete="off"/>
+      <div class="hint">Used to keep students' saved entries attached. Changing it detaches anything students have already saved here.</div></div></details>`;
+  }
+  const auto = buAuto && buAuto.byBlock && buAuto.byBlock.get(b);
+  return `<details class="bu-idrow"><summary>Permanent name</summary><div class="bu-note">Automatic (currently ${buEsc(auto || '…')}). <button type="button" class="btn-small" data-act="name-block">Give it a permanent name</button></div>
+    <div class="hint">A permanent name keeps students' saved entries attached to this block even when blocks are moved, added or removed.</div></details>`;
+}
+function buChips(b, fields) {
+  let chips = '';
+  fields.forEach(field => {
+    const text = String(buGetPath(b, field) || ''); let occ = [];
+    try { occ = bmInputsIn(text); } catch (e) { occ = []; }
+    occ.forEach((o, i) => {
+      const named = !!o.id;
+      chips += `<span class="bu-chip${named ? '' : ' unnamed'}" title="${buEsc(o.label || '')}"><button type="button" data-act="edit-input" data-field="${field}" data-index="${i}">${buEsc(named ? o.id : 'unnamed')}${o.unit ? ` (${buEsc(o.unit)})` : ''}</button>${named ? '' : `<button type="button" data-act="name-input" data-field="${field}" data-index="${i}" title="Give it a permanent name">name</button>`}</span>`;
+    });
+  });
+  return `<div class="bu-chips-wrap">${chips ? `<div class="bu-chips"><span class="bu-note">Fill-in boxes in this text:</span> ${chips}</div>` : ''}</div>`;
+}
+function buCommandNote(strings) {
+  return strings.some(s => BU_BLOCK_CMD.test(String(s || ''))) ? `<div class="bu-note">This text contains a command; it works, and the next time you open the lab it will appear as its own block.</div>` : '';
+}
+function buRefSelect(bind, kind, items, cur, noneLabel) {
+  let h = `<select data-bind="${bind}" data-kind="${kind}">`;
+  if (noneLabel != null) h += `<option value="" ${!cur ? 'selected' : ''}>${buEsc(noneLabel)}</option>`;
+  else if (!cur) h += `<option value="" selected>Choose…</option>`;
+  let found = !cur;
+  items.forEach(it => {
+    const label = it.title || (it.block.type === 'table' ? 'Untitled table' : 'Untitled graph');
+    if (it.id) { if (cur === it.id) found = true; h += `<option value="${buEsc(it.id)}" ${cur === it.id ? 'selected' : ''}>${buEsc(label)}</option>`; }
+    else h += `<option value="__auto__:${it.block._k}">${buEsc(label)} (needs a permanent name)</option>`;
+  });
+  if (!found) h += `<option value="${buEsc(cur)}" class="bu-missing" selected>Missing: ${buEsc(cur)}</option>`;
+  return h + '</select>';
+}
+
+/* ---------- forms per block type ---------- */
+function buForm(b, list) {
+  let h = '';
+  switch (b.type) {
+    case 'heading':
+      h = buRow('Level', `<select data-bind="level" data-kind="num">${BU_LEVELS.map(([v, l]) => `<option value="${v}" ${+b.level === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`)
+        + buRow('Heading', buInput('text', b.text, 'str', 'placeholder="e.g. Part 1 — Calorimetry"'), 'A title for the part that follows.');
+      break;
+    case 'text':
+      h = `<div class="form-row"><label>Text</label>${buTextarea('text', b.text, 'str', 'rows="4"')}<div class="hint">Ordinary writing. Leave a blank line between paragraphs. Formulas written between dollar signs are typeset in the preview.</div></div>
+        <div class="bu-tools"><button type="button" class="btn-small" data-act="insert-input" data-field="text">Insert a fill-in box…</button><button type="button" class="btn-small" data-act="split-text" title="Split this block in two at the cursor">Split here</button></div>
+        ${buChips(b, ['text'])}${buCommandNote([b.text])}`;
+      break;
+    case 'comment':
+      h = `<div class="form-row"><label>Note to self</label>${buTextarea('text', b.text, 'str')}<div class="hint">Students never see this.</div></div>`;
+      break;
+    case 'raw':
+      h = `<div class="bu-note">${BU_RAW_MSG}</div><div class="form-row">${buTextarea('text', b.text, 'str', 'class="bu-grow bu-mono" spellcheck="false" rows="6"')}</div>`;
+      break;
+    case 'steps': {
+      const start = Number.isFinite(+b.start) ? +b.start : 1;
+      h = `<div class="form-grid-2"><div class="form-row"><label>Start numbering at</label>${buNum('start', start, 'min="0" step="1"')}</div><div class="form-row"><label>Spacing</label>${buCheck('loose', !!b.loose, 'Blank line between steps', 'bool')}</div></div>
+        <div class="bu-steps">${b.steps.map((s, i) => `<div class="bu-step" data-step="${i}"><span class="bu-step-n">${start + i}.</span>
+          <div>${buTextarea('steps.' + i, s, 'str', 'rows="2" data-brace="1"')}${buBraceLine(s)}</div>
+          <span class="bu-step-tools"><button type="button" data-act="insert-input" data-field="steps.${i}" title="Insert a fill-in box in this step">box</button><button type="button" data-act="step-up" title="Move step up" ${i === 0 ? 'disabled' : ''}>↑</button><button type="button" data-act="step-down" title="Move step down" ${i === b.steps.length - 1 ? 'disabled' : ''}>↓</button><button type="button" data-act="del-step" class="danger" title="Remove step">✕</button></span></div>`).join('')}</div>
+        <div class="bu-tools"><button type="button" class="btn-small" data-act="add-step">+ Add a step</button></div>
+        ${buChips(b, b.steps.map((_, i) => 'steps.' + i))}${buCommandNote(b.steps)}
+        <div class="hint">Each step gets its own notes box for students automatically. Press Shift+Enter inside a step to add the next one.</div>${buIdRow(b)}`;
+      break;
+    }
+    case 'table': h = buFormTable(b); break;
+    case 'answer':
+      h = `<div class="form-row"><label>Question (optional, shown above the box)</label>${buTextarea('prompt', b.prompt, 'str', 'data-brace="1"')}${buBraceLine(b.prompt)}<div class="hint">Leave the question empty when it is already written in the text above.</div></div>
+        <div class="form-row bu-narrow"><label>Lines</label>${buNum('opts.lines', buOptStr(b, 'lines'), 'min="1" step="1" placeholder="3"')}</div>${buIdRow(b)}`;
+      break;
+    case 'notes':
+      h = `<div class="form-row"><label>Label (optional)</label>${buInput('label', b.label, 'body', 'placeholder="My notes" data-brace="1"')}${buBraceLine(b.label)}<div class="hint">Students see a collapsible box with this label where they can keep their own notes.</div></div>${buIdRow(b)}`;
+      break;
+    case 'photo':
+      h = `<div class="form-row"><label>What should the photo show?</label>${buTextarea('prompt', b.prompt, 'str', 'data-brace="1"')}${buBraceLine(b.prompt)}<div class="hint">Students add a photo from their phone or computer. It is kept in their own browser.</div></div>${buIdRow(b)}`;
+      break;
+    case 'video': {
+      const id = buHost.youtubeId(b.url);
+      h = `<div class="form-row"><label>YouTube link</label>${buInput('url', b.url, 'str', 'placeholder="https://www.youtube.com/watch?v=…" spellcheck="false"')}
+        <div class="bu-video-line ${id ? 'bu-note' : 'bu-err'}" ${!b.url ? 'hidden' : ''}>${id ? `YouTube video found (${buEsc(id)})` : 'That does not look like a YouTube link. It will be shown as a plain link.'}</div>
+        <div class="hint">Any YouTube link works, including unlisted videos.</div></div>`;
+      break;
+    }
+    case 'figure': h = buFormFigure(b); break;
+    case 'callout':
+      h = buRow('Kind', `<select data-bind="kind" data-kind="kind">${(typeof BM_CALLOUT_KINDS !== 'undefined' ? BM_CALLOUT_KINDS : Object.keys(BU_CALLOUT_LABELS)).map(k => `<option value="${k}" ${b.kind === k ? 'selected' : ''}>${BU_CALLOUT_LABELS[k] || k}</option>`).join('')}</select>`)
+        + buRow('Custom label (optional)', buInput('opts.label', buOptStr(b, 'label'), 'opt', `placeholder="${buEsc(BU_CALLOUT_LABELS[b.kind] || b.kind)}"`))
+        + `<div class="form-row"><label>Text</label>${buTextarea('body', b.body, 'str', 'rows="4" data-brace="1"')}${buBraceLine(b.body)}<div class="hint">A highlighted box. Ordinary writing works here, including lists and formulas between dollar signs.</div></div>`;
+      break;
+    case 'graph': h = buFormGraph(b); break;
+    case 'pagebreak': h = `<div class="bu-note">Starts a new page when the lab is printed.</div>`; break;
+    case 'section': h = buFormSection(b); break;
+    case 'usetable':
+      h = buRow('Table', buRefSelect('ref', 'ref', buTables(), b.ref || ''), 'Shows this table in the report, filled with the student\'s own numbers, with a caption like "Table 1".');
+      break;
+    case 'usegraph':
+      h = buRow('Graph', buRefSelect('ref', 'ref', buGraphs(), b.ref || ''), 'Shows this graph in the report, drawn from the student\'s own data, with a caption like "Figure 1".');
+      break;
+    default: h = `<div class="bu-note">This block has no form.</div>`;
+  }
+  return h;
+}
+function buFormTable(b) {
+  const cols = Math.max(b.headers.length, ...b.rows.map(r => r.length), 1);
+  const blanks = b.rows.reduce((n, r) => n + r.filter(c => c === '___').length, 0);
+  let h = buRow('Title', buInput('opts.title', buOptStr(b, 'title'), 'opt', 'placeholder="e.g. Trial 1 data"'));
+  h += `<div class="form-row">${buCheck('opts.addrows', !!(b.opts && b.opts.addrows), 'Students may add rows')}</div>`;
+  h += `<div class="bu-sheet-wrap"><table class="bu-sheet"><thead><tr class="bu-coltools">`;
+  for (let c = 0; c < cols; c++) h += `<th><button type="button" data-act="col-left" data-c="${c}" title="Move column left" ${c === 0 ? 'disabled' : ''}>◂</button><button type="button" data-act="col-right" data-c="${c}" title="Move column right" ${c === cols - 1 ? 'disabled' : ''}>▸</button><button type="button" data-act="del-col" data-c="${c}" class="danger" title="Remove column" ${cols === 1 ? 'disabled' : ''}>✕</button></th>`;
+  h += `<th class="bu-rowtools"><button type="button" data-act="add-col" title="Add a column">+ Column</button></th></tr><tr>`;
+  for (let c = 0; c < cols; c++) h += `<th class="bu-cell head"><input type="text" data-bind="headers.${c}" data-kind="cell" value="${buEsc(b.headers[c] || '')}" placeholder="Header"/></th>`;
+  h += `<th></th></tr></thead><tbody>`;
+  b.rows.forEach((row, r) => {
+    h += `<tr>`;
+    for (let c = 0; c < cols; c++) {
+      const v = row[c] == null ? '' : String(row[c]);
+      h += v === '___'
+        ? `<td class="bu-cell fill" data-r="${r}" data-c="${c}"><button type="button" data-act="text-cell" title="Click to write fixed text here instead">student fills in</button></td>`
+        : `<td class="bu-cell" data-r="${r}" data-c="${c}"><input type="text" data-bind="rows.${r}.${c}" data-kind="cell" value="${buEsc(v)}"/><button type="button" class="bu-cell-blank" data-act="blank" title="Make this a box students fill in">blank</button></td>`;
+    }
+    h += `<td class="bu-rowtools" data-r="${r}"><button type="button" data-act="row-up" title="Move row up" ${r === 0 ? 'disabled' : ''}>↑</button><button type="button" data-act="row-down" title="Move row down" ${r === b.rows.length - 1 ? 'disabled' : ''}>↓</button><button type="button" data-act="del-row" class="danger" title="Remove row">✕</button></td></tr>`;
+  });
+  h += `</tbody></table></div><div class="bu-tools"><button type="button" class="btn-small" data-act="add-row">+ Row</button></div>`;
+  h += `<div class="hint">Cells marked "student fills in" become boxes students type into. To make one, click the small "blank" button in the corner of a cell (or double-click the cell). Everything else is shown as written. Formulas between dollar signs are fine.</div>`;
+  if (!blanks) h += `<div class="bu-note">This table has no boxes for students yet; click "blank" in the corner of a cell to make one.</div>`;
+  if (buShiftNoted[b._k]) h += `<div class="bu-note">Students who already typed into this table keep their entries by row and column position, so adding or removing in the middle shifts what is below or to the right.</div>`;
+  return h + buIdRow(b);
+}
+function buFormFigure(b) {
+  const raw = String(b.path || ''), shown = raw.replace(/^img:/, '');
+  const placeholder = !shown || /^(IMAGE|FIGURE)[_-]?\w*$/i.test(shown);
+  let h = '';
+  if (!placeholder) {
+    h += `<div class="bu-figure"><img src="${buEsc(buHost.fileUrl(shown))}" alt=""/><div><div class="bu-note">${buEsc(shown.split('/').pop())}</div><label class="btn-small">Replace picture… <input type="file" accept="image/*" data-role="figure-file"/></label></div></div>`;
+  } else {
+    h += `<label class="bu-dropzone">Drop a picture here, or click to choose<input type="file" accept="image/*" data-role="figure-file"/></label>`;
+    if (shown) h += `<div class="bu-note">The lab file expects a picture called ${buEsc(shown)} here. Upload it to replace the placeholder.</div>`;
+  }
+  let pics = []; try { pics = (buHost.pictures() || []).filter(p => p && p !== shown); } catch (e) { pics = []; }
+  if (pics.length) h += buRow('Use an uploaded picture', `<select data-bind="path" data-kind="picture"><option value="">Choose…</option>${pics.map(p => `<option value="${buEsc(p)}">${buEsc(String(p).split('/').pop())}</option>`).join('')}</select>`);
+  h += buRow('Caption', buInput('opts.caption', buOptStr(b, 'caption'), 'opt'), 'Shown under the picture.');
+  return h;
+}
+function buFormSection(b) {
+  let h = buRow('Title', buInput('opts.title', buOptStr(b, 'title'), 'opt', 'placeholder="e.g. Purpose"'));
+  h += `<div class="form-row"><label>Instructions to the student (optional)</label>${buTextarea('prompt', b.prompt, 'str', 'data-brace="1"')}${buBraceLine(b.prompt)}</div>`;
+  h += buRow('Hint (optional, students can expand it)', buInput('opts.hint', buOptStr(b, 'hint'), 'opt'));
+  h += `<div class="form-row">${buCheck('opts.required', !!(b.opts && b.opts.required), 'Required')}</div>`;
+  let wv = { min: '', max: '', raw: null };
+  try { wv = bmWordsView(buOptStr(b, 'words')); } catch (e) {}
+  if (wv.raw != null && wv.raw !== '') h += buRow('Suggested length (as typed)', buInput('opts.words', wv.raw, 'str'), 'Write it as two numbers, for example 40-120, to get the usual controls.');
+  else h += `<div class="form-row"><label>Suggested length</label><div class="bu-inline">from <input type="number" min="0" step="1" data-bind="opts.words" data-kind="words" data-part="min" value="${buEsc(wv.min)}"/> to <input type="number" min="0" step="1" data-bind="opts.words" data-kind="words" data-part="max" value="${buEsc(wv.max)}"/> words</div><div class="hint">Optional. Students see a gentle word-count target; leave either side empty for no limit.</div></div>`;
+  h += `<div class="form-row bu-narrow"><label>Lines in the writing box</label>${buNum('opts.lines', buOptStr(b, 'lines'), 'min="1" step="1" placeholder="6"')}</div>`;
+  return h + buIdRow(b);
+}
+
+/* ---------- graph form ---------- */
+function buGraphTable(b) {
+  // The table this graph reads: its explicit id, or (when absent) the table the renderer calls table1.
+  const cur = buOptStr(b, 'table'), tables = buTables();
+  if (cur) return tables.find(t => t.id === cur) || null;
+  return tables.find(t => t.id === 'table1') || tables.find(t => buAuto && buAuto.byBlock && buAuto.byBlock.get(t.block) === 'table1') || null;
+}
+function buExprViewOf(expr, defaultCol) {
+  try { return bmExprView(expr == null || expr === '' ? 'c' + defaultCol : String(expr)); }
+  catch (e) { return { mode: 'formula', expr: String(expr || '') }; }
+}
+function buAxisControls(axis, si, view, headers) {
+  const kind = axis === 'x' ? 'expr' : 'series', bind = axis === 'x' ? 'opts.x' : 'opts.y';
+  const sattr = si == null ? '' : ` data-series="${si}"`;
+  const ncols = Math.max(headers.length, view.mode === 'column' ? view.col : 0, 2);
+  const name = c => { const hname = headers[c - 1]; return hname && String(hname).trim() ? String(hname) : 'Column ' + c; };
+  let sel = `<select data-bind="${bind}" data-kind="${kind}"${sattr} data-part="col">`;
+  for (let c = 1; c <= ncols; c++) sel += `<option value="${c}" ${view.mode === 'column' && view.col === c ? 'selected' : ''}>${c}: ${buEsc(name(c))}</option>`;
+  sel += `<option value="formula" ${view.mode === 'formula' ? 'selected' : ''}>Formula…</option></select>`;
+  const expr = view.mode === 'formula' ? view.expr : (view.transform ? view.transform.replace(/(?<![A-Za-z])v(?![A-Za-z0-9])/g, 'c1') : '');
+  const errLine = `<div class="bu-err bu-expr-err" ${buExprOk(expr) ? 'hidden' : ''}>${buExprMsg(view)}</div>`;
+  if (view.mode === 'formula') {
+    const legend = headers.map((hname, i) => `c${i + 1} = ${hname && String(hname).trim() ? hname : 'Column ' + (i + 1)}`).join(', ');
+    return `<div class="form-grid-2"><div class="form-row"><label>Column</label>${sel}</div><div class="form-row"><label>Formula</label><input type="text" data-bind="${bind}" data-kind="${kind}"${sattr} data-part="formula" value="${buEsc(view.expr)}" spellcheck="false" placeholder="c3-c2"/>${errLine}<div class="hint">${buEsc(legend ? 'Columns: ' + legend + '. ' : '')}Numbers, + - * / ^, ln, log, exp, sqrt, abs.</div></div></div>`;
+  }
+  return `<div class="form-grid-2"><div class="form-row"><label>Column</label>${sel}</div><div class="form-row"><label>Change it first (optional)</label><input type="text" data-bind="${bind}" data-kind="${kind}"${sattr} data-part="transform" value="${buEsc(view.transform || '')}" placeholder="v" spellcheck="false"/>${errLine}<div class="hint">Use v for the value in that column, for example 1/(v+273.15) or ln(v).</div></div></div>`;
+}
+function buFormGraph(b) {
+  const tables = buTables(), cur = buOptStr(b, 'table');
+  let sel = `<select data-bind="opts.table" data-kind="table-ref"><option value="" ${!cur ? 'selected' : ''}>first table (automatic)</option>`;
+  let found = !cur;
+  tables.forEach(t => {
+    const label = t.title || 'Untitled table';
+    if (t.id) { if (cur === t.id) found = true; sel += `<option value="${buEsc(t.id)}" ${cur === t.id ? 'selected' : ''}>${buEsc(label)}</option>`; }
+    else sel += `<option value="__auto__:${t.block._k}">${buEsc(label)} (needs a permanent name)</option>`;
+  });
+  if (!found) sel += `<option value="${buEsc(cur)}" class="bu-missing" selected>Missing: ${buEsc(cur)}</option>`;
+  sel += '</select>';
+  const tbl = buGraphTable(b), headers = tbl ? tbl.block.headers : [];
+  let h = buRow('Table', sel, 'The graph reads its numbers from this table and redraws as students type.');
+  h += `<div class="bu-axis" data-axis="x"><div class="bu-axis-title">Horizontal axis</div>${buAxisControls('x', null, buExprViewOf(b.opts.x, 1), headers)}</div>`;
+  let series = [];
+  try { series = bmSeriesView(buOptStr(b, 'y') || 'c2', buOptStr(b, 'series')); } catch (e) { series = [{ axis: { mode: 'formula', expr: buOptStr(b, 'y') || 'c2' }, name: '' }]; }
+  if (!series.length) series = [{ axis: { mode: 'column', col: 2, transform: '' }, name: '' }];
+  h += `<div class="bu-axis" data-axis="y"><div class="bu-axis-title">Vertical axis</div>${series.map((s, i) => `<div class="bu-series" data-series="${i}">${buAxisControls('y', i, s.axis, headers)}
+    <div class="form-grid-2"><div class="form-row"><label>Series name (optional)</label><input type="text" data-bind="opts.y" data-kind="series" data-series="${i}" data-part="name" value="${buEsc(s.name || '')}" placeholder="e.g. Trial 1"/></div>
+    <div class="form-row bu-tools">${series.length > 1 ? `<button type="button" class="btn-small" data-act="del-series" data-series="${i}">✕ Remove this series</button>` : ''}</div></div></div>`).join('')}
+    <div class="bu-tools"><button type="button" class="btn-small" data-act="add-series">+ Another series</button></div></div>`;
+  const type = buOptStr(b, 'type'), known = ['', 'scatter', 'both', 'line'].includes(type);
+  h += buRow('Points', `<select data-bind="opts.type" data-kind="str"><option value="" ${type === '' || type === 'scatter' ? 'selected' : ''}>Dots only</option><option value="both" ${type === 'both' ? 'selected' : ''}>Dots joined by lines</option><option value="line" ${type === 'line' ? 'selected' : ''}>Lines only</option>${known ? '' : `<option value="${buEsc(type)}" selected>(as typed: ${buEsc(type)})</option>`}</select>`);
+  const fit = b.opts && b.opts.fit, fitOn = !!fit && String(fit).toLowerCase() !== 'none';
+  h += `<div class="form-row">${buCheck('opts.fit', fitOn, 'Draw the best-fit straight line and show its equation', 'fit')}</div>`;
+  h += buRow('Title', buInput('opts.title', buOptStr(b, 'title'), 'opt', 'placeholder="e.g. Viscosity vs temperature"'));
+  h += `<div class="form-grid-2">${buRow('Horizontal axis label', buInput('opts.xlabel', buOptStr(b, 'xlabel'), 'opt'))}${buRow('Vertical axis label', buInput('opts.ylabel', buOptStr(b, 'ylabel'), 'opt'))}</div>`;
+  h += `<div class="form-row"><label>Caption</label>${buTextarea('caption', b.caption, 'str', 'rows="2" data-brace="1"')}${buBraceLine(b.caption)}</div>`;
+  h += `<details class="bu-idrow"><summary>Fix the axis range (optional)</summary><div class="form-grid-2">${['xmin', 'xmax', 'ymin', 'ymax'].map(k => buRow({ xmin: 'Horizontal from', xmax: 'Horizontal to', ymin: 'Vertical from', ymax: 'Vertical to' }[k], buNum('opts.' + k, buOptStr(b, k), 'step="any"'))).join('')}</div><div class="hint">Leave empty for automatic ranges.</div></details>`;
+  return h + buIdRow(b);
+}
+function buReadAxis(scope) {
+  const col = scope.querySelector('[data-part="col"]'); if (!col) return null;
+  if (col.value === 'formula') { const f = scope.querySelector('[data-part="formula"]'); return { mode: 'formula', expr: f ? f.value.trim() : '' }; }
+  const t = scope.querySelector('[data-part="transform"]');
+  return { mode: 'column', col: parseInt(col.value, 10) || 1, transform: t ? t.value.trim() : '' };
+}
+function buSwitchedShape(scope, el, current) {
+  // A column select moved between a numbered column and "Formula…": convert the view and re-render the card.
+  if (!el || !el.matches('[data-part="col"]')) return null;
+  const hasFormula = !!scope.querySelector('[data-part="formula"]');
+  if ((el.value === 'formula') === hasFormula) return null;
+  if (el.value === 'formula') {
+    const t = scope.querySelector('[data-part="transform"]'); const prevCol = (current && current.mode === 'column' && current.col) || 1;
+    let expr = ''; try { expr = bmExprFromView({ mode: 'column', col: prevCol, transform: t ? t.value.trim() : '' }); } catch (e) { expr = 'c' + prevCol; }
+    return { mode: 'formula', expr };
+  }
+  const f = scope.querySelector('[data-part="formula"]'); let v = null;
+  try { v = bmExprView(f ? f.value.trim() : ''); } catch (e) { v = null; }
+  return { mode: 'column', col: parseInt(el.value, 10) || 1, transform: v && v.mode === 'column' ? (v.transform || '') : '' };
+}
+function buWriteAxisX(found, card, el) {
+  const b = found.block, scope = card.querySelector('.bu-axis[data-axis="x"]'); if (!scope) return false;
+  const switched = buSwitchedShape(scope, el, buExprViewOf(b.opts.x, 1)), view = switched || buReadAxis(scope); if (!view) return false;
+  let expr = ''; try { expr = bmExprFromView(view); } catch (e) { expr = view.mode === 'formula' ? view.expr : 'c' + view.col; }
+  buSetOpt(b, 'x', expr);
+  buExprLine(scope, view);
+  return !!switched;
+}
+function buWriteSeries(found, card, el) {
+  const b = found.block, scopes = Array.from(card.querySelectorAll('.bu-series')); if (!scopes.length) return false;
+  let switched = false, current = [];
+  try { current = bmSeriesView(buOptStr(b, 'y') || 'c2', buOptStr(b, 'series')); } catch (e) { current = []; }
+  const list = scopes.map((scope, i) => {
+    let view = null;
+    if (el && scope.contains(el)) { const sw = buSwitchedShape(scope, el, current[i] && current[i].axis); if (sw) { switched = true; view = sw; } }
+    if (!view) view = buReadAxis(scope) || { mode: 'column', col: 2, transform: '' };
+    const n = scope.querySelector('[data-part="name"]');
+    buExprLine(scope, view);
+    return { axis: view, name: n ? n.value.trim() : '' };
+  });
+  let out = { y: '', series: '' };
+  try { out = bmSeriesFromView(list); } catch (e) { out = { y: list.map(s => s.axis.mode === 'formula' ? s.axis.expr : 'c' + s.axis.col).join(';'), series: '' }; }
+  buSetOpt(b, 'y', out.y); buSetOpt(b, 'series', out.series);
+  return switched;
+}
+function buExprLine(scope, view) {
+  const line = scope.querySelector('.bu-expr-err'); if (!line) return;
+  const expr = view.mode === 'formula' ? view.expr : (view.transform ? view.transform.replace(/(?<![A-Za-z])v(?![A-Za-z0-9])/g, 'c1') : '');
+  line.textContent = buExprMsg(view);
+  line.hidden = buExprOk(expr);
+}
+function buWriteWords(found, card) {
+  const min = card.querySelector('[data-kind="words"][data-part="min"]'), max = card.querySelector('[data-kind="words"][data-part="max"]');
+  let v = ''; try { v = bmWordsFromView(min ? min.value.trim() : '', max ? max.value.trim() : ''); } catch (e) { v = [min && min.value.trim(), max && max.value.trim()].filter(Boolean).join('-'); }
+  buSetOpt(found.block, 'words', v);
+}
+
+/* ---------- validation and warnings ---------- */
+function buRevalidate(now) {
+  clearTimeout(buTimer); buTimer = null;
+  if (!now) { buTimer = setTimeout(() => buRevalidate(true), 250); return; }
+  if (!buModel || !buContainer) return;
+  try { buAuto = bmAutoIds(buModel); } catch (e) { buAuto = { byBlock: new Map(), inline: new Map(), all: new Set() }; }
+  let items = [];
+  try { items = bmValidate(buModel, buAuto) || []; } catch (e) { items = [{ k: null, msg: 'The checker ran into a problem: ' + (e.message || e) }]; }
+  let self = null; try { self = typeof bmSelfCheck === 'function' ? bmSelfCheck(buModel) : null; } catch (e) { self = null; }
+  buPaintWarnings(items, self);
+  buContainer.querySelectorAll('.bu-card[data-k]').forEach(card => {
+    const f = buFindBlock(+card.dataset.k); if (!f) return;
+    buPaintCardErrors(card, f.block, items);
+    const t = card.querySelector('.bu-idtag'); if (t) t.textContent = buIdTag(f.block);
+  });
+  buRenderHeader();
+}
+function buPaintCardErrors(card, b, items) {
+  const box = card.querySelector('.bu-card-errors'); if (!box) return;
+  if (!items) { box.innerHTML = ''; return; }
+  box.innerHTML = items.filter(i => i.k === b._k).map(i => `<div class="bu-err">${buEsc(i.msg)}</div>`).join('');
+}
+function buAutoCount() {
+  if (!buAuto) return 0;
+  let n = buAuto.byBlock ? buAuto.byBlock.size : 0;
+  if (buAuto.inline) buAuto.inline.forEach(list => { n += (list || []).length; });
+  return n;
+}
+function buPaintWarnings(items, self) {
+  const w = buQ('#bu-warnings'); if (!w) return;
+  let html = '';
+  (buModel.warnings || []).filter(m => !items.some(i => i.msg === m)).forEach(m => { html += `<div class="bu-warn">${buEsc(m)}</div>`; });
+  items.forEach(i => { html += `<div class="bu-warn">${buEsc(i.msg)}${i.k != null ? ` <button type="button" class="bu-link" data-act="goto" data-target="${i.k}">Show</button>` : ''}</div>`; });
+  if (self) html += `<div class="bu-err bu-err-block">${buEsc(self)}</div>`;
+  if (buNoticeShown && !buNoticeDismissed) html += `<div class="bu-warn bu-notice">Some blocks have no permanent name yet, so their names are numbered in order. Moving, adding or removing blocks changes those numbers, and students who already saved work in them would lose it.
+    <span class="bu-tools"><button type="button" class="btn-small" data-act="pin-all">Give every unnamed block a permanent name</button><button type="button" class="btn-small" data-act="dismiss-notice">Not now</button></span></div>`;
+  w.innerHTML = html;
+}
+
+/* ---------- focus and textarea growth ---------- */
+function buFocusDescriptor() {
+  const a = document.activeElement;
+  if (!buContainer || !a || !buContainer.contains(a)) return null;
+  const card = a.closest('.bu-card');
+  const d = { k: card && card.dataset.k != null ? card.dataset.k : null, style: !!(card && card.dataset.type === 'style'), bind: a.dataset ? a.dataset.bind : null, series: a.dataset ? a.dataset.series : null, part: a.dataset ? a.dataset.part : null, act: a.dataset ? a.dataset.act : null, cardOnly: a === card };
+  if ('selectionStart' in a && a.type !== 'number' && a.tagName !== 'SELECT') { try { d.s = a.selectionStart; d.e = a.selectionEnd; } catch (e) {} }
+  return d;
+}
+function buRestoreFocus(d) {
+  if (!d || !buContainer) return;
+  let card = d.style ? buQ('.bu-card[data-type="style"]') : (d.k != null ? buCardEl(+d.k) : null);
+  if (!card) return;
+  let el = null;
+  if (d.cardOnly || (!d.bind && !d.act)) el = card;
+  else if (d.bind) {
+    let sel = `[data-bind="${d.bind}"]`; if (d.series != null) sel += `[data-series="${d.series}"]`; if (d.part) sel += `[data-part="${d.part}"]`;
+    el = card.querySelector(sel);
+  } else if (d.act) el = card.querySelector(`[data-act="${d.act}"]`);
+  if (!el) el = card;
+  try { el.focus({ preventScroll: true }); if (d.s != null && 'setSelectionRange' in el) el.setSelectionRange(d.s, d.e); } catch (e) {}
+}
+function buGrow(ta) { if (!ta || !ta.classList.contains('bu-grow')) return; ta.style.height = 'auto'; ta.style.height = Math.max(ta.scrollHeight + 2, 48) + 'px'; }
+function buGrowAll(root) { requestAnimationFrame(() => root.querySelectorAll('textarea.bu-grow').forEach(buGrow)); }
+
+/* ---------- change pipeline ---------- */
+function buChanged(k, structural, debounced) {
+  if (structural) buLastStructural = true;
+  buRevalidate(!!structural);
+  if (structural && !buNoticeShown && !buNoticeDismissed && buAutoCount() > 0) { buNoticeShown = true; buRevalidate(true); }
+  const fire = () => { buChangePending = null; clearTimeout(buChangeTimer); buChangeTimer = null; if (buOnChange && buModel) buOnChange(buModel, { structural: !!structural, k: k == null ? null : k }); };
+  clearTimeout(buChangeTimer); buChangePending = null;
+  if (debounced) { buChangePending = fire; buChangeTimer = setTimeout(fire, 250); } else fire();
+}
+function buFlushChange() { if (buChangePending) { const f = buChangePending; buChangePending = null; clearTimeout(buChangeTimer); f(); } }
+
+/* ---------- delegated input / change ---------- */
+function buLiveFilter(el, kind) {
+  // Keeps option values and ids safe while typing; never blocks typing.
+  if (kind === 'id') { const v = el.value.replace(/[^a-zA-Z0-9_.-]/g, ''); if (v !== el.value) { const p = el.selectionStart; el.value = v; try { el.setSelectionRange(p - 1, p - 1); } catch (e) {} } return; }
+  if (kind === 'opt') {
+    if (/\]/.test(el.value)) { const p = el.selectionStart; el.value = buOutsideMath(el.value, s => s.replace(/\]/g, ')')); try { el.setSelectionRange(p, p); } catch (e) {} buTip(el, 'Square brackets cannot be used here'); }
+    const both = buOutsideMath(el.value, s => s.replace(/[^"']/g, '')).includes('"') && buOutsideMath(el.value, s => s.replace(/[^"']/g, '')).includes("'");
+    let line = el.parentElement.querySelector('.bu-quote-err');
+    if (both && !line) { line = document.createElement('div'); line.className = 'bu-err bu-quote-err'; line.textContent = 'Use only one kind of quotation mark here.'; el.insertAdjacentElement('afterend', line); }
+    if (!both && line) line.remove();
+  }
+}
+function buTip(el, msg) {
+  let tip = el.parentElement.querySelector('.bu-tip');
+  if (!tip) { tip = document.createElement('div'); tip.className = 'bu-tip'; el.insertAdjacentElement('afterend', tip); }
+  tip.textContent = msg; clearTimeout(tip._t); tip._t = setTimeout(() => tip.remove(), 2000);
+}
+function buWrite(found, bind, kind, el, card) {
+  const b = found.block, key = bind.startsWith('opts.') ? bind.slice(5) : null;
+  const v = el.type === 'checkbox' ? el.checked : el.value;
+  switch (kind) {
+    case 'flag': buSetOpt(b, key, v ? true : undefined); return false;
+    case 'bool': b[bind] = !!v; return false;
+    case 'fit': buSetOpt(b, 'fit', v ? 'linear' : undefined); return false;
+    case 'num':
+      if (bind === 'level') b.level = Math.min(6, Math.max(1, parseInt(v, 10) || 2));
+      else if (bind === 'start') b.start = Math.max(0, parseInt(v, 10) || 0);
+      else buSetOpt(b, key, String(v).trim());
+      return bind === 'start';
+    case 'id': {
+      const nv = String(v).trim(), old = b.opts ? b.opts.id : undefined;
+      b._fresh = false; buSetOpt(b, 'id', nv);
+      if (old && nv && old !== nv) { try { bmRenameId(buModel, old, nv); } catch (e) {} }
+      return false;
+    }
+    case 'cell': { const nv = buCellClean(v); if (el.value !== nv) { const p = el.selectionStart; el.value = nv; try { el.setSelectionRange(p, p); } catch (e) {} } buSetPath(b, bind, nv); return false; }
+    case 'expr': return buWriteAxisX(found, card, el);
+    case 'series': return buWriteSeries(found, card, el);
+    case 'words': buWriteWords(found, card); return false;
+    case 'kind': b.kind = v; return true;
+    case 'ref': b.ref = v; return false;
+    case 'table-ref': buSetOpt(b, 'table', v); return true;
+    case 'picture': if (v) { b.path = v; return true; } return false;
+    case 'body': case 'opt': case 'str': default:
+      if (key != null) buSetOpt(b, key, v === '' ? undefined : v); else buSetPath(b, bind, v);
+      return false;
+  }
+}
+function buAfterWrite(found, bind, el, card) {
+  const b = found.block, k = b._k;
+  if (buIsNamingField(b, bind) && b._fresh) {
+    const old = b.opts.id; try { bmRefreshFreshId(buModel, b); } catch (e) {}
+    if (b.opts.id !== old) { buRefreshAllIdTags(); buRerenderReferrers(b.opts.id); }
+  }
+  if (bind === 'opts.id') { buRefreshAllIdTags(); buRerenderReferrers(b.opts.id); }
+  if (el.dataset.brace) { const line = el.parentElement.querySelector('.bu-brace'); if (line) { let ok = true; try { ok = typeof bmBracesOk === 'function' ? bmBracesOk(el.value) : true; } catch (e) {} line.hidden = ok; } }
+  if (b.type === 'video' && bind === 'url') { const line = card.querySelector('.bu-video-line'); if (line) { const id = buHost.youtubeId(b.url); line.hidden = !b.url; line.className = 'bu-video-line ' + (id ? 'bu-note' : 'bu-err'); line.textContent = id ? `YouTube video found (${id})` : 'That does not look like a YouTube link. It will be shown as a plain link.'; } }
+  if ((b.type === 'text' || b.type === 'steps') && (bind === 'text' || bind.startsWith('steps.'))) {
+    const wrap = card.querySelector('.bu-chips-wrap'); if (wrap) { const tmp = document.createElement('div'); tmp.innerHTML = buChips(b, b.type === 'text' ? ['text'] : b.steps.map((_, i) => 'steps.' + i)); wrap.replaceWith(tmp.firstElementChild); }
+  }
+  if (el.tagName === 'TEXTAREA') buGrow(el);
+  buRefreshSummary(k);
+}
+function buRerenderReferrers(id) {
+  if (!id) return;
+  let refs = []; try { refs = bmReferencesTo(buModel, id) || []; } catch (e) { refs = []; }
+  const seen = new Set();
+  refs.forEach(r => { const rb = r.block; if (!rb || seen.has(rb._k)) return; seen.add(rb._k); if (rb._open) buRenderCard(rb._k); else buRefreshSummary(rb._k); });
+}
+function buOnInput(e) {
+  const el = e.target; if (!el || !el.dataset || !el.dataset.bind) return;
+  if (el.type === 'checkbox' || el.tagName === 'SELECT' || el.type === 'file') return;   // those arrive on change
+  if (el.dataset.kind === 'style') { buModel.style = el.value; buGrow(el); const s = buQ('.bu-card-style .bu-summary'); if (s) s.textContent = buFirstLine(buModel.style, 80) || 'Your writing rules'; buChanged(null, false, true); return; }
+  const card = el.closest('.bu-card[data-k]'); if (!card) return;
+  const found = buFindBlock(+card.dataset.k); if (!found) return;
+  const kind = el.dataset.kind || 'str';
+  buLiveFilter(el, kind);
+  buWrite(found, el.dataset.bind, kind, el, card);
+  buAfterWrite(found, el.dataset.bind, el, card);
+  buChanged(found.block._k, false, true);
+}
+function buOnChangeEvt(e) {
+  const el = e.target; if (!el) return;
+  if (el.type === 'file' && el.dataset.role === 'figure-file') { buFigureFiles(el); return; }
+  if (!el.dataset || !el.dataset.bind) return;
+  if (!(el.type === 'checkbox' || el.tagName === 'SELECT')) { buFlushChange(); return; }
+  const card = el.closest('.bu-card[data-k]'); if (!card) return;
+  const found = buFindBlock(+card.dataset.k); if (!found) return;
+  const kind = el.dataset.kind || 'str', b = found.block;
+  if (kind === 'table-ref' || kind === 'ref') {
+    let val = el.value;
+    if (val.startsWith('__auto__:')) {
+      const target = buFindBlock(+val.slice(9));
+      if (!target) { buRenderCard(b._k); return; }
+      const tb = target.block, name = buNameOf(tb) || (tb.type === 'table' ? 'Untitled table' : 'Untitled graph');
+      const ask = tb.type === 'table' ? `"${name}" has no permanent name yet. Give it one now? Students who already saved entries in it will not see them any more.` : `"${name}" has no permanent name yet. Give it one now?`;
+      if (!buHost.confirm(ask)) { buRenderCard(b._k); return; }
+      tb.opts.id = bmNewId(buModel, buNameOf(tb), buTypeInfo(tb.type).idBase || tb.type); tb._fresh = false;   // frozen, not fresh (A.5.8)
+      val = tb.opts.id;
+      if (tb._open) buRenderCard(tb._k); else buRefreshSummary(tb._k);
+    }
+    if (kind === 'ref') b.ref = val; else buSetOpt(b, 'table', val);
+    buRenderCard(b._k); buChanged(b._k, true); return;
+  }
+  const reshape = buWrite(found, el.dataset.bind, kind, el, card);
+  buAfterWrite(found, el.dataset.bind, el, card);
+  if (reshape) buRenderCard(b._k);
+  buChanged(b._k, kind === 'picture' || kind === 'kind', false);
+}
+function buFigureFiles(input) {
+  const card = input.closest('.bu-card[data-k]'); const f = input.files && input.files[0]; input.value = '';
+  if (!card || !f) return;
+  const found = buFindBlock(+card.dataset.k); if (!found) return;
+  const k = found.block._k;
+  buHost.toast('Uploading picture…');
+  Promise.resolve().then(() => buHost.upload(f)).then(path => {
+    const again = buFindBlock(k); if (!again) return;
+    again.block.path = typeof path === 'string' ? path : (path && path.path) || '';
+    buRenderCard(k); buChanged(k, true); buHost.toast('Picture added');
+  }).catch(err => buHost.toast((err && err.message) || String(err), true));
+}
+
+/* ---------- delegated clicks ---------- */
+function buOnClick(e) {
+  const btn = e.target.closest('[data-act]');
+  if (buPopover && !e.target.closest('.bu-popover') && !(btn && /^(insert-input|edit-input|name-input)$/.test(btn.dataset.act))) buClosePopover();
+  if (!btn || !buContainer.contains(btn)) {
+    const head = e.target.closest('.bu-card-head');
+    if (head && !e.target.closest('button, .bu-handle, input, select')) { const card = head.closest('.bu-card[data-k]'); if (card) buToggle(+card.dataset.k); }
+    return;
+  }
+  if (btn.disabled) return;
+  const act = btn.dataset.act, card = btn.closest('.bu-card[data-k]');
+  const k = card ? +card.dataset.k : null, found = k != null ? buFindBlock(k) : null;
+  const b = found ? found.block : null;
+  switch (act) {
+    case 'toggle': buToggle(k); break;
+    case 'up': buMove(k, -1); break;
+    case 'down': buMove(k, 1); break;
+    case 'dup': buDuplicate(found); break;
+    case 'del': buDelete(found); break;
+    case 'show': if (b) buShowBlock(b); break;
+    case 'add': buOpenInsert(card, found); break;
+    case 'cancel-insert': buCloseInserts(); break;
+    case 'palette-add': buAddBlock(btn.dataset.type, btn.dataset.list, btn.dataset.after != null ? +btn.dataset.after : null); break;
+    case 'template': buApplyTemplate(btn.dataset.template); break;
+    case 'add-style': buModel.style = ''; buRenderStyle(); buRenderPalette('report'); buRenderTemplates(); buChanged(null, true); { const ta = buQ('[data-kind="style"]'); if (ta) ta.focus(); } break;
+    case 'remove-style':
+      if (buModel.style && !buHost.confirm('Remove the style guide?')) break;
+      buModel.style = null; buRenderStyle(); buRenderPalette('report'); buRenderTemplates(); buChanged(null, true); break;
+    case 'apply-header': try { buHost.applyHeaderToFields(); } catch (err) { buHost.toast((err && err.message) || String(err), true); } buRenderHeader(); break;
+    case 'goto': buGoto(+btn.dataset.target); break;
+    case 'pin-all': buPinAll(); break;
+    case 'dismiss-notice': buNoticeDismissed = true; buRevalidate(true); break;
+    case 'name-block':
+      if (!b) break;
+      b.opts.id = bmNewId(buModel, buNameOf(b), buTypeInfo(b.type).idBase || b.type); b._fresh = false;
+      buRenderCard(k); buChanged(k, true); break;
+    case 'add-row': case 'del-row': case 'row-up': case 'row-down': case 'add-col': case 'del-col': case 'col-left': case 'col-right': case 'blank': case 'text-cell':
+      buTableAction(found, act, btn); break;
+    case 'add-step': case 'del-step': case 'step-up': case 'step-down': buStepAction(found, act, btn); break;
+    case 'add-series': case 'del-series': buSeriesAction(found, act, btn); break;
+    case 'insert-input': buOpenPopover(card, found, btn.dataset.field, null, btn); break;
+    case 'edit-input': buOpenPopover(card, found, btn.dataset.field, +btn.dataset.index, btn); break;
+    case 'name-input': buNameInput(found, btn.dataset.field, +btn.dataset.index); break;
+    case 'popover-ok': buPopoverOk(); break;
+    case 'popover-remove': buPopoverRemove(); break;
+    case 'popover-cancel': buClosePopover(); break;
+    case 'split-text': buSplitText(found, card); break;
+    default: break;
+  }
+}
+function buToggle(k) {
+  const f = buFindBlock(k); if (!f) return;
+  f.block._open = !f.block._open; buRenderCard(k);
+  const card = buCardEl(k); if (!card) return;
+  if (f.block._open) buFocusFirstField(card); else card.focus({ preventScroll: true });
+}
+function buFocusFirstField(card) {
+  const el = card.querySelector('.bu-card-body input:not([type="checkbox"]):not([type="file"]), .bu-card-body textarea, .bu-card-body select');
+  if (el) { try { el.focus({ preventScroll: true }); } catch (e) {} }
+}
+function buMove(k, delta) {
+  const f = buFindBlock(k); if (!f) return;
+  const to = f.index + delta; if (to < 0 || to >= buModel[f.list].length) return;
+  bmMoveBlock(buModel, f.list, f.index, to);
+  buRenderAll(); buChanged(k, true);
+  const card = buCardEl(k); if (card && !buContainer.contains(document.activeElement)) card.focus({ preventScroll: true });
+  if (card) card.scrollIntoView({ block: 'nearest' });
+}
+function buIsBlank(b) {
+  switch (b.type) {
+    case 'heading': case 'text': case 'comment': case 'raw': return !String(b.text || '').trim();
+    case 'steps': return b.steps.every(s => !String(s || '').trim());
+    case 'table': return b.headers.every(h => !String(h || '').trim()) && b.rows.every(r => r.every(c => !String(c || '').trim() || c === '___'));
+    case 'answer': case 'photo': case 'section': return !String(b.prompt || '').trim() && !buOptStr(b, 'title');
+    case 'notes': return !String(b.label || '').trim();
+    case 'video': return !String(b.url || '').trim();
+    case 'figure': return !String(b.path || '').trim();
+    case 'callout': return !String(b.body || '').trim();
+    case 'graph': return !buOptStr(b, 'title') && !buOptStr(b, 'x') && !buOptStr(b, 'y') && !String(b.caption || '').trim();
+    case 'usetable': case 'usegraph': return !String(b.ref || '').trim();
+    case 'pagebreak': return true;
+    default: return false;
+  }
+}
+function buDelete(f) {
+  if (!f) return;
+  const b = f.block, label = buKindLabel(b).toLowerCase();
+  if (!buIsBlank(b)) {
+    let msg = `Remove this ${label}?`;
+    const id = b.opts && b.opts.id;
+    if (id) {
+      let refs = []; try { refs = bmReferencesTo(buModel, id) || []; } catch (e) {}
+      const graphs = refs.filter(r => r.block && r.block.type === 'graph').length, rep = refs.length - graphs;
+      const who = [graphs ? `${graphs} ${graphs === 1 ? 'graph' : 'graphs'}` : '', rep ? `${rep} report ${rep === 1 ? 'block' : 'blocks'}` : ''].filter(Boolean).join(' and ');
+      if (who) msg += ` ${who} point${refs.length === 1 ? 's' : ''} at it and will show a missing-${b.type === 'graph' ? 'graph' : 'table'} message until you change ${refs.length === 1 ? 'it' : 'them'}.`;
+    }
+    if (!buHost.confirm(msg)) return;
+  }
+  bmRemoveBlock(buModel, f.list, f.index);
+  buRenderAll(); buChanged(null, true);
+}
+function buDuplicate(f) {
+  if (!f) return;
+  const nb = bmDuplicate(buModel, f.list, f.index);
+  buRenderAll(); buChanged(nb ? nb._k : null, true);
+  buHost.toast(buHasId(f.block) ? 'Copied. The copy has its own permanent name.' : 'Copied.');
+  if (nb) { const card = buCardEl(nb._k); if (card) { card.scrollIntoView({ block: 'nearest' }); buFocusFirstField(card); } }
+}
+function buOpenInsert(card, f) {
+  buCloseInserts();
+  const ins = card.querySelector('.bu-insert'); if (!ins) return;
+  ins.innerHTML = buPaletteButtons(f.list, f.block._k); ins.hidden = false;
+  const first = ins.querySelector('button:not([disabled])'); if (first) first.focus({ preventScroll: true });
+}
+function buCloseInserts() { if (buContainer) buContainer.querySelectorAll('.bu-insert').forEach(el => { el.hidden = true; el.innerHTML = ''; }); }
+function buAddBlock(type, list, afterK) {
+  if (!type || !buModel[list]) return;
+  const b = builderNewBlock(type);
+  let index = buModel[list].length;
+  if (afterK != null) { const f = buFindBlock(afterK); if (f && f.list === list) index = f.index + 1; }
+  if (type === 'graph') {
+    // Default to the nearest preceding table that already has a permanent name (never touches that table).
+    const before = buModel[list].slice(0, index).filter(x => x.type === 'table' && x.opts && x.opts.id).pop() || buTables().filter(t => t.id).pop();
+    if (before) buSetOpt(b, 'table', before.opts ? before.opts.id : before.id);
+  }
+  bmInsertBlock(buModel, list, index, b);
+  b._open = true;
+  buRenderAll(); buChanged(b._k, true);
+  const card = buCardEl(b._k); if (card) { card.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); buFocusFirstField(card); }
+}
+function buApplyTemplate(name) {
+  let m = null; try { m = bmApplyTemplate(name); } catch (e) { buHost.toast('The template could not be loaded: ' + (e.message || e), true); return; }
+  if (!m) return;
+  builderSetModel(m); buChanged(null, true);
+  if (name === 'report') buHost.toast('The Procedure tab will be empty. Add a Text block if students should see instructions.');
+}
+function buGoto(k) {
+  const f = buFindBlock(k); if (!f) return;
+  if (!f.block._open) { f.block._open = true; buRenderCard(k); }
+  const card = buCardEl(k); if (!card) return;
+  card.scrollIntoView({ block: 'center', behavior: 'smooth' }); card.classList.add('bu-flash'); setTimeout(() => card.classList.remove('bu-flash'), 1200);
+  card.focus({ preventScroll: true });
+}
+function buPinAll() {
+  let r = null; try { r = bmPinText(builderSerialize(buModel)); } catch (e) { buHost.toast('Could not give names: ' + (e.message || e), true); return; }
+  if (r.refused) { buHost.toast(r.refused, true); return; }
+  builderSetModel(builderParse(r.text)); buNoticeDismissed = true; buRevalidate(true);
+  buHost.toast(`${r.count} ${r.count === 1 ? 'block was' : 'blocks were'} given permanent names.`);
+  buChanged(null, true);
+}
+function buShowBlock(b) {
+  const id = (b.opts && b.opts.id) || (buAuto && buAuto.byBlock && buAuto.byBlock.get(b)) || '';
+  let t = null;
+  switch (b.type) {
+    case 'table': t = { attr: 'data-table', value: id }; break;
+    case 'graph': t = { attr: 'data-graph', value: id }; break;
+    case 'answer': case 'notes': t = { attr: 'data-field', value: id }; break;
+    case 'steps': t = { attr: 'data-field', value: id + '.step1' }; break;
+    case 'photo': t = { attr: 'data-photo', value: id }; break;
+    case 'section': t = { attr: 'data-section', value: id }; break;
+    case 'usetable': t = { attr: 'data-mirror-table', value: b.ref }; break;
+    case 'usegraph': t = { attr: 'data-mirror-graph', value: b.ref }; break;
+    case 'heading': t = { selector: 'h1, h2, h3, h4, h5, h6', nth: buModel.procedure.filter(x => x.type === 'heading').indexOf(b) }; break;
+    case 'callout': t = { selector: '.lt-callout', nth: buModel.procedure.filter(x => x.type === 'callout').indexOf(b) }; break;
+    case 'figure': t = { selector: '.lt-figure, .lt-figure-pending', nth: buModel.procedure.filter(x => x.type === 'figure').indexOf(b) }; break;
+    default: t = null;
+  }
+  if (!t || (t.attr && !t.value)) { buHost.toast('The preview cannot jump to this kind of block.'); return; }
+  const ok = buHost.showInPreview(t);
+  if (ok === false) buHost.toast('Not in the preview yet. Refresh the preview and try again.');
+}
+function buSplitText(f, card) {
+  if (!f || f.block.type !== 'text') return;
+  const ta = card.querySelector('[data-bind="text"]'); if (!ta) return;
+  const pos = ta.selectionStart == null ? 0 : ta.selectionStart, t = String(f.block.text || '');
+  const a = t.slice(0, pos).replace(/\s+$/, ''), c = t.slice(pos).replace(/^\s+/, '');
+  if (!a || !c) { buHost.toast('Put the cursor where the text should split, then click "Split here".'); return; }
+  f.block.text = a;
+  const nb = builderNewBlock('text'); nb.text = c;
+  bmInsertBlock(buModel, f.list, f.index + 1, nb); nb._open = true;
+  buRenderAll(); buChanged(nb._k, true);
+}
+
+/* ---------- table, step and series actions ---------- */
+function buTableAction(f, act, btn) {
+  if (!f || f.block.type !== 'table') return;
+  const b = f.block, k = b._k, td = btn.closest('td, th');
+  const r = td && td.dataset.r != null ? +td.dataset.r : (btn.dataset.r != null ? +btn.dataset.r : null);
+  const c = btn.dataset.c != null ? +btn.dataset.c : (td && td.dataset.c != null ? +td.dataset.c : null);
+  const cols = Math.max(b.headers.length, ...b.rows.map(row => row.length), 1);
+  const pad = () => b.rows.forEach(row => { while (row.length < cols) row.push(''); });
+  const mem = buCellMemory[k] || (buCellMemory[k] = {});
+  const shiftNote = () => { if (!b._fresh && !buShiftNoted[k]) buShiftNoted[k] = true; };
+  pad();
+  switch (act) {
+    case 'add-row': b.rows.push(Array.from({ length: cols }, () => '___')); break;
+    case 'del-row': if (r == null) return; if (r < b.rows.length - 1) shiftNote(); b.rows.splice(r, 1); break;
+    case 'row-up': if (r == null || r === 0) return; shiftNote(); [b.rows[r - 1], b.rows[r]] = [b.rows[r], b.rows[r - 1]]; break;
+    case 'row-down': if (r == null || r >= b.rows.length - 1) return; shiftNote(); [b.rows[r + 1], b.rows[r]] = [b.rows[r], b.rows[r + 1]]; break;
+    case 'add-col': while (b.headers.length < cols) b.headers.push(''); b.headers.push(''); b.rows.forEach(row => row.push('___')); break;
+    case 'del-col': if (c == null || cols <= 1) return; if (c < cols - 1) shiftNote(); b.headers.splice(c, 1); b.rows.forEach(row => row.splice(c, 1)); break;
+    case 'col-left': if (c == null || c === 0) return; shiftNote(); while (b.headers.length < cols) b.headers.push(''); [b.headers[c - 1], b.headers[c]] = [b.headers[c], b.headers[c - 1]]; b.rows.forEach(row => { [row[c - 1], row[c]] = [row[c], row[c - 1]]; }); break;
+    case 'col-right': if (c == null || c >= cols - 1) return; shiftNote(); while (b.headers.length < cols) b.headers.push(''); [b.headers[c + 1], b.headers[c]] = [b.headers[c], b.headers[c + 1]]; b.rows.forEach(row => { [row[c + 1], row[c]] = [row[c], row[c + 1]]; }); break;
+    case 'blank': if (r == null || c == null) return; mem[r + ',' + c] = b.rows[r][c]; b.rows[r][c] = '___'; break;
+    case 'text-cell': if (r == null || c == null) return; b.rows[r][c] = mem[r + ',' + c] || ''; break;
+    default: return;
+  }
+  buRenderCard(k); buChanged(k, true);
+  if (act === 'blank' || act === 'text-cell') { const card = buCardEl(k); const cell = card && card.querySelector(`.bu-cell[data-r="${r}"][data-c="${c}"]`); const focus = cell && cell.querySelector('input, button'); if (focus) focus.focus({ preventScroll: true }); }
+}
+function buStepAction(f, act, btn) {
+  if (!f || f.block.type !== 'steps') return;
+  const b = f.block, k = b._k, row = btn.closest('.bu-step');
+  const i = row && row.dataset.step != null ? +row.dataset.step : null;
+  let focusIndex = null;
+  switch (act) {
+    case 'add-step': { const at = i == null ? b.steps.length : i + 1; b.steps.splice(at, 0, ''); focusIndex = at; break; }
+    case 'del-step': if (i == null) return; if (String(b.steps[i] || '').trim() && !buHost.confirm('Remove this step?')) return; b.steps.splice(i, 1); if (!b.steps.length) b.steps.push(''); focusIndex = Math.min(i, b.steps.length - 1); break;
+    case 'step-up': if (i == null || i === 0) return; [b.steps[i - 1], b.steps[i]] = [b.steps[i], b.steps[i - 1]]; focusIndex = i - 1; break;
+    case 'step-down': if (i == null || i >= b.steps.length - 1) return; [b.steps[i + 1], b.steps[i]] = [b.steps[i], b.steps[i + 1]]; focusIndex = i + 1; break;
+    default: return;
+  }
+  buRenderCard(k); buChanged(k, true);
+  if (focusIndex != null) { const card = buCardEl(k); const ta = card && card.querySelector(`[data-bind="steps.${focusIndex}"]`); if (ta) ta.focus({ preventScroll: true }); }
+}
+function buSeriesAction(f, act, btn) {
+  if (!f || f.block.type !== 'graph') return;
+  const b = f.block, k = b._k;
+  let list = []; try { list = bmSeriesView(buOptStr(b, 'y') || 'c2', buOptStr(b, 'series')); } catch (e) { list = []; }
+  if (!list.length) list = [{ axis: { mode: 'column', col: 2, transform: '' }, name: '' }];
+  if (act === 'add-series') { const last = list[list.length - 1]; const col = last.axis.mode === 'column' ? last.axis.col + 1 : list.length + 2; list.push({ axis: { mode: 'column', col, transform: '' }, name: '' }); }
+  else { const i = +btn.dataset.series; if (list.length <= 1 || !(i >= 0)) return; list.splice(i, 1); }
+  let out = { y: '', series: '' };
+  try { out = bmSeriesFromView(list); } catch (e) { out = { y: list.map(s => s.axis.mode === 'formula' ? s.axis.expr : 'c' + s.axis.col).join(';'), series: '' }; }
+  buSetOpt(b, 'y', out.y); buSetOpt(b, 'series', out.series);
+  buRenderCard(k); buChanged(k, true);
+}
+
+/* ---------- fill-in box popover ---------- */
+function buClosePopover() { if (buContainer) buContainer.querySelectorAll('.bu-popover').forEach(p => p.remove()); buPopover = null; }
+function buOpenPopover(card, f, field, index, anchor) {
+  if (!f || !field) return;
+  buClosePopover();
+  const b = f.block, text = String(buGetPath(b, field) || '');
+  let label = '', unit = '', id = '';
+  if (index != null) { let occ = null; try { occ = bmInputsIn(text)[index]; } catch (e) {} if (!occ) return; label = occ.label || ''; unit = occ.unit || ''; id = occ.id || ''; }
+  const ta = card.querySelector(`[data-bind="${field}"]`);
+  const caret = ta && ta.selectionStart != null ? ta.selectionStart : text.length;
+  buPopover = { k: b._k, field, index, caret };
+  const pop = document.createElement('div'); pop.className = 'bu-popover';
+  pop.innerHTML = `<div class="bu-popover-title">${index == null ? 'Insert a fill-in box' : 'Fill-in box'}${id ? ` · <span class="bu-idtag">${buEsc(id)}</span>` : ''}</div>
+    <div class="form-row"><label>Label (optional)</label><input type="text" data-pop="label" value="${buEsc(label)}" placeholder="e.g. Mass of sample"/></div>
+    <div class="form-row"><label>Unit (optional)</label><input type="text" data-pop="unit" value="${buEsc(unit)}" placeholder="e.g. g"/></div>
+    <div class="bu-tools"><button type="button" class="btn-small" data-act="popover-ok">${index == null ? 'Insert' : 'Save'}</button>${index != null ? '<button type="button" class="btn-small" data-act="popover-remove">Remove</button>' : ''}<button type="button" class="btn-small" data-act="popover-cancel">Cancel</button></div>
+    <div class="hint">${index == null ? 'A small box goes into the sentence where the cursor is; the student types one value there.' : 'A small box in the sentence where the student types one value.'}</div>`;
+  const body = card.querySelector('.bu-card-body'); body.appendChild(pop);
+  let top = 0, node = anchor; while (node && node !== body) { top += node.offsetTop; node = node.offsetParent; if (node === body) break; }
+  pop.style.top = (top + anchor.offsetHeight + 6) + 'px';
+  pop.style.left = Math.max(0, Math.min(anchor.offsetLeft, body.clientWidth - pop.offsetWidth - 8)) + 'px';
+  const first = pop.querySelector('[data-pop="label"]'); if (first) first.focus();
+}
+function buPopoverOk() {
+  if (!buPopover) return;
+  const pop = buQ('.bu-popover'), f = buFindBlock(buPopover.k); if (!pop || !f) { buClosePopover(); return; }
+  const label = pop.querySelector('[data-pop="label"]').value.trim(), unit = pop.querySelector('[data-pop="unit"]').value.trim();
+  const { field, index, caret, k } = buPopover, b = f.block, text = String(buGetPath(b, field) || '');
+  let caretAfter = caret;
+  if (index == null) {
+    const id = bmNewId(buModel, label, 'value');
+    const snippet = bmInsertInputText({ id, label, unit });
+    buSetPath(b, field, text.slice(0, caret) + snippet + text.slice(caret)); caretAfter = caret + snippet.length;
+  } else {
+    let occ = null; try { occ = bmInputsIn(text)[index]; } catch (e) {}
+    if (!occ) { buClosePopover(); return; }
+    const opts = Object.assign({}, occ.opts || {});
+    if (label) opts.label = label; else delete opts.label;
+    if (unit) opts.unit = unit; else delete opts.unit;
+    buSetPath(b, field, bmReplaceInput(text, index, opts));
+  }
+  buClosePopover(); buRenderCard(k); buChanged(k, true);
+  const card = buCardEl(k), ta = card && card.querySelector(`[data-bind="${field}"]`);
+  if (ta) { ta.focus({ preventScroll: true }); if (index == null) { try { ta.setSelectionRange(caretAfter, caretAfter); } catch (e) {} } }
+}
+function buPopoverRemove() {
+  if (!buPopover || buPopover.index == null) { buClosePopover(); return; }
+  const f = buFindBlock(buPopover.k); if (!f) { buClosePopover(); return; }
+  const { field, index, k } = buPopover, text = String(buGetPath(f.block, field) || '');
+  buSetPath(f.block, field, bmReplaceInput(text, index, null));
+  buClosePopover(); buRenderCard(k); buChanged(k, true);
+}
+function buNameInput(f, field, index) {
+  if (!f) return;
+  const text = String(buGetPath(f.block, field) || ''); let occ = null; try { occ = bmInputsIn(text)[index]; } catch (e) {}
+  if (!occ || occ.id) return;
+  const opts = Object.assign({ id: bmNewId(buModel, occ.label || '', 'value') }, occ.opts || {});
+  buSetPath(f.block, field, bmReplaceInput(text, index, opts));
+  buRenderCard(f.block._k); buChanged(f.block._k, true);
+}
+
+/* ---------- keyboard ---------- */
+function buOnKeydown(e) {
+  const t = e.target;
+  if (e.key === 'Escape') {
+    if (buPopover) { e.preventDefault(); e.stopPropagation(); buClosePopover(); return; }   // stopPropagation: the page's Escape handler would close the whole lab modal
+    if (buContainer.querySelector('.bu-insert:not([hidden])')) { e.preventDefault(); e.stopPropagation(); buCloseInserts(); return; }
+    return;
+  }
+  if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown') && t.tagName !== 'SELECT') {
+    const card = t.closest('.bu-card[data-k]'); if (!card) return;
+    e.preventDefault(); buMove(+card.dataset.k, e.key === 'ArrowUp' ? -1 : 1); return;
+  }
+  if (e.key === 'Enter' && t.closest('.bu-popover') && t.tagName === 'INPUT') { e.preventDefault(); buPopoverOk(); return; }
+  if (e.key === 'Enter' && e.shiftKey && t.matches('.bu-step textarea')) {
+    e.preventDefault();
+    const card = t.closest('.bu-card[data-k]'), f = card && buFindBlock(+card.dataset.k), row = t.closest('.bu-step');
+    if (!f || !row) return;
+    buFlushChange();
+    const i = +row.dataset.step; f.block.steps.splice(i + 1, 0, '');
+    buRenderCard(f.block._k); buChanged(f.block._k, true);
+    const ta = buCardEl(f.block._k).querySelector(`[data-bind="steps.${i + 1}"]`); if (ta) ta.focus({ preventScroll: true });
+    return;
+  }
+  if (t.closest('.bu-sheet') && (t.tagName === 'INPUT' || t.tagName === 'BUTTON')) buSheetKeys(e);
+}
+function buSheetKeys(e) {
+  const t = e.target, cell = t.closest('td, th'); if (!cell) return;
+  const tr = cell.parentElement, table = cell.closest('table');
+  const rows = Array.from(table.querySelectorAll('tr')).filter(r => !r.classList.contains('bu-coltools'));
+  const ri = rows.indexOf(tr), ci = Array.from(tr.children).indexOf(cell);
+  let target = null;
+  const isInput = t.tagName === 'INPUT';
+  const atStart = isInput && t.selectionStart === 0 && t.selectionEnd === 0, atEnd = isInput && t.selectionStart === t.value.length;
+  if (e.key === 'ArrowUp' && ri > 0) target = rows[ri - 1].children[ci];
+  else if ((e.key === 'ArrowDown' || e.key === 'Enter') && ri < rows.length - 1) target = rows[ri + 1].children[ci];
+  else if (e.key === 'ArrowLeft' && (!isInput || atStart)) target = cell.previousElementSibling;
+  else if (e.key === 'ArrowRight' && (!isInput || atEnd)) target = cell.nextElementSibling;
+  if (!target || !target.classList.contains('bu-cell')) return;
+  const focus = target.querySelector('input, button[data-act="text-cell"]'); if (!focus) return;
+  e.preventDefault(); focus.focus(); if (focus.tagName === 'INPUT') { try { focus.select(); } catch (err) {} }
+}
+
+/* ---------- drag to reorder (handle only) and picture drop ---------- */
+function buOnDragStart(e) {
+  const h = e.target.closest && e.target.closest('.bu-handle'); if (!h) return;
+  const card = h.closest('.bu-card[data-k]'); if (!card) return;
+  buDrag = { k: +card.dataset.k, list: card.dataset.list, to: null };
+  card.classList.add('dragging');
+  try { e.dataTransfer.setData('text/plain', String(buDrag.k)); e.dataTransfer.effectAllowed = 'move'; } catch (err) {}
+}
+function buDropLineEl() {
+  if (!buDropLine) { buDropLine = document.createElement('div'); buDropLine.className = 'bu-drop-line'; }
+  return buDropLine;
+}
+function buHideDropLine() { if (buDropLine && buDropLine.parentNode) buDropLine.parentNode.removeChild(buDropLine); }
+function buOnDragOver(e) {
+  const dz = e.target.closest && e.target.closest('.bu-dropzone');
+  if (dz && !buDrag) { e.preventDefault(); dz.classList.add('dragover'); return; }
+  if (!buDrag) return;
+  const list = e.target.closest('.bu-list');
+  if (!list || list.dataset.list !== buDrag.list) { buHideDropLine(); buDrag.to = null; return; }
+  e.preventDefault(); try { e.dataTransfer.dropEffect = 'move'; } catch (err) {}
+  const cards = Array.from(list.querySelectorAll(':scope > .bu-card'));
+  let to = cards.length, before = null;
+  for (let i = 0; i < cards.length; i++) { const r = cards[i].getBoundingClientRect(); if (e.clientY < r.top + r.height / 2) { to = i; before = cards[i]; break; } }
+  buDrag.to = to;
+  const line = buDropLineEl();
+  if (before) list.insertBefore(line, before); else list.appendChild(line);
+}
+function buOnDragLeave(e) {
+  const dz = e.target.closest && e.target.closest('.bu-dropzone'); if (dz && !dz.contains(e.relatedTarget)) dz.classList.remove('dragover');
+  if (buDrag && !buContainer.contains(e.relatedTarget)) { buHideDropLine(); buDrag.to = null; }
+}
+function buOnDrop(e) {
+  const dz = e.target.closest && e.target.closest('.bu-dropzone');
+  if (dz && !buDrag) {
+    e.preventDefault(); dz.classList.remove('dragover');
+    const input = dz.querySelector('input[type="file"]'), f = e.dataTransfer.files && Array.from(e.dataTransfer.files).find(x => /^image\//.test(x.type));
+    if (input && f) { const dt = new DataTransfer(); dt.items.add(f); input.files = dt.files; buFigureFiles(input); }
+    return;
+  }
+  if (!buDrag) return;
+  e.preventDefault();
+  const drag = buDrag; buOnDragEnd();
+  if (drag.to == null) return;
+  const f = buFindBlock(drag.k); if (!f || f.list !== drag.list) return;
+  let to = drag.to; if (to > f.index) to -= 1;
+  if (to === f.index) return;
+  bmMoveBlock(buModel, f.list, f.index, to);
+  buRenderAll(); buChanged(drag.k, true);
+}
+function buOnDragEnd() {
+  buHideDropLine();
+  if (buContainer) buContainer.querySelectorAll('.bu-card.dragging').forEach(c => c.classList.remove('dragging'));
+  buDrag = null;
+}
+// BUILDER-UI-END
+// BUILDER-GLUE-BEGIN
+/* ---------- Builder mode glue (spec section D): wires the builder to the lab modal ---------- */
+let buLabModel = null, buLabFormatPrev = null, buLastSerialized = null;
+function builderActive() { const s = $('lab-format'); return !!s && s.value === 'builder'; }
+function buHeaderFromFields() { return { title: $('lab-title').value.trim(), summary: $('lab-summary').value.trim(), tags: $('lab-tags').value.trim(), minutes: $('lab-minutes').value.trim() }; }
+function buLabLive() { return (typeof builderGetModel === 'function' && builderGetModel()) || buLabModel; }   // the model the builder is showing right now (templates and "give permanent names" swap it)
+function buLabOnChange(model, info) {
+  // Every builder change lands in the textarea (the single stored format) and in the preview.
+  buLabModel = model;   // keep the glue pointed at the live model (builderSetModel swaps it for templates and pin-all)
+  buLastSerialized = builderSerialize(model);
+  $('lab-markup').value = buLastSerialized;
+  // The header fields are the teacher's; they are filled from the file only on load/import (buLabLoad), never on every edit.
+  previewLabMarkup(!!(info && info.structural));
+}
+function buLabHost() {
+  return {
+    upload: uploadFigureFile, fileUrl, youtubeId: extractYoutubeId,
+    pictures: () => [...new Set([...labFigureUploads, ...labFilePaths($('lab-markup').value)])].filter(p => /\.(png|jpe?g|gif|webp|svg)$/i.test(p)),
+    fields: () => ({ title: $('lab-title').value, summary: $('lab-summary').value, tags: $('lab-tags').value, minutes: $('lab-minutes').value }),
+    applyHeaderToFields: () => applyLabMarkupMeta(true),
+    confirm: m => confirm(m), toast,
+  };
+}
+function buLabLoad(text) {
+  // textarea → builder. builderParse already falls back to one Raw block; this guard keeps the modal usable if anything else throws.
+  // The header fields are filled from the file only on import (loadLabMarkupFromFile), never silently on open; the header card offers the copy.
+  builderDestroy();   // flush a pending (debounced) edit against the old model before the glue state changes hands
+  let model;
+  try { model = builderParse(text); }
+  catch (e) { console.error(e); model = bmEmptyModel(); model.procedure = [{ type: 'raw', text: String(text || ''), _k: bmKey() }]; model.warnings = [BM_W.fallback]; }
+  buLabModel = model;
+  builderMount($('lab-builder'), buLabModel, buLabOnChange, buLabHost());
+  buLastSerialized = builderSerialize(buLabModel);
+  $('lab-markup').value = buLastSerialized;   // canonical form; render-equal to what was pasted
+}
+// Admin-only dev helper: does the builder's round trip render the same widgets as the original text?
+function buRenderSignature(text) {
+  const r = ltRender(text);
+  const sig = html => { const t = document.createElement('template'); t.innerHTML = html;
+    return Array.from(t.content.querySelectorAll('[data-field],[data-photo],[data-table],[data-graph],[data-section],[data-check]')).map(el => (el.dataset.field || el.dataset.photo || el.dataset.table || el.dataset.graph || el.dataset.section || el.dataset.check)).join(','); };
+  return { errors: r.errors.length, procedure: sig(r.html), report: sig(r.report), style: (r.style || '').length > 0 };
+}
+function buEquivalenceCheck(text) {
+  const a = buRenderSignature(text), b = buRenderSignature(builderSerialize(builderParse(text)));
+  const same = JSON.stringify(a) === JSON.stringify(b);
+  console.log(same ? 'equivalent' : 'DIFFERENT', a, b);
+  return same;
+}
+// BUILDER-GLUE-END
 
 /* ============================================================
    INIT
