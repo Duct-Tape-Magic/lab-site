@@ -541,6 +541,7 @@
   .rp-style-body { border-left: 3px solid var(--rule-strong); padding: 0.5rem 1rem; margin-top: 0.6rem; font-size: 0.92em; }
   .rp-section { margin: 0 0 2rem; }
   .rp-title { font-family: var(--font-heading); font-weight: 400; font-size: 1.4rem; margin: 0 0 0.4rem; }
+  .rp-badge-line { margin-bottom: 0.4rem; }
   .rp-prompt { font-size: 0.95em; color: var(--ink); opacity: 0.9; margin-bottom: 0.6rem; }
   .rp-prompt p:last-child { margin-bottom: 0; }
   .rp-hint { margin: 0 0 0.6rem; }
@@ -1848,7 +1849,6 @@ function buildLabTagsHTML(r, lab) {
       <div class="rp-doc-header"><div class="rp-doc-title">${escapeHTML(lab ? lab.title : '')}</div><div class="rp-doc-meta"></div></div>
       <div class="rp-toolbar">
         <button type="button" class="btn-small" onclick="previewReport()">${escapeHTML(getText('reportPreview'))}</button>
-        ${r.style ? `<details class="rp-style"><summary>${escapeHTML(getText('reportStyleTitle'))}</summary><div class="rich-content rp-style-body">${r.style}</div></details>` : ''}
       </div>
       <div class="lab-body rich-content rp-body">${r.report}</div>
     </div>`;
@@ -3131,9 +3131,10 @@ function ltWidget(name, o, body, ctx, widgets) {
     case 'pagebreak': return `<div class="lt-pagebreak"></div>`;
     case 'section': {
       const lines = Math.max(3, parseInt(o.lines, 10) || 6);
-      const title = o.title || id;
+      const title = o.title ? String(o.title).trim() : '';
+      const badge = o.required ? ` <span class="badge">${escapeHTML(getText('reportRequired'))}</span>` : '';
       return `<section class="rp-section" data-section="${id}" ${o.required ? 'data-required="1"' : ''} data-words="${escapeHTML(String(o.words || ''))}">
-        <h3 class="rp-title">${escapeHTML(title)}${o.required ? ` <span class="badge">${escapeHTML(getText('reportRequired'))}</span>` : ''}</h3>
+        ${title ? `<h3 class="rp-title">${escapeHTML(title)}${badge}</h3>` : (badge ? `<div class="rp-badge-line">${badge}</div>` : '')}
         ${body && body.trim() ? `<div class="rp-prompt">${ltInner(body.trim(), ctx)}</div>` : ''}
         ${o.hint ? `<details class="lt-notes rp-hint"><summary>${escapeHTML(getText('reportHint'))}</summary><div class="rp-hint-body">${ltInline(String(o.hint), ctx)}</div></details>` : ''}
         <div class="lt-field rp-field" contenteditable="plaintext-only" data-field="report.${id}" data-placeholder="${escapeHTML(getText('reportPlaceholder'))}" style="min-height:${(lines * 1.6 + 0.8).toFixed(1)}em"></div>
@@ -4483,10 +4484,6 @@ Wear goggles at all times.
 
 \\notes[id=reflection]{Reflection}
 
-\\style{
-${BM_STYLE_RULES}
-}
-
 \\report{
 \\section[id=purpose, title="Purpose", required, words=30-80]{State the goal of this experiment in your own words.}
 
@@ -4517,11 +4514,7 @@ ${BM_STYLE_RULES}
 
 \\notes[id=observations]{Observations}
 ` },
-  report: { label: 'Report only', text: `\\style{
-${BM_STYLE_RULES}
-}
-
-\\report{
+  report: { label: 'Report only', text: `\\report{
 \\section[id=purpose, title="Purpose", required, words=30-80]{State the goal of this experiment in your own words.}
 
 \\section[id=method, title="Method", required]{Describe what you did, in enough detail that a classmate could repeat it.}
@@ -4650,8 +4643,8 @@ const BU_PALETTE = {
   usegraph:  'Shows one of the lab\'s graphs, drawn from the student\'s own data.',
   style:     'Your writing rules, shown at the top of the Report tab.',
 };
-const BU_PROCEDURE_PALETTE = ['heading', 'text', 'steps', 'table', 'answer', 'notes', 'photo', 'video', 'figure', 'callout', 'graph', 'pagebreak', 'comment'];
-const BU_REPORT_PALETTE = ['section', 'usetable', 'usegraph', 'heading', 'text', 'comment'];
+const BU_PROCEDURE_PALETTE = ['heading', 'text', 'steps', 'table', 'answer', 'notes', 'photo', 'video', 'figure', 'callout', 'graph', 'pagebreak'];
+const BU_REPORT_PALETTE = ['section', 'usetable', 'usegraph', 'heading', 'text'];
 const BU_ID_TYPES = ['steps', 'table', 'answer', 'notes', 'photo', 'graph', 'section'];
 const BU_CALLOUT_LABELS = { safety: 'Safety', warning: 'Warning', info: 'Information', tip: 'Tip', hint: 'Hint' };
 const BU_LEVELS = [[1, 'Big heading'], [2, 'Heading'], [3, 'Small heading'], [4, 'Level 4'], [5, 'Level 5'], [6, 'Level 6']];
@@ -4874,12 +4867,12 @@ function buPaletteButtons(list, afterK) {
   }).join('');
   if (list === 'report') {
     const has = buModel.style !== null && buModel.style !== undefined;
-    h += `<button type="button" class="btn-small" data-act="add-style" ${has ? 'disabled' : ''} title="${has ? 'There is already a style guide' : buEsc(BU_PALETTE.style)}">Style guide</button>`;
   }
   if (afterK != null) h += `<button type="button" class="btn-small" data-act="cancel-insert">Cancel</button>`;
   return h;
 }
 function buRenderStyle() {
+  { const el0 = buQ('#bu-style'); if (el0) el0.innerHTML = ''; return; }
   const el = buQ('#bu-style'); if (!el) return;
   if (buModel.style === null || buModel.style === undefined) { el.innerHTML = ''; return; }
   const info = (!buModel.report.length && !buModel.reportPresent) ? `<div class="bu-note">The style guide only appears once the report has a section.</div>` : '';
@@ -4903,7 +4896,7 @@ function buRenderHeader() {
 function buKindLabel(b) { return b.type === 'callout' ? 'Callout' : buTypeInfo(b.type).label; }
 function buCardHTML(b, list, i) {
   const open = !!b._open, n = buModel[list].length;
-  return `<div class="bu-card" data-k="${b._k}" data-type="${buEsc(b.type)}" data-list="${list}" tabindex="0">
+  return `<div class="bu-card" data-k="${b._k}" data-type="${buEsc(b.type)}" data-list="${list}" tabindex="0" ${b.type === 'comment' ? 'hidden' : ''}>
     <div class="bu-card-head">
       <span class="bu-handle" draggable="true" title="Drag to move">⋮⋮</span>
       <button type="button" class="bu-toggle" data-act="toggle" aria-expanded="${open}" title="${open ? 'Close' : 'Open'}">${open ? '▾' : '▸'}</button>
@@ -4975,7 +4968,7 @@ function buSummary(b) {
     case 'callout': return `${buOptStr(b, 'label') || BU_CALLOUT_LABELS[b.kind] || b.kind} · ${buFirstLine(buPlainInputs(b.body), 60)}`;
     case 'graph': { const t = buTables().find(x => x.id && x.id === buOptStr(b, 'table')); return `${buOptStr(b, 'title') || buGraphAxesName(b)} · from "${t ? (t.title || 'Untitled table') : (buOptStr(b, 'table') || 'first table')}"`; }
     case 'pagebreak': return 'Page break';
-    case 'section': { const w = buOptStr(b, 'words'); return `${buOptStr(b, 'title') || '(untitled section)'}${b.opts && b.opts.required ? ' · required' : ''}${w ? ` · ${w} words` : ''}`; }
+    case 'section': { const w = buOptStr(b, 'words'); return `${buOptStr(b, 'title') || buFirstLine(buPlainInputs(b.prompt), 80) || '(empty question)'}${b.opts && b.opts.required ? ' · required' : ''}${w ? ` · ${w} words` : ''}`; }
     case 'usetable': { const t = buTables().find(x => x.id && x.id === b.ref); return t ? (t.title || 'Untitled table') : `Missing: ${b.ref || '(nothing chosen)'}`; }
     case 'usegraph': { const g = buGraphs().find(x => x.id && x.id === b.ref); return g ? g.title : `Missing: ${b.ref || '(nothing chosen)'}`; }
     default: return '';
@@ -5138,8 +5131,10 @@ function buFormFigure(b) {
   return h;
 }
 function buFormSection(b) {
-  let h = buRow('Title', buInput('opts.title', buOptStr(b, 'title'), 'opt', 'placeholder="e.g. Purpose"'));
-  h += `<div class="form-row"><label>Instructions to the student (optional)</label>${buTextarea('prompt', b.prompt, 'str', 'data-brace="1"')}${buBraceLine(b.prompt)}</div>`;
+  const hasTitle = !!buOptStr(b, 'title') || !!b._wantTitle;
+  let h = `<div class="form-row">${buCheck('_wantTitle', hasTitle, 'Add a heading above this question', 'ui')}</div>`;
+  if (hasTitle) h += buRow('Heading', buInput('opts.title', buOptStr(b, 'title'), 'opt', 'placeholder="e.g. Purpose"'));
+  h += `<div class="form-row"><label>Question or instructions to the student</label>${buTextarea('prompt', b.prompt, 'str', 'data-brace="1"')}${buBraceLine(b.prompt)}</div>`;
   h += buRow('Hint (optional, students can expand it)', buInput('opts.hint', buOptStr(b, 'hint'), 'opt'));
   h += `<div class="form-row">${buCheck('opts.required', !!(b.opts && b.opts.required), 'Required')}</div>`;
   let wv = { min: '', max: '', raw: null };
@@ -5362,6 +5357,7 @@ function buWrite(found, bind, kind, el, card) {
   const v = el.type === 'checkbox' ? el.checked : el.value;
   switch (kind) {
     case 'flag': buSetOpt(b, key, v ? true : undefined); return false;
+    case 'ui': b[bind] = !!v; if (!v && bind === '_wantTitle') buSetOpt(b, 'title', undefined); return true;
     case 'bool': b[bind] = !!v; return false;
     case 'fit': buSetOpt(b, 'fit', v ? 'linear' : undefined); return false;
     case 'num':

@@ -80,21 +80,13 @@ Inside `\report{…}` use ordinary Markdown plus:
 
 | Command | What it does |
 |---|---|
-| `\section[id=…, title=…, required, words=min-max, hint="…", lines=6]{Prompt}` | One section of the report: a heading, your prompt (Markdown, optional), an expandable hint, and a writing box. `required` marks it; `words=40-120` shows a gentle word-count target (`words=40` for a minimum only, `words=-120` for a maximum only). |
+| `\section[id=…, required, words=min-max, hint="…", lines=6, title=…]{Question or instructions}` | One question in the report: your prompt (Markdown), an expandable hint, and a writing box. `title` is optional and adds a heading above the question; leave it out for a plain numbered-style question. `required` marks it; `words=40-120` shows a gentle word-count target (`words=40` for a minimum only, `words=-120` for a maximum only). |
 | `\usetable{id}` | Shows a read-only copy of the `\datatable` with that id, filled with the student's own data, captioned "Table n". |
 | `\usegraph{id}` | Shows the `\graph` with that id (give the graph an `id=` option), drawn from the student's data, captioned "Figure n". |
-
-Optionally add a `\style{…}` block anywhere in the file (Markdown) with your writing rules; it appears as an expandable "Style guide" at the top of the Report tab.
 
 Rules for converting a PDF: if the PDF includes report instructions, a rubric, or "write-up" requirements, turn them into `\section`s in the same order, using the PDF's own wording for prompts. Put every data table the report must include in `\usetable{…}` and every required plot in `\usegraph{…}`. Keep report sections short and specific; do not invent requirements the PDF does not state.
 
 ```
-\style{
-- Write in past tense and third person ("The solution was heated…").
-- Every number carries a unit and the right number of significant figures.
-- Refer to tables and figures by number.
-}
-
 \report{
 \section[id=purpose, title="Purpose", required, words=30-80, hint="One or two sentences: what was measured and why."]{State the goal of this experiment in your own words.}
 
