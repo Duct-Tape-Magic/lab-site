@@ -285,6 +285,8 @@
   .rich-content .katex { font-size: 1.05em; }
   .rich-content .katex-display { margin: 1.4rem 0; overflow-x: auto; overflow-y: hidden; }
   .home-intro { max-width: var(--measure); margin-bottom: 1rem; }
+  .home-nudge { font-size: 13px; color: var(--muted); max-width: var(--measure); margin: -0.25rem 0 1rem; }
+  .home-nudge a { color: var(--accent); }
 
   /* ---------- Slideshow ---------- */
   .slideshow { background: var(--card-bg); position: relative; user-select: none; overflow: hidden; }
@@ -435,6 +437,12 @@
   .text-group .form-row { margin-bottom: 0.85rem; }
   .text-group .form-row label { font-size: 10px; text-transform: none; letter-spacing: 0.02em; }
 
+  .access-list { border: 0.5px solid var(--rule-strong); padding: 1rem 1.25rem; }
+  .access-list h4 { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 400; margin: 0.6rem 0 0.4rem; }
+  .access-list .bu-check { display: flex; align-items: center; gap: 0.5rem; font-size: 13px; padding: 0.15rem 0; text-transform: none; letter-spacing: 0; color: var(--ink); }
+  .access-list input[type="checkbox"] { width: auto; accent-color: var(--accent); }
+  .access-list .acc-filter { width: 100%; margin-bottom: 0.4rem; }
+  .access-list .acc-people { max-height: 200px; overflow: auto; border-top: 0.5px solid var(--rule); padding-top: 0.3rem; }
   .cls-code { font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.06em; font-size: 13px; }
   .cls-nick { width: 100%; background: transparent; border: none; border-bottom: 0.5px solid var(--rule); font-family: var(--font-body); font-size: 13px; color: var(--ink); padding: 0.2rem 0; }
   .cls-nick:focus { outline: none; border-bottom-color: var(--rule-strong); }
@@ -816,6 +824,7 @@
         <div class="hint" id="lab-access-hint"></div>
       </div>
     </div>
+    <div class="form-row access-list" id="lab-access-list" hidden></div>
 
     <div class="form-row">
       <label>Cover image (optional — the first photo is used if empty)</label>
@@ -899,7 +908,7 @@
       <div class="form-row"><label>Order</label><input type="number" id="folder-order" step="1" value="0"/></div>
       <div class="form-row">
         <label>Who can open it</label>
-        <select id="folder-access">
+        <select id="folder-access" onchange="onAccessSelectChange('folder')">
           <option value="inherit">Same as the folder above</option>
           <option value="public">Everyone (public)</option>
           <option value="password">Anyone with the password</option>
@@ -909,6 +918,7 @@
       </div>
       <div class="form-row"><label>Listing</label><label style="display:flex; align-items:center; gap:0.5rem; text-transform:none; letter-spacing:0; font-size:13px; color:var(--ink);"><input type="checkbox" id="folder-listed" checked/> Show in navigation</label><div class="hint">Unlisted folders still open from a direct link.</div></div>
     </div>
+    <div class="form-row access-list" id="folder-access-list" hidden></div>
     <div class="modal-actions">
       <button class="btn btn-accent" onclick="saveFolder()" id="save-folder-btn">Save</button>
       <button class="btn" onclick="closeModal('folder-modal')">Cancel</button>
@@ -1106,6 +1116,7 @@ const DEFAULTS = {
   homeFoldersLabel: 'Courses',
   homeLabsLabel: 'Labs',
   homeEmpty: 'No labs have been posted yet.',
+  homeLoginNudge: 'Labs for your class appear after you log in.',
   folderSectionsLabel: 'Sections',
   folderLabsLabel: 'Labs',
   folderEmpty: 'Nothing here yet.',
@@ -1211,7 +1222,7 @@ const DEFAULTS = {
 const SITE_TEXT_GROUPS = [
   { label: 'Site', keys: ['siteTitle', 'footerText', 'loadingText'] },
   { label: 'Search', keys: ['searchPlaceholder', 'searchButton', 'searchResultsTitle', 'searchNoResults'] },
-  { label: 'Home page', keys: ['homeFoldersLabel', 'homeLabsLabel', 'homeEmpty'] },
+  { label: 'Home page', keys: ['homeFoldersLabel', 'homeLabsLabel', 'homeEmpty', 'homeLoginNudge'] },
   { label: 'Folder pages', keys: ['folderSectionsLabel', 'folderLabsLabel', 'folderEmpty'] },
   { label: 'Cards', keys: ['cardMinutes', 'cardUpdated', 'lockedBadge', 'signInRequiredBadge', 'draftBadge', 'scheduledBadge', 'hiddenBadge'] },
   { label: 'Lab page', keys: ['labMinutes', 'labUpdated', 'labFilesLabel', 'labDownloadFile', 'labViewInline', 'labPrint', 'labCopyLink', 'labLinkCopied', 'labPrev', 'labNext', 'labNoContent'] },
@@ -1225,7 +1236,7 @@ const SITE_TEXT_GROUPS = [
 const TEXT_LABELS = {
   siteTitle: 'Site title', footerText: 'Footer text', loadingText: 'Loading message',
   searchPlaceholder: 'Search box placeholder', searchButton: 'Search button', searchResultsTitle: 'Search results title', searchNoResults: 'No results message',
-  homeFoldersLabel: 'Folders heading', homeLabsLabel: 'Labs heading', homeEmpty: 'Empty site message',
+  homeFoldersLabel: 'Folders heading', homeLabsLabel: 'Labs heading', homeEmpty: 'Empty site message', homeLoginNudge: 'Log-in nudge for visitors',
   folderSectionsLabel: 'Sub-folders heading', folderLabsLabel: 'Labs heading', folderEmpty: 'Empty folder message',
   cardMinutes: 'Minutes on cards', cardUpdated: 'Updated date on cards', lockedBadge: 'Locked badge', signInRequiredBadge: 'Sign-in badge',
   draftBadge: 'Draft badge (admins)', scheduledBadge: 'Scheduled badge (admins)', hiddenBadge: 'Unlisted badge (admins)',
@@ -1629,7 +1640,7 @@ function labBadges(lab) {
   }
   const acc = effectiveAccess(lab).level;
   if (acc === 'password') b.push(`<span class="badge lock">${escapeHTML(getText('lockedBadge'))}</span>`);
-  else if (acc === 'accounts') b.push(`<span class="badge lock">${escapeHTML(getText('signInRequiredBadge'))}</span>`);
+  else if (acc === 'accounts' && isAdmin()) b.push(`<span class="badge lock">${escapeHTML(getText('signInRequiredBadge'))}</span>`);
   else if (acc === 'admin' && isAdmin()) b.push(`<span class="badge draft">Admin only</span>`);
   return b.join('');
 }
@@ -1662,7 +1673,7 @@ function folderCardHTML(f) {
   const badges = [];
   if (isAdmin() && f.listed === false) badges.push(`<span class="badge hidden">${escapeHTML(getText('hiddenBadge'))}</span>`);
   if (acc === 'password') badges.push(`<span class="badge lock">${escapeHTML(getText('lockedBadge'))}</span>`);
-  if (acc === 'accounts') badges.push(`<span class="badge lock">${escapeHTML(getText('signInRequiredBadge'))}</span>`);
+  if (acc === 'accounts' && isAdmin()) badges.push(`<span class="badge lock">${escapeHTML(getText('signInRequiredBadge'))}</span>`);
   if (acc === 'admin') badges.push(`<span class="badge draft">Admin only</span>`);
   return `
     <a class="card" href="#/f/${encodeURIComponent(f.slug)}">
@@ -1688,6 +1699,7 @@ function renderHome(view) {
   const intro = getText('homeIntro');
   let html = `<section class="page">
     <div class="home-intro rich-content editable" data-edit="homeIntro" data-rich="true" onclick="handleEditableClick(event, 'homeIntro', true)">${intro}</div>`;
+  if (!state.session) html += `<p class="home-nudge">${escapeHTML(getText('homeLoginNudge'))} <a href="#/signin">${escapeHTML(getText('signInLink'))}</a></p>`;
   if (folders.length === 0 && labs.length === 0) {
     html += `<div class="empty-state" style="margin-top:2rem;">${escapeHTML(getText('homeEmpty'))}</div>`;
   } else {
@@ -2514,11 +2526,55 @@ function updateAccessHint() {
     inherit: 'Follows whatever the folder allows.',
     public: 'Anyone with the link can open it.',
     password: 'Students enter a password once per visit. Password unlocking is enabled in a later update.',
-    accounts: 'Only signed-in students in the allowed groups. Student accounts are enabled in a later update.',
+    accounts: 'Only the classes and accounts you tick below. Everyone else never sees it.',
     admin: 'Hidden from everyone except admins.'
   }[v] || '';
+  onAccessSelectChange('lab');
 }
 $('lab-access').addEventListener('change', updateAccessHint);
+
+/* ---------- Access lists (who can open an account-locked item) ---------- */
+let accessListState = { lab: null, folder: null };   // { classes: Set, users: Set }
+function onAccessSelectChange(kind) {
+  const sel = $(kind + '-access'), box = $(kind + '-access-list');
+  const on = sel.value === 'accounts'; box.hidden = !on;
+  if (on && !accessListState[kind]) loadAccessList(kind);
+}
+async function loadAccessList(kind, itemId) {
+  const box = $(kind + '-access-list'); box.hidden = $(kind + '-access').value !== 'accounts';
+  itemId = itemId || (kind === 'lab' ? ($('lab-id').value || editingLabId) : ($('folder-id').value || editingFolderId));
+  box.innerHTML = '<span class="hint">Loading…</span>';
+  try {
+    const [classes, people, ig, iu] = await Promise.all([
+      rpc('list_classes'), rpc('list_account_choices'),
+      sb.from('item_groups').select('group_id').eq('item_id', itemId), sb.from('item_users').select('user_id').eq('item_id', itemId)
+    ]);
+    const st = { classes: new Set((ig.data || []).map(r => r.group_id)), users: new Set((iu.data || []).map(r => r.user_id)), allClasses: classes, allPeople: people };
+    accessListState[kind] = st;
+    renderAccessList(kind);
+  } catch (e) { box.innerHTML = `<div class="lt-error">${escapeHTML(e.message)}</div>`; }
+}
+function renderAccessList(kind, filter = '') {
+  const st = accessListState[kind], box = $(kind + '-access-list'); if (!st) return;
+  const f = filter.trim().toLowerCase();
+  const people = st.allPeople.filter(p => !f || p.label.toLowerCase().includes(f));
+  box.innerHTML = `<label>Who can open it</label>
+    <h4>Classes</h4>
+    ${st.allClasses.length ? st.allClasses.map(c => `<label class="bu-check"><input type="checkbox" data-acc="class" data-id="${c.id}" ${st.classes.has(c.id) ? 'checked' : ''}/> ${escapeHTML(c.name)}${c.archived ? ' <span class="badge">closed</span>' : ''} <span class="hint" style="margin:0;">${c.seat_count} seats</span></label>`).join('') : '<span class="hint">No classes yet. Create them from the Classes button in the admin bar.</span>'}
+    <h4>Individual accounts (Google sign-in)</h4>
+    ${st.allPeople.length ? `<input type="text" class="acc-filter" placeholder="Filter by name or email…" value="${escapeHTML(filter)}" oninput="renderAccessList('${kind}', this.value)"/>
+      <div class="acc-people">${people.map(p => `<label class="bu-check"><input type="checkbox" data-acc="user" data-id="${p.user_id}" ${st.users.has(p.user_id) ? 'checked' : ''}/> ${escapeHTML(p.label)}</label>`).join('') || '<span class="hint">No matches.</span>'}</div>` : '<span class="hint">No Google-account students have signed in yet.</span>'}
+    <div class="hint" style="margin-top:0.6rem;">Ticked classes and accounts can open this and everything inside it that follows its setting. Admins always can.</div>`;
+  box.querySelectorAll('input[data-acc]').forEach(cb => cb.addEventListener('change', () => { const set = cb.dataset.acc === 'class' ? st.classes : st.users; cb.checked ? set.add(cb.dataset.id) : set.delete(cb.dataset.id); }));
+  const filt = box.querySelector('.acc-filter'); if (filt && f) { filt.focus(); filt.setSelectionRange(filt.value.length, filt.value.length); }
+}
+async function saveAccessList(kind, itemId) {
+  const st = accessListState[kind]; if (!st || $(kind + '-access').value !== 'accounts') return;
+  let r = await sb.from('item_groups').delete().eq('item_id', itemId); if (r.error) throw r.error;
+  r = await sb.from('item_users').delete().eq('item_id', itemId); if (r.error) throw r.error;
+  if (st.classes.size) { r = await sb.from('item_groups').insert([...st.classes].map(g => ({ item_id: itemId, group_id: g }))); if (r.error) throw r.error; }
+  if (st.users.size) { r = await sb.from('item_users').insert([...st.users].map(u => ({ item_id: itemId, user_id: u }))); if (r.error) throw r.error; }
+}
 
 async function openLabModal(id) {
   if (!isAdmin()) return;
@@ -2545,6 +2601,7 @@ async function openLabModal(id) {
   $('lab-status').value = lab?.status || 'draft';
   $('lab-publish-at').value = toLocalDatetime(lab?.publish_at);
   onLabStatusChange();
+  accessListState.lab = null;
   $('lab-access').value = lab?.access || 'inherit'; updateAccessHint();
   labCoverItem = lab?.cover_path ? parseMediaEntry(lab.cover_path) : null;
   labMediaItems = (entry?.media || []).map(parseMediaEntry).filter(Boolean);
@@ -2625,6 +2682,7 @@ async function saveLab() {
       r = await sb.from('attachments').upsert(labAttachmentItems.map((a, i) => ({ id: a.id, lab_id: lab.id, name: a.name.trim() || 'File', path: a.path, mime: a.mime || null, size_bytes: a.size_bytes || 0, sort_order: i })));
       if (r.error) throw r.error;
     }
+    await saveAccessList('lab', lab.id);
     // Remove files under this lab's folder that are no longer referenced.
     const newEntry = { media: mediaArr, content, format, attachments: labAttachmentItems };
     const stillUsed = new Set(referencedPaths(lab, newEntry));
@@ -2690,6 +2748,7 @@ function openFolderModal(id) {
   editingFolderId = f ? f.id : 'f-' + Date.now();
   folderCoverItem = f?.cover_path || null;
   renderFolderCoverManager();
+  accessListState.folder = null; onAccessSelectChange('folder');
   openModal('folder-modal');
   setTimeout(() => $('folder-name').focus(), 100);
 }
@@ -2714,6 +2773,7 @@ async function saveFolder() {
   btn.disabled = false; btn.textContent = 'Save';
   if (error) { toast('Could not save: ' + error.message, true); return; }
   if (original?.cover_path && original.cover_path !== folder.cover_path) await removeStoragePaths([original.cover_path]);
+  try { await saveAccessList('folder', folder.id); } catch (e) { toast('Saved, but the access list failed: ' + e.message, true); }
   closeModal('folder-modal');
   await reloadCatalogue();
   toast(existingId ? 'Folder updated' : 'Folder added');
@@ -6122,8 +6182,9 @@ function buEquivalenceCheck(text) {
       if (prevUser === nextUser) return;
       loadMySeat().then(() => { renderChrome(); if (state.route.view === 'signin') render(); });
       document.body.classList.toggle('admin-mode', isAdmin());
-      if (was !== isAdmin()) { closeModal('login-modal'); reloadCatalogue(); if (isAdmin() && event === 'SIGNED_IN') toast('Welcome back'); }
-      else { renderChrome(); render(); }
+      closeModal('login-modal');
+      if (was !== isAdmin() && isAdmin() && event === 'SIGNED_IN') toast('Welcome back');
+      reloadCatalogue();
     });
   } catch (e) {
     console.error(e);

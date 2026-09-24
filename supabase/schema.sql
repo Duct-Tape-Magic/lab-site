@@ -661,3 +661,83 @@ end $$;
 revoke execute on function public.gen_passcode(text) from public, anon;
 revoke execute on function public.seat_email(text) from public, anon;
 grant execute on function public.seat_email(text) to authenticated;
+-- ============================================================
+-- Account-locked access: classes (groups) and individual accounts per item
+-- ============================================================
+create table if not exists public.item_users (
+  item_id text not null,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  primary key (item_id, user_id)
+);
+alter table public.item_users enable row level security;
+drop policy if exists "admin all item_users" on public.item_users;
+create policy "admin all item_users" on public.item_users for all using (is_admin()) with check (is_admin());
+drop policy if exists "student reads own item_users" on public.item_users;
+create policy "student reads own item_users" on public.item_users for select using (user_id = auth.uid());
+drop policy if exists "student reads item_groups" on public.item_groups;
+create policy "student reads item_groups" on public.item_groups for select
+  using (exists (select 1 from public.group_members gm where gm.group_id = item_groups.group_id and gm.user_id = auth.uid()));
+
+create or replace function public.student_allowed(p_governing_id text) returns boolean
+language sql stable security definer set search_path = public as $$
+  select auth.uid() is not null and (
+    exists (select 1 from item_groups ig join group_members gm on gm.group_id = ig.group_id
+            where ig.item_id = p_governing_id and gm.user_id = auth.uid())
+    or exists (select 1 from item_users iu where iu.item_id = p_governing_id and iu.user_id = auth.uid()))
+$$;
+
+create or replace function public.resolve_folder_governing(p_folder_id text)
+returns table(level text, governing_id text)
+language plpgsql stable security definer set search_path = public as $$
+declare v_level text; v_parent text := p_folder_id; v_id text; v_depth int := 0;
+begin
+  while v_parent is not null and v_depth < 20 loop
+    select f.access, f.parent_id, f.id into v_level, v_parent, v_id from folders f where f.id = v_parent;
+    if v_level is null then exit; end if;
+    if v_level <> 'inherit' then level := v_level; governing_id := v_id; return next; return; end if;
+    v_depth := v_depth + 1;
+  end loop;
+  level := 'public'; governing_id := null; return next;
+end $$;
+
+create or replace function public.item_visible(p_level text, p_governing_id text) returns boolean
+language sql stable security definer set search_path = public as $$
+  select case
+    when is_admin() then true
+    when p_level = 'admin' then false
+    when p_level = 'accounts' then student_allowed(p_governing_id)
+    else true end
+$$;
+
+drop policy if exists "read folders" on public.folders;
+create policy "read folders" on public.folders for select
+  using (is_admin() or (select item_visible(r.level, r.governing_id) from resolve_folder_governing(id) r));
+
+drop policy if exists "read lab catalogue" on public.labs;
+create policy "read lab catalogue" on public.labs for select
+  using (is_admin() or (lab_is_live(status, publish_at) and (select item_visible(r.level, r.governing_id) from resolve_access(id) r)));
+
+drop policy if exists "read public content" on public.lab_content;
+create policy "read public content" on public.lab_content for select
+  using (is_admin() or exists (
+    select 1 from labs l where l.id = lab_content.lab_id and lab_is_live(l.status, l.publish_at)
+      and (select r.level = 'public' or (r.level = 'accounts' and student_allowed(r.governing_id)) from resolve_access(l.id) r)));
+
+drop policy if exists "read public attachments" on public.attachments;
+create policy "read public attachments" on public.attachments for select
+  using (is_admin() or exists (
+    select 1 from labs l where l.id = attachments.lab_id and lab_is_live(l.status, l.publish_at)
+      and (select r.level = 'public' or (r.level = 'accounts' and student_allowed(r.governing_id)) from resolve_access(l.id) r)));
+
+-- Admin helper: everyone who can be put on an access list
+create or replace function public.list_account_choices()
+returns table(user_id uuid, label text, kind text)
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'admin only'; end if;
+  return query
+    select s.user_id, coalesce(nullif(s.full_name, ''), s.email) || case when s.full_name is not null and s.full_name <> '' then ' (' || s.email || ')' else '' end, 'google'::text
+    from students s where coalesce(s.email, '') not like '%@seats.ohschemlabs.com'
+      and coalesce((select u.raw_app_meta_data->>'role' from auth.users u where u.id = s.user_id), '') <> 'admin'
+    order by 2;
+end $$;
