@@ -1165,8 +1165,6 @@ const DEFAULTS = {
   pdfFailed: 'The PDF could not be made. Try again, or use Print and choose Save as PDF.',
   labCopyLink: 'Copy link',
   labLinkCopied: 'Link copied',
-  labPrev: '← Previous',
-  labNext: 'Next →',
   labNoContent: 'This lab has no procedure text yet.',
   lockPasswordTitle: 'This lab is locked',
   lockPasswordPrompt: 'Enter the password your teacher gave you.',
@@ -1258,7 +1256,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Home page', keys: ['homeFoldersLabel', 'homeLabsLabel', 'homeEmpty', 'homeLoginNudge'] },
   { label: 'Folder pages', keys: ['folderSectionsLabel', 'folderLabsLabel', 'folderEmpty'] },
   { label: 'Cards', keys: ['cardMinutes', 'cardUpdated', 'lockedBadge', 'signInRequiredBadge', 'draftBadge', 'scheduledBadge', 'hiddenBadge'] },
-  { label: 'Lab page', keys: ['labMinutes', 'labUpdated', 'labFilesLabel', 'labDownloadFile', 'labViewInline', 'labPrint', 'labDownloadPdf', 'pdfPreparing', 'pdfReady', 'pdfFailed', 'labCopyLink', 'labLinkCopied', 'labPrev', 'labNext', 'labNoContent'] },
+  { label: 'Lab page', keys: ['labMinutes', 'labUpdated', 'labFilesLabel', 'labDownloadFile', 'labViewInline', 'labPrint', 'labDownloadPdf', 'pdfPreparing', 'pdfReady', 'pdfFailed', 'labCopyLink', 'labLinkCopied', 'labNoContent'] },
   { label: 'Locked labs', keys: ['lockPasswordTitle', 'lockPasswordPrompt', 'lockPasswordPlaceholder', 'lockPasswordButton', 'lockPasswordWrong', 'lockTooMany', 'lockAccountsTitle', 'lockAccountsPrompt', 'lockNotAllowed', 'lockAdminOnly', 'lockUnavailable'] },
   { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'accessTitle', 'accessHint', 'accessButton', 'accessWrong', 'accessArchived', 'seatName', 'seatShort', 'seatUnknown', 'seatManaged', 'privacyLink', 'privacyTitle'] },
   { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
@@ -1274,7 +1272,7 @@ const TEXT_LABELS = {
   cardMinutes: 'Minutes on cards', cardUpdated: 'Updated date on cards', lockedBadge: 'Locked badge', signInRequiredBadge: 'Sign-in badge',
   draftBadge: 'Draft badge (admins)', scheduledBadge: 'Scheduled badge (admins)', hiddenBadge: 'Unlisted badge (admins)',
   labMinutes: 'Minutes line', labUpdated: 'Updated line', labFilesLabel: 'Files heading', labDownloadFile: 'Download button', labViewInline: 'View-here button',
-  labPrint: 'Print button', labDownloadPdf: 'Download PDF button', pdfPreparing: 'PDF preparing message', pdfReady: 'PDF done message', pdfFailed: 'PDF failed message', labCopyLink: 'Copy link button', labLinkCopied: 'Link copied message', labPrev: 'Previous lab link', labNext: 'Next lab link', labNoContent: 'No procedure text message',
+  labPrint: 'Print button', labDownloadPdf: 'Download PDF button', pdfPreparing: 'PDF preparing message', pdfReady: 'PDF done message', pdfFailed: 'PDF failed message', labCopyLink: 'Copy link button', labLinkCopied: 'Link copied message', labNoContent: 'No procedure text message',
   lockPasswordTitle: 'Password lock title', lockPasswordPrompt: 'Password lock prompt', lockPasswordPlaceholder: 'Password field placeholder', lockPasswordButton: 'Unlock button',
   lockPasswordWrong: 'Wrong password message', lockTooMany: 'Too many attempts message', lockAccountsTitle: 'Account lock title', lockAccountsPrompt: 'Account lock prompt',
   lockNotAllowed: 'Not allowed message', lockAdminOnly: 'Admin-only message', lockUnavailable: 'Lock server unavailable message',
@@ -1875,7 +1873,6 @@ async function renderLab(view) {
       <div class="lab-meta">${labBadges(lab)}${meta.join('')}</div>
     </header>
     <div id="lab-content-area"><p style="color:var(--muted);">${escapeHTML(getText('loadingText'))}</p></div>
-    ${labFooterNavHTML(lab)}
   </section>`;
 
   const area = $('lab-content-area');
@@ -2067,18 +2064,6 @@ async function submitUnlock(e, labId) {
   // The gate function arrives in the access-control phase; until it is deployed this reports the unavailable message.
   $('unlock-error').textContent = getText('lockUnavailable');
   return false;
-}
-
-function labFooterNavHTML(lab) {
-  const siblings = labsInFolder(lab.folder_id);
-  const i = siblings.findIndex(l => l.id === lab.id);
-  const prev = i > 0 ? siblings[i - 1] : null;
-  const next = i >= 0 && i < siblings.length - 1 ? siblings[i + 1] : null;
-  if (!prev && !next) return '';
-  return `<div class="lab-footer-nav">
-    <span>${prev ? `<a href="#/lab/${encodeURIComponent(prev.slug)}">${escapeHTML(getText('labPrev'))} · ${escapeHTML(prev.title)}</a>` : ''}</span>
-    <span>${next ? `<a href="#/lab/${encodeURIComponent(next.slug)}">${escapeHTML(next.title)} · ${escapeHTML(getText('labNext'))}</a>` : ''}</span>
-  </div>`;
 }
 
 function printLab(labId) { logEvent('print', { lab_id: labId, path: location.hash }); window.print(); }
