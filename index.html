@@ -231,6 +231,8 @@
     text-transform: uppercase; cursor: pointer; text-decoration: none; border-radius: var(--border-radius); font-weight: 300;
   }
   .btn-small:hover { border-color: var(--ink); background: var(--card-bg); }
+  .btn-primary-small { border-color: var(--accent); color: var(--accent); }
+  .btn-primary-small:hover { background: var(--accent); color: var(--bg); }
 
   /* Attachments */
   .attachments { list-style: none; max-width: var(--measure); border-top: 0.5px solid var(--rule); margin-top: 0.5rem; }
@@ -572,6 +574,33 @@
   body.report-print .rp-doc-header { display: block; margin-bottom: 1.5rem; border-bottom: 1px solid #000; padding-bottom: 0.6rem; }
   .rp-doc-title { font-family: var(--font-heading); font-size: 1.8rem; }
   .rp-doc-meta { font-size: 12px; color: #444; margin-top: 0.2rem; }
+  /* ---------- PDF export document ---------- */
+  .pdf-host { position: fixed; left: -10000px; top: 0; width: 760px; background: #fff; z-index: -1; }
+  .pdf-doc { width: 760px; padding: 0; background: #fff; color: #111; font-family: var(--font-body); font-size: 13.5px; line-height: 1.6; }
+  .pdf-head { border-bottom: 1px solid #222; padding-bottom: 8px; margin-bottom: 18px; }
+  .pdf-title { font-family: var(--font-heading); font-size: 24px; line-height: 1.15; }
+  .pdf-meta { font-size: 11px; color: #555; margin-top: 4px; }
+  .pdf-doc .lab-body { max-width: none; margin-top: 0; }
+  .pdf-doc .rp-body { max-width: none; }
+  .pdf-doc .rp-section { margin: 0 0 18px; }
+  .pdf-doc .rp-title { font-size: 17px; margin: 0 0 4px; color: #111; }
+  .pdf-doc .rp-prompt, .pdf-doc .lt-prompt { font-size: 12.5px; color: #444; margin-bottom: 4px; }
+  .pdf-doc .pdf-field { border: 0.5px solid #bbb; background: #fff; padding: 6px 8px; min-height: 0; white-space: pre-wrap; border-radius: 0; box-shadow: none; }
+  .pdf-doc .pdf-field.pdf-empty { min-height: 2.2em; }
+  .pdf-doc td.pdf-field { border: none; padding: 4px 6px; background: #fff; }
+  .pdf-doc .lt-table th, .pdf-doc .lt-table td { border: 0.5px solid #888; }
+  .pdf-doc .lt-table th { background: #f2f2f2; }
+  .pdf-doc .lt-graph-svg { border: 0.5px solid #ccc; background: #fff; }
+  .pdf-doc .lt-callout { background: #f6f6f6; border-left-color: #444; }
+  .pdf-doc .lt-notes summary { color: #444; }
+  .pdf-doc .lt-photo { border: none; padding: 0; }
+  .pdf-doc .pdf-video { font-size: 12px; color: #444; margin: 8px 0; }
+  .pdf-doc .rp-caption { color: #333; text-transform: none; letter-spacing: 0; font-style: italic; font-size: 11.5px; }
+  .pdf-doc .lt-figure-pending { display: none; }
+  .pdf-doc .badge { border-color: #888; color: #444; }
+  .pdf-doc a { color: #111; text-decoration: none; }
+  .pdf-doc li.task-list-item { list-style: none; margin-left: -1.2rem; }
+  .pdf-check { margin-right: 0.4rem; }
   .lt-error { background: #fde3e3; color: #6b1e1e; padding: 0.6rem 0.8rem; font-size: 13px; margin: 0.6rem 0; }
   .lt-markup { width: 100%; min-height: 340px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; line-height: 1.5; border: 0.5px solid var(--rule-strong); padding: 0.75rem; background: var(--bg); color: var(--ink); resize: vertical; outline: none; border-radius: 4px; }
   .lt-markup:focus { border-color: var(--ink); }
@@ -1130,6 +1159,10 @@ const DEFAULTS = {
   labDownloadFile: 'Download',
   labViewInline: 'View here',
   labPrint: 'Print',
+  labDownloadPdf: 'Download PDF',
+  pdfPreparing: 'Preparing your PDF…',
+  pdfReady: 'Your PDF has been downloaded.',
+  pdfFailed: 'The PDF could not be made. Try again, or use Print and choose Save as PDF.',
   labCopyLink: 'Copy link',
   labLinkCopied: 'Link copied',
   labPrev: '← Previous',
@@ -1225,7 +1258,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Home page', keys: ['homeFoldersLabel', 'homeLabsLabel', 'homeEmpty', 'homeLoginNudge'] },
   { label: 'Folder pages', keys: ['folderSectionsLabel', 'folderLabsLabel', 'folderEmpty'] },
   { label: 'Cards', keys: ['cardMinutes', 'cardUpdated', 'lockedBadge', 'signInRequiredBadge', 'draftBadge', 'scheduledBadge', 'hiddenBadge'] },
-  { label: 'Lab page', keys: ['labMinutes', 'labUpdated', 'labFilesLabel', 'labDownloadFile', 'labViewInline', 'labPrint', 'labCopyLink', 'labLinkCopied', 'labPrev', 'labNext', 'labNoContent'] },
+  { label: 'Lab page', keys: ['labMinutes', 'labUpdated', 'labFilesLabel', 'labDownloadFile', 'labViewInline', 'labPrint', 'labDownloadPdf', 'pdfPreparing', 'pdfReady', 'pdfFailed', 'labCopyLink', 'labLinkCopied', 'labPrev', 'labNext', 'labNoContent'] },
   { label: 'Locked labs', keys: ['lockPasswordTitle', 'lockPasswordPrompt', 'lockPasswordPlaceholder', 'lockPasswordButton', 'lockPasswordWrong', 'lockTooMany', 'lockAccountsTitle', 'lockAccountsPrompt', 'lockNotAllowed', 'lockAdminOnly', 'lockUnavailable'] },
   { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'accessTitle', 'accessHint', 'accessButton', 'accessWrong', 'accessArchived', 'seatName', 'seatShort', 'seatUnknown', 'seatManaged', 'privacyLink', 'privacyTitle'] },
   { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
@@ -1241,7 +1274,7 @@ const TEXT_LABELS = {
   cardMinutes: 'Minutes on cards', cardUpdated: 'Updated date on cards', lockedBadge: 'Locked badge', signInRequiredBadge: 'Sign-in badge',
   draftBadge: 'Draft badge (admins)', scheduledBadge: 'Scheduled badge (admins)', hiddenBadge: 'Unlisted badge (admins)',
   labMinutes: 'Minutes line', labUpdated: 'Updated line', labFilesLabel: 'Files heading', labDownloadFile: 'Download button', labViewInline: 'View-here button',
-  labPrint: 'Print button', labCopyLink: 'Copy link button', labLinkCopied: 'Link copied message', labPrev: 'Previous lab link', labNext: 'Next lab link', labNoContent: 'No procedure text message',
+  labPrint: 'Print button', labDownloadPdf: 'Download PDF button', pdfPreparing: 'PDF preparing message', pdfReady: 'PDF done message', pdfFailed: 'PDF failed message', labCopyLink: 'Copy link button', labLinkCopied: 'Link copied message', labPrev: 'Previous lab link', labNext: 'Next lab link', labNoContent: 'No procedure text message',
   lockPasswordTitle: 'Password lock title', lockPasswordPrompt: 'Password lock prompt', lockPasswordPlaceholder: 'Password field placeholder', lockPasswordButton: 'Unlock button',
   lockPasswordWrong: 'Wrong password message', lockTooMany: 'Too many attempts message', lockAccountsTitle: 'Account lock title', lockAccountsPrompt: 'Account lock prompt',
   lockNotAllowed: 'Not allowed message', lockAdminOnly: 'Admin-only message', lockUnavailable: 'Lock server unavailable message',
@@ -1897,6 +1930,7 @@ function renderLabContent(area, lab, entry, cloud = null, readOnly = false) {
       }).join('') + `</ul>`;
   }
   html += `<div class="lab-toolbar" style="margin-top:2rem; max-width:var(--measure); align-items:center;">
+    <button class="btn-small btn-primary-small" onclick="downloadLabPdf('procedure')">${escapeHTML(getText('labDownloadPdf'))}</button>
     <button class="btn-small" onclick="printLab('${lab.id}')">${escapeHTML(getText('labPrint'))}</button>
     <button class="btn-small" onclick="copyLabLink()">${escapeHTML(getText('labCopyLink'))}</button>
     ${isTags ? `<button type="button" class="btn-small lt-clear" style="margin-left:auto; color:var(--danger); border-color:var(--danger);">${escapeHTML(getText('entriesClear'))}</button><span class="lt-saved" style="font-size:12px; color:var(--accent); opacity:0; transition:opacity 0.3s;">${escapeHTML(getText('entriesSaved'))}</span>` : ''}
@@ -1926,7 +1960,8 @@ function buildLabTagsHTML(r, lab) {
     <div class="lab-pane" id="lab-pane-report" ${reportFirst ? '' : 'hidden'}>
       <div class="rp-doc-header"><div class="rp-doc-title">${escapeHTML(lab ? lab.title : '')}</div><div class="rp-doc-meta"></div></div>
       <div class="rp-toolbar">
-        <button type="button" class="btn-small" onclick="previewReport()">${escapeHTML(getText('reportPreview'))}</button>
+        <button type="button" class="btn-small btn-primary-small" onclick="downloadLabPdf('report')">${escapeHTML(getText('labDownloadPdf'))}</button>
+        <button type="button" class="btn-small" onclick="previewReport()">${escapeHTML(getText('labPrint'))}</button>
       </div>
       <div class="lab-body rich-content rp-body">${r.report}</div>
     </div>`;
@@ -2047,6 +2082,60 @@ function labFooterNavHTML(lab) {
 }
 
 function printLab(labId) { logEvent('print', { lab_id: labId, path: location.hash }); window.print(); }
+
+/* ---------- Download PDF (built in the browser from the page as the student sees it) ---------- */
+let pdfLibLoad = null;
+function loadPdfLib() {
+  if (window.html2pdf) return Promise.resolve();
+  if (pdfLibLoad) return pdfLibLoad;
+  pdfLibLoad = new Promise((res, rej) => { const el = document.createElement('script'); el.src = 'vendor/html2pdf.bundle.min.js'; el.onload = () => res(); el.onerror = () => { pdfLibLoad = null; rej(new Error('pdf library failed to load')); }; document.head.appendChild(el); });
+  return pdfLibLoad;
+}
+function buildPdfDocument(which, lab) {
+  const src = which === 'report' ? document.getElementById('lab-pane-report') : (document.getElementById('lab-pane-procedure') || document.getElementById('lab-content-area'));
+  if (!src) return null;
+  const doc = document.createElement('div'); doc.className = 'pdf-doc';
+  const who = state.session ? studentName() : '';
+  doc.innerHTML = `<div class="pdf-head"><div class="pdf-title">${escapeHTML(lab.title)}${which === 'report' ? ` — ${escapeHTML(getText('reportTab'))}` : ''}</div><div class="pdf-meta">${[who, new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })].filter(Boolean).map(escapeHTML).join(' · ')}</div></div>`;
+  const body = src.cloneNode(true); body.hidden = false; body.removeAttribute('hidden');
+  // remove interactive chrome
+  body.querySelectorAll('.rp-toolbar, .rp-doc-header, .rp-meter, .lab-toolbar, .lt-table-add, .lt-photo-actions, .lt-status, .rp-hint, .admin-inline, .review-banner, .lab-footer-nav, button, input[type="file"]').forEach(el => el.remove());
+  // answer boxes and cells → static text
+  body.querySelectorAll('[contenteditable]').forEach(el => { const live = src.querySelector(`[data-field="${el.dataset.field}"]`); el.textContent = live ? live.textContent : el.textContent; el.removeAttribute('contenteditable'); el.classList.add('pdf-field'); if (!el.textContent.trim()) el.classList.add('pdf-empty'); });
+  body.querySelectorAll('details').forEach(d => { const f = d.querySelector('.lt-field'); if (f && f.textContent.trim()) d.open = true; else if (!d.classList.contains('rp-hint')) d.remove(); });
+  body.querySelectorAll('input[type="checkbox"]').forEach(cb => { const live = src.querySelector(`[data-check="${cb.dataset.check}"]`); const on = live ? live.checked : cb.checked; const m = document.createElement('span'); m.className = 'pdf-check'; m.textContent = on ? '☑' : '☐'; cb.replaceWith(m); });
+  body.querySelectorAll('.lt-photo').forEach(p => { const img = p.querySelector('img'); if (!img) p.remove(); });
+  body.querySelectorAll('iframe').forEach(f => { const a = document.createElement('div'); a.className = 'pdf-video'; a.textContent = 'Video: ' + (f.getAttribute('src') || '').replace('youtube-nocookie.com/embed/', 'youtube.com/watch?v=').replace(/\?.*$/, ''); f.replaceWith(a); });
+  body.querySelectorAll('.slideshow-arrow, .slideshow-dots, .slideshow-counter').forEach(el => el.remove());
+  body.querySelectorAll('.slideshow-slide').forEach(sl => { sl.style.position = 'static'; sl.style.opacity = '1'; sl.style.display = 'block'; });
+  body.querySelectorAll('.pdf-doc .lab-media, .slideshow-main').forEach(el => { el.style.height = 'auto'; });
+  doc.appendChild(body);
+  return doc;
+}
+async function downloadLabPdf(which) {
+  const lab = state.route.view === 'lab' ? labBySlug(state.route.slug) : null; if (!lab) return;
+  toast(getText('pdfPreparing'));
+  let host = null;
+  try {
+    await loadPdfLib();
+    const doc = buildPdfDocument(which, lab); if (!doc) throw new Error('nothing to export');
+    host = document.createElement('div'); host.className = 'pdf-host'; host.appendChild(doc); document.body.appendChild(host);
+    renderMathIn([doc]);
+    await new Promise(r => setTimeout(r, 150));
+    const who = state.session ? studentName().replace(/[^\w .-]+/g, '').trim() : '';
+    const name = `${slugify(lab.title)}${which === 'report' ? '-report' : ''}${who ? '-' + slugify(who) : ''}.pdf`;
+    await html2pdf().set({
+      margin: [14, 14, 16, 14], filename: name,
+      image: { type: 'jpeg', quality: 0.93 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false, windowWidth: 800 },
+      jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
+      pagebreak: { mode: ['css', 'legacy'], avoid: ['.rp-section', '.lt-table-wrap', '.lt-graph', 'tr', '.lt-answer', '.lt-photo', 'h2', 'h3', '.lt-callout', 'li'] }
+    }).from(doc).save();
+    logEvent('print', { lab_id: lab.id, path: location.hash });
+    toast(getText('pdfReady'));
+  } catch (e) { console.error(e); toast(getText('pdfFailed'), true); }
+  finally { if (host) host.remove(); }
+}
 async function copyLabLink() {
   try { await navigator.clipboard.writeText(location.href); toast(getText('labLinkCopied')); }
   catch (e) { prompt('Copy this link:', location.href); }
