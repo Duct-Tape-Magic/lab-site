@@ -1989,7 +1989,7 @@ function rpRefreshMirrors(area) {
     if (!src) { box.innerHTML = `<div class="lt-error">${escapeHTML(getText('reportMissingRef'))} \\usetable{${escapeHTML(box.dataset.mirrorTable)}}</div>`; return; }
     const clone = src.cloneNode(true);
     clone.classList.add('rp-table'); clone.removeAttribute('data-table');
-    clone.querySelectorAll('[contenteditable]').forEach(td => { td.removeAttribute('contenteditable'); td.removeAttribute('data-field'); td.removeAttribute('data-bound'); td.classList.add('rp-cell'); });
+    clone.querySelectorAll('[contenteditable]').forEach(td => { td.removeAttribute('contenteditable'); td.removeAttribute('data-field'); td.removeAttribute('data-bound'); td.classList.add('rp-cell'); if (!td.textContent) td.textContent = '\u00a0'; });   // an empty editable cell keeps one line of height; a plain empty cell would collapse the row
     clone.querySelectorAll('.lt-table-add').forEach(b => b.remove());
     const cap = box.querySelector('.rp-caption'); box.innerHTML = ''; box.appendChild(clone); if (cap) box.appendChild(cap);
   });
@@ -2107,7 +2107,7 @@ function buildPdfDocument(which, lab) {
   // remove interactive chrome
   body.querySelectorAll('.rp-toolbar, .rp-doc-header, .rp-meter, .lab-toolbar, .lt-table-add, .lt-photo-actions, .lt-status, .rp-hint, .admin-inline, .review-banner, .lab-footer-nav, button, input[type="file"]').forEach(el => el.remove());
   // answer boxes and cells → static text
-  body.querySelectorAll('[contenteditable]').forEach(el => { const live = src.querySelector(`[data-field="${el.dataset.field}"]`); el.textContent = live ? live.textContent : el.textContent; el.removeAttribute('contenteditable'); el.classList.add('pdf-field'); if (!el.textContent.trim()) el.classList.add('pdf-empty'); });
+  body.querySelectorAll('[contenteditable]').forEach(el => { const live = src.querySelector(`[data-field="${el.dataset.field}"]`); el.textContent = live ? live.textContent : el.textContent; el.removeAttribute('contenteditable'); el.classList.add('pdf-field'); if (!el.textContent.trim()) { el.classList.add('pdf-empty'); if (el.tagName === 'TD') el.textContent = '\u00a0'; } });
   body.querySelectorAll('details').forEach(d => { const f = d.querySelector('.lt-field'); if (f && f.textContent.trim()) d.open = true; else if (!d.classList.contains('rp-hint')) d.remove(); });
   body.querySelectorAll('input[type="checkbox"]').forEach(cb => { const live = src.querySelector(`[data-check="${cb.dataset.check}"]`); const on = live ? live.checked : cb.checked; const m = document.createElement('span'); m.className = 'pdf-check'; m.textContent = on ? '☑' : '☐'; cb.replaceWith(m); });
   body.querySelectorAll('.lt-photo').forEach(p => { const img = p.querySelector('img'); if (!img) p.remove(); });
