@@ -1927,8 +1927,8 @@ function renderLabContent(area, lab, entry, cloud = null, readOnly = false) {
       }).join('') + `</ul>`;
   }
   html += `<div class="lab-toolbar" style="margin-top:2rem; max-width:var(--measure); align-items:center;">
-    <button class="btn-small btn-primary-small" onclick="downloadLabPdf('procedure')">${escapeHTML(getText('labDownloadPdf'))}</button>
-    <button class="btn-small" onclick="printLab('${lab.id}')">${escapeHTML(getText('labPrint'))}</button>
+    <button class="btn-small btn-primary-small" onclick="downloadLabPdf(activeLabTab())">${escapeHTML(getText('labDownloadPdf'))}</button>
+    <button class="btn-small" onclick="activeLabTab() === 'report' ? previewReport() : printLab('${lab.id}')">${escapeHTML(getText('labPrint'))}</button>
     <button class="btn-small" onclick="copyLabLink()">${escapeHTML(getText('labCopyLink'))}</button>
     ${isTags ? `<button type="button" class="btn-small lt-clear" style="margin-left:auto; color:var(--danger); border-color:var(--danger);">${escapeHTML(getText('entriesClear'))}</button><span class="lt-saved" style="font-size:12px; color:var(--accent); opacity:0; transition:opacity 0.3s;">${escapeHTML(getText('entriesSaved'))}</span>` : ''}
   </div>`;
@@ -1956,10 +1956,7 @@ function buildLabTagsHTML(r, lab) {
     <div class="lab-pane" id="lab-pane-procedure" ${reportFirst ? 'hidden' : ''}>${body}</div>
     <div class="lab-pane" id="lab-pane-report" ${reportFirst ? '' : 'hidden'}>
       <div class="rp-doc-header"><div class="rp-doc-title">${escapeHTML(lab ? lab.title : '')}</div><div class="rp-doc-meta"></div></div>
-      <div class="rp-toolbar">
-        <button type="button" class="btn-small btn-primary-small" onclick="downloadLabPdf('report')">${escapeHTML(getText('labDownloadPdf'))}</button>
-        <button type="button" class="btn-small" onclick="previewReport()">${escapeHTML(getText('labPrint'))}</button>
-      </div>
+      <div class="rp-toolbar"></div>
       <div class="lab-body rich-content rp-body">${r.report}</div>
     </div>`;
 }
@@ -2066,6 +2063,7 @@ async function submitUnlock(e, labId) {
   return false;
 }
 
+function activeLabTab() { const r = document.getElementById('lab-pane-report'); return r && !r.hidden ? 'report' : 'procedure'; }
 function printLab(labId) { logEvent('print', { lab_id: labId, path: location.hash }); window.print(); }
 
 /* ---------- Download PDF (built in the browser from the page as the student sees it) ---------- */
