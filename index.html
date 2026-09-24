@@ -569,6 +569,8 @@
   .rp-meter.empty { color: var(--muted); font-style: italic; }
   .rp-mirror { margin: 1rem 0 1.6rem; }
   .rp-table td.rp-cell { background: transparent; cursor: default; }
+  .rp-copy { background: transparent; white-space: pre-wrap; min-height: 2em; }
+  .rp-copy-photo { border-style: solid; }
   .rp-caption { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-top: 0.4rem; }
   .rp-doc-header { display: none; }
   body.report-print .rp-doc-header { display: block; margin-bottom: 1.5rem; border-bottom: 1px solid #000; padding-bottom: 0.6rem; }
@@ -1247,7 +1249,8 @@ const DEFAULTS = {
   reportEmptyRequired: 'This section is required and is still empty.',
   reportTableLabel: 'Table',
   reportFigureLabel: 'Figure',
-  reportMissingRef: 'Nothing in the procedure matches'
+  reportMissingRef: 'Nothing in the procedure matches',
+  reportNoPhotoYet: 'No photo added yet. Add it on the Procedure tab.'
 };
 
 const SITE_TEXT_GROUPS = [
@@ -1260,7 +1263,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Locked labs', keys: ['lockPasswordTitle', 'lockPasswordPrompt', 'lockPasswordPlaceholder', 'lockPasswordButton', 'lockPasswordWrong', 'lockTooMany', 'lockAccountsTitle', 'lockAccountsPrompt', 'lockNotAllowed', 'lockAdminOnly', 'lockUnavailable'] },
   { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'accessTitle', 'accessHint', 'accessButton', 'accessWrong', 'accessArchived', 'seatName', 'seatShort', 'seatUnknown', 'seatManaged', 'privacyLink', 'privacyTitle'] },
   { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
-  { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportPlaceholder', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef'] },
+  { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportPlaceholder', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef', 'reportNoPhotoYet'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
 ];
 
@@ -1284,7 +1287,7 @@ const TEXT_LABELS = {
   notesLabel: 'Notes toggle', notesPlaceholder: 'Notes placeholder', answerPlaceholder: 'Answer placeholder', tableAddRow: 'Add row button',
   photoAdd: 'Add photo button', photoChange: 'Change photo button', photoRemove: 'Remove photo button',
   calloutSafety: 'Safety box label', calloutWarning: 'Caution box label', calloutInfo: 'Note box label', calloutTip: 'Tip box label', calloutHint: 'Hint box label', figurePending: 'Missing figure text', graphEmpty: 'Empty graph message',
-  procedureTab: 'Procedure tab label', reportTab: 'Report tab label', reportPreview: 'Preview report button', reportStyleTitle: 'Style guide heading', reportRequired: 'Required badge', reportHint: 'Hint toggle', reportPlaceholder: 'Report box placeholder', reportWords: 'Word count', reportWordsAim: 'Word range hint', reportEmptyRequired: 'Empty required section note', reportTableLabel: 'Table caption word', reportFigureLabel: 'Figure caption word', reportMissingRef: 'Missing table/graph message'
+  procedureTab: 'Procedure tab label', reportTab: 'Report tab label', reportPreview: 'Preview report button', reportStyleTitle: 'Style guide heading', reportRequired: 'Required badge', reportHint: 'Hint toggle', reportPlaceholder: 'Report box placeholder', reportWords: 'Word count', reportWordsAim: 'Word range hint', reportEmptyRequired: 'Empty required section note', reportTableLabel: 'Table caption word', reportFigureLabel: 'Figure caption word', reportMissingRef: 'Missing table/graph message', reportNoPhotoYet: 'No photo yet message'
 };
 
 /* ============================================================
@@ -1950,8 +1953,8 @@ function buildLabTagsHTML(r, lab) {
   const reportFirst = saved === 'report';
   return `
     <div class="lab-tabs" role="tablist">
-      <button type="button" class="lab-tab ${reportFirst ? '' : 'active'}" data-tab="procedure" onclick="switchLabTab('procedure')">${escapeHTML(getText('procedureTab'))}</button>
-      <button type="button" class="lab-tab ${reportFirst ? 'active' : ''}" data-tab="report" onclick="switchLabTab('report')">${escapeHTML(getText('reportTab'))}</button>
+      <button type="button" class="lab-tab ${reportFirst ? '' : 'active'}" data-tab="procedure" onclick="switchLabTab('procedure', this)">${escapeHTML(getText('procedureTab'))}</button>
+      <button type="button" class="lab-tab ${reportFirst ? 'active' : ''}" data-tab="report" onclick="switchLabTab('report', this)">${escapeHTML(getText('reportTab'))}</button>
     </div>
     <div class="lab-pane" id="lab-pane-procedure" ${reportFirst ? 'hidden' : ''}>${body}</div>
     <div class="lab-pane" id="lab-pane-report" ${reportFirst ? '' : 'hidden'}>
@@ -1960,12 +1963,15 @@ function buildLabTagsHTML(r, lab) {
       <div class="lab-body rich-content rp-body">${r.report}</div>
     </div>`;
 }
-function switchLabTab(name) {
-  document.querySelectorAll('.lab-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
-  document.querySelectorAll('.lab-pane').forEach(p => { p.hidden = p.id !== 'lab-pane-' + name; });
-  const lab = state.route.view === 'lab' ? labBySlug(state.route.slug) : null;
+function switchLabTab(name, from) {
+  // Scope to the lab view or the builder preview that owns the clicked tab (both can exist at once when the builder is open over a lab page).
+  const area = (from && from.closest && from.closest('#lab-markup-preview, #lab-content-area')) || document.getElementById('lab-content-area') || document.getElementById('lab-markup-preview');
+  if (!area) return;
+  area.querySelectorAll('.lab-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  area.querySelectorAll('.lab-pane').forEach(p => { p.hidden = p.id !== 'lab-pane-' + name; });
+  const lab = state.route.view === 'lab' && area.id === 'lab-content-area' ? labBySlug(state.route.slug) : null;
   try { sessionStorage.setItem('labsite.tab.' + (lab ? lab.id : 'preview'), name); } catch (e) { /* ignore */ }
-  if (name === 'report') rpRefreshMirrors(document.getElementById('lab-content-area') || document.getElementById('lab-markup-preview'));
+  if (name === 'report') rpRefreshMirrors(area);
 }
 // Before ltBind: create mirror graph boxes (real .lt-graph elements so the live-graph code redraws them) and empty table clones.
 function rpPrepare(area) {
@@ -1987,9 +1993,24 @@ function rpRefreshMirrors(area) {
     clone.querySelectorAll('.lt-table-add').forEach(b => b.remove());
     const cap = box.querySelector('.rp-caption'); box.innerHTML = ''; box.appendChild(clone); if (cap) box.appendChild(cap);
   });
+  area.querySelectorAll('.rp-mirror[data-mirror-answer]').forEach(box => {
+    const id = box.dataset.mirrorAnswer;
+    const field = area.querySelector(`#lab-pane-procedure [data-field="${id}"]`);
+    if (!field) { box.innerHTML = `<div class="lt-error">${escapeHTML(getText('reportMissingRef'))} \\useanswer{${escapeHTML(id)}}</div>`; return; }
+    const wrap = field.closest('.lt-answer, .lt-notes, .lt-step-notes');
+    const prompt = wrap ? wrap.querySelector('.lt-prompt, summary') : null;
+    box.innerHTML = `<div class="rp-copy-answer">${prompt ? `<div class="lt-prompt">${prompt.innerHTML}</div>` : ''}<div class="lt-field rp-copy" data-copy-of="${escapeHTML(id)}">${escapeHTML(field.textContent)}</div></div>`;
+  });
+  area.querySelectorAll('.rp-mirror[data-mirror-photo]').forEach(box => {
+    const id = box.dataset.mirrorPhoto;
+    const src = area.querySelector(`#lab-pane-procedure .lt-photo[data-photo="${id}"]`);
+    if (!src) { box.innerHTML = `<div class="lt-error">${escapeHTML(getText('reportMissingRef'))} \\usephoto{${escapeHTML(id)}}</div>`; return; }
+    const img = src.querySelector('.lt-photo-preview img'), prompt = src.querySelector('.lt-prompt');
+    box.innerHTML = `<div class="lt-photo rp-copy-photo ${img ? 'has-photo' : ''}">${prompt ? `<div class="lt-prompt">${prompt.innerHTML}</div>` : ''}<div class="lt-photo-preview">${img ? `<img src="${img.getAttribute('src')}" alt=""/>` : `<span class="hint" style="margin:0;">${escapeHTML(getText('reportNoPhotoYet'))}</span>`}</div></div>`;
+  });
   // captions: Table n / Figure n in document order
   let t = 0, f = 0;
-  area.querySelectorAll('.rp-body .rp-mirror').forEach(box => {
+  area.querySelectorAll('.rp-body .rp-mirror[data-mirror-table], .rp-body .rp-mirror[data-mirror-graph]').forEach(box => {
     let cap = box.querySelector('.rp-caption');
     if (!cap) { cap = document.createElement('div'); cap.className = 'rp-caption'; box.appendChild(cap); }
     cap.textContent = box.dataset.mirrorTable ? `${getText('reportTableLabel')} ${++t}` : `${getText('reportFigureLabel')} ${++f}`;
@@ -2012,10 +2033,12 @@ function rpBind(area, lab) {
   rpRefreshMirrors(area);
   let t = null;
   area.addEventListener('input', e => {
-    if (e.target.closest('#lab-pane-procedure .lt-table-wrap')) { clearTimeout(t); t = setTimeout(() => rpRefreshMirrors(area), 200); }
+    if (e.target.closest('#lab-pane-procedure')) { clearTimeout(t); t = setTimeout(() => rpRefreshMirrors(area), 200); }
     const sec = e.target.closest('.rp-section'); if (sec) rpUpdateMeter(sec);
   });
-  area.addEventListener('click', e => { if (e.target.closest('#lab-pane-procedure .lt-table-add')) setTimeout(() => rpRefreshMirrors(area), 100); });
+  area.addEventListener('change', e => { if (e.target.closest('#lab-pane-procedure')) setTimeout(() => rpRefreshMirrors(area), 400); });
+  area.addEventListener('click', e => { if (e.target.closest('#lab-pane-procedure .lt-table-add, #lab-pane-procedure .lt-photo-remove')) setTimeout(() => rpRefreshMirrors(area), 150); });
+  setTimeout(() => rpRefreshMirrors(area), 900);   // photos arrive from the browser's store a moment after binding
   area.querySelectorAll('.rp-section').forEach(rpUpdateMeter);
   const meta = area.querySelector('.rp-doc-meta');
   if (meta) meta.textContent = [isStudent() ? studentName() : '', new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })].filter(Boolean).join(' · ');
@@ -3336,9 +3359,9 @@ function loadDesignFromSiteContent() {
    LAB TAGS — markdown + LaTeX-style commands for interactive lab reports.
    Spec for authors (and for Claude converting PDFs): docs/LAB-FORMAT.md
    ============================================================ */
-const LT_TAGS = new Set(['title', 'summary', 'tags', 'minutes', 'video', 'datatable', 'answer', 'notes', 'photo', 'input', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'report', 'style', 'section', 'usetable', 'usegraph']);
+const LT_TAGS = new Set(['title', 'summary', 'tags', 'minutes', 'video', 'datatable', 'answer', 'notes', 'photo', 'input', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'report', 'style', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto']);
 const LT_META = new Set(['title', 'summary', 'tags', 'minutes', 'report', 'style']);   // stored on ctx, not rendered in place
-const LT_BLOCK = new Set(['video', 'datatable', 'answer', 'notes', 'photo', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'section', 'usetable', 'usegraph']);
+const LT_BLOCK = new Set(['video', 'datatable', 'answer', 'notes', 'photo', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto']);
 
 if (window.marked) marked.use({ gfm: true, breaks: false, mangle: false, headerIds: false });
 
@@ -3484,6 +3507,8 @@ function ltWidget(name, o, body, ctx, widgets) {
     }
     case 'usetable': return `<div class="rp-mirror" data-mirror-table="${ltSafeId((body || '').trim())}"></div>`;
     case 'usegraph': return `<div class="rp-mirror" data-mirror-graph="${ltSafeId((body || '').trim())}"></div>`;
+    case 'useanswer': return `<div class="rp-mirror" data-mirror-answer="${ltSafeId((body || '').trim())}"></div>`;
+    case 'usephoto': return `<div class="rp-mirror" data-mirror-photo="${ltSafeId((body || '').trim())}"></div>`;
     case 'graph': {
       // Options go into a JSON attribute: put the raw math/code back first (JSON.stringify escapes its backslashes), otherwise
       // ltRestore would later drop unescaped "\eta" into the JSON string and the graph would never draw.
@@ -3955,9 +3980,9 @@ function previewLabMarkup(now) {
    Public globals: builderParse, builderSerialize, builderNewBlock, builderTemplates (+ bm* helpers, BM_* constants).
    ============================================================ */
 
-const BM_TAGS = new Set(['title', 'summary', 'tags', 'minutes', 'video', 'datatable', 'answer', 'notes', 'photo', 'input', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'report', 'style', 'section', 'usetable', 'usegraph']);
+const BM_TAGS = new Set(['title', 'summary', 'tags', 'minutes', 'video', 'datatable', 'answer', 'notes', 'photo', 'input', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'report', 'style', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto']);
 const BM_META = new Set(['title', 'summary', 'tags', 'minutes', 'report', 'style']);
-const BM_BLOCK = new Set(['video', 'datatable', 'answer', 'notes', 'photo', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'section', 'usetable', 'usegraph']);
+const BM_BLOCK = new Set(['video', 'datatable', 'answer', 'notes', 'photo', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto']);
 const BM_CALLOUT_KINDS = ['safety', 'warning', 'info', 'tip', 'hint'];
 const BM_HEADER_KEYS = ['title', 'summary', 'tags', 'minutes'];
 
@@ -3967,22 +3992,24 @@ const BM_TYPES = {
   comment:   { label: 'Note to self',     list: 'both' },
   raw:       { label: 'Raw',              list: 'both' },
   steps:     { tag: 'procedure', label: 'Numbered steps',  list: 'procedure', kind: 'proc',  idBase: 'steps',    known: ['id'] },
-  table:     { tag: 'datatable', label: 'Data table',      list: 'procedure', kind: 'table', idBase: 'table',    known: ['id', 'title', 'addrows'], nameOf: b => b.opts.title },
-  answer:    { tag: 'answer',    label: 'Question',        list: 'procedure', kind: 'q',     idBase: 'question', known: ['id', 'lines'] },
-  notes:     { tag: 'notes',     label: 'Notes box',       list: 'procedure', kind: 'notes', idBase: 'notes',    known: ['id'], nameOf: b => b.label },
-  photo:     { tag: 'photo',     label: 'Photo slot',      list: 'procedure', kind: 'photo', idBase: 'photo',    known: ['id'] },
+  table:     { tag: 'datatable', label: 'Data table',      list: 'both', kind: 'table', idBase: 'table',    known: ['id', 'title', 'addrows'], nameOf: b => b.opts.title },
+  answer:    { tag: 'answer',    label: 'Question',        list: 'both', kind: 'q',     idBase: 'question', known: ['id', 'lines'] },
+  notes:     { tag: 'notes',     label: 'Notes box',       list: 'both', kind: 'notes', idBase: 'notes',    known: ['id'], nameOf: b => b.label },
+  photo:     { tag: 'photo',     label: 'Photo slot',      list: 'both', kind: 'photo', idBase: 'photo',    known: ['id'] },
   video:     { tag: 'video',     label: 'Video',           list: 'procedure', known: [] },
   figure:    { tag: 'figure',    label: 'Picture',         list: 'procedure', known: ['caption'] },
   callout:   { tag: null,        label: 'Callout',         list: 'procedure', known: ['label'] },
-  graph:     { tag: 'graph',     label: 'Graph',           list: 'procedure', kind: 'graph', idBase: 'graph',    known: ['id', 'table', 'x', 'y', 'series', 'type', 'fit', 'title', 'xlabel', 'ylabel', 'xmin', 'xmax', 'ymin', 'ymax'], nameOf: b => b.opts.title },
+  graph:     { tag: 'graph',     label: 'Graph',           list: 'both', kind: 'graph', idBase: 'graph',    known: ['id', 'table', 'x', 'y', 'series', 'type', 'fit', 'title', 'xlabel', 'ylabel', 'xmin', 'xmax', 'ymin', 'ymax'], nameOf: b => b.opts.title },
   pagebreak: { tag: 'pagebreak', label: 'Page break',      list: 'procedure', known: [] },
   section:   { tag: 'section',   label: 'Report section',  list: 'report',    kind: 'section', idBase: 'section', known: ['id', 'title', 'required', 'words', 'hint', 'lines'], nameOf: b => b.opts.title },
   usetable:  { tag: 'usetable',  label: 'Include a table', list: 'report' },
   usegraph:  { tag: 'usegraph',  label: 'Include a graph', list: 'report' },
+  useanswer: { tag: 'useanswer', label: 'Include an answer', list: 'report' },
+  usephoto:  { tag: 'usephoto',  label: 'Include a photo',  list: 'report' },
 };
-const BM_TAG_TYPE = { procedure: 'steps', datatable: 'table', answer: 'answer', notes: 'notes', photo: 'photo', video: 'video', figure: 'figure', graph: 'graph', pagebreak: 'pagebreak', section: 'section', usetable: 'usetable', usegraph: 'usegraph', safety: 'callout', warning: 'callout', info: 'callout', tip: 'callout', hint: 'callout' };
+const BM_TAG_TYPE = { procedure: 'steps', datatable: 'table', answer: 'answer', notes: 'notes', photo: 'photo', video: 'video', figure: 'figure', graph: 'graph', pagebreak: 'pagebreak', section: 'section', usetable: 'usetable', usegraph: 'usegraph', useanswer: 'useanswer', usephoto: 'usephoto', safety: 'callout', warning: 'callout', info: 'callout', tip: 'callout', hint: 'callout' };
 const BM_KIND = { datatable: 'table', answer: 'q', notes: 'notes', photo: 'photo', input: 'field', procedure: 'proc' };
-const BM_RESERVED_ID = /^(table|q|notes|photo|field|proc|graph|section|figure|video|pagebreak|safety|warning|info|tip|hint|usetable|usegraph)\d*$/;
+const BM_RESERVED_ID = /^(table|q|notes|photo|field|proc|graph|section|figure|video|pagebreak|safety|warning|info|tip|hint|usetable|usegraph|useanswer|usephoto)\d*$/;
 const BM_ID_TYPES = new Set(['steps', 'table', 'answer', 'notes', 'photo', 'graph', 'section']);
 const BM_INPUT_KNOWN = ['id', 'label', 'unit', 'placeholder'];
 const BM_FILL = /^_{3,}$/;
@@ -4154,7 +4181,7 @@ function builderParse(text) {
     model.procedure = top.blocks;
     const warnings = top.warnings.slice();
     if (top.reportBody != null) { const r = bmParseFlow(top.reportBody, ctx, { inReport: true }); model.report = r.blocks; warnings.push(...r.warnings); }
-    for (const b of model.procedure) if (b.type === 'section' || b.type === 'usetable' || b.type === 'usegraph') { warnings.push(BM_W.sectionOutside); break; }
+    for (const b of model.procedure) if (['section', 'usetable', 'usegraph', 'useanswer', 'usephoto'].includes(b.type)) { warnings.push(BM_W.sectionOutside); break; }
     for (const b of model.report) if (b.type === 'steps' || b.type === 'table' || b.type === 'graph') { warnings.push(BM_W.procedureInReport); break; }
     warnings.push(...bmParseWarnings(model));
     model.warnings = [...new Set(warnings)];
@@ -4346,7 +4373,7 @@ function bmBlockFromOcc(occ, ctx) {
     case 'figure': return { type: 'figure', opts: o, path: B.trim() };
     case 'graph': return { type: 'graph', opts: o, caption: B.trim() };
     case 'pagebreak': return (Bp == null || B.trim() === '') ? { type: 'pagebreak', opts: o } : raw(BM_W.pagebreak);
-    case 'usetable': case 'usegraph': return { type, ref: B.trim() };
+    case 'usetable': case 'usegraph': case 'useanswer': case 'usephoto': return { type, ref: B.trim() };
     default: return { type: 'callout', kind: occ.name, opts: o, body: bmTrimBlankLines(B) };
   }
 }
@@ -4419,7 +4446,7 @@ function bmSerializeBlock(b) {
     case 'notes': return `\\notes${bmOpts(b)}` + (b.label ? `{${bmBody(b.label)}}` : '');
     case 'graph': return `\\graph${bmOpts(b)}` + (b.caption ? `{${bmBody(b.caption)}}` : '');
     case 'video': return `\\video${bmOpts(b)}{${bmBody(b.url ?? '')}}`;
-    case 'usetable': case 'usegraph': return `\\${tag}{${bmBody(b.ref ?? '')}}`;
+    case 'usetable': case 'usegraph': case 'useanswer': case 'usephoto': return `\\${tag}{${bmBody(b.ref ?? '')}}`;
     case 'figure': return `\\figure${bmOpts(b)}{${bmBody(b.path ?? '')}}`;
     case 'callout': return `\\${BM_CALLOUT_KINDS.includes(b.kind) ? b.kind : 'info'}${bmOpts(b)}{\n${bmBody(b.body ?? '')}\n}`;
     case 'pagebreak': return `\\pagebreak${bmOpts(b)}`;
@@ -4559,14 +4586,14 @@ function bmRenameId(model, oldId, newId) {
   if (!oldId || oldId === newId) return;
   for (const b of [...(model.procedure || []), ...(model.report || [])]) {
     if (b.type === 'graph' && b.opts && b.opts.table === oldId) b.opts.table = newId;
-    if ((b.type === 'usetable' || b.type === 'usegraph') && b.ref === oldId) b.ref = newId;
+    if (['usetable', 'usegraph', 'useanswer', 'usephoto'].includes(b.type) && b.ref === oldId) b.ref = newId;
   }
 }
 function bmReferencesTo(model, id) {
   const out = [];
   for (const b of [...(model.procedure || []), ...(model.report || [])]) {
     if (b.type === 'graph' && b.opts && b.opts.table === id) out.push({ block: b, field: 'table' });
-    if ((b.type === 'usetable' || b.type === 'usegraph') && b.ref === id) out.push({ block: b, field: 'ref' });
+    if (['usetable', 'usegraph', 'useanswer', 'usephoto'].includes(b.type) && b.ref === id) out.push({ block: b, field: 'ref' });
   }
   return out;
 }
@@ -4645,8 +4672,8 @@ function bmEffectiveIds(model, auto) {
 }
 function bmReferenceProblems(model, auto) {   // shared by builderParse (strings) and bmValidate (with keys)
   const out = [], eff = bmEffectiveIds(model, auto);
-  const tables = new Set(), graphs = new Set();
-  for (const [b, id] of eff) { if (b.type === 'table') tables.add(id); if (b.type === 'graph') graphs.add(id); }
+  const tables = new Set(), graphs = new Set(), answers = new Set(), photos = new Set();
+  for (const [b, id] of eff) { if (b.type === 'table') tables.add(id); if (b.type === 'graph') graphs.add(id); if (b.type === 'answer' || b.type === 'notes') answers.add(id); if (b.type === 'photo') photos.add(id); }
   for (const id of auto.dups) out.push({ k: null, msg: `Two blocks are both named '${id}'; students' answers would collide.` });
   for (const b of [...(model.procedure || []), ...(model.report || [])]) {
     if (b.type === 'graph') {
@@ -4661,6 +4688,14 @@ function bmReferenceProblems(model, auto) {   // shared by builderParse (strings
     if (b.type === 'usegraph') {
       if (!String(b.ref || '').trim()) out.push({ k: b._k ?? null, msg: 'Choose which graph this block should show.' });
       else if (!graphs.has(bmSafeId(b.ref))) out.push({ k: b._k ?? null, msg: `The report includes a graph named '${b.ref}', but no graph has that name.` });
+    }
+    if (b.type === 'useanswer') {
+      if (!String(b.ref || '').trim()) out.push({ k: b._k ?? null, msg: 'Choose which question\'s answer this block should show.' });
+      else if (!answers.has(bmSafeId(b.ref))) out.push({ k: b._k ?? null, msg: `The report includes the answer to '${b.ref}', but no question has that name.` });
+    }
+    if (b.type === 'usephoto') {
+      if (!String(b.ref || '').trim()) out.push({ k: b._k ?? null, msg: 'Choose which photo slot this block should show.' });
+      else if (!photos.has(bmSafeId(b.ref))) out.push({ k: b._k ?? null, msg: `The report includes the photo from '${b.ref}', but no photo slot has that name.` });
     }
   }
   return out;
@@ -4680,7 +4715,7 @@ function bmValidate(model, auto = bmAutoIds(model)) {
   const out = [];
   const push = (b, msg) => out.push({ k: b ? (b._k ?? null) : null, msg });
   out.push(...bmReferenceProblems(model, auto));
-  for (const b of model.procedure || []) if (b.type === 'section' || b.type === 'usetable' || b.type === 'usegraph') push(b, BM_W.sectionOutside);
+  for (const b of model.procedure || []) if (['section', 'usetable', 'usegraph', 'useanswer', 'usephoto'].includes(b.type)) push(b, BM_W.sectionOutside);
   const braceMsg = 'A curly bracket here has no partner. It is shown as a plain character, which is usually what you want.';
   for (const b of [...(model.procedure || []), ...(model.report || [])]) {
     if (b.type === 'table' && !(b.rows || []).some(r => r.some(c => BM_FILL.test(c)))) push(b, 'This table has no blank cells for students to fill in.');
@@ -4695,7 +4730,7 @@ function bmValidate(model, auto = bmAutoIds(model)) {
     if (b.type === 'callout') bodies.push(b.body);
     if (b.type === 'video') bodies.push(b.url);
     if (b.type === 'figure') bodies.push(b.path);
-    if (b.type === 'usetable' || b.type === 'usegraph') bodies.push(b.ref);
+    if (['usetable', 'usegraph', 'useanswer', 'usephoto'].includes(b.type)) bodies.push(b.ref);
     if (bodies.some(s => s && bmBodyInfo(s).escaped)) push(b, braceMsg);
     for (const m of bmOptProblems(b)) push(b, m);
   }
@@ -4769,7 +4804,7 @@ function builderNewBlock(type) {
     answer: { opts: { lines: '4' }, prompt: '' }, notes: { opts: {}, label: '' }, photo: { opts: {}, prompt: '' },
     video: { opts: {}, url: '' }, figure: { opts: {}, path: '' }, callout: { kind: 'safety', opts: {}, body: '' },
     graph: { opts: { fit: 'linear' }, caption: '' }, pagebreak: { opts: {} },
-    section: { opts: {}, prompt: '' }, usetable: { ref: '' }, usegraph: { ref: '' },
+    section: { opts: {}, prompt: '' }, usetable: { ref: '' }, usegraph: { ref: '' }, useanswer: { ref: '' }, usephoto: { ref: '' },
   }[type];
   if (!d) throw new Error('Unknown block type ' + type);
   return Object.assign({ type }, JSON.parse(JSON.stringify(d)), { _fresh: true, _open: true, _k: bmKey() });
@@ -4982,10 +5017,12 @@ const BU_PALETTE = {
   section:   'One part of the write-up: a title, your instructions, an optional hint, and a writing box.',
   usetable:  'Shows one of the lab\'s data tables, filled with the student\'s own numbers.',
   usegraph:  'Shows one of the lab\'s graphs, drawn from the student\'s own data.',
+  useanswer: 'Shows what the student wrote for one of the procedure\'s questions.',
+  usephoto:  'Shows the photo the student added in one of the procedure\'s photo slots.',
   style:     'Your writing rules, shown at the top of the Report tab.',
 };
 const BU_PROCEDURE_PALETTE = ['heading', 'text', 'steps', 'table', 'answer', 'notes', 'photo', 'video', 'figure', 'callout', 'graph', 'pagebreak'];
-const BU_REPORT_PALETTE = ['section', 'usetable', 'usegraph', 'heading', 'text'];
+const BU_REPORT_PALETTE = ['section', 'answer', 'table', 'photo', 'notes', 'graph', 'usetable', 'usegraph', 'useanswer', 'usephoto', 'heading', 'text'];
 const BU_ID_TYPES = ['steps', 'table', 'answer', 'notes', 'photo', 'graph', 'section'];
 const BU_CALLOUT_LABELS = { safety: 'Safety', warning: 'Warning', info: 'Information', tip: 'Tip', hint: 'Hint' };
 const BU_LEVELS = [[1, 'Big heading'], [2, 'Heading'], [3, 'Small heading'], [4, 'Level 4'], [5, 'Level 5'], [6, 'Level 6']];
@@ -4994,7 +5031,7 @@ const BU_EXPR_MSG_FORMULA = 'The site cannot read this formula. Write it with th
 const BU_EXPR_MSG_TRANSFORM = 'The site cannot read this. Use v for the column value, numbers, + - * / ^, ln, log, exp, sqrt, abs.';
 function buExprMsg(view) { return view && view.mode === 'formula' ? BU_EXPR_MSG_FORMULA : BU_EXPR_MSG_TRANSFORM; }
 const BU_RAW_MSG = 'The builder does not have a form for this part, so here is the text itself. It works as written; you can edit it as plain text.';
-const BU_BLOCK_CMD = /\\(procedure|datatable|answer|notes|photo|video|figure|graph|pagebreak|section|usetable|usegraph|safety|warning|info|tip|hint)\b/;
+const BU_BLOCK_CMD = /\\(procedure|datatable|answer|notes|photo|video|figure|graph|pagebreak|section|usetable|usegraph|useanswer|usephoto|safety|warning|info|tip|hint)\b/;
 
 function buEsc(s) {
   if (s == null) return '';
@@ -5118,6 +5155,8 @@ function buFindBlock(k) {
 }
 function buAllBlocks() { return [...buModel.procedure, ...buModel.report]; }
 function buTables() { return buAllBlocks().filter(b => b.type === 'table').map(b => ({ block: b, id: (b.opts && b.opts.id) || '', title: buOptStr(b, 'title') })); }
+function buAnswers() { return buModel.procedure.filter(b => b.type === 'answer' || b.type === 'notes').map(b => ({ block: b, id: (b.opts && b.opts.id) || '', title: buFirstLine(buPlainInputs(b.type === 'notes' ? (b.label || '') : (b.prompt || '')), 70) || (b.type === 'notes' ? 'Notes box' : 'Question') })); }
+function buPhotos() { return buModel.procedure.filter(b => b.type === 'photo').map(b => ({ block: b, id: (b.opts && b.opts.id) || '', title: buFirstLine(buPlainInputs(b.prompt || ''), 70) || 'Photo slot' })); }
 function buGraphs() { return buAllBlocks().filter(b => b.type === 'graph').map(b => ({ block: b, id: (b.opts && b.opts.id) || '', title: buOptStr(b, 'title') || buGraphAxesName(b) })); }
 function buGraphAxesName(b) {
   // Untitled graph: name it by the table headers it plots (never by column codes or formulas).
@@ -5205,6 +5244,8 @@ function buPaletteButtons(list, afterK) {
     let dis = '', title = BU_PALETTE[t] || '';
     if ((t === 'graph' || t === 'usetable') && !hasTable) { dis = 'disabled'; title = 'Add a data table first'; }
     if (t === 'usegraph' && !hasGraph) { dis = 'disabled'; title = 'Add a graph first'; }
+    if (t === 'useanswer' && !buAnswers().length) { dis = 'disabled'; title = 'Add a question to the procedure first'; }
+    if (t === 'usephoto' && !buPhotos().length) { dis = 'disabled'; title = 'Add a photo slot to the procedure first'; }
     return `<button type="button" class="btn-small" data-act="palette-add" data-type="${t}" data-list="${list}"${afterK != null ? ` data-after="${afterK}"` : ''} ${dis} title="${buEsc(title)}">${buEsc(buTypeInfo(t).label)}</button>`;
   }).join('');
   if (list === 'report') {
@@ -5313,6 +5354,8 @@ function buSummary(b) {
     case 'section': { const w = buOptStr(b, 'words'); return `${buOptStr(b, 'title') || buFirstLine(buPlainInputs(b.prompt), 80) || '(empty question)'}${b.opts && b.opts.required ? ' · required' : ''}${w ? ` · ${w} words` : ''}`; }
     case 'usetable': { const t = buTables().find(x => x.id && x.id === b.ref); return t ? (t.title || 'Untitled table') : `Missing: ${b.ref || '(nothing chosen)'}`; }
     case 'usegraph': { const g = buGraphs().find(x => x.id && x.id === b.ref); return g ? g.title : `Missing: ${b.ref || '(nothing chosen)'}`; }
+    case 'useanswer': { const a = buAnswers().find(x => x.id && x.id === b.ref); return a ? a.title : `Missing: ${b.ref || '(nothing chosen)'}`; }
+    case 'usephoto': { const a = buPhotos().find(x => x.id && x.id === b.ref); return a ? a.title : `Missing: ${b.ref || '(nothing chosen)'}`; }
     default: return '';
   }
 }
@@ -5356,7 +5399,7 @@ function buRefSelect(bind, kind, items, cur, noneLabel) {
   else if (!cur) h += `<option value="" selected>Choose…</option>`;
   let found = !cur;
   items.forEach(it => {
-    const label = it.title || (it.block.type === 'table' ? 'Untitled table' : 'Untitled graph');
+    const label = it.title || ({ table: 'Untitled table', graph: 'Untitled graph', answer: 'Question', notes: 'Notes box', photo: 'Photo slot' }[it.block.type] || 'Untitled');
     if (it.id) { if (cur === it.id) found = true; h += `<option value="${buEsc(it.id)}" ${cur === it.id ? 'selected' : ''}>${buEsc(label)}</option>`; }
     else h += `<option value="__auto__:${it.block._k}">${buEsc(label)} (needs a permanent name)</option>`;
   });
@@ -5422,10 +5465,16 @@ function buForm(b, list) {
     case 'pagebreak': h = `<div class="bu-note">Starts a new page when the lab is printed.</div>`; break;
     case 'section': h = buFormSection(b); break;
     case 'usetable':
-      h = buRow('Table', buRefSelect('ref', 'ref', buTables(), b.ref || ''), 'Shows this table in the report, filled with the student\'s own numbers, with a caption like "Table 1".');
+      h = buRow('Table', buRefSelect('ref', 'ref', buTables().filter(x => buModel.procedure.includes(x.block)), b.ref || ''), 'Shows this table in the report, filled with the student\'s own numbers, with a caption like "Table 1".');
       break;
     case 'usegraph':
-      h = buRow('Graph', buRefSelect('ref', 'ref', buGraphs(), b.ref || ''), 'Shows this graph in the report, drawn from the student\'s own data, with a caption like "Figure 1".');
+      h = buRow('Graph', buRefSelect('ref', 'ref', buGraphs().filter(x => buModel.procedure.includes(x.block)), b.ref || ''), 'Shows this graph in the report, drawn from the student\'s own data, with a caption like "Figure 1".');
+      break;
+    case 'useanswer':
+      h = buRow('Question', buRefSelect('ref', 'ref', buAnswers(), b.ref || ''), 'Shows the question and what the student wrote for it on the Procedure tab. They edit it there; the report copy follows along.');
+      break;
+    case 'usephoto':
+      h = buRow('Photo slot', buRefSelect('ref', 'ref', buPhotos(), b.ref || ''), 'Shows the photo the student added in this slot on the Procedure tab.');
       break;
     default: h = `<div class="bu-note">This block has no form.</div>`;
   }
@@ -5772,10 +5821,11 @@ function buOnChangeEvt(e) {
     if (val.startsWith('__auto__:')) {
       const target = buFindBlock(+val.slice(9));
       if (!target) { buRenderCard(b._k); return; }
-      const tb = target.block, name = buNameOf(tb) || (tb.type === 'table' ? 'Untitled table' : 'Untitled graph');
-      const ask = tb.type === 'table' ? `"${name}" has no permanent name yet. Give it one now? Students who already saved entries in it will not see them any more.` : `"${name}" has no permanent name yet. Give it one now?`;
+      const tb = target.block, name = buNameOf(tb) || ({ table: 'Untitled table', graph: 'Untitled graph', answer: 'This question', notes: 'This notes box', photo: 'This photo slot' }[tb.type] || 'This block');
+      const ask = (tb.type === 'table' || tb.type === 'answer' || tb.type === 'notes' || tb.type === 'photo') ? `"${name}" has no permanent name yet. Give it one now? Students who already saved entries in it will not see them any more.` : `"${name}" has no permanent name yet. Give it one now?`;
       if (!buHost.confirm(ask)) { buRenderCard(b._k); return; }
-      tb.opts.id = bmNewId(buModel, buNameOf(tb), buTypeInfo(tb.type).idBase || tb.type); tb._fresh = false;   // frozen, not fresh (A.5.8)
+      const idName = buNameOf(tb) || (['answer', 'photo'].includes(tb.type) ? buFirstLine(buPlainInputs(tb.prompt || ''), 40) : '');   // questions/photos: slug of the prompt
+      tb.opts.id = bmNewId(buModel, idName, buTypeInfo(tb.type).idBase || tb.type); tb._fresh = false;   // frozen, not fresh (A.5.8)
       val = tb.opts.id;
       if (tb._open) buRenderCard(tb._k); else buRefreshSummary(tb._k);
     }
@@ -5879,7 +5929,7 @@ function buIsBlank(b) {
     case 'figure': return !String(b.path || '').trim();
     case 'callout': return !String(b.body || '').trim();
     case 'graph': return !buOptStr(b, 'title') && !buOptStr(b, 'x') && !buOptStr(b, 'y') && !String(b.caption || '').trim();
-    case 'usetable': case 'usegraph': return !String(b.ref || '').trim();
+    case 'usetable': case 'usegraph': case 'useanswer': case 'usephoto': return !String(b.ref || '').trim();
     case 'pagebreak': return true;
     default: return false;
   }
@@ -5962,6 +6012,8 @@ function buShowBlock(b) {
     case 'section': t = { attr: 'data-section', value: id }; break;
     case 'usetable': t = { attr: 'data-mirror-table', value: b.ref }; break;
     case 'usegraph': t = { attr: 'data-mirror-graph', value: b.ref }; break;
+    case 'useanswer': t = { attr: 'data-mirror-answer', value: b.ref }; break;
+    case 'usephoto': t = { attr: 'data-mirror-photo', value: b.ref }; break;
     case 'heading': t = { selector: 'h1, h2, h3, h4, h5, h6', nth: buModel.procedure.filter(x => x.type === 'heading').indexOf(b) }; break;
     case 'callout': t = { selector: '.lt-callout', nth: buModel.procedure.filter(x => x.type === 'callout').indexOf(b) }; break;
     case 'figure': t = { selector: '.lt-figure, .lt-figure-pending', nth: buModel.procedure.filter(x => x.type === 'figure').indexOf(b) }; break;
