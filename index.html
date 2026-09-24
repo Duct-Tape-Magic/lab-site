@@ -5174,6 +5174,7 @@ function buRenderAll() {
 }
 function buRenderTemplates() {
   const el = buQ('#bu-templates'); if (!el) return;
+  el.hidden = true; el.innerHTML = ''; return;   // starter templates retired: a new lab starts empty
   const empty = typeof bmIsEmpty === 'function' ? bmIsEmpty(buModel) : (!buModel.procedure.length && !buModel.report.length && buModel.style == null);
   el.hidden = !empty;
   if (!empty) { el.innerHTML = ''; return; }
