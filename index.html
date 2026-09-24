@@ -2908,16 +2908,16 @@ async function openClass(id) {
       <button type="button" class="btn-small" style="margin-left:auto; color:var(--danger); border-color:var(--danger);" onclick="deleteClassConfirm()">Delete class</button>
     </div>
     ${c.archived ? '<p class="hint" style="margin-bottom:1rem;">This class is closed: its access codes no longer log in, but every entry is kept. Reopen it to let students back in.</p>' : ''}
-    <table class="stats-table"><thead><tr><th>Seat</th><th>Access code</th><th>Nickname (only you see it)</th><th>Last login</th><th>Labs</th><th></th></tr></thead><tbody>
+    <div style="overflow-x:auto;"><table class="stats-table"><thead><tr><th>Seat</th><th>Access code</th><th>Nickname (only you see it)</th><th>Last login</th><th>Labs</th><th></th></tr></thead><tbody>
       ${seats.map(s => `<tr>
         <td>${s.seat_no}</td>
-        <td><code class="cls-code">${escapeHTML(s.passcode)}</code></td>
+        <td style="white-space:nowrap;"><code class="cls-code">${escapeHTML(s.passcode)}</code> <button type="button" class="btn-small" onclick="copyText('${escapeHTML(s.passcode)}')" title="Copy this code">Copy</button></td>
         <td><input type="text" class="cls-nick" value="${escapeHTML(s.nickname || '')}" placeholder="—" onchange="saveNickname('${s.user_id}', this.value)"/></td>
         <td>${s.last_sign_in_at ? escapeHTML(formatDate(s.last_sign_in_at)) : '<span class="hint" style="margin:0;">never</span>'}</td>
         <td>${s.entries ? `<button type="button" class="btn-small" onclick="showSeatLabs('${s.user_id}')">${s.entries}</button>` : '0'}</td>
         <td style="white-space:nowrap;"><button type="button" class="btn-small" onclick="regenerateSeat('${s.user_id}', ${s.seat_no})" title="Give this seat a new access code (the old one stops working; entries are kept)">New code</button> <button type="button" class="btn-small" style="color:var(--danger);" onclick="deleteSeatConfirm('${s.user_id}', ${s.seat_no})">Remove</button></td>
       </tr><tr id="seatlabs-${s.user_id}" hidden><td colspan="6"><span class="hint">Loading…</span></td></tr>`).join('')}
-    </tbody></table>
+    </tbody></table></div>
     <p class="hint" style="margin-top:1rem;">"New code" is the fix for a lost or shared code. "Remove" deletes the seat and its entries. Closing the class keeps everything but stops logins, which is the right choice at the end of a term.</p>`;
 }
 async function showSeatLabs(uid) {
@@ -2969,6 +2969,7 @@ async function deleteClassConfirm() {
   if (prompt(`Type the class name to confirm deleting it:`) !== c.name) { toast('Name did not match; nothing deleted'); return; }
   try { await rpc('delete_class', { p_class_id: c.id }); toast('Class deleted'); await renderClassesList(); } catch (e) { toast(e.message, true); }
 }
+function copyText(t) { navigator.clipboard.writeText(t).then(() => toast('Copied'), () => prompt('Copy:', t)); }
 function copyCodeList() {
   const c = classesView.cls, text = classesView.seats.map(s => `Seat ${s.seat_no}\t${s.passcode}${s.nickname ? '\t' + s.nickname : ''}`).join('\n');
   navigator.clipboard.writeText(`${c.name}\n${text}`).then(() => toast('List copied'), () => prompt('Copy this list:', text));
@@ -3079,7 +3080,7 @@ async function loadStudentsAndEntries() {
   const [s, e, cl, se] = await Promise.all([sb.from('students').select('*').order('created_at'), sb.from('lab_entries').select('user_id, lab_id, updated_at'), sb.from('classes').select('*'), sb.from('seats').select('*')]);
   if (s.error) throw s.error; if (e.error) throw e.error;
   const classes = Object.fromEntries((cl.data || []).map(c => [c.id, c]));
-  const seatRows = (se.data || []).map(x => ({ user_id: x.user_id, email: '', full_name: seatLabel(classes[x.class_id], x), created_at: x.created_at, seat: true }));
+  const seatRows = (se.data || []).map(x => ({ user_id: x.user_id, email: '', full_name: seatLabel(classes[x.class_id], x), created_at: x.created_at, seat: true, passcode: x.passcode }));
   statsCache.students = [...(s.data || []), ...seatRows]; statsCache.entries = e.data || [];
   return statsCache;
 }
@@ -3089,13 +3090,20 @@ async function renderStatsStudents() {
   const list = students.filter(s => !adminIds.has(s.user_id));
   const byUser = {}; entries.forEach(e => { (byUser[e.user_id] = byUser[e.user_id] || []).push(e); });
   body.innerHTML = `
-    <div class="lt-toolbar" style="margin-bottom:1rem;"><span class="hint" style="margin:0;">${list.length} student account${list.length === 1 ? '' : 's'}</span><button type="button" class="btn-small" style="margin-left:auto;" onclick="exportStudentsCsv()">Export CSV</button></div>
-    ${list.length ? `<table class="stats-table"><thead><tr><th>Name</th><th>Email</th><th>Joined</th><th>Labs with entries</th><th>Last activity</th></tr></thead><tbody>${list.map(s => {
+    <div class="lt-toolbar" style="margin-bottom:1rem;"><span class="hint" style="margin:0;">${list.length} student account${list.length === 1 ? '' : 's'}</span>${list.some(s => s.seat) ? `<button type="button" class="btn-small" onclick="toggleAllCodes(this)">Show all access codes</button>` : ''}<button type="button" class="btn-small" style="margin-left:auto;" onclick="exportStudentsCsv()">Export CSV</button></div>
+    ${list.length ? `<div style="overflow-x:auto;"><table class="stats-table"><thead><tr><th>Name</th><th>Email / access code</th><th>Joined</th><th>Labs with entries</th><th>Last activity</th></tr></thead><tbody>${list.map(s => {
       const es = byUser[s.user_id] || []; const last = es.length ? es.map(e => e.updated_at).sort().pop() : null;
-      return `<tr class="stats-row" onclick="showStudentLabs('${s.user_id}')"><td>${escapeHTML(s.full_name || '')}</td><td>${escapeHTML(s.email)}</td><td>${escapeHTML(formatDate(s.created_at))}</td><td>${es.length}</td><td>${last ? escapeHTML(formatDate(last)) : '—'}</td></tr>
+      const idCell = s.seat ? `<span class="code-hidden" data-code="${escapeHTML(s.passcode)}"><button type="button" class="btn-small" onclick="event.stopPropagation(); revealCode(this)">Show code</button></span>` : escapeHTML(s.email);
+      return `<tr class="stats-row" onclick="showStudentLabs('${s.user_id}')"><td>${escapeHTML(s.full_name || '')}</td><td style="white-space:nowrap;">${idCell}</td><td>${escapeHTML(formatDate(s.created_at))}</td><td>${es.length}</td><td>${last ? escapeHTML(formatDate(last)) : '—'}</td></tr>
       <tr id="studentlabs-${s.user_id}" hidden><td colspan="5">${es.length ? es.map(e => `<div style="display:flex; gap:0.75rem; align-items:center; padding:0.3rem 0;"><span style="flex:1;">${escapeHTML(labTitle(e.lab_id))}</span><span class="hint" style="margin:0;">${escapeHTML(formatDate(e.updated_at))}</span><button type="button" class="btn-small" onclick="event.stopPropagation(); reviewEntries('${s.user_id}', '${e.lab_id}')">View entries</button></div>`).join('') : '<span class="hint">No saved entries yet.</span>'}</td></tr>`;
-    }).join('')}</tbody></table>` : `<div class="empty-state" style="padding:1.5rem;">No student accounts yet. Students create one with the Log in button.</div>`}`;
+    }).join('')}</tbody></table></div>` : `<div class="empty-state" style="padding:1.5rem;">No student accounts yet. Students create one with the Log in button, or you create a class of access codes.</div>`}`;
 }
+function revealCode(btn) {
+  const span = btn.closest('.code-hidden'); const code = span.dataset.code;
+  span.innerHTML = `<code class="cls-code">${escapeHTML(code)}</code> <button type="button" class="btn-small" onclick="event.stopPropagation(); copyText('${escapeHTML(code)}')">Copy</button>`;
+  span.classList.remove('code-hidden');
+}
+function toggleAllCodes(btn) { document.querySelectorAll('#stats-body .code-hidden button').forEach(b => revealCode(b)); btn.remove(); }
 function showStudentLabs(uid) { const el = $('studentlabs-' + uid); if (el) el.hidden = !el.hidden; }
 async function renderStatsResults() {
   const body = $('stats-body'); const { students, entries } = await loadStudentsAndEntries();
