@@ -31,6 +31,10 @@
 3. Pictures: under the text box there is a "Figures in this lab file" area. Drop a picture there and it is placed on its own line just below wherever your cursor is in the text. If Claude left `IMAGE_1`-style placeholders, click the dashed box in the preview to upload the picture straight into that spot. Each figure has Insert and Remove buttons; Remove takes it out of the text and deletes the file.
 4. Publish. Students see tables they can type into, answer boxes, notes on each step, photo slots and checklists. Their entries save in their own browser and print with the lab (Print → Save as PDF) for hand-in through Canvas.
 
+## Classes and access codes
+
+For students who should not use an email: admin bar → Classes → New class. Give it a name, a short code such as P3, and the number of seats. Click "Print access codes" and cut the sheet into slips, one per student, and keep your own list of who got which seat. Students click Log in → Access Code Login and type the code; it works on any number of devices, and everything they type in a lab follows the code. The site never stores their name. In the class page you can give a seat a new code (if one is lost or shared), remove a seat, add a nickname only you see, and at the end of the term "Close class", which keeps all entries but stops logins.
+
 ## Media rules of thumb
 
 - Photos: JPG or PNG straight from a phone are fine; the site shrinks them. iPhone HEIC photos need "Most Compatible" format in Camera settings.

@@ -208,7 +208,7 @@ $$;
 
 -- Admin sets or clears an item password (plaintext never stored)
 create or replace function public.set_item_password(p_item_id text, p_password text) returns void
-language plpgsql security definer set search_path = public as $$
+language plpgsql security definer set search_path = public, extensions as $$
 begin
   if not is_admin() then raise exception 'admin only'; end if;
   if p_password is null or p_password = '' then
@@ -478,3 +478,186 @@ begin
     where e.lab_id is not null and e.ts >= now() - make_interval(days => n_days)
     group by e.lab_id, e.ts::date order by e.lab_id, e.ts::date;
 end $$;
+-- ============================================================
+-- Classes of access-code accounts (no email; passcode only)
+-- ============================================================
+create table if not exists public.classes (
+  id         text primary key,
+  name       text not null,
+  prefix     text not null,
+  archived   boolean not null default false,
+  created_at timestamptz not null default now()
+);
+create table if not exists public.seats (
+  user_id    uuid primary key references auth.users(id) on delete cascade,
+  class_id   text not null references public.classes(id) on delete cascade,
+  seat_no    integer not null,
+  passcode   text not null unique,
+  nickname   text,
+  created_at timestamptz not null default now(),
+  unique (class_id, seat_no)
+);
+alter table public.classes enable row level security;
+alter table public.seats   enable row level security;
+drop policy if exists "admin all classes" on public.classes;
+create policy "admin all classes" on public.classes for all using (is_admin()) with check (is_admin());
+drop policy if exists "seat reads own class" on public.classes;
+create policy "seat reads own class" on public.classes for select
+  using (exists (select 1 from public.seats s where s.class_id = classes.id and s.user_id = auth.uid()));
+drop policy if exists "admin all seats" on public.seats;
+create policy "admin all seats" on public.seats for all using (is_admin()) with check (is_admin());
+drop policy if exists "seat reads self" on public.seats;
+create policy "seat reads self" on public.seats for select using (user_id = auth.uid());
+
+-- is_admin: also true for direct dashboard sessions (never for API roles), so functions can be exercised from the SQL editor
+create or replace function public.is_admin() returns boolean
+language sql stable as $$
+  select coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'admin' or session_user = 'postgres'
+$$;
+
+-- Seat accounts are not listed as named students
+create or replace function public.handle_new_user() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if new.email like '%@seats.ohschemlabs.com' then return new; end if;
+  insert into public.students (user_id, email, full_name)
+  values (new.id, coalesce(new.email, ''), coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name'))
+  on conflict (user_id) do update set email = excluded.email, full_name = coalesce(excluded.full_name, students.full_name);
+  return new;
+end $$;
+
+create or replace function public.seat_email(p_code text) returns text
+language sql immutable as $$
+  select lower(trim(both '-' from regexp_replace(upper(trim(p_code)), '[^A-Z0-9]+', '-', 'g'))) || '@seats.ohschemlabs.com'
+$$;
+
+create or replace function public.gen_passcode(p_prefix text) returns text
+language plpgsql volatile as $$
+declare
+  words text[] := array['TIGER','MAPLE','RIVER','COMET','FALCON','CEDAR','EMBER','GLACIER','HARBOR','ISLAND','JASPER','KESTREL','LANTERN','METEOR','NEBULA','ORCHID','PEBBLE','QUARTZ','RAVEN','SUMMIT','THUNDER','VALLEY','WALNUT','ZEPHYR','AMBER','BEACON','CANYON','DELTA','EAGLE','FOREST','GARNET','HAZEL','IRIS','JUNIPER','KOALA','LAGOON','MARBLE','NECTAR','OTTER','PRISM','QUILL','ROCKET','SADDLE','TUNDRA','UMBER','VELVET','WILLOW','YARROW','ACORN','BADGER','CINDER','DUNE','ELM','FJORD','GRANITE','HERON','INLET','JADE','KELP','LOTUS','MESA','NORTH','OASIS','PINE','QUAIL','REEF','SPRUCE','TOPAZ','VORTEX','WREN','ASPEN','BISON','CORAL','DRIFT','ECHO','FERN','GROVE','HALO','IVORY','JETTY','KITE','LUNAR','MOSS','NOVA','ONYX','PLUM','RIDGE','SLATE','TRAIL','VISTA','WAVE','BERRY','CLOUD','DAWN','FLARE','GLOW','HAWK','LILAC','MINT','OPAL','PEARL','ROBIN','STORM','TIDE','VINE','WHEAT'];
+begin
+  return upper(regexp_replace(p_prefix, '[^A-Za-z0-9]+', '', 'g')) || '-' || words[1 + floor(random() * array_length(words, 1))::int] || '-' || lpad(floor(random() * 10000)::int::text, 4, '0');
+end $$;
+
+create or replace function public.create_class(p_name text, p_prefix text) returns text
+language plpgsql security definer set search_path = public as $$
+declare v_id text := 'c-' || floor(extract(epoch from clock_timestamp()) * 1000)::bigint::text;
+begin
+  if not is_admin() then raise exception 'admin only'; end if;
+  if coalesce(trim(p_name), '') = '' then raise exception 'A class needs a name'; end if;
+  insert into classes (id, name, prefix) values (v_id, trim(p_name), upper(regexp_replace(coalesce(p_prefix, 'C'), '[^A-Za-z0-9]+', '', 'g')));
+  insert into groups (id, name) values (v_id, trim(p_name)) on conflict (id) do nothing;
+  return v_id;
+end $$;
+
+create or replace function public.add_seats(p_class_id text, p_count int)
+returns table(user_id uuid, seat_no int, passcode text)
+language plpgsql security definer set search_path = public, extensions as $$
+declare
+  v_prefix text; v_next int; v_code text; v_uid uuid; v_email text; i int;
+begin
+  if not is_admin() then raise exception 'admin only'; end if;
+  select c.prefix into v_prefix from classes c where c.id = p_class_id;
+  if v_prefix is null then raise exception 'No such class'; end if;
+  if p_count < 1 or p_count > 200 then raise exception 'Add between 1 and 200 seats at a time'; end if;
+  for i in 1..p_count loop
+    select coalesce(max(s.seat_no), 0) + 1 into v_next from seats s where s.class_id = p_class_id;
+    loop
+      v_code := gen_passcode(v_prefix);
+      exit when not exists (select 1 from seats s where s.passcode = v_code);
+    end loop;
+    v_uid := gen_random_uuid(); v_email := seat_email(v_code);
+    insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
+                            created_at, updated_at, confirmation_token, recovery_token, email_change, email_change_token_new, email_change_token_current, phone_change, phone_change_token, reauthentication_token, is_sso_user)
+    values ('00000000-0000-0000-0000-000000000000', v_uid, 'authenticated', 'authenticated', v_email, crypt(v_code, gen_salt('bf', 10)), now(),
+            jsonb_build_object('provider', 'email', 'providers', array['email'], 'role', 'seat'), jsonb_build_object('seat', true),
+            now(), now(), '', '', '', '', '', '', '', '', false);
+    insert into auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+    values (gen_random_uuid(), v_uid, v_uid::text, jsonb_build_object('sub', v_uid::text, 'email', v_email, 'email_verified', true, 'phone_verified', false), 'email', now(), now(), now());
+    insert into seats (user_id, class_id, seat_no, passcode) values (v_uid, p_class_id, v_next, v_code);
+    insert into group_members (group_id, user_id) values (p_class_id, v_uid) on conflict do nothing;
+    user_id := v_uid; seat_no := v_next; passcode := v_code; return next;
+  end loop;
+end $$;
+
+create or replace function public.regenerate_seat(p_user uuid) returns text
+language plpgsql security definer set search_path = public, extensions as $$
+declare v_prefix text; v_code text; v_email text;
+begin
+  if not is_admin() then raise exception 'admin only'; end if;
+  select c.prefix into v_prefix from seats s join classes c on c.id = s.class_id where s.user_id = p_user;
+  if v_prefix is null then raise exception 'No such seat'; end if;
+  loop
+    v_code := gen_passcode(v_prefix);
+    exit when not exists (select 1 from seats s where s.passcode = v_code);
+  end loop;
+  v_email := seat_email(v_code);
+  update auth.users set email = v_email, encrypted_password = crypt(v_code, gen_salt('bf', 10)), updated_at = now() where id = p_user;
+  update auth.identities set identity_data = identity_data || jsonb_build_object('email', v_email), updated_at = now() where auth.identities.user_id = p_user and provider = 'email';
+  update seats set passcode = v_code where user_id = p_user;
+  return v_code;
+end $$;
+
+create or replace function public.delete_seat(p_user uuid) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'admin only'; end if;
+  delete from auth.users where id = p_user and exists (select 1 from seats s where s.user_id = p_user);
+end $$;
+
+create or replace function public.delete_class(p_class_id text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'admin only'; end if;
+  delete from auth.users where id in (select s.user_id from seats s where s.class_id = p_class_id);
+  delete from classes where id = p_class_id;
+  delete from groups where id = p_class_id;
+end $$;
+
+create or replace function public.set_class_archived(p_class_id text, p_archived boolean) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'admin only'; end if;
+  update classes set archived = p_archived where id = p_class_id;
+  update auth.users set banned_until = case when p_archived then 'infinity'::timestamptz else null end, updated_at = now()
+    where id in (select s.user_id from seats s where s.class_id = p_class_id);
+end $$;
+
+create or replace function public.list_classes()
+returns table(id text, name text, prefix text, archived boolean, created_at timestamptz, seat_count bigint)
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'admin only'; end if;
+  return query select c.id, c.name, c.prefix, c.archived, c.created_at, (select count(*) from seats s where s.class_id = c.id)
+    from classes c order by c.archived, c.created_at;
+end $$;
+
+create or replace function public.list_class_seats(p_class_id text)
+returns table(user_id uuid, seat_no int, passcode text, nickname text, last_sign_in_at timestamptz, entries bigint)
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'admin only'; end if;
+  return query select s.user_id, s.seat_no, s.passcode, s.nickname, u.last_sign_in_at,
+      (select count(*) from lab_entries e where e.user_id = s.user_id)
+    from seats s join auth.users u on u.id = s.user_id where s.class_id = p_class_id order by s.seat_no;
+end $$;
+
+create or replace function public.my_seat()
+returns table(class_name text, seat_no int, nickname text, archived boolean)
+language sql stable security definer set search_path = public as $$
+  select c.name, s.seat_no, s.nickname, c.archived from seats s join classes c on c.id = s.class_id where s.user_id = auth.uid()
+$$;
+
+-- Seats cannot delete themselves; their teacher manages them
+create or replace function public.delete_my_account() returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null then raise exception 'not signed in'; end if;
+  if is_admin() then raise exception 'admin accounts cannot be deleted from the site'; end if;
+  if exists (select 1 from seats s where s.user_id = auth.uid()) then raise exception 'access code accounts are managed by the teacher'; end if;
+  delete from auth.users where id = auth.uid();
+end $$;
+
+revoke execute on function public.gen_passcode(text) from public, anon;
+revoke execute on function public.seat_email(text) from public, anon;
+grant execute on function public.seat_email(text) to authenticated;

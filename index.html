@@ -117,6 +117,9 @@
   }
   .nav-admin:hover { opacity: 1; }
   .nav-login { padding: 0.5rem 1.1rem; border-color: var(--ink); white-space: nowrap; }
+  .access-login { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 0.5px solid var(--rule); }
+  .access-title { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+  .access-login input { text-transform: uppercase; letter-spacing: 0.08em; font-family: 'IBM Plex Mono', monospace; }
   .login-admin summary { cursor: pointer; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 1.5rem 0 1rem; user-select: none; }
   .login-admin summary:hover { color: var(--ink); }
 
@@ -432,6 +435,10 @@
   .text-group .form-row { margin-bottom: 0.85rem; }
   .text-group .form-row label { font-size: 10px; text-transform: none; letter-spacing: 0.02em; }
 
+  .cls-code { font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.06em; font-size: 13px; }
+  .cls-nick { width: 100%; background: transparent; border: none; border-bottom: 0.5px solid var(--rule); font-family: var(--font-body); font-size: 13px; color: var(--ink); padding: 0.2rem 0; }
+  .cls-nick:focus { outline: none; border-bottom-color: var(--rule-strong); }
+  tr.cls-archived td { color: var(--muted); }
   .toast {
     position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--ink); color: var(--bg);
     padding: 0.75rem 1.5rem; border-radius: 4px; font-size: 13px; letter-spacing: 0.04em; opacity: 0; transition: all 0.3s; z-index: 200; pointer-events: none; max-width: 90vw;
@@ -714,6 +721,7 @@
     <button onclick="openSiteTextModal()">Site text</button>
     <button onclick="openDesignModal()">Design</button>
     <button onclick="openStatsModal()">Stats</button>
+    <button onclick="openClassesModal()">Classes</button>
     <button onclick="openAdminsModal()">Admins</button>
     <button onclick="logoutAdmin()">Log out</button>
   </div>
@@ -751,6 +759,14 @@
     <div id="google-btn-modal" class="google-btn-host"></div>
     <button type="button" class="btn google-btn" onclick="signInWithGoogle()" id="google-login-btn" hidden><svg viewBox="0 0 48 48" width="16" height="16" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.6 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.3l7.8 6C12.3 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17z"/><path fill="#FBBC05" d="M10.4 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.8-6C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.7l7.8-6z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.7-4.1-13.6-9.8l-7.8 6C6.5 42.6 14.6 48 24 48z"/></svg><span id="login-google-label">Continue with Google</span></button>
     <p id="login-hint" style="font-size:12px; color:var(--muted); margin-top:0.75rem; line-height:1.6;"></p>
+    <div class="access-login">
+      <div class="access-title" id="access-title">Access Code Login</div>
+      <p class="hint" id="access-hint" style="margin:0 0 0.6rem;"></p>
+      <form onsubmit="return submitAccessCode(event, 'access-code-input', 'access-code-btn', 'access-code-error')">
+        <div class="media-add-row"><input type="text" id="access-code-input" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="P3-TIGER-4821"/><button type="submit" id="access-code-btn">Log in</button></div>
+        <div class="lock-error" id="access-code-error"></div>
+      </form>
+    </div>
     <details class="login-admin">
       <summary id="login-admin-toggle">Admin email and password</summary>
       <div class="form-row"><label>Email</label><input type="email" id="login-email" autocomplete="email"/></div>
@@ -1003,6 +1019,16 @@
   </div>
 </div>
 
+<!-- Classes (access-code accounts) -->
+<div class="modal-backdrop" id="classes-modal">
+  <div class="modal modal-wide">
+    <button class="modal-close" onclick="closeModal('classes-modal')">×</button>
+    <h2>Classes</h2>
+    <p style="font-size:13px; color:var(--muted); margin-bottom:1.25rem; line-height:1.6;">A class is a set of accounts that log in with an access code instead of an email. Hand each student one code; keep your own list of who has which. The site never learns a student's name. A code works on any number of devices at once.</p>
+    <div id="classes-body"></div>
+  </div>
+</div>
+
 <!-- Admins -->
 <div class="modal-backdrop" id="admins-modal">
   <div class="modal modal-narrow">
@@ -1125,9 +1151,18 @@ const DEFAULTS = {
   accountDelete: 'Delete my account',
   accountDeleteConfirm: 'Delete your account and every saved entry? This cannot be undone.',
   accountDeleted: 'Your account has been deleted.',
+  accessTitle: 'Access Code Login',
+  accessHint: 'Your teacher may have given you an access code. It works on any device and needs no email.',
+  accessButton: 'Log in',
+  accessWrong: 'That access code is not right. Check it with your teacher.',
+  accessArchived: 'This access code has been closed. Ask your teacher.',
+  seatName: '{cls} · Seat {n}',
+  seatShort: 'Seat {n}',
+  seatUnknown: 'Access code account',
+  seatManaged: 'This account was created by your teacher with an access code. Your teacher manages it; nothing about you is stored except your lab entries.',
   privacyLink: 'Privacy',
   privacyTitle: 'Privacy',
-  privacyBody: '<p>This site publishes lab procedures for students. You can use it without an account.</p><p>If you choose to sign in with Google, the site stores only your name and email address so your lab entries can follow you between devices. Your entries are visible to you and to the site administrators (your teachers). Nothing is sold or shared with anyone else, and no advertising is shown.</p><p>You can delete your account and every saved entry at any time: while signed in, click your name at the top of the page and choose Delete my account. Anonymous usage statistics (which labs are opened, on what kind of device) are collected without any personal information.</p>',
+  privacyBody: '<p>This site publishes lab procedures for students. You can use it without an account.</p><p>If you choose to sign in with Google, the site stores only your name and email address so your lab entries can follow you between devices. If your teacher gives you an access code instead, the site stores no name and no email at all: only a seat number in your class and your lab entries. Your entries are visible to you and to the site administrators (your teachers). Nothing is sold or shared with anyone else, and no advertising is shown.</p><p>You can delete your account and every saved entry at any time: while signed in, click your name at the top of the page and choose Delete my account. Anonymous usage statistics (which labs are opened, on what kind of device) are collected without any personal information.</p>',
   notFoundTitle: 'Page not found',
   notFoundBody: 'That link does not go anywhere. It may have been moved or unpublished.',
   notFoundHome: 'Go to the home page',
@@ -1181,7 +1216,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Cards', keys: ['cardMinutes', 'cardUpdated', 'lockedBadge', 'signInRequiredBadge', 'draftBadge', 'scheduledBadge', 'hiddenBadge'] },
   { label: 'Lab page', keys: ['labMinutes', 'labUpdated', 'labFilesLabel', 'labDownloadFile', 'labViewInline', 'labPrint', 'labCopyLink', 'labLinkCopied', 'labPrev', 'labNext', 'labNoContent'] },
   { label: 'Locked labs', keys: ['lockPasswordTitle', 'lockPasswordPrompt', 'lockPasswordPlaceholder', 'lockPasswordButton', 'lockPasswordWrong', 'lockTooMany', 'lockAccountsTitle', 'lockAccountsPrompt', 'lockNotAllowed', 'lockAdminOnly', 'lockUnavailable'] },
-  { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'privacyLink', 'privacyTitle'] },
+  { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'accessTitle', 'accessHint', 'accessButton', 'accessWrong', 'accessArchived', 'seatName', 'seatShort', 'seatUnknown', 'seatManaged', 'privacyLink', 'privacyTitle'] },
   { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
   { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportPlaceholder', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
@@ -1200,7 +1235,7 @@ const TEXT_LABELS = {
   lockPasswordWrong: 'Wrong password message', lockTooMany: 'Too many attempts message', lockAccountsTitle: 'Account lock title', lockAccountsPrompt: 'Account lock prompt',
   lockNotAllowed: 'Not allowed message', lockAdminOnly: 'Admin-only message', lockUnavailable: 'Lock server unavailable message',
   signInLink: 'Log in button / link', loginTitle: 'Log-in box title', loginAdminToggle: 'Admin fields toggle', signOutLink: 'Sign-out link', signInTitle: 'Sign-in title', signInIntro: 'Sign-in explanation', signInGoogle: 'Google button', signInCreateHint: 'Creates-an-account note', signInError: 'Sign-in error',
-  accountTitle: 'Account page title', accountSignedInAs: 'Signed-in-as line', accountSyncOn: 'Syncing note', accountHello: 'Greeting in the menu', accountDelete: 'Delete account button', accountDeleteConfirm: 'Delete account confirmation', accountDeleted: 'Account deleted message', privacyLink: 'Privacy link', privacyTitle: 'Privacy page title', privacyBody: 'Privacy page text',
+  accountTitle: 'Account page title', accountSignedInAs: 'Signed-in-as line', accountSyncOn: 'Syncing note', accountHello: 'Greeting in the menu', accountDelete: 'Delete account button', accountDeleteConfirm: 'Delete account confirmation', accountDeleted: 'Account deleted message', accessTitle: 'Access code heading', accessHint: 'Access code hint', accessButton: 'Access code button', accessWrong: 'Wrong access code message', accessArchived: 'Closed access code message', seatName: 'Seat name ({cls}, {n})', seatShort: 'Short seat name ({n})', seatUnknown: 'Seat fallback name', seatManaged: 'Seat account note', privacyLink: 'Privacy link', privacyTitle: 'Privacy page title', privacyBody: 'Privacy page text',
   notFoundTitle: 'Not found title', notFoundBody: 'Not found text', notFoundHome: 'Not found home link', unavailableTitle: 'Unavailable title', unavailableBody: 'Unavailable text',
   fallbackBanner: 'Saved-copy banner', errorBanner: 'Error banner',
   entriesInfo: 'Autosave notice', entriesSaved: 'Saved flash', entriesClear: 'Clear entries button', entriesClearConfirm: 'Clear entries confirmation',
@@ -1517,6 +1552,7 @@ function renderChrome() {
   $('login-title').textContent = getText('loginTitle'); $('login-intro').textContent = getText('signInIntro');
   $('login-google-label').textContent = getText('signInGoogle'); $('login-hint').textContent = getText('signInCreateHint');
   $('login-admin-toggle').textContent = getText('loginAdminToggle');
+  $('access-title').textContent = getText('accessTitle'); $('access-hint').textContent = getText('accessHint'); $('access-code-btn').textContent = getText('accessButton');
   $('footer-privacy').textContent = getText('privacyLink');
   $('announce-dismiss').textContent = 'Dismiss';
   renderAnnouncement();
@@ -1707,8 +1743,11 @@ function renderNotFound(view) {
 }
 
 function isStudent() { return !!state.session && !isAdmin(); }
-function studentName() { const u = state.session?.user; return u?.user_metadata?.full_name || u?.user_metadata?.name || u?.email || ''; }
-function studentFirstName() { return studentName().split(/[\s@]/)[0] || ''; }
+function studentName() {
+  if (isSeat()) { const st = state.seat; return st ? fmt('seatName', { cls: st.class_name, n: st.seat_no }) + (st.nickname ? ` (${st.nickname})` : '') : getText('seatUnknown'); }
+  const u = state.session?.user; return u?.user_metadata?.full_name || u?.user_metadata?.name || u?.email || '';
+}
+function studentFirstName() { if (isSeat()) return state.seat ? fmt('seatShort', { n: state.seat.seat_no }) : getText('seatUnknown'); return studentName().split(/[\s@]/)[0] || ''; }
 const GOOGLE_SVG = '<svg viewBox="0 0 48 48" width="16" height="16" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.6 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.3l7.8 6C12.3 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17z"/><path fill="#FBBC05" d="M10.4 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.8-6C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.7l7.8-6z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.7-4.1-13.6-9.8l-7.8 6C6.5 42.6 14.6 48 24 48z"/></svg>';
 function renderSignIn(view) {
   document.title = `${getText('signInTitle')} · ${getText('siteTitle')}`;
@@ -1717,9 +1756,10 @@ function renderSignIn(view) {
       <div style="max-width:var(--measure);">
         <p>${fmt('accountSignedInAs', { name: studentName() })}</p>
         <p style="color:var(--muted); font-size:14px; margin-top:0.5rem;">${escapeHTML(getText('accountSyncOn'))}</p>
+        ${isSeat() ? `<p style="color:var(--muted); font-size:14px; margin-top:0.5rem;">${escapeHTML(getText('seatManaged'))}</p>` : ''}
         <div class="lab-toolbar" style="margin-top:1.5rem;">
           <button class="btn" onclick="signOutStudent()">${escapeHTML(getText('signOutLink'))}</button>
-          <button class="btn btn-danger" onclick="deleteMyAccount()">${escapeHTML(getText('accountDelete'))}</button>
+          ${isSeat() ? '' : `<button class="btn btn-danger" onclick="deleteMyAccount()">${escapeHTML(getText('accountDelete'))}</button>`}
         </div>
       </div></section>`;
     return;
@@ -1729,8 +1769,34 @@ function renderSignIn(view) {
       <p style="color:var(--muted); font-size:15px;">${escapeHTML(getText('signInIntro'))}</p>
       <div style="margin:1.5rem 0 0.75rem;"><div id="google-btn-page" class="google-btn-host" style="justify-content:flex-start;"></div><button type="button" class="btn google-btn" id="google-page-btn" onclick="signInWithGoogle('#/signin')" hidden>${GOOGLE_SVG}${escapeHTML(getText('signInGoogle'))}</button></div>
       <p style="color:var(--muted); font-size:13px;">${escapeHTML(getText('signInCreateHint'))}</p>
+      <div class="access-login">
+        <div class="access-title">${escapeHTML(getText('accessTitle'))}</div>
+        <p class="hint" style="margin:0 0 0.6rem;">${escapeHTML(getText('accessHint'))}</p>
+        <form onsubmit="return submitAccessCode(event, 'access-code-page', 'access-code-page-btn', 'access-code-page-error', '#/')">
+          <div class="media-add-row"><input type="text" id="access-code-page" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="P3-TIGER-4821"/><button type="submit" id="access-code-page-btn">${escapeHTML(getText('accessButton'))}</button></div>
+          <div class="lock-error" id="access-code-page-error"></div>
+        </form>
+      </div>
     </div></section>`;
   mountGoogleButton($('google-btn-page'), $('google-page-btn'), '#/signin');
+}
+function normalizeAccessCode(v) { return String(v || '').toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
+function isSeat() { return state.session?.user?.app_metadata?.role === 'seat'; }
+async function loadMySeat() {
+  if (!sb || !isSeat()) { state.seat = null; return; }
+  try { const { data } = await sb.rpc('my_seat'); state.seat = (data && data[0]) || null; } catch (e) { state.seat = null; }
+}
+async function submitAccessCode(e, inputId, btnId, errId, returnHash) {
+  e.preventDefault();
+  const code = normalizeAccessCode($(inputId).value); const err = $(errId); err.textContent = '';
+  if (!code) return false;
+  const btn = $(btnId); btn.disabled = true;
+  const { data, error } = await sb.auth.signInWithPassword({ email: code.toLowerCase() + '@seats.ohschemlabs.com', password: code });
+  btn.disabled = false;
+  if (error || !data?.session) { err.textContent = getText(/banned/i.test(error?.message || '') ? 'accessArchived' : 'accessWrong'); return false; }
+  closeModal('login-modal');
+  if (returnHash) navigate(returnHash);
+  return false;
 }
 function renderPrivacy(view) {
   document.title = `${getText('privacyTitle')} · ${getText('siteTitle')}`;
@@ -2044,6 +2110,7 @@ async function checkSession() {
   try {
     const { data } = await sb.auth.getSession();
     state.session = data.session; state.role = roleFromSession(data.session);
+    await loadMySeat();
   } catch (e) { console.warn('session check failed', e); }
   document.body.classList.toggle('admin-mode', isAdmin());
 }
@@ -2728,6 +2795,138 @@ async function saveSiteText() {
 }
 
 /* ============================================================
+   CLASSES PANEL (access-code accounts)
+   ============================================================ */
+let classesView = { classId: null, seats: [] };
+async function openClassesModal() { classesView = { classId: null, seats: [] }; openModal('classes-modal'); await renderClassesList(); }
+async function renderClassesList() {
+  const body = $('classes-body'); body.innerHTML = '<p style="color:var(--muted);">Loading…</p>';
+  let classes;
+  try { classes = await rpc('list_classes'); } catch (e) { body.innerHTML = `<div class="lt-error">${escapeHTML(e.message)}</div>`; return; }
+  body.innerHTML = `
+    <div class="text-group">
+      <p class="text-group-label">New class</p>
+      <div class="form-grid-3">
+        <div class="form-row"><label>Class name</label><input type="text" id="cls-name" placeholder="e.g. Period 3 Chemistry"/></div>
+        <div class="form-row"><label>Short code (starts every access code)</label><input type="text" id="cls-prefix" placeholder="e.g. P3" maxlength="6" style="text-transform:uppercase;"/></div>
+        <div class="form-row"><label>Number of seats</label><input type="number" id="cls-count" min="1" max="200" value="30"/></div>
+      </div>
+      <button type="button" class="btn btn-accent" onclick="createClass()" id="cls-create-btn">Create class</button>
+    </div>
+    ${classes.length ? `<table class="stats-table"><thead><tr><th>Class</th><th>Code starts with</th><th>Seats</th><th>Created</th><th></th></tr></thead><tbody>${classes.map(c => `<tr class="${c.archived ? 'cls-archived' : ''}"><td>${escapeHTML(c.name)}${c.archived ? ' <span class="badge">closed</span>' : ''}</td><td>${escapeHTML(c.prefix)}-…</td><td>${c.seat_count}</td><td>${escapeHTML(formatDate(c.created_at))}</td><td><button type="button" class="btn-small" onclick="openClass('${c.id}')">Open</button></td></tr>`).join('')}</tbody></table>` : `<div class="empty-state" style="padding:1.5rem;">No classes yet. Create one above and print its access codes.</div>`}`;
+  setTimeout(() => $('cls-name')?.focus(), 100);
+}
+async function createClass() {
+  const name = $('cls-name').value.trim(), prefix = $('cls-prefix').value.trim() || 'C', count = parseInt($('cls-count').value, 10) || 0;
+  if (!name) { toast('Give the class a name', true); return; }
+  if (count < 1 || count > 200) { toast('Seats must be between 1 and 200', true); return; }
+  const btn = $('cls-create-btn'); btn.disabled = true; btn.textContent = 'Creating…';
+  try { const id = await rpc('create_class', { p_name: name, p_prefix: prefix }); await rpc('add_seats', { p_class_id: id, p_count: count }); toast(`${name} created with ${count} access codes`); await openClass(id); }
+  catch (e) { toast('Could not create the class: ' + e.message, true); btn.disabled = false; btn.textContent = 'Create class'; }
+}
+async function openClass(id) {
+  const body = $('classes-body'); body.innerHTML = '<p style="color:var(--muted);">Loading…</p>';
+  let classes, seats;
+  try { [classes, seats] = await Promise.all([rpc('list_classes'), rpc('list_class_seats', { p_class_id: id })]); }
+  catch (e) { body.innerHTML = `<div class="lt-error">${escapeHTML(e.message)}</div>`; return; }
+  const c = classes.find(x => x.id === id); if (!c) { renderClassesList(); return; }
+  classesView = { classId: id, cls: c, seats };
+  const active = seats.filter(s => s.last_sign_in_at).length;
+  body.innerHTML = `
+    <div class="lt-toolbar" style="margin-bottom:1rem;">
+      <button type="button" class="btn-small" onclick="renderClassesList()">← All classes</button>
+      <span style="font-family:var(--font-heading); font-size:1.4rem;">${escapeHTML(c.name)}</span>
+      ${c.archived ? '<span class="badge">closed</span>' : ''}
+      <span class="hint" style="margin:0 0 0 auto;">${seats.length} seat${seats.length === 1 ? '' : 's'} · ${active} used at least once</span>
+    </div>
+    <div class="lt-toolbar" style="margin-bottom:1.25rem;">
+      <button type="button" class="btn-small" onclick="printCodeSheet()">Print access codes</button>
+      <button type="button" class="btn-small" onclick="copyCodeList()">Copy list</button>
+      <button type="button" class="btn-small" onclick="addSeatsPrompt()">Add seats…</button>
+      <button type="button" class="btn-small" onclick="renameClassPrompt()">Rename</button>
+      <button type="button" class="btn-small" onclick="toggleClassArchived()">${c.archived ? 'Reopen class' : 'Close class'}</button>
+      <button type="button" class="btn-small" style="margin-left:auto; color:var(--danger); border-color:var(--danger);" onclick="deleteClassConfirm()">Delete class</button>
+    </div>
+    ${c.archived ? '<p class="hint" style="margin-bottom:1rem;">This class is closed: its access codes no longer log in, but every entry is kept. Reopen it to let students back in.</p>' : ''}
+    <table class="stats-table"><thead><tr><th>Seat</th><th>Access code</th><th>Nickname (only you see it)</th><th>Last login</th><th>Labs</th><th></th></tr></thead><tbody>
+      ${seats.map(s => `<tr>
+        <td>${s.seat_no}</td>
+        <td><code class="cls-code">${escapeHTML(s.passcode)}</code></td>
+        <td><input type="text" class="cls-nick" value="${escapeHTML(s.nickname || '')}" placeholder="—" onchange="saveNickname('${s.user_id}', this.value)"/></td>
+        <td>${s.last_sign_in_at ? escapeHTML(formatDate(s.last_sign_in_at)) : '<span class="hint" style="margin:0;">never</span>'}</td>
+        <td>${s.entries ? `<button type="button" class="btn-small" onclick="showSeatLabs('${s.user_id}')">${s.entries}</button>` : '0'}</td>
+        <td style="white-space:nowrap;"><button type="button" class="btn-small" onclick="regenerateSeat('${s.user_id}', ${s.seat_no})" title="Give this seat a new access code (the old one stops working; entries are kept)">New code</button> <button type="button" class="btn-small" style="color:var(--danger);" onclick="deleteSeatConfirm('${s.user_id}', ${s.seat_no})">Remove</button></td>
+      </tr><tr id="seatlabs-${s.user_id}" hidden><td colspan="6"><span class="hint">Loading…</span></td></tr>`).join('')}
+    </tbody></table>
+    <p class="hint" style="margin-top:1rem;">"New code" is the fix for a lost or shared code. "Remove" deletes the seat and its entries. Closing the class keeps everything but stops logins, which is the right choice at the end of a term.</p>`;
+}
+async function showSeatLabs(uid) {
+  const row = $('seatlabs-' + uid); if (!row) return; row.hidden = !row.hidden; if (row.hidden) return;
+  const { data, error } = await sb.from('lab_entries').select('lab_id, updated_at').eq('user_id', uid).order('updated_at', { ascending: false });
+  row.firstElementChild.innerHTML = error ? `<span class="lt-error">${escapeHTML(error.message)}</span>` : (data || []).map(e => `<div style="display:flex; gap:0.75rem; align-items:center; padding:0.3rem 0;"><span style="flex:1;">${escapeHTML(labTitle(e.lab_id))}</span><span class="hint" style="margin:0;">${escapeHTML(formatDate(e.updated_at))}</span><button type="button" class="btn-small" onclick="reviewSeatEntries('${uid}', '${e.lab_id}')">View entries</button></div>`).join('') || '<span class="hint">No entries.</span>';
+}
+async function reviewSeatEntries(uid, labId) {
+  const { data, error } = await sb.from('lab_entries').select('data, updated_at').eq('user_id', uid).eq('lab_id', labId).maybeSingle();
+  if (error || !data) { toast('Could not load those entries', true); return; }
+  const s = classesView.seats.find(x => x.user_id === uid);
+  state.reviewing = { lab_id: labId, user_id: uid, name: seatLabel(classesView.cls, s), data: data.data || {}, updated_at: data.updated_at };
+  closeModal('classes-modal');
+  const lab = state.labs.find(l => l.id === labId); if (lab) navigate('#/lab/' + encodeURIComponent(lab.slug));
+}
+function seatLabel(cls, s) { return `${cls ? cls.name : 'Class'} · Seat ${s ? s.seat_no : '?'}${s && s.nickname ? ` (${s.nickname})` : ''}`; }
+async function saveNickname(uid, value) {
+  const { error } = await sb.from('seats').update({ nickname: value.trim() || null }).eq('user_id', uid);
+  if (error) toast(error.message, true); else { const s = classesView.seats.find(x => x.user_id === uid); if (s) s.nickname = value.trim() || null; toast('Saved'); }
+}
+async function addSeatsPrompt() {
+  const n = parseInt(prompt('How many seats to add?', '5'), 10); if (!n) return;
+  try { await rpc('add_seats', { p_class_id: classesView.classId, p_count: n }); toast(`${n} seat${n === 1 ? '' : 's'} added`); await openClass(classesView.classId); }
+  catch (e) { toast(e.message, true); }
+}
+async function renameClassPrompt() {
+  const name = prompt('Class name', classesView.cls.name); if (!name || !name.trim()) return;
+  const { error } = await sb.from('classes').update({ name: name.trim() }).eq('id', classesView.classId);
+  if (error) { toast(error.message, true); return; }
+  await sb.from('groups').update({ name: name.trim() }).eq('id', classesView.classId);
+  await openClass(classesView.classId);
+}
+async function toggleClassArchived() {
+  const c = classesView.cls;
+  if (!c.archived && !confirm(`Close "${c.name}"? Its access codes will stop working until you reopen it. Nothing is deleted.`)) return;
+  try { await rpc('set_class_archived', { p_class_id: c.id, p_archived: !c.archived }); await openClass(c.id); } catch (e) { toast(e.message, true); }
+}
+async function regenerateSeat(uid, seatNo) {
+  if (!confirm(`Give seat ${seatNo} a new access code? The old code stops working immediately. Entries are kept.`)) return;
+  try { const code = await rpc('regenerate_seat', { p_user: uid }); toast(`Seat ${seatNo}: ${code}`); await openClass(classesView.classId); } catch (e) { toast(e.message, true); }
+}
+async function deleteSeatConfirm(uid, seatNo) {
+  if (!confirm(`Remove seat ${seatNo}? Its access code and every entry saved under it are deleted. This cannot be undone.`)) return;
+  try { await rpc('delete_seat', { p_user: uid }); toast(`Seat ${seatNo} removed`); await openClass(classesView.classId); } catch (e) { toast(e.message, true); }
+}
+async function deleteClassConfirm() {
+  const c = classesView.cls;
+  if (!confirm(`Delete "${c.name}" and all ${classesView.seats.length} seats, including every entry saved under them? This cannot be undone. Consider "Close class" instead.`)) return;
+  if (prompt(`Type the class name to confirm deleting it:`) !== c.name) { toast('Name did not match; nothing deleted'); return; }
+  try { await rpc('delete_class', { p_class_id: c.id }); toast('Class deleted'); await renderClassesList(); } catch (e) { toast(e.message, true); }
+}
+function copyCodeList() {
+  const c = classesView.cls, text = classesView.seats.map(s => `Seat ${s.seat_no}\t${s.passcode}${s.nickname ? '\t' + s.nickname : ''}`).join('\n');
+  navigator.clipboard.writeText(`${c.name}\n${text}`).then(() => toast('List copied'), () => prompt('Copy this list:', text));
+}
+function printCodeSheet() {
+  const c = classesView.cls, site = location.origin + location.pathname.replace(/index\.html$/, '');
+  const slips = classesView.seats.map(s => `<div class="slip"><div class="cls">${escapeHTML(c.name)} · Seat ${s.seat_no}</div><div class="code">${escapeHTML(s.passcode)}</div><div class="how">Go to ${escapeHTML(site)} → Log in → Access Code Login. Works on any device. Keep this slip.</div></div>`).join('');
+  const w = window.open('', '_blank');
+  if (!w) { toast('Pop-up blocked. Allow pop-ups for this site and try again.', true); return; }
+  w.document.write(`<!doctype html><title>${escapeHTML(c.name)} access codes</title><style>
+    body{font-family:-apple-system,Helvetica,Arial,sans-serif;margin:0.5in;color:#000}h1{font-size:14pt;font-weight:normal;margin:0 0 0.2in}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:0}.slip{border:1px dashed #999;padding:0.18in 0.25in;break-inside:avoid;page-break-inside:avoid}
+    .cls{font-size:9pt;color:#444}.code{font-family:Menlo,Consolas,monospace;font-size:20pt;letter-spacing:0.08em;margin:0.06in 0}.how{font-size:8pt;color:#555;line-height:1.35}
+    @media print{h1{display:none}}</style><h1>${escapeHTML(c.name)} — cut along the dashed lines and hand one slip to each student. Keep your own list of who has which seat.</h1><div class="grid">${slips}</div>`);
+  w.document.close(); setTimeout(() => { w.focus(); w.print(); }, 300);
+}
+
+/* ============================================================
    ADMINS PANEL (any admin may add or remove admins)
    ============================================================ */
 async function openAdminsModal() {
@@ -2817,9 +3016,11 @@ async function renderStatsOverview() {
 function toggleLabDays(id) { const el = $('labdays-' + id); if (el) el.hidden = !el.hidden; }
 async function loadStudentsAndEntries() {
   if (statsCache.students) return statsCache;
-  const [s, e] = await Promise.all([sb.from('students').select('*').order('created_at'), sb.from('lab_entries').select('user_id, lab_id, updated_at')]);
+  const [s, e, cl, se] = await Promise.all([sb.from('students').select('*').order('created_at'), sb.from('lab_entries').select('user_id, lab_id, updated_at'), sb.from('classes').select('*'), sb.from('seats').select('*')]);
   if (s.error) throw s.error; if (e.error) throw e.error;
-  statsCache.students = s.data || []; statsCache.entries = e.data || [];
+  const classes = Object.fromEntries((cl.data || []).map(c => [c.id, c]));
+  const seatRows = (se.data || []).map(x => ({ user_id: x.user_id, email: '', full_name: seatLabel(classes[x.class_id], x), created_at: x.created_at, seat: true }));
+  statsCache.students = [...(s.data || []), ...seatRows]; statsCache.entries = e.data || [];
   return statsCache;
 }
 async function renderStatsStudents() {
@@ -5919,6 +6120,7 @@ function buEquivalenceCheck(text) {
       const prevUser = state.session?.user?.id || null, nextUser = session?.user?.id || null;
       const was = isAdmin(); state.session = session; state.role = roleFromSession(session);
       if (prevUser === nextUser) return;
+      loadMySeat().then(() => { renderChrome(); if (state.route.view === 'signin') render(); });
       document.body.classList.toggle('admin-mode', isAdmin());
       if (was !== isAdmin()) { closeModal('login-modal'); reloadCatalogue(); if (isAdmin() && event === 'SIGNED_IN') toast('Welcome back'); }
       else { renderChrome(); render(); }
