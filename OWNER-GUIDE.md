@@ -17,6 +17,7 @@
 
 - **Log in:** click the small ⚙ at the top right, enter your admin email and password. A dark admin bar appears.
 - **Add a folder:** admin bar → + Folder. Folders can sit inside other folders. "Show in navigation" off makes a folder reachable only by its link.
+- **Arrange the page:** folders and labs share one order on the home page and inside each folder, so a lab can sit before a folder. In admin mode, use the ← → buttons on any card to move it, or set "Order on the page" in its edit form (lower numbers first).
 - **Add a lab:** admin bar → + Lab. Title, folder, a one-line summary, photos (they are compressed automatically), a YouTube link for video, the procedure text (the ☰ Template button inserts the standard sections), and files (PDF is best; it opens inside the site).
 - **Publish:** Status = Published. Draft keeps it invisible to students; Scheduled makes it appear at a chosen date and time.
 - **Who can open it:** Public, password, selected student accounts, or admins only. Password and account locks are enabled in a later update; until then keep labs Public or Draft.

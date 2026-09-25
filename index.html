@@ -830,7 +830,7 @@
     <div class="form-grid-3">
       <div class="form-row"><label>Search tags (comma separated, never shown to students)</label><input type="text" id="lab-tags" placeholder="chemistry, acids"/></div>
       <div class="form-row"><label>Estimated minutes</label><input type="number" id="lab-minutes" min="0" step="5"/></div>
-      <div class="form-row"><label>Order within folder</label><input type="number" id="lab-order" step="1" value="0"/><div class="hint">Lower numbers come first.</div></div>
+      <div class="form-row"><label>Order on the page</label><input type="number" id="lab-order" step="1" value="0"/><div class="hint">Lower numbers come first. Folders and labs share one order, so a lab can sit before a folder. The ← → buttons on the cards set this too.</div></div>
     </div>
     <div class="form-grid-3">
       <div class="form-row">
@@ -935,7 +935,7 @@
     <div class="form-row"><label>Description (optional)</label><textarea id="folder-description" style="min-height:56px;"></textarea></div>
     <div class="form-row"><label>Cover photo (optional)</label><div class="media-manager" id="folder-cover-manager"></div></div>
     <div class="form-grid-3">
-      <div class="form-row"><label>Order</label><input type="number" id="folder-order" step="1" value="0"/></div>
+      <div class="form-row"><label>Order on the page</label><input type="number" id="folder-order" step="1" value="0"/><div class="hint">Lower numbers come first. Folders and labs share one order. The ← → buttons on the cards set this too.</div></div>
       <div class="form-row">
         <label>Who can open it</label>
         <select id="folder-access" onchange="onAccessSelectChange('folder')">
@@ -1143,12 +1143,8 @@ const DEFAULTS = {
   searchResultsTitle: 'Search results for “{q}”',
   searchNoResults: 'No labs match that search.',
   homeIntro: '<p>Welcome. Choose a course below to find your lab procedures. Log in as admin and click this text to change it.</p>',
-  homeFoldersLabel: 'Courses',
-  homeLabsLabel: 'Labs',
   homeEmpty: 'No labs have been posted yet.',
   homeLoginNudge: 'Labs for your class appear after you log in.',
-  folderSectionsLabel: 'Sections',
-  folderLabsLabel: 'Labs',
   folderEmpty: 'Nothing here yet.',
   cardMinutes: '{n} min',
   cardUpdated: 'Updated {date}',
@@ -1254,8 +1250,8 @@ const DEFAULTS = {
 const SITE_TEXT_GROUPS = [
   { label: 'Site', keys: ['siteTitle', 'footerText', 'loadingText'] },
   { label: 'Search', keys: ['searchPlaceholder', 'searchButton', 'searchResultsTitle', 'searchNoResults'] },
-  { label: 'Home page', keys: ['homeFoldersLabel', 'homeLabsLabel', 'homeEmpty', 'homeLoginNudge'] },
-  { label: 'Folder pages', keys: ['folderSectionsLabel', 'folderLabsLabel', 'folderEmpty'] },
+  { label: 'Home page', keys: ['homeEmpty', 'homeLoginNudge'] },
+  { label: 'Folder pages', keys: ['folderEmpty'] },
   { label: 'Cards', keys: ['cardMinutes', 'cardUpdated', 'lockedBadge', 'signInRequiredBadge', 'draftBadge', 'scheduledBadge', 'hiddenBadge'] },
   { label: 'Lab page', keys: ['labMinutes', 'labUpdated', 'labFilesLabel', 'labDownloadFile', 'labViewInline', 'labPrint', 'labDownloadPdf', 'pdfPreparing', 'pdfReady', 'pdfFailed', 'labCopyLink', 'labLinkCopied', 'labNoContent'] },
   { label: 'Locked labs', keys: ['lockPasswordTitle', 'lockPasswordPrompt', 'lockPasswordPlaceholder', 'lockPasswordButton', 'lockPasswordWrong', 'lockTooMany', 'lockAccountsTitle', 'lockAccountsPrompt', 'lockNotAllowed', 'lockAdminOnly', 'lockUnavailable'] },
@@ -1268,8 +1264,8 @@ const SITE_TEXT_GROUPS = [
 const TEXT_LABELS = {
   siteTitle: 'Site title', footerText: 'Footer text', loadingText: 'Loading message',
   searchPlaceholder: 'Search box placeholder', searchButton: 'Search button', searchResultsTitle: 'Search results title', searchNoResults: 'No results message',
-  homeFoldersLabel: 'Folders heading', homeLabsLabel: 'Labs heading', homeEmpty: 'Empty site message', homeLoginNudge: 'Log-in nudge for visitors',
-  folderSectionsLabel: 'Sub-folders heading', folderLabsLabel: 'Labs heading', folderEmpty: 'Empty folder message',
+  homeEmpty: 'Empty site message', homeLoginNudge: 'Log-in nudge for visitors',
+  folderEmpty: 'Empty folder message',
   cardMinutes: 'Minutes on cards', cardUpdated: 'Updated date on cards', lockedBadge: 'Locked badge', signInRequiredBadge: 'Sign-in badge',
   draftBadge: 'Draft badge (admins)', scheduledBadge: 'Scheduled badge (admins)', hiddenBadge: 'Unlisted badge (admins)',
   labMinutes: 'Minutes line', labUpdated: 'Updated line', labFilesLabel: 'Files heading', labDownloadFile: 'Download button', labViewInline: 'View-here button',
@@ -1548,6 +1544,28 @@ function labsInFolder(folderId) {
   return visibleLabs().filter(l => (l.folder_id || null) === (folderId || null))
     .sort((a, b) => (a.sort_order - b.sort_order) || a.title.localeCompare(b.title));
 }
+// Folders and labs share one order on a page: by sort_order, then folders before labs, then name.
+function itemsIn(parentId) {
+  const items = [...subfolders(parentId).map(f => ({ kind: 'folder', row: f })), ...labsInFolder(parentId).map(l => ({ kind: 'lab', row: l }))];
+  return items.sort((a, b) => ((a.row.sort_order || 0) - (b.row.sort_order || 0)) || (a.kind === b.kind ? 0 : a.kind === 'folder' ? -1 : 1) || (a.row.name || a.row.title).localeCompare(b.row.name || b.row.title));
+}
+function itemCardHTML(it) { return it.kind === 'folder' ? folderCardHTML(it.row) : labCardHTML(it.row); }
+// Admin: move a card one step earlier/later among its siblings; renumbers every sibling so the order is explicit.
+async function moveItem(kind, id, dir) {
+  const row = kind === 'folder' ? folderById(id) : state.labs.find(l => l.id === id); if (!row) return;
+  const parent = kind === 'folder' ? (row.parent_id || null) : (row.folder_id || null);
+  const items = itemsIn(parent);
+  const i = items.findIndex(it => it.kind === kind && it.row.id === id), j = i + dir;
+  if (i < 0 || j < 0 || j >= items.length) return;
+  [items[i], items[j]] = [items[j], items[i]];
+  const changes = [];
+  items.forEach((it, n) => { const v = (n + 1) * 10; if (it.row.sort_order !== v) { it.row.sort_order = v; changes.push(it); } });
+  render();
+  try {
+    const results = await Promise.all(changes.map(it => sb.from(it.kind === 'folder' ? 'folders' : 'labs').update({ sort_order: it.row.sort_order }).eq('id', it.row.id)));
+    const bad = results.find(r => r.error); if (bad) throw bad.error;
+  } catch (e) { toast('Could not save the new order: ' + e.message, true); }
+}
 function subfolders(parentId, includeUnlisted = false) {
   return visibleFolders().filter(f => (f.parent_id || null) === (parentId || null) && (includeUnlisted || f.listed !== false || isAdmin()))
     .sort((a, b) => (a.sort_order - b.sort_order) || a.name.localeCompare(b.name));
@@ -1689,6 +1707,8 @@ function labCardHTML(lab) {
   return `
     <a class="card" href="#/lab/${encodeURIComponent(lab.slug)}">
       <div class="admin-controls" onclick="event.preventDefault(); event.stopPropagation();">
+        <button onclick="moveItem('lab', '${lab.id}', -1)" title="Move earlier">←</button>
+        <button onclick="moveItem('lab', '${lab.id}', 1)" title="Move later">→</button>
         <button onclick="openLabModal('${lab.id}')">Edit</button>
         <button class="delete" onclick="confirmDeleteLab('${lab.id}')">Delete</button>
       </div>
@@ -1710,6 +1730,8 @@ function folderCardHTML(f) {
   return `
     <a class="card" href="#/f/${encodeURIComponent(f.slug)}">
       <div class="admin-controls" onclick="event.preventDefault(); event.stopPropagation();">
+        <button onclick="moveItem('folder', '${f.id}', -1)" title="Move earlier">←</button>
+        <button onclick="moveItem('folder', '${f.id}', 1)" title="Move later">→</button>
         <button onclick="openFolderModal('${f.id}')">Edit</button>
         <button class="delete" onclick="confirmDeleteFolder('${f.id}')">Delete</button>
       </div>
@@ -1726,18 +1748,13 @@ function gridOrEmpty(cards, emptyText) {
 
 function renderHome(view) {
   document.title = getText('siteTitle');
-  const folders = subfolders(null);
-  const labs = labsInFolder(null);
+  const items = itemsIn(null);
   const intro = getText('homeIntro');
   let html = `<section class="page">
     <div class="home-intro rich-content editable" data-edit="homeIntro" data-rich="true" onclick="handleEditableClick(event, 'homeIntro', true)">${intro}</div>`;
   if (!state.session) html += `<p class="home-nudge">${escapeHTML(getText('homeLoginNudge'))} <a href="#/signin">${escapeHTML(getText('signInLink'))}</a></p>`;
-  if (folders.length === 0 && labs.length === 0) {
-    html += `<div class="empty-state" style="margin-top:2rem;">${escapeHTML(getText('homeEmpty'))}</div>`;
-  } else {
-    if (folders.length) html += `<div class="section-heading"><span>${escapeHTML(getText('homeFoldersLabel'))}</span></div>${gridOrEmpty(folders.map(folderCardHTML), '')}`;
-    if (labs.length) html += `<div class="section-heading"><span>${escapeHTML(getText('homeLabsLabel'))}</span></div>${gridOrEmpty(labs.map(labCardHTML), '')}`;
-  }
+  if (!items.length) html += `<div class="empty-state" style="margin-top:2rem;">${escapeHTML(getText('homeEmpty'))}</div>`;
+  else html += `<div style="margin-top:2rem;">${gridOrEmpty(items.map(itemCardHTML), '')}</div>`;
   html += `</section>`;
   view.innerHTML = html;
   renderMathIn(view.querySelectorAll('.rich-content'));
@@ -1747,17 +1764,13 @@ function renderFolder(view) {
   const f = folderBySlug(state.route.slug);
   if (!f || (!isAdmin() && effectiveFolderAccess(f) === 'admin')) return renderNotFound(view);
   document.title = `${f.name} · ${getText('siteTitle')}`;
-  const subs = subfolders(f.id);
-  const labs = labsInFolder(f.id);
+  const items = itemsIn(f.id);
   let html = `<section class="page">
     ${breadcrumbHTML(f.parent_id)}
     <h1 class="page-title">${escapeHTML(f.name)} <span class="admin-inline"><button class="btn-small" onclick="openFolderModal('${f.id}')">Edit folder</button></span></h1>
     ${f.description ? `<p class="lab-summary" style="margin-top:-0.5rem; margin-bottom:1rem;">${escapeHTML(f.description)}</p>` : ''}`;
-  if (subs.length === 0 && labs.length === 0) html += `<div class="empty-state" style="margin-top:2rem;">${escapeHTML(getText('folderEmpty'))}</div>`;
-  else {
-    if (subs.length) html += `<div class="section-heading"><span>${escapeHTML(getText('folderSectionsLabel'))}</span></div>${gridOrEmpty(subs.map(folderCardHTML), '')}`;
-    if (labs.length) html += `<div class="section-heading"><span>${escapeHTML(getText('folderLabsLabel'))}</span></div>${gridOrEmpty(labs.map(labCardHTML), '')}`;
-  }
+  if (!items.length) html += `<div class="empty-state" style="margin-top:2rem;">${escapeHTML(getText('folderEmpty'))}</div>`;
+  else html += `<div style="margin-top:1.5rem;">${gridOrEmpty(items.map(itemCardHTML), '')}</div>`;
   html += `</section>`;
   view.innerHTML = html;
   logEvent('view', { folder_id: f.id, path: location.hash });
