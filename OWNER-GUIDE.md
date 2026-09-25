@@ -33,7 +33,7 @@
 
 ## Classes and access codes
 
-For students who should not use an email: admin bar → Classes → New class. Give it a name, a short code such as P3, and the number of seats. Click "Print access codes" and cut the sheet into slips, one per student, and keep your own list of who got which seat. Students click Log in → Access Code Login and type the code; it works on any number of devices, and everything they type in a lab follows the code. The site never stores their name. In the class page you can give a seat a new code (if one is lost or shared), remove a seat, add a nickname only you see, and at the end of the term "Close class", which keeps all entries but stops logins.
+For students who should not use an email: admin bar → Classes → New class. Give it a name, a short code such as P3, and the number of seats. Open the class, click Show on a seat to see its code (or "Copy list" for all of them), send each student their code privately, and keep your own list of who got which seat. Students click Log in → Access Code Login and type the code; it works on any number of devices, and everything they type in a lab follows the code. The site never stores their name. In the class page you can give a seat a new code (if one is lost or shared), remove a seat, add a nickname only you see, and at the end of the term "Close class", which keeps all entries but stops logins.
 
 ## Giving classes their own labs
 

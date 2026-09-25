@@ -2995,7 +2995,6 @@ async function openClass(id) {
       <span class="hint" style="margin:0 0 0 auto;">${seats.length} seat${seats.length === 1 ? '' : 's'} · ${active} used at least once</span>
     </div>
     <div class="lt-toolbar" style="margin-bottom:1.25rem;">
-      <button type="button" class="btn-small" onclick="printCodeSheet()">Print access codes</button>
       <button type="button" class="btn-small" onclick="copyCodeList()">Copy list</button>
       <button type="button" class="btn-small" onclick="addSeatsPrompt()">Add seats…</button>
       <button type="button" class="btn-small" onclick="renameClassPrompt()">Rename</button>
@@ -3068,18 +3067,6 @@ function copyText(t) { navigator.clipboard.writeText(t).then(() => toast('Copied
 function copyCodeList() {
   const c = classesView.cls, text = classesView.seats.map(s => `Seat ${s.seat_no}\t${s.passcode}${s.nickname ? '\t' + s.nickname : ''}`).join('\n');
   navigator.clipboard.writeText(`${c.name}\n${text}`).then(() => toast('List copied'), () => prompt('Copy this list:', text));
-}
-function printCodeSheet() {
-  const c = classesView.cls, site = location.origin + location.pathname.replace(/index\.html$/, '');
-  const slips = classesView.seats.map(s => `<div class="slip"><div class="cls">${escapeHTML(c.name)} · Seat ${s.seat_no}</div><div class="code">${escapeHTML(s.passcode)}</div><div class="how">Go to ${escapeHTML(site)} → Log in → Access Code Login. Works on any device. Keep this slip.</div></div>`).join('');
-  const w = window.open('', '_blank');
-  if (!w) { toast('Pop-up blocked. Allow pop-ups for this site and try again.', true); return; }
-  w.document.write(`<!doctype html><title>${escapeHTML(c.name)} access codes</title><style>
-    body{font-family:-apple-system,Helvetica,Arial,sans-serif;margin:0.5in;color:#000}h1{font-size:14pt;font-weight:normal;margin:0 0 0.2in}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:0}.slip{border:1px dashed #999;padding:0.18in 0.25in;break-inside:avoid;page-break-inside:avoid}
-    .cls{font-size:9pt;color:#444}.code{font-family:Menlo,Consolas,monospace;font-size:20pt;letter-spacing:0.08em;margin:0.06in 0}.how{font-size:8pt;color:#555;line-height:1.35}
-    @media print{h1{display:none}}</style><h1>${escapeHTML(c.name)} — cut along the dashed lines and hand one slip to each student. Keep your own list of who has which seat.</h1><div class="grid">${slips}</div>`);
-  w.document.close(); setTimeout(() => { w.focus(); w.print(); }, 300);
 }
 
 /* ============================================================
