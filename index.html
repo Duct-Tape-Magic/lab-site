@@ -563,7 +563,6 @@
   .rp-prompt p:last-child { margin-bottom: 0; }
   .rp-hint { margin: 0 0 0.6rem; }
   .rp-hint-body { font-size: 0.9em; color: var(--muted); padding: 0.4rem 0 0; }
-  .rp-field { min-height: 8em; }
   .rp-meter { font-size: 11px; color: var(--muted); margin-top: 0.3rem; letter-spacing: 0.04em; }
   .rp-meter.low, .rp-meter.high { color: var(--warn); }
   .rp-meter.empty { color: var(--muted); font-style: italic; }
@@ -736,11 +735,11 @@
     .lt-pagebreak { display: block; page-break-before: always; break-before: page; }
     .lt-notes:not([open]) { display: none; }
     .lt-callout, .lt-graph { break-inside: avoid; }
-    body.report-print #lab-pane-procedure, body.report-print .lab-tabs, body.report-print .rp-toolbar, body.report-print .rp-prompt, body.report-print .rp-hint, body.report-print .rp-meter,
+    body.report-print #lab-pane-procedure, body.report-print .lab-tabs, body.report-print .rp-toolbar, body.report-print #lab-pane-report .lt-prompt, body.report-print .rp-hint, body.report-print .rp-meter,
     body.report-print .lab-media, body.report-print .attachments, body.report-print .section-heading, body.report-print .lab-toolbar, body.report-print .lab-footer-nav, body.report-print .breadcrumb, body.report-print .lab-header, body.report-print .review-banner { display: none !important; }
     body.report-print #lab-pane-report { display: block !important; }
-    body.report-print .rp-field { border: none !important; padding: 0 !important; background: white !important; min-height: 0 !important; font-size: 12pt; }
-    body.report-print .rp-field:empty::before { content: ''; }
+    body.report-print #lab-pane-report .lt-field { border: none !important; padding: 0 !important; background: white !important; min-height: 0 !important; font-size: 12pt; }
+    body.report-print #lab-pane-report .lt-field:empty::before { content: ''; }
     body.report-print .rp-section { break-inside: avoid; margin-bottom: 1.2rem; }
     body.report-print .rp-title { font-size: 14pt; }
     body.report-print .rp-title .badge { display: none; }
@@ -1243,10 +1242,9 @@ const DEFAULTS = {
   reportStyleTitle: 'Style guide',
   reportRequired: 'Required',
   reportHint: 'Show hint',
-  reportPlaceholder: 'Write here…',
   reportWords: '{n} words',
   reportWordsAim: 'aim for {min}–{max}',
-  reportEmptyRequired: 'This section is required and is still empty.',
+  reportEmptyRequired: 'This question is required and is still empty.',
   reportTableLabel: 'Table',
   reportFigureLabel: 'Figure',
   reportMissingRef: 'Nothing in the procedure matches',
@@ -1263,7 +1261,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Locked labs', keys: ['lockPasswordTitle', 'lockPasswordPrompt', 'lockPasswordPlaceholder', 'lockPasswordButton', 'lockPasswordWrong', 'lockTooMany', 'lockAccountsTitle', 'lockAccountsPrompt', 'lockNotAllowed', 'lockAdminOnly', 'lockUnavailable'] },
   { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'accessTitle', 'accessHint', 'accessButton', 'accessWrong', 'accessArchived', 'seatName', 'seatShort', 'seatUnknown', 'seatManaged', 'privacyLink', 'privacyTitle'] },
   { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
-  { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportPlaceholder', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef', 'reportNoPhotoYet'] },
+  { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef', 'reportNoPhotoYet'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
 ];
 
@@ -1287,7 +1285,7 @@ const TEXT_LABELS = {
   notesLabel: 'Notes toggle', notesPlaceholder: 'Notes placeholder', answerPlaceholder: 'Answer placeholder', tableAddRow: 'Add row button',
   photoAdd: 'Add photo button', photoChange: 'Change photo button', photoRemove: 'Remove photo button',
   calloutSafety: 'Safety box label', calloutWarning: 'Caution box label', calloutInfo: 'Note box label', calloutTip: 'Tip box label', calloutHint: 'Hint box label', figurePending: 'Missing figure text', graphEmpty: 'Empty graph message',
-  procedureTab: 'Procedure tab label', reportTab: 'Report tab label', reportPreview: 'Preview report button', reportStyleTitle: 'Style guide heading', reportRequired: 'Required badge', reportHint: 'Hint toggle', reportPlaceholder: 'Report box placeholder', reportWords: 'Word count', reportWordsAim: 'Word range hint', reportEmptyRequired: 'Empty required section note', reportTableLabel: 'Table caption word', reportFigureLabel: 'Figure caption word', reportMissingRef: 'Missing table/graph message', reportNoPhotoYet: 'No photo yet message'
+  procedureTab: 'Procedure tab label', reportTab: 'Report tab label', reportPreview: 'Preview report button', reportStyleTitle: 'Style guide heading', reportRequired: 'Required badge', reportHint: 'Hint toggle', reportWords: 'Word count', reportWordsAim: 'Word range hint', reportEmptyRequired: 'Empty required question note', reportTableLabel: 'Table caption word', reportFigureLabel: 'Figure caption word', reportMissingRef: 'Missing table/graph message', reportNoPhotoYet: 'No photo yet message'
 };
 
 /* ============================================================
@@ -2018,7 +2016,7 @@ function rpRefreshMirrors(area) {
 }
 function rpWordCount(text) { return (String(text || '').trim().match(/\S+/g) || []).length; }
 function rpUpdateMeter(sec) {
-  const field = sec.querySelector('.rp-field'), meter = sec.querySelector('.rp-meter'); if (!field || !meter) return;
+  const field = sec.querySelector('.lt-field'), meter = sec.querySelector('.rp-meter'); if (!field || !meter) return;
   const n = rpWordCount(field.textContent);
   const [lo, hi] = String(sec.dataset.words || '').split('-').map(v => parseInt(v, 10));
   let txt = fmt('reportWords', { n }), cls = '';
@@ -2034,12 +2032,10 @@ function rpBind(area, lab) {
   let t = null;
   area.addEventListener('input', e => {
     if (e.target.closest('#lab-pane-procedure')) { clearTimeout(t); t = setTimeout(() => rpRefreshMirrors(area), 200); }
-    const sec = e.target.closest('.rp-section'); if (sec) rpUpdateMeter(sec);
   });
   area.addEventListener('change', e => { if (e.target.closest('#lab-pane-procedure')) setTimeout(() => rpRefreshMirrors(area), 400); });
   area.addEventListener('click', e => { if (e.target.closest('#lab-pane-procedure .lt-table-add, #lab-pane-procedure .lt-photo-remove')) setTimeout(() => rpRefreshMirrors(area), 150); });
   setTimeout(() => rpRefreshMirrors(area), 900);   // photos arrive from the browser's store a moment after binding
-  area.querySelectorAll('.rp-section').forEach(rpUpdateMeter);
   const meta = area.querySelector('.rp-doc-meta');
   if (meta) meta.textContent = [isStudent() ? studentName() : '', new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })].filter(Boolean).join(' · ');
 }
@@ -3450,9 +3446,19 @@ function ltWidget(name, o, body, ctx, widgets) {
       return `<p><a href="${escapeHTML((body || '').trim())}" target="_blank" rel="noopener">${escapeHTML((body || '').trim())}</a></p>`;
     }
     case 'datatable': return ltDataTable(id, o, body || '', ctx);
-    case 'answer': {
-      const lines = Math.max(1, parseInt(o.lines, 10) || 3);
-      return `<div class="lt-answer">${body ? `<div class="lt-prompt">${ltInline(body.trim(), ctx)}</div>` : ''}<div class="lt-field" contenteditable="plaintext-only" data-field="${id}" data-placeholder="${escapeHTML(getText('answerPlaceholder'))}" style="min-height:${(lines * 1.6 + 0.8).toFixed(1)}em"></div></div>`;
+    case 'answer': case 'section': {   // \section is a legacy alias of \answer
+      const lines = Math.max(1, parseInt(o.lines, 10) || (name === 'section' ? 6 : 3));
+      const title = o.title ? String(o.title).trim() : '';
+      const badge = o.required ? ` <span class="badge">${escapeHTML(getText('reportRequired'))}</span>` : '';
+      const meter = !!(o.required || o.words);
+      const prompt = body && body.trim() ? body.trim() : '';
+      return `<div class="lt-answer${meter ? ' rp-section' : ''}" data-answer="${id}" ${o.required ? 'data-required="1"' : ''} data-words="${escapeHTML(String(o.words || ''))}">
+        ${title ? `<h3 class="rp-title">${escapeHTML(title)}${badge}</h3>` : (badge ? `<div class="rp-badge-line">${badge}</div>` : '')}
+        ${prompt ? `<div class="lt-prompt">${prompt.includes('\n') ? ltInner(prompt, ctx) : ltInline(prompt, ctx)}</div>` : ''}
+        ${o.hint ? `<details class="lt-notes rp-hint"><summary>${escapeHTML(getText('reportHint'))}</summary><div class="rp-hint-body">${ltInline(String(o.hint), ctx)}</div></details>` : ''}
+        <div class="lt-field" contenteditable="plaintext-only" data-field="${id}" data-placeholder="${escapeHTML(getText('answerPlaceholder'))}" style="min-height:${(lines * 1.6 + 0.8).toFixed(1)}em"></div>
+        ${meter ? '<div class="rp-meter"></div>' : ''}
+      </div>`;
     }
     case 'notes': return `<details class="lt-notes"><summary>${body ? ltInline(body.trim(), ctx) : escapeHTML(getText('notesLabel'))}</summary><div class="lt-field" contenteditable="plaintext-only" data-field="${id}" data-placeholder="${escapeHTML(getText('notesPlaceholder'))}"></div></details>`;
     case 'photo': return `<div class="lt-photo" data-photo="${id}">${body ? `<div class="lt-prompt">${ltInline(body.trim(), ctx)}</div>` : ''}<div class="lt-photo-preview"></div><div class="lt-photo-actions"><label class="btn-small lt-photo-add">${escapeHTML(getText('photoAdd'))}<input type="file" accept="image/*" capture="environment"/></label><button type="button" class="btn-small lt-photo-remove" hidden>${escapeHTML(getText('photoRemove'))}</button></div></div>`;
@@ -3480,18 +3486,6 @@ function ltWidget(name, o, body, ctx, widgets) {
       return `<figure class="lt-figure"><img src="${escapeHTML(fileUrl(src))}" alt="${escapeHTML(o.caption || '')}" loading="lazy"/>${cap}</figure>`;
     }
     case 'pagebreak': return `<div class="lt-pagebreak"></div>`;
-    case 'section': {
-      const lines = Math.max(3, parseInt(o.lines, 10) || 6);
-      const title = o.title ? String(o.title).trim() : '';
-      const badge = o.required ? ` <span class="badge">${escapeHTML(getText('reportRequired'))}</span>` : '';
-      return `<section class="rp-section" data-section="${id}" ${o.required ? 'data-required="1"' : ''} data-words="${escapeHTML(String(o.words || ''))}">
-        ${title ? `<h3 class="rp-title">${escapeHTML(title)}${badge}</h3>` : (badge ? `<div class="rp-badge-line">${badge}</div>` : '')}
-        ${body && body.trim() ? `<div class="rp-prompt">${ltInner(body.trim(), ctx)}</div>` : ''}
-        ${o.hint ? `<details class="lt-notes rp-hint"><summary>${escapeHTML(getText('reportHint'))}</summary><div class="rp-hint-body">${ltInline(String(o.hint), ctx)}</div></details>` : ''}
-        <div class="lt-field rp-field" contenteditable="plaintext-only" data-field="report.${id}" data-placeholder="${escapeHTML(getText('reportPlaceholder'))}" style="min-height:${(lines * 1.6 + 0.8).toFixed(1)}em"></div>
-        <div class="rp-meter"></div>
-      </section>`;
-    }
     case 'usetable': return `<div class="rp-mirror" data-mirror-table="${ltSafeId((body || '').trim())}"></div>`;
     case 'usegraph': return `<div class="rp-mirror" data-mirror-graph="${ltSafeId((body || '').trim())}"></div>`;
     case 'useanswer': return `<div class="rp-mirror" data-mirror-answer="${ltSafeId((body || '').trim())}"></div>`;
@@ -3643,6 +3637,8 @@ function ltBind(area, labId, cloud = null, readOnly = false) {
     const det = el.closest('details.lt-notes'); if (det && entries[id]) det.open = true;
   }
   area.querySelectorAll('[data-field]').forEach(bindField);
+  area.querySelectorAll('.rp-section').forEach(rpUpdateMeter);   // required / word-count meters on questions
+  area.addEventListener('input', e => { const sec = e.target.closest('.rp-section'); if (sec) rpUpdateMeter(sec); });
   area.querySelectorAll('[data-check]').forEach(cb => {
     cb.checked = !!entries[cb.dataset.check];
     cb.addEventListener('change', () => { entries[cb.dataset.check] = cb.checked ? 1 : 0; save(); });
@@ -3980,7 +3976,7 @@ const BM_TYPES = {
   raw:       { label: 'Raw',              list: 'both' },
   steps:     { tag: 'procedure', label: 'Numbered steps',  list: 'procedure', kind: 'proc',  idBase: 'steps',    known: ['id'] },
   table:     { tag: 'datatable', label: 'Data table',      list: 'both', kind: 'table', idBase: 'table',    known: ['id', 'title', 'addrows'], nameOf: b => b.opts.title },
-  answer:    { tag: 'answer',    label: 'Question',        list: 'both', kind: 'q',     idBase: 'question', known: ['id', 'lines'] },
+  answer:    { tag: 'answer',    label: 'Question',        list: 'both', kind: 'q',     idBase: 'question', known: ['id', 'lines', 'title', 'required', 'words', 'hint'] },
   notes:     { tag: 'notes',     label: 'Notes box',       list: 'both', kind: 'notes', idBase: 'notes',    known: ['id'], nameOf: b => b.label },
   photo:     { tag: 'photo',     label: 'Photo slot',      list: 'both', kind: 'photo', idBase: 'photo',    known: ['id'] },
   video:     { tag: 'video',     label: 'Video',           list: 'procedure', known: [] },
@@ -3988,16 +3984,15 @@ const BM_TYPES = {
   callout:   { tag: null,        label: 'Callout',         list: 'procedure', known: ['label'] },
   graph:     { tag: 'graph',     label: 'Graph',           list: 'both', kind: 'graph', idBase: 'graph',    known: ['id', 'table', 'x', 'y', 'series', 'type', 'fit', 'title', 'xlabel', 'ylabel', 'xmin', 'xmax', 'ymin', 'ymax'], nameOf: b => b.opts.title },
   pagebreak: { tag: 'pagebreak', label: 'Page break',      list: 'procedure', known: [] },
-  section:   { tag: 'section',   label: 'Report section',  list: 'report',    kind: 'section', idBase: 'section', known: ['id', 'title', 'required', 'words', 'hint', 'lines'], nameOf: b => b.opts.title },
   usetable:  { tag: 'usetable',  label: 'Include a table', list: 'report' },
   usegraph:  { tag: 'usegraph',  label: 'Include a graph', list: 'report' },
   useanswer: { tag: 'useanswer', label: 'Include an answer', list: 'report' },
   usephoto:  { tag: 'usephoto',  label: 'Include a photo',  list: 'report' },
 };
-const BM_TAG_TYPE = { procedure: 'steps', datatable: 'table', answer: 'answer', notes: 'notes', photo: 'photo', video: 'video', figure: 'figure', graph: 'graph', pagebreak: 'pagebreak', section: 'section', usetable: 'usetable', usegraph: 'usegraph', useanswer: 'useanswer', usephoto: 'usephoto', safety: 'callout', warning: 'callout', info: 'callout', tip: 'callout', hint: 'callout' };
+const BM_TAG_TYPE = { procedure: 'steps', datatable: 'table', answer: 'answer', notes: 'notes', photo: 'photo', video: 'video', figure: 'figure', graph: 'graph', pagebreak: 'pagebreak', section: 'answer', usetable: 'usetable', usegraph: 'usegraph', useanswer: 'useanswer', usephoto: 'usephoto', safety: 'callout', warning: 'callout', info: 'callout', tip: 'callout', hint: 'callout' };
 const BM_KIND = { datatable: 'table', answer: 'q', notes: 'notes', photo: 'photo', input: 'field', procedure: 'proc' };
 const BM_RESERVED_ID = /^(table|q|notes|photo|field|proc|graph|section|figure|video|pagebreak|safety|warning|info|tip|hint|usetable|usegraph|useanswer|usephoto)\d*$/;
-const BM_ID_TYPES = new Set(['steps', 'table', 'answer', 'notes', 'photo', 'graph', 'section']);
+const BM_ID_TYPES = new Set(['steps', 'table', 'answer', 'notes', 'photo', 'graph']);
 const BM_INPUT_KNOWN = ['id', 'label', 'unit', 'placeholder'];
 const BM_FILL = /^_{3,}$/;
 const BM_PIN_KINDS = new Set(['table', 'q', 'notes', 'photo', 'field', 'proc', 'section', 'graph']);   // widgets whose id matters (entries, references)
@@ -4125,7 +4120,7 @@ const BM_W = {
   pagebreak: 'A page break with text inside it is kept as a raw block.',
   metaInReport: 'A header command was found inside the report; the site ignores it there. It is kept as a raw block.',
   fallback: 'The builder could not read this file, so it is shown as one raw block. Nothing was changed.',
-  sectionOutside: 'A report section was found outside the report; it still works but students see it in the procedure.',
+  sectionOutside: 'An "Include" block was found outside the report; it still works but students see it in the procedure.',
   procedureInReport: 'A procedure block was found inside the report; it still works there.',
   nestedMeta: 'A report or style guide is tucked inside another block, and the file also has one at the top level. Students only see the tucked-in one, so the whole file is kept as raw text to leave it as it is.',
   nestedMetaOnly: 'A report or style guide is tucked inside another block; the site still uses it, but the builder cannot edit it as a form.',
@@ -4168,8 +4163,8 @@ function builderParse(text) {
     model.procedure = top.blocks;
     const warnings = top.warnings.slice();
     if (top.reportBody != null) { const r = bmParseFlow(top.reportBody, ctx, { inReport: true }); model.report = r.blocks; warnings.push(...r.warnings); }
-    for (const b of model.procedure) if (['section', 'usetable', 'usegraph', 'useanswer', 'usephoto'].includes(b.type)) { warnings.push(BM_W.sectionOutside); break; }
-    for (const b of model.report) if (b.type === 'steps' || b.type === 'table' || b.type === 'graph') { warnings.push(BM_W.procedureInReport); break; }
+    for (const b of model.procedure) if (['usetable', 'usegraph', 'useanswer', 'usephoto'].includes(b.type)) { warnings.push(BM_W.sectionOutside); break; }
+    for (const b of model.report) if (b.type === 'steps') { warnings.push(BM_W.procedureInReport); break; }
     warnings.push(...bmParseWarnings(model));
     model.warnings = [...new Set(warnings)];
     for (const b of model.procedure) b._k = bmKey();
@@ -4354,7 +4349,8 @@ function bmBlockFromOcc(occ, ctx) {
   switch (occ.name) {
     case 'datatable': { const r = bmParseTable(Bp ?? '', ctx); return r ? { type: 'table', opts: o, headers: r.headers, rows: r.rows } : raw(BM_W.table); }
     case 'procedure': { const r = bmParseSteps(Bp ?? ''); return r ? { type: 'steps', opts: o, start: r.start, loose: r.loose, steps: r.steps.map(s => bmRestore(s, ctx)) } : raw(BM_W.steps); }
-    case 'answer': case 'photo': case 'section': return { type, opts: o, prompt: B.trim() };
+    case 'answer': case 'photo': return { type, opts: o, prompt: B.trim() };
+    case 'section': { if (o.lines == null) o.lines = 6; return { type, opts: o, prompt: B.trim() }; }   // legacy tag: becomes a question, keeps its taller box
     case 'notes': return { type: 'notes', opts: o, label: B.trim() };
     case 'video': return { type: 'video', opts: o, url: B.trim() };
     case 'figure': return { type: 'figure', opts: o, path: B.trim() };
@@ -4429,7 +4425,7 @@ function bmSerializeBlock(b) {
       if (rows.length) out += '\n' + rows.map(line).join('\n');
       return out + '\n}';
     }
-    case 'answer': case 'photo': case 'section': return `\\${tag}${bmOpts(b)}` + (b.prompt ? `{${bmBody(b.prompt)}}` : '');
+    case 'answer': case 'photo': return `\\${tag}${bmOpts(b)}` + (b.prompt ? `{${bmBody(b.prompt)}}` : '');
     case 'notes': return `\\notes${bmOpts(b)}` + (b.label ? `{${bmBody(b.label)}}` : '');
     case 'graph': return `\\graph${bmOpts(b)}` + (b.caption ? `{${bmBody(b.caption)}}` : '');
     case 'video': return `\\video${bmOpts(b)}{${bmBody(b.url ?? '')}}`;
@@ -4483,7 +4479,7 @@ function bmTraverse(p, ctx, handler, st, depth = 0, where = 'body') {
       } else if (name === 'procedure' || BM_CALLOUT_KINDS.includes(name)) newBody = sub(body);
       else if (name === 'section') { if (body.trim()) newBody = sub(body); }
     }
-    if (name === 'section' && po.hint) sub(String(po.hint), 'option');
+    if ((name === 'answer' || name === 'section') && po.hint) sub(String(po.hint), 'option');
     if (name === 'figure' && po.caption) sub(String(po.caption), 'option');
     let text;
     if (give && give.id || newBody !== body || tableEmit) {
@@ -4615,8 +4611,7 @@ function bmMapStrings(b, fn) {   // apply fn to every tag-scannable string field
     case 'heading': F(b, 'text'); break;
     case 'steps': b.steps = (b.steps || []).map(fn); break;
     case 'table': b.headers = (b.headers || []).map(fn); b.rows = (b.rows || []).map(r => r.map(c => (BM_FILL.test(c) ? c : fn(c)))); break;
-    case 'answer': case 'photo': F(b, 'prompt'); break;
-    case 'section': F(b, 'prompt'); if (b.opts) F(b.opts, 'hint'); break;
+    case 'answer': case 'photo': F(b, 'prompt'); if (b.opts) F(b.opts, 'hint'); break;
     case 'notes': F(b, 'label'); break;
     case 'callout': F(b, 'body'); break;
     case 'figure': if (b.opts) F(b.opts, 'caption'); break;
@@ -4702,7 +4697,7 @@ function bmValidate(model, auto = bmAutoIds(model)) {
   const out = [];
   const push = (b, msg) => out.push({ k: b ? (b._k ?? null) : null, msg });
   out.push(...bmReferenceProblems(model, auto));
-  for (const b of model.procedure || []) if (['section', 'usetable', 'usegraph', 'useanswer', 'usephoto'].includes(b.type)) push(b, BM_W.sectionOutside);
+  for (const b of model.procedure || []) if (['usetable', 'usegraph', 'useanswer', 'usephoto'].includes(b.type)) push(b, BM_W.sectionOutside);
   const braceMsg = 'A curly bracket here has no partner. It is shown as a plain character, which is usually what you want.';
   for (const b of [...(model.procedure || []), ...(model.report || [])]) {
     if (b.type === 'table' && !(b.rows || []).some(r => r.some(c => BM_FILL.test(c)))) push(b, 'This table has no blank cells for students to fill in.');
@@ -4711,7 +4706,7 @@ function bmValidate(model, auto = bmAutoIds(model)) {
     const bodies = [];
     if (b.type === 'steps') bodies.push(...(b.steps || []));
     if (b.type === 'table') bodies.push(...(b.headers || []), ...(b.rows || []).flat());
-    if (b.type === 'answer' || b.type === 'photo' || b.type === 'section') bodies.push(b.prompt);
+    if (b.type === 'answer' || b.type === 'photo') bodies.push(b.prompt);
     if (b.type === 'notes') bodies.push(b.label);
     if (b.type === 'graph') bodies.push(b.caption);
     if (b.type === 'callout') bodies.push(b.body);
@@ -4761,8 +4756,8 @@ function bmWidgetSignature(text) {
     const body = occ.body;
     if (name === 'datatable') { const t = bmTableCells(body ?? ''); shape = { headers: t.headers.map(c => bmRestore(c, ctx)), rows: t.rows.map(r => r.map(c => (BM_FILL.test(c) ? '___' : bmRestore(c, ctx)))) }; }
     else if (name === 'procedure' || BM_CALLOUT_KINDS.includes(name)) shape = bmMdOf(body ?? '', ctx, name === 'procedure');
-    else if (name === 'section') shape = [body && body.trim() ? bmMdOf(body.trim(), ctx) : '', info.opts.hint ? bmNormalizeMd(String(info.opts.hint)) : ''];
-    else if (name === 'answer' || name === 'notes' || name === 'photo') shape = body ? bmMdOf(body.trim(), ctx) : '';
+    else if (name === 'answer' || name === 'section') shape = [body && body.trim() ? bmMdOf(body.trim(), ctx) : '', info.opts.hint ? bmNormalizeMd(String(info.opts.hint)) : ''];
+    else if (name === 'notes' || name === 'photo') shape = body ? bmMdOf(body.trim(), ctx) : '';
     else if (name === 'graph') shape = body ? bmRestore(body, ctx).trim() : '';
     else if (body != null) shape = bmRestore(body, ctx).trim();
     widgets.push([name, info.id, opts, info.depth, info.where, shape]);
@@ -4791,7 +4786,7 @@ function builderNewBlock(type) {
     answer: { opts: { lines: '4' }, prompt: '' }, notes: { opts: {}, label: '' }, photo: { opts: {}, prompt: '' },
     video: { opts: {}, url: '' }, figure: { opts: {}, path: '' }, callout: { kind: 'safety', opts: {}, body: '' },
     graph: { opts: { fit: 'linear' }, caption: '' }, pagebreak: { opts: {} },
-    section: { opts: {}, prompt: '' }, usetable: { ref: '' }, usegraph: { ref: '' }, useanswer: { ref: '' }, usephoto: { ref: '' },
+    usetable: { ref: '' }, usegraph: { ref: '' }, useanswer: { ref: '' }, usephoto: { ref: '' },
   }[type];
   if (!d) throw new Error('Unknown block type ' + type);
   return Object.assign({ type }, JSON.parse(JSON.stringify(d)), { _fresh: true, _open: true, _k: bmKey() });
@@ -4848,17 +4843,17 @@ Wear goggles at all times.
 \\notes[id=reflection]{Reflection}
 
 \\report{
-\\section[id=purpose, title="Purpose", required, words=30-80]{State the goal of this experiment in your own words.}
+\\answer[id=purpose, title="Purpose", required, words=30-80]{State the goal of this experiment in your own words.}
 
-\\section[id=results, title="Results", required, words=80-200]{Summarize what the data show. Refer to Table 1 and Figure 1.}
+\\answer[id=results, title="Results", required, words=80-200]{Summarize what the data show. Refer to Table 1 and Figure 1.}
 
 \\usetable{data}
 
 \\usegraph{data-graph}
 
-\\section[id=sources-of-error, title="Sources of error", words=50-150]{Identify two specific sources of error and how each would change your result.}
+\\answer[id=sources-of-error, title="Sources of error", words=50-150]{Identify two specific sources of error and how each would change your result.}
 
-\\section[id=conclusion, title="Conclusion", required, words=50-150]
+\\answer[id=conclusion, title="Conclusion", required, words=50-150]
 }
 ` },
   data: { label: 'Data collection only', text: `# Data
@@ -4878,15 +4873,15 @@ Wear goggles at all times.
 \\notes[id=observations]{Observations}
 ` },
   report: { label: 'Report only', text: `\\report{
-\\section[id=purpose, title="Purpose", required, words=30-80]{State the goal of this experiment in your own words.}
+\\answer[id=purpose, title="Purpose", required, words=30-80]{State the goal of this experiment in your own words.}
 
-\\section[id=method, title="Method", required]{Describe what you did, in enough detail that a classmate could repeat it.}
+\\answer[id=method, title="Method", required]{Describe what you did, in enough detail that a classmate could repeat it.}
 
-\\section[id=results, title="Results", required, words=80-200]{Summarize what the data show.}
+\\answer[id=results, title="Results", required, words=80-200]{Summarize what the data show.}
 
-\\section[id=discussion, title="Discussion", words=50-150]{Explain what the results mean and what could have affected them.}
+\\answer[id=discussion, title="Discussion", words=50-150]{Explain what the results mean and what could have affected them.}
 
-\\section[id=conclusion, title="Conclusion", required, words=50-150]
+\\answer[id=conclusion, title="Conclusion", required, words=50-150]
 }
 ` },
 };
@@ -4992,7 +4987,7 @@ const BU_PALETTE = {
   text:      'Writing: explanations, materials lists, anything students read. Can include fill-in boxes for single values.',
   steps:     'Steps students follow; each step gets its own notes box automatically.',
   table:     'A table students fill in. You choose which cells are blank.',
-  answer:    'A question with an answer box under it.',
+  answer:    'A question with an answer box under it. More options: a heading, a hint, required, a word-count target.',
   notes:     'A collapsible box where students keep their own notes.',
   photo:     'A place for students to add a photo of their work.',
   video:     'A YouTube video.',
@@ -5001,7 +4996,6 @@ const BU_PALETTE = {
   graph:     'A live graph drawn from one of your data tables. It fills in as students type.',
   pagebreak: 'Starts a new page when the lab is printed.',
   comment:   'Text only you can see in the file; students never see it.',
-  section:   'One part of the write-up: a title, your instructions, an optional hint, and a writing box.',
   usetable:  'Shows one of the lab\'s data tables, filled with the student\'s own numbers.',
   usegraph:  'Shows one of the lab\'s graphs, drawn from the student\'s own data.',
   useanswer: 'Shows what the student wrote for one of the procedure\'s questions.',
@@ -5009,8 +5003,8 @@ const BU_PALETTE = {
   style:     'Your writing rules, shown at the top of the Report tab.',
 };
 const BU_PROCEDURE_PALETTE = ['heading', 'text', 'steps', 'table', 'answer', 'notes', 'photo', 'video', 'figure', 'callout', 'graph', 'pagebreak'];
-const BU_REPORT_PALETTE = ['section', 'answer', 'table', 'photo', 'notes', 'graph', 'usetable', 'usegraph', 'useanswer', 'usephoto', 'heading', 'text'];
-const BU_ID_TYPES = ['steps', 'table', 'answer', 'notes', 'photo', 'graph', 'section'];
+const BU_REPORT_PALETTE = ['answer', 'table', 'photo', 'notes', 'graph', 'usetable', 'usegraph', 'useanswer', 'usephoto', 'heading', 'text'];
+const BU_ID_TYPES = ['steps', 'table', 'answer', 'notes', 'photo', 'graph'];
 const BU_CALLOUT_LABELS = { safety: 'Safety', warning: 'Warning', info: 'Information', tip: 'Tip', hint: 'Hint' };
 const BU_LEVELS = [[1, 'Big heading'], [2, 'Heading'], [3, 'Small heading'], [4, 'Level 4'], [5, 'Level 5'], [6, 'Level 6']];
 const BU_BRACE_MSG = 'A curly bracket here has no partner. It is shown as a plain character, which is usually what you want.';
@@ -5103,7 +5097,7 @@ function builderSetModel(model) {
 function builderDestroy() {
   buFlushChange();
   clearTimeout(buTimer); buTimer = null;
-  if (buBound) { buBound.pairs.forEach(([ev, fn]) => buBound.el.removeEventListener(ev, fn)); buBound = null; }
+  if (buBound) { buBound.pairs.forEach(([ev, fn]) => buBound.el.removeEventListener(ev, fn)); buBound.el.removeEventListener('toggle', buOnToggle, true); buBound = null; }
   if (buContainer) buContainer.innerHTML = '';
   buContainer = null; buModel = null; buOnChange = null; buHost = null; buAuto = null; buPopover = null; buDrag = null; buDropLine = null;
   buCellMemory = {}; buShiftNoted = {};
@@ -5115,12 +5109,17 @@ function buEnsureKeys() {
   if (buModel.style === undefined) buModel.style = null;
   if (!Array.isArray(buModel.warnings)) buModel.warnings = [];
 }
+function buOnToggle(e) {
+  const d = e.target; if (!d.classList || !d.classList.contains('bu-more')) return;
+  const card = d.closest('.bu-card'); const f = card ? buFindBlock(+card.dataset.k) : null; if (f) f.block._more = d.open;
+}
 function buBind() {
   const pairs = [
     ['input', buOnInput], ['change', buOnChangeEvt], ['click', buOnClick], ['dblclick', buOnDblClick], ['keydown', buOnKeydown],
     ['dragstart', buOnDragStart], ['dragover', buOnDragOver], ['dragleave', buOnDragLeave], ['drop', buOnDrop], ['dragend', buOnDragEnd],
   ];
   pairs.forEach(([ev, fn]) => buContainer.addEventListener(ev, fn));
+  buContainer.addEventListener('toggle', buOnToggle, true);   // <details> toggle does not bubble
   buBound = { el: buContainer, pairs };
 }
 
@@ -5169,7 +5168,7 @@ function buNameOf(b) {
   const t = buTypeInfo(b.type); return t.nameOf ? (t.nameOf(b) || '') : '';
 }
 function buIsNamingField(b, bind) {
-  return (['table', 'graph', 'section'].includes(b.type) && bind === 'opts.title') || (b.type === 'notes' && bind === 'label');
+  return (['table', 'graph'].includes(b.type) && bind === 'opts.title') || (b.type === 'notes' && bind === 'label');
 }
 
 /* ---------- top-level rendering ---------- */
@@ -5216,7 +5215,7 @@ function buRenderList(list) {
   const blocks = buModel[list];
   let html = blocks.map((b, i) => buCardHTML(b, list, i)).join('');
   if (list === 'procedure' && !blocks.length && buModel.report.length) html += `<div class="bu-note">The Procedure tab will be empty. Add a Text block if students should see instructions.</div>`;
-  if (list === 'report' && !blocks.length && buModel.reportPresent) html += `<div class="bu-note">Add a Report section to give students a Report tab.</div>`;
+  if (list === 'report' && !blocks.length && buModel.reportPresent) html += `<div class="bu-note">Add a Question to give students a Report tab.</div>`;
   el.innerHTML = html;
 }
 function buRenderPalette(list) {
@@ -5245,7 +5244,7 @@ function buRenderStyle() {
   { const el0 = buQ('#bu-style'); if (el0) el0.innerHTML = ''; return; }
   const el = buQ('#bu-style'); if (!el) return;
   if (buModel.style === null || buModel.style === undefined) { el.innerHTML = ''; return; }
-  const info = (!buModel.report.length && !buModel.reportPresent) ? `<div class="bu-note">The style guide only appears once the report has a section.</div>` : '';
+  const info = (!buModel.report.length && !buModel.reportPresent) ? `<div class="bu-note">The style guide only appears once the report has a block.</div>` : '';
   el.innerHTML = `<div class="bu-card bu-card-style" data-type="style" tabindex="0">
     <div class="bu-card-head"><span class="bu-kind">Style guide</span><span class="bu-summary">${buEsc(buFirstLine(buModel.style, 80) || 'Your writing rules')}</span>
       <span class="bu-actions"><button type="button" data-act="remove-style" class="danger" title="Remove the style guide">✕</button></span></div>
@@ -5330,7 +5329,7 @@ function buSummary(b) {
       const blanks = b.rows.reduce((n, r) => n + r.filter(c => c === '___').length, 0);
       return `${buOptStr(b, 'title') || 'Untitled'} · ${cols} ${cols === 1 ? 'column' : 'columns'} · ${b.rows.length} ${b.rows.length === 1 ? 'row' : 'rows'} · ${blanks} ${blanks === 1 ? 'blank' : 'blanks'}${b.opts && b.opts.addrows ? ' · students can add rows' : ''}`;
     }
-    case 'answer': return `${buFirstLine(buPlainInputs(b.prompt), 80) || '(no question text)'} · ${buOptStr(b, 'lines') || '3'} lines`;
+    case 'answer': { const w = buOptStr(b, 'words'); return `${buOptStr(b, 'title') || buFirstLine(buPlainInputs(b.prompt), 80) || '(no question text)'}${b.opts && b.opts.required ? ' · required' : ''}${w ? ` · ${w} words` : ''} · ${buOptStr(b, 'lines') || '3'} lines`; }
     case 'notes': return b.label || 'My notes';
     case 'photo': return buFirstLine(buPlainInputs(b.prompt), 80) || '(no instruction)';
     case 'video': return buHost.youtubeId(b.url) || b.url || '(no link yet)';
@@ -5338,7 +5337,6 @@ function buSummary(b) {
     case 'callout': return `${buOptStr(b, 'label') || BU_CALLOUT_LABELS[b.kind] || b.kind} · ${buFirstLine(buPlainInputs(b.body), 60)}`;
     case 'graph': { const t = buTables().find(x => x.id && x.id === buOptStr(b, 'table')); return `${buOptStr(b, 'title') || buGraphAxesName(b)} · from "${t ? (t.title || 'Untitled table') : (buOptStr(b, 'table') || 'first table')}"`; }
     case 'pagebreak': return 'Page break';
-    case 'section': { const w = buOptStr(b, 'words'); return `${buOptStr(b, 'title') || buFirstLine(buPlainInputs(b.prompt), 80) || '(empty question)'}${b.opts && b.opts.required ? ' · required' : ''}${w ? ` · ${w} words` : ''}`; }
     case 'usetable': { const t = buTables().find(x => x.id && x.id === b.ref); return t ? (t.title || 'Untitled table') : `Missing: ${b.ref || '(nothing chosen)'}`; }
     case 'usegraph': { const g = buGraphs().find(x => x.id && x.id === b.ref); return g ? g.title : `Missing: ${b.ref || '(nothing chosen)'}`; }
     case 'useanswer': { const a = buAnswers().find(x => x.id && x.id === b.ref); return a ? a.title : `Missing: ${b.ref || '(nothing chosen)'}`; }
@@ -5425,10 +5423,7 @@ function buForm(b, list) {
       break;
     }
     case 'table': h = buFormTable(b); break;
-    case 'answer':
-      h = `<div class="form-row"><label>Question (optional, shown above the box)</label>${buTextarea('prompt', b.prompt, 'str', 'data-brace="1"')}${buBraceLine(b.prompt)}<div class="hint">Leave the question empty when it is already written in the text above.</div></div>
-        <div class="form-row bu-narrow"><label>Lines</label>${buNum('opts.lines', buOptStr(b, 'lines'), 'min="1" step="1" placeholder="3"')}</div>${buIdRow(b)}`;
-      break;
+    case 'answer': h = buFormAnswer(b); break;
     case 'notes':
       h = `<div class="form-row"><label>Label (optional)</label>${buInput('label', b.label, 'body', 'placeholder="My notes" data-brace="1"')}${buBraceLine(b.label)}<div class="hint">Students see a collapsible box with this label where they can keep their own notes.</div></div>${buIdRow(b)}`;
       break;
@@ -5450,7 +5445,6 @@ function buForm(b, list) {
       break;
     case 'graph': h = buFormGraph(b); break;
     case 'pagebreak': h = `<div class="bu-note">Starts a new page when the lab is printed.</div>`; break;
-    case 'section': h = buFormSection(b); break;
     case 'usetable':
       h = buRow('Table', buRefSelect('ref', 'ref', buTables().filter(x => buModel.procedure.includes(x.block)), b.ref || ''), 'Shows this table in the report, filled with the student\'s own numbers, with a caption like "Table 1".');
       break;
@@ -5508,18 +5502,21 @@ function buFormFigure(b) {
   h += buRow('Caption', buInput('opts.caption', buOptStr(b, 'caption'), 'opt'), 'Shown under the picture.');
   return h;
 }
-function buFormSection(b) {
+function buFormAnswer(b) {
   const hasTitle = !!buOptStr(b, 'title') || !!b._wantTitle;
-  let h = `<div class="form-row">${buCheck('_wantTitle', hasTitle, 'Add a heading above this question', 'ui')}</div>`;
-  if (hasTitle) h += buRow('Heading', buInput('opts.title', buOptStr(b, 'title'), 'opt', 'placeholder="e.g. Purpose"'));
-  h += `<div class="form-row"><label>Question or instructions to the student</label>${buTextarea('prompt', b.prompt, 'str', 'data-brace="1"')}${buBraceLine(b.prompt)}</div>`;
-  h += buRow('Hint (optional, students can expand it)', buInput('opts.hint', buOptStr(b, 'hint'), 'opt'));
-  h += `<div class="form-row">${buCheck('opts.required', !!(b.opts && b.opts.required), 'Required')}</div>`;
+  const hint = buOptStr(b, 'hint'), words = buOptStr(b, 'words'), required = !!(b.opts && b.opts.required);
+  let h = `<div class="form-row"><label>Question (optional, shown above the box)</label>${buTextarea('prompt', b.prompt, 'str', 'data-brace="1"')}${buBraceLine(b.prompt)}<div class="hint">Leave the question empty when it is already written in the text above.</div></div>
+    <div class="form-row bu-narrow"><label>Lines in the answer box</label>${buNum('opts.lines', buOptStr(b, 'lines'), 'min="1" step="1" placeholder="3"')}</div>`;
+  let more = `<div class="form-row">${buCheck('_wantTitle', hasTitle, 'Add a heading above this question', 'ui')}</div>`;
+  if (hasTitle) more += buRow('Heading', buInput('opts.title', buOptStr(b, 'title'), 'opt', 'placeholder="e.g. Purpose"'));
+  more += buRow('Hint (optional, students can expand it)', buInput('opts.hint', hint, 'opt'));
+  more += `<div class="form-row">${buCheck('opts.required', required, 'Required (students see a badge and a note while it is empty)')}</div>`;
   let wv = { min: '', max: '', raw: null };
-  try { wv = bmWordsView(buOptStr(b, 'words')); } catch (e) {}
-  if (wv.raw != null && wv.raw !== '') h += buRow('Suggested length (as typed)', buInput('opts.words', wv.raw, 'str'), 'Write it as two numbers, for example 40-120, to get the usual controls.');
-  else h += `<div class="form-row"><label>Suggested length</label><div class="bu-inline">from <input type="number" min="0" step="1" data-bind="opts.words" data-kind="words" data-part="min" value="${buEsc(wv.min)}"/> to <input type="number" min="0" step="1" data-bind="opts.words" data-kind="words" data-part="max" value="${buEsc(wv.max)}"/> words</div><div class="hint">Optional. Students see a gentle word-count target; leave either side empty for no limit.</div></div>`;
-  h += `<div class="form-row bu-narrow"><label>Lines in the writing box</label>${buNum('opts.lines', buOptStr(b, 'lines'), 'min="1" step="1" placeholder="6"')}</div>`;
+  try { wv = bmWordsView(words); } catch (e) {}
+  if (wv.raw != null && wv.raw !== '') more += buRow('Suggested length (as typed)', buInput('opts.words', wv.raw, 'str'), 'Write it as two numbers, for example 40-120, to get the usual controls.');
+  else more += `<div class="form-row"><label>Suggested length</label><div class="bu-inline">from <input type="number" min="0" step="1" data-bind="opts.words" data-kind="words" data-part="min" value="${buEsc(wv.min)}"/> to <input type="number" min="0" step="1" data-bind="opts.words" data-kind="words" data-part="max" value="${buEsc(wv.max)}"/> words</div><div class="hint">Students see a word count under the box. Leave both empty for no target.</div></div>`;
+  const open = !!(b._more || hasTitle || hint || words || required);
+  h += `<details class="bu-more" ${open ? 'open' : ''}><summary>More options (heading, hint, required, suggested length)</summary>${more}</details>`;
   return h + buIdRow(b);
 }
 
@@ -5910,7 +5907,7 @@ function buIsBlank(b) {
     case 'heading': case 'text': case 'comment': case 'raw': return !String(b.text || '').trim();
     case 'steps': return b.steps.every(s => !String(s || '').trim());
     case 'table': return b.headers.every(h => !String(h || '').trim()) && b.rows.every(r => r.every(c => !String(c || '').trim() || c === '___'));
-    case 'answer': case 'photo': case 'section': return !String(b.prompt || '').trim() && !buOptStr(b, 'title');
+    case 'answer': case 'photo': return !String(b.prompt || '').trim() && !buOptStr(b, 'title');
     case 'notes': return !String(b.label || '').trim();
     case 'video': return !String(b.url || '').trim();
     case 'figure': return !String(b.path || '').trim();
@@ -5996,7 +5993,6 @@ function buShowBlock(b) {
     case 'answer': case 'notes': t = { attr: 'data-field', value: id }; break;
     case 'steps': t = { attr: 'data-field', value: id + '.step1' }; break;
     case 'photo': t = { attr: 'data-photo', value: id }; break;
-    case 'section': t = { attr: 'data-section', value: id }; break;
     case 'usetable': t = { attr: 'data-mirror-table', value: b.ref }; break;
     case 'usegraph': t = { attr: 'data-mirror-graph', value: b.ref }; break;
     case 'useanswer': t = { attr: 'data-mirror-answer', value: b.ref }; break;

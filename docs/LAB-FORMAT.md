@@ -80,7 +80,7 @@ Inside `\report{…}` use ordinary Markdown plus:
 
 | Command | What it does |
 |---|---|
-| `\section[id=…, required, words=min-max, hint="…", lines=6, title=…]{Question or instructions}` | One question in the report: your prompt (Markdown), an expandable hint, and a writing box. `title` is optional and adds a heading above the question; leave it out for a plain numbered-style question. `required` marks it; `words=40-120` shows a gentle word-count target (`words=40` for a minimum only, `words=-120` for a maximum only). |
+| `\answer[id=…, title=…, required, words=min-max, hint="…", lines=6]{Question or instructions}` | The same `\answer` as in the procedure, with options that suit a write-up: `title` adds a heading above the question; `required` marks it and shows a note while it is empty; `words=40-120` shows a gentle word-count target (`words=40` for a minimum only, `words=-120` for a maximum only); `hint` adds an expandable hint. All optional. (`\section` is accepted as an old alias.) |
 | `\usetable{id}` | Shows a read-only copy of the `\datatable` with that id, filled with the student's own data, captioned "Table n". |
 | `\usegraph{id}` | Shows the `\graph` with that id (give the graph an `id=` option), drawn from the student's data, captioned "Figure n". |
 | `\useanswer{id}` | Shows a procedure `\answer` or `\notes` box (by its id): the prompt plus what the student wrote there. Read-only; the student edits it on the Procedure tab. |
@@ -89,23 +89,23 @@ Inside `\report{…}` use ordinary Markdown plus:
 
 The `\use…` commands only refer to blocks in the procedure, so every referenced block needs an explicit `id=`.
 
-Rules for converting a PDF: if the PDF includes report instructions, a rubric, or "write-up" requirements, turn them into `\section`s in the same order, using the PDF's own wording for prompts. Put every data table the report must include in `\usetable{…}` and every required plot in `\usegraph{…}`; if the write-up asks for a table the procedure never collected, put a `\datatable` in the report instead. Keep report sections short and specific; do not invent requirements the PDF does not state.
+Rules for converting a PDF: if the PDF includes report instructions, a rubric, or "write-up" requirements, turn them into `\answer`s in the same order, using the PDF's own wording for prompts. Put every data table the report must include in `\usetable{…}` and every required plot in `\usegraph{…}`; if the write-up asks for a table the procedure never collected, put a `\datatable` in the report instead. Keep report questions short and specific; do not invent requirements the PDF does not state.
 
 ```
 \report{
-\section[id=purpose, title="Purpose", required, words=30-80, hint="One or two sentences: what was measured and why."]{State the goal of this experiment in your own words.}
+\answer[id=purpose, title="Purpose", required, words=30-80, hint="One or two sentences: what was measured and why."]{State the goal of this experiment in your own words.}
 
-\section[id=results, title="Results", required, words=80-200]{Summarize what the data show. Refer to Table 1 and Figure 1.}
+\answer[id=results, title="Results", required, words=80-200]{Summarize what the data show. Refer to Table 1 and Figure 1.}
 
 \usetable{visc}
 
 \usegraph{arrhenius}
 
-\section[id=calculations, title="Calculations", required, hint="Show one worked example for each type of calculation, with units."]
+\answer[id=calculations, title="Calculations", required, hint="Show one worked example for each type of calculation, with units."]
 
-\section[id=error, title="Sources of error", words=50-150]{Identify two specific sources of error and how each would change your result.}
+\answer[id=error, title="Sources of error", words=50-150]{Identify two specific sources of error and how each would change your result.}
 
-\section[id=conclusion, title="Conclusion", required, words=50-150]
+\answer[id=conclusion, title="Conclusion", required, words=50-150]
 }
 ```
 
