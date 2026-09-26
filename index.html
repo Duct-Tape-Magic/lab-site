@@ -2680,6 +2680,94 @@ async function saveAccessList(kind, itemId) {
   if (st.users.size) { r = await sb.from('item_users').insert([...st.users].map(u => ({ item_id: itemId, user_id: u }))); if (r.error) throw r.error; }
 }
 
+/* ---------- Student-work guard: warn before an edit hides saved entries ----------
+   Entries are saved under widget ids (q1, t1.r2c3, proc1.step2, …). Removing a block, renaming its id, or changing a table's
+   shape leaves those entries in the database but invisible (or in the wrong cell). While a lab is being edited, `labWork`
+   holds which keys real students have filled so every such action can ask first. */
+let labWork = null, labWorkPromise = null;
+async function loadLabWork(labId, oldText) {
+  labWork = null;
+  if (!labId || !sb || state.source !== 'live') return null;
+  try {
+    const { data, error } = await sb.from('lab_entries').select('user_id, data').eq('lab_id', labId);
+    if (error) throw error;
+    const keys = new Map();
+    for (const row of data || []) for (const [k, v] of Object.entries(row.data || {})) {
+      if (k.startsWith('_') || v === '' || v == null || v === 0) continue;
+      keys.set(k, (keys.get(k) || 0) + 1);
+    }
+    labWork = { labId, students: (data || []).length, keys, oldSchema: ltEntrySchema(oldText) };
+  } catch (e) { console.warn('could not load student work:', e.message); labWork = null; }
+  return labWork;
+}
+// Which ids a lab file produces: every field/check id, and each table's base cells.
+function ltEntrySchema(text) {
+  const out = { fields: new Set(), tables: new Map() };
+  if (!text || !String(text).trim() || typeof ltRender !== 'function') return out;
+  let r; try { r = ltRender(text); } catch (e) { return out; }
+  const tpl = document.createElement('template'); tpl.innerHTML = (r.html || '') + (r.report || '');
+  tpl.content.querySelectorAll('[data-field], [data-check]').forEach(el => out.fields.add(el.dataset.field || el.dataset.check));
+  tpl.content.querySelectorAll('.lt-table-wrap[data-table]').forEach(w => out.tables.set(w.dataset.table, {
+    addrows: !!w.querySelector('.lt-table-add'), cols: +w.dataset.cols || 0, rows: w.querySelectorAll('tbody tr').length,
+    cells: [...w.querySelectorAll('[data-field]')].map(c => c.dataset.field).sort().join(' ')
+  }));
+  return out;
+}
+function ltWorkOwner(key) { const dot = key.indexOf('.'); return dot > 0 ? key.slice(0, dot) : key; }
+// Students with saved work under one block id (exact key or "<id>.…").
+function labWorkOn(id, work = labWork) {
+  if (!work || !id) return 0; let n = 0;
+  for (const [k, c] of work.keys) if (k === id || k.startsWith(id + '.')) n = Math.max(n, c);
+  return n;
+}
+// Problems a new version of the lab file would cause for saved work: [{ id, students, kind: 'missing'|'reshaped' }]
+function labWorkProblems(work, newText, isLabFile) {
+  const out = [];
+  if (!work || !work.keys.size) return out;
+  const schema = isLabFile ? ltEntrySchema(newText) : { fields: new Set(), tables: new Map() };
+  const missing = new Map(), reshaped = new Map();
+  for (const [k, n] of work.keys) {
+    if (!n || schema.fields.has(k)) continue;
+    const owner = ltWorkOwner(k), rest = k.slice(owner.length + 1), t = schema.tables.get(owner);
+    if (t) {
+      if (rest === 'rows') continue;
+      const m = /^r(\d+)c(\d+)$/.exec(rest);
+      if (m && t.addrows && +m[1] > t.rows && +m[2] <= t.cols) continue;   // a row the student added
+      reshaped.set(owner, Math.max(reshaped.get(owner) || 0, n)); continue;
+    }
+    missing.set(owner, Math.max(missing.get(owner) || 0, n));
+  }
+  for (const [id, t] of schema.tables) {
+    const old = work.oldSchema.tables.get(id);
+    if (old && (old.cells !== t.cells || old.cols !== t.cols)) { const n = labWorkOn(id, work); if (n) reshaped.set(id, Math.max(reshaped.get(id) || 0, n)); }
+  }
+  for (const [id, n] of missing) out.push({ id, students: n, kind: 'missing' });
+  for (const [id, n] of reshaped) if (!missing.has(id)) out.push({ id, students: n, kind: 'reshaped' });
+  return out;
+}
+// Friendly labels for block ids in a lab file (old version), e.g. 'Question "What did you observe?"'.
+function labBlockLabels(text) {
+  const map = new Map();
+  try {
+    const model = builderParse(text || ''), auto = bmAutoIds(model);
+    for (const b of [...(model.procedure || []), ...(model.report || [])]) {
+      const id = (b.opts && b.opts.id) ? bmSafeId(String(b.opts.id)) : auto.byBlock.get(b); if (!id) continue;
+      const t = BM_TYPES[b.type]; const name = (t && t.nameOf && t.nameOf(b)) || (b.prompt ? String(b.prompt).split('\n')[0] : '') || b.label || '';
+      map.set(id, `${t ? t.label : b.type}${name ? ` "${name.length > 50 ? name.slice(0, 50) + '…' : name}"` : ''}`);
+    }
+  } catch (e) { /* labels are a courtesy */ }
+  return map;
+}
+function labWorkWarning(problems, oldText) {
+  const labels = labBlockLabels(oldText);
+  const lines = problems.map(p => {
+    const who = `${p.students} student${p.students === 1 ? '' : 's'}`;
+    const what = labels.get(p.id) || `"${p.id}"`;
+    return p.kind === 'missing' ? `• ${who}: ${what} is gone from this version, so their saved answers will no longer show.` : `• ${who}: ${what} changed shape, so their saved cells may show in the wrong place.`;
+  });
+  return `This change affects saved student work:\n\n${lines.join('\n')}\n\nNothing is deleted from the database, but students will not see this work on the site until the lab has these blocks again. Save anyway?`;
+}
+
 async function openLabModal(id) {
   if (!isAdmin()) return;
   const lab = id ? state.labs.find(l => l.id === id) : null;
@@ -2689,6 +2777,7 @@ async function openLabModal(id) {
     if (!entry) entry = { media: [], content: '', attachments: [] };
   }
   editingLabId = lab ? lab.id : 'l-' + Date.now();
+  labWork = null; labWorkPromise = lab ? loadLabWork(lab.id, entry?.format === 'labtags' ? (entry?.content || '') : '') : null;
   labFigureUploads = [];
   labSlugTouched = !!lab;
   $('lab-modal-title').textContent = lab ? 'Edit lab' : 'Add a lab';
@@ -2774,6 +2863,11 @@ async function saveLab() {
   const btn = $('save-lab-btn'); btn.disabled = true; btn.textContent = 'Saving…';
   try {
     if (original) {
+      const work = await labWorkPromise;   // student work on this lab (null when there is none or it could not be loaded)
+      const problems = labWorkProblems(work, isEmpty ? '' : content, format === 'labtags');
+      if (problems.length && !confirm(labWorkWarning(problems, originalEntry?.format === 'labtags' ? (originalEntry.content || '') : ''))) { btn.disabled = false; btn.textContent = 'Save lab'; return; }
+    }
+    if (original) {
       const { error: revErr } = await sb.from('lab_revisions').insert({ lab_id: original.id, snapshot: { lab: original, content: originalEntry || null }, note: 'before save' });
       if (revErr) console.warn('revision not saved:', revErr.message);
     }
@@ -2807,7 +2901,10 @@ async function saveLab() {
 
 async function deleteLabById(id) {
   const lab = state.labs.find(l => l.id === id); if (!lab) return false;
-  if (!confirm(`Delete "${lab.title}"? Its photos and files are removed too. This cannot be undone.`)) return false;
+  let n = 0; try { const r = await sb.from('lab_entries').select('user_id', { count: 'exact', head: true }).eq('lab_id', id); n = r.count || 0; } catch (e) { /* unknown */ }
+  const work = n ? `\n\n${n} student${n === 1 ? ' has' : 's have'} saved work in this lab. Their entries stay in the database, but nothing on the site will show them any more.` : '';
+  if (!confirm(`Delete "${lab.title}"? Its photos and files are removed too. This cannot be undone.${work}`)) return false;
+  if (n && prompt(`Type DELETE to confirm removing a lab with student work:`) !== 'DELETE') { toast('Nothing deleted'); return false; }
   const { error } = await sb.from('labs').delete().eq('id', id);
   if (error) { toast('Could not delete: ' + error.message, true); return false; }
   await removeStoragePaths(await listStorageFolder(`labs/${id}`));
@@ -3063,12 +3160,16 @@ async function regenerateSeat(uid, seatNo) {
   try { const code = await rpc('regenerate_seat', { p_user: uid }); toast(`Seat ${seatNo}: ${code}`); await openClass(classesView.classId); } catch (e) { toast(e.message, true); }
 }
 async function deleteSeatConfirm(uid, seatNo) {
-  if (!confirm(`Remove seat ${seatNo}? Its access code and every entry saved under it are deleted. This cannot be undone.`)) return;
+  const seat = (classesView.seats || []).find(s => s.user_id === uid), n = seat ? +seat.entries || 0 : 0;
+  const work = n ? `This seat has saved work in ${n} lab${n === 1 ? '' : 's'}. Deleting the seat erases that work permanently; there is no undo.` : 'Its access code and any entries saved under it are deleted. This cannot be undone.';
+  if (!confirm(`Remove seat ${seatNo}? ${work}`)) return;
+  if (n && prompt(`Type DELETE to confirm erasing seat ${seatNo}'s saved work:`) !== 'DELETE') { toast('Nothing deleted'); return; }
   try { await rpc('delete_seat', { p_user: uid }); toast(`Seat ${seatNo} removed`); await openClass(classesView.classId); } catch (e) { toast(e.message, true); }
 }
 async function deleteClassConfirm() {
   const c = classesView.cls;
-  if (!confirm(`Delete "${c.name}" and all ${classesView.seats.length} seats, including every entry saved under them? This cannot be undone. Consider "Close class" instead.`)) return;
+  const labsWithWork = (classesView.seats || []).reduce((a, s) => a + (+s.entries || 0), 0);
+  if (!confirm(`Delete "${c.name}" and all ${classesView.seats.length} seats, including every entry saved under them?${labsWithWork ? ` That is ${labsWithWork} saved lab${labsWithWork === 1 ? '' : 's'} of student work, erased permanently.` : ''} This cannot be undone. Consider "Close class" instead, which keeps everything.`)) return;
   if (prompt(`Type the class name to confirm deleting it:`) !== c.name) { toast('Name did not match; nothing deleted'); return; }
   try { await rpc('delete_class', { p_class_id: c.id }); toast('Class deleted'); await renderClassesList(); } catch (e) { toast(e.message, true); }
 }
@@ -5063,6 +5164,7 @@ function buMakeHost(h) {
     upload: h.upload || (typeof uploadFigureFile === 'function' ? uploadFigureFile : (() => Promise.reject(new Error('Uploads are not available here')))),
     fileUrl: h.fileUrl || (typeof fileUrl === 'function' ? fileUrl : (p => p)),
     youtubeId: h.youtubeId || (typeof extractYoutubeId === 'function' ? extractYoutubeId : buYoutubeId),
+    workOn: h.workOn || (() => 0),
     pictures: h.pictures || (() => {
       try {
         const a = typeof labFigureUploads !== 'undefined' ? labFigureUploads : [];
@@ -5755,6 +5857,7 @@ function buWrite(found, bind, kind, el, card) {
       return bind === 'start';
     case 'id': {
       const nv = String(v).trim(), old = b.opts ? b.opts.id : undefined;
+      if (old && nv !== old) { const w = buHost.workOn(old); if (w && !buHost.confirm(`${w} student${w === 1 ? ' has' : 's have'} saved work under the name "${old}". Renaming it detaches that work: it stays in the database, but students will no longer see it.\n\nRename anyway?`)) { el.value = old; return false; } }
       b._fresh = false; buSetOpt(b, 'id', nv);
       if (old && nv && old !== nv) { try { bmRenameId(buModel, old, nv); } catch (e) {} }
       return false;
@@ -5819,7 +5922,8 @@ function buOnChangeEvt(e) {
       const target = buFindBlock(+val.slice(9));
       if (!target) { buRenderCard(b._k); return; }
       const tb = target.block, name = buNameOf(tb) || ({ table: 'Untitled table', graph: 'Untitled graph', answer: 'This question', notes: 'This notes box', photo: 'This photo slot' }[tb.type] || 'This block');
-      const ask = (tb.type === 'table' || tb.type === 'answer' || tb.type === 'notes' || tb.type === 'photo') ? `"${name}" has no permanent name yet. Give it one now? Students who already saved entries in it will not see them any more.` : `"${name}" has no permanent name yet. Give it one now?`;
+      const autoId = buAuto && buAuto.byBlock && buAuto.byBlock.get(tb), w = autoId ? buHost.workOn(autoId) : 0;
+      const ask = w ? `"${name}" has no permanent name yet, and ${w} student${w === 1 ? ' has' : 's have'} saved work under its automatic name "${autoId}". Giving it a permanent name detaches that work: it stays in the database, but students will no longer see it. Continue?` : (tb.type === 'table' || tb.type === 'answer' || tb.type === 'notes' || tb.type === 'photo') ? `"${name}" has no permanent name yet. Give it one now? Anything students already saved in it will not show any more.` : `"${name}" has no permanent name yet. Give it one now?`;
       if (!buHost.confirm(ask)) { buRenderCard(b._k); return; }
       const idName = buNameOf(tb) || (['answer', 'photo'].includes(tb.type) ? buFirstLine(buPlainInputs(tb.prompt || ''), 40) : '');   // questions/photos: slug of the prompt
       tb.opts.id = bmNewId(buModel, idName, buTypeInfo(tb.type).idBase || tb.type); tb._fresh = false;   // frozen, not fresh (A.5.8)
@@ -5879,10 +5983,13 @@ function buOnClick(e) {
     case 'goto': buGoto(+btn.dataset.target); break;
     case 'pin-all': buPinAll(); break;
     case 'dismiss-notice': buNoticeDismissed = true; buRevalidate(true); break;
-    case 'name-block':
+    case 'name-block': {
       if (!b) break;
+      const autoId = buAuto && buAuto.byBlock && buAuto.byBlock.get(b), w = autoId ? buHost.workOn(autoId) : 0;
+      if (w && !buHost.confirm(`${w} student${w === 1 ? ' has' : 's have'} saved work under the automatic name "${autoId}". Giving this block a permanent name detaches that work: it stays in the database, but students will no longer see it.\n\nContinue?`)) break;
       b.opts.id = bmNewId(buModel, buNameOf(b), buTypeInfo(b.type).idBase || b.type); b._fresh = false;
       buRenderCard(k); buChanged(k, true); break;
+    }
     case 'add-row': case 'del-row': case 'row-up': case 'row-down': case 'add-col': case 'del-col': case 'col-left': case 'col-right': case 'blank': case 'text-cell':
       buTableAction(found, act, btn); break;
     case 'add-step': case 'del-step': case 'step-up': case 'step-down': buStepAction(found, act, btn); break;
@@ -5934,6 +6041,12 @@ function buIsBlank(b) {
 function buDelete(f) {
   if (!f) return;
   const b = f.block, label = buKindLabel(b).toLowerCase();
+  const effId = (b.opts && b.opts.id) || (buAuto && buAuto.byBlock && buAuto.byBlock.get(b)) || '';
+  const work = effId ? buHost.workOn(effId) : 0;
+  if (work) {
+    if (!buHost.confirm(`${work} student${work === 1 ? ' has' : 's have'} saved work in this ${label}. Removing it hides that work: it stays in the database, but students will no longer see it on the site.\n\nRemove it anyway?`)) return;
+    bmRemoveBlock(buModel, f.list, f.index); buRenderAll(); buChanged(null, true); return;
+  }
   if (!buIsBlank(b)) {
     let msg = `Remove this ${label}?`;
     const id = b.opts && b.opts.id;
@@ -6264,6 +6377,7 @@ function buLabHost() {
     pictures: () => [...new Set([...labFigureUploads, ...labFilePaths($('lab-markup').value)])].filter(p => /\.(png|jpe?g|gif|webp|svg)$/i.test(p)),
     fields: () => ({ title: $('lab-title').value, summary: $('lab-summary').value, tags: $('lab-tags').value, minutes: $('lab-minutes').value }),
     applyHeaderToFields: () => applyLabMarkupMeta(true),
+    workOn: id => labWorkOn(id),   // students with saved work under a block id
     confirm: m => confirm(m), toast,
   };
 }
@@ -6285,6 +6399,49 @@ function buRenderSignature(text) {
   const sig = html => { const t = document.createElement('template'); t.innerHTML = html;
     return Array.from(t.content.querySelectorAll('[data-field],[data-photo],[data-table],[data-graph],[data-section],[data-check]')).map(el => (el.dataset.field || el.dataset.photo || el.dataset.table || el.dataset.graph || el.dataset.section || el.dataset.check)).join(','); };
   return { errors: r.errors.length, procedure: sig(r.html), report: sig(r.report), style: (r.style || '').length > 0 };
+}
+// Release check: every widget's saved entries must survive render → bind → save unchanged. Run entriesSelfTest() in the console
+// (or from the preview) before pushing a new version; it returns true or throws with the first mismatch.
+async function entriesSelfTest() {
+  const src = `\\title{Self test}
+\\procedure[id=steps]{
+1. Step one
+2. Step two
+}
+\\datatable[id=tbl, addrows=true]{
+| A | B |
+|---|---|
+| ___ | ___ |
+}
+\\answer[id=q]{Q?}
+\\notes[id=n]{Notes}
+\\answer{Auto question}
+Value: \\input[id=f]{}
+\\report{
+\\answer[id=rq, required, words=5-10]{Report Q}
+\\usetable{tbl}
+}`;
+  const fixture = { 'steps.step1': 'note 1', 'tbl.r1c1': '1.5', 'tbl.r1c2': '2', 'tbl.rows': 1, 'tbl.r2c1': 'added', q: 'answer', n: 'my notes', q1: 'auto answer', f: '42', rq: 'report text', _savedAt: '2026-01-01T00:00:00.000Z' };
+  const labId = 'selftest-' + Date.now();
+  localStorage.setItem(LT_STORE + labId, JSON.stringify(fixture));
+  const host = document.createElement('div'); host.style.cssText = 'position:absolute;left:-9999px;top:0;width:800px'; document.body.appendChild(host);
+  try {
+    const r = ltRender(src); if (r.errors.length) throw new Error('render errors: ' + r.errors.join('; '));
+    host.innerHTML = buildLabTagsHTML(r, { id: labId, title: 'Self test' });
+    rpPrepare(host); ltBind(host, labId); rpBind(host, null);
+    for (const [k, v] of Object.entries(fixture)) {
+      if (k.startsWith('_') || k === 'tbl.rows') continue;
+      const el = host.querySelector(`[data-field="${k}"]`); if (!el) throw new Error(`field ${k} did not render`);
+      if (el.textContent !== String(v)) throw new Error(`field ${k} shows "${el.textContent}", expected "${v}"`);
+    }
+    const q = host.querySelector('[data-field="q"]'); q.textContent = 'changed'; q.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise(res => setTimeout(res, 500));
+    const saved = JSON.parse(localStorage.getItem(LT_STORE + labId) || '{}');
+    for (const k of Object.keys(fixture)) if (!k.startsWith('_') && !(k in saved)) throw new Error(`key ${k} was dropped on save`);
+    if (saved.q !== 'changed') throw new Error('edit was not saved');
+    const mirror = host.querySelector('[data-mirror-table="tbl"] .rp-table'); if (!mirror || !mirror.textContent.includes('1.5')) throw new Error('report mirror missing data');
+    console.log('entriesSelfTest: OK'); return true;
+  } finally { host.remove(); localStorage.removeItem(LT_STORE + labId); }
 }
 function buEquivalenceCheck(text) {
   const a = buRenderSignature(text), b = buRenderSignature(builderSerialize(builderParse(text)));

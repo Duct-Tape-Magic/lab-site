@@ -51,6 +51,17 @@ Students load `index.html` from GitHub Pages. The page fetches the catalogue (fo
 - `uploadFile(file, folder, {compress})` compresses images client-side (max edge 1600, WebP/JPEG q0.82) before upload. HEIC cannot be decoded in Chrome; the error message tells the owner what to do.
 - Errors never blank the page: `window.onerror` shows `#error-banner`; `render()` and `init()` are wrapped.
 
+
+## Student-entry invariants (do not change without a migration plan)
+
+Real student work hangs off these. Changing any of them silently orphans saved entries.
+- localStorage key `labsite.entries.<labId>`; IndexedDB `labsite` / `photos` keyed `<labId>|<photoId>`; Supabase `lab_entries(user_id, lab_id, data jsonb, updated_at)`.
+- Entry keys are widget ids: `<id>` for answers/notes/inputs, `<table>.r<row>c<col>` and `<table>.rows` for tables, `<steps>.step<n>` for step notes, `data-check` ids for checkboxes. Legacy `report.<id>` keys exist from before 2026-09-25.
+- Automatic ids are positional per kind (`q1`, `table1`, `proc1`, `notes1`, `photo1`, `field1`); explicit `id=` never changes after the first save.
+- Merge rule: whole-object, newer `_savedAt` / `updated_at` wins.
+
+Release rule: before every push that touches the renderer, `ltBind`, the report code, or the builder model, run `entriesSelfTest()` in the preview (it must return true) and re-run the saved-work guard checks (`labWorkProblems`) against a lab with entries.
+
 ## Status (updated 2026-09-18)
 
 Deployed 2026-09-18; custom domain https://ohschemlabs.com/ since 2026-09-20 (DNS at Squarespace: four A records to GitHub Pages + CNAME www → duct-tape-magic.github.io; the old duct-tape-magic.github.io/lab-site address redirects) (repo Duct-Tape-Magic/lab-site, Supabase project `nioebkjtrweyxvboajyv` "AP Chem" in the Pro org "OHS Student Labs"; admin whclark09@gmail.com). Snapshot workflow runs hourly. Added 2026-09-18: interactive lab files (`docs/LAB-FORMAT.md`, `ltRender`, `ltBind`, editor import panel, `lab_content.format`).
@@ -61,6 +72,7 @@ Verified so far only against the snapshot fallback (no Supabase project yet). Fi
 
 Added 2026-09-19: Google sign-in (Supabase Google provider; Google Cloud project `ohs-chem-labs`, OAuth client "OHS Chem Labs website", app published to production; consent screen support email whclark09@gmail.com). Student accounts: `#/signin` page with "Continue with Google" (creates the account on first use), `students` row auto-created by trigger `on_auth_user_created`, per-student `lab_entries` (user_id, lab_id, data jsonb, updated_at) synced by `ltFetchCloud`/`ltPushCloud` (newer side wins; photos stay local), `delete_my_account()` RPC. Any non-admin session is a student (`isStudent()`). Admins panel: `list_admins()` / `set_admin(email, bool)` RPCs; a person must have signed in once before being made admin; role lives in `app_metadata.role` so it takes effect on next sign-in. Editable `#/privacy` page (`privacyBody`) linked from the footer and from the Google consent screen.
 
+Added 2026-09-26: student-work guard. `loadLabWork(labId, oldText)` (called by `openLabModal`) reads `lab_entries` for the lab into `labWork` {students, keys→count, oldSchema}; `ltEntrySchema(text)` lists the field ids and table cell layouts a lab file produces; `labWorkProblems(work, newText, isLabFile)` reports blocks that are missing or tables that changed shape; `saveLab` confirms with `labWorkWarning` before writing. The builder host exposes `workOn(id)`, used by `buDelete`, the id rename (`case 'id'`), and both give-permanent-name flows. Lab delete and seat delete require typing DELETE when work exists; class delete shows the total. `entriesSelfTest()` (BUILDER-GLUE) is the release check.
 Changed 2026-09-25: home and folder pages show folders and labs in one grid ordered by `sort_order` (ties: folders first, then name) via `itemsIn(parentId)`; the Folders/Labs headings and their text keys are gone. Admin cards have ← → buttons (`moveItem(kind, id, dir)`) that renumber every sibling (10, 20, …) and update `folders`/`labs` rows.
 Merged 2026-09-25: "Report section" is gone; `\answer` now takes `title`, `required`, `words`, `hint` (the builder shows them under "More options" on Question, remembered per block via `_more`), and `\section` is a legacy alias that parses into an answer block (default `lines=6`) and serializes as `\answer`. Required/word-count meters (`.rp-section` + `.rp-meter`, `rpUpdateMeter`) now bind inside `ltBind`, so they work in the procedure too. Text key `reportPlaceholder` removed (answers use `answerPlaceholder`).
 Removed 2026-09-24: the printable access-code slip sheet (`printCodeSheet`); OHS is online, so codes are shared with Show/Copy in the Classes panel instead.
