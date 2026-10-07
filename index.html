@@ -603,6 +603,7 @@
   .pdf-doc .lt-field:empty::before { content: none; }
   .pdf-doc .rp-mirror, .pdf-doc .lt-graph, .pdf-doc .lt-figure, .pdf-doc .lt-figure-row, .pdf-doc .lt-answer, .pdf-doc .lt-photo, .pdf-doc .lt-callout, .pdf-doc .lt-table tr { break-inside: avoid; page-break-inside: avoid; }
   .pdf-doc h2, .pdf-doc h3, .pdf-doc .rp-title, .pdf-doc .lt-table-title { break-after: avoid; page-break-after: avoid; }
+  .pdf-doc .pdf-keep { break-inside: avoid; page-break-inside: avoid; }
   .pdf-doc .lt-table th { background: #f2f2f2; }
   .pdf-doc .lt-graph-svg { border: 0.5px solid #ccc; background: #fff; }
   .pdf-doc .lt-callout { background: #f6f6f6; border-left-color: #444; }
@@ -2162,6 +2163,13 @@ function buildPdfDocument(which, lab) {
   body.querySelectorAll('.lt-photo').forEach(p => { const img = p.querySelector('img'); if (!img) p.remove(); });
   body.querySelectorAll('iframe').forEach(f => { const a = document.createElement('div'); a.className = 'pdf-video'; a.textContent = 'Video: ' + (f.getAttribute('src') || '').replace('youtube-nocookie.com/embed/', 'youtube.com/watch?v=').replace(/\?.*$/, ''); f.replaceWith(a); });
   body.querySelectorAll('.slideshow-arrow, .slideshow-dots, .slideshow-counter').forEach(el => el.remove());
+  // A heading travels with whatever follows it, so it is never stranded at the bottom of a page.
+  body.querySelectorAll('h2, h3, h4, h5, h6').forEach(h => {
+    if (h.closest('.lt-answer, .lt-table-wrap, .lt-callout, .pdf-keep')) return;
+    const next = h.nextElementSibling; if (!next) return;
+    const wrap = document.createElement('div'); wrap.className = 'pdf-keep';
+    h.parentNode.insertBefore(wrap, h); wrap.appendChild(h); wrap.appendChild(next);
+  });
   body.querySelectorAll('.slideshow-slide').forEach(sl => { sl.style.position = 'static'; sl.style.opacity = '1'; sl.style.display = 'block'; });
   body.querySelectorAll('.pdf-doc .lab-media, .slideshow-main').forEach(el => { el.style.height = 'auto'; });
   doc.appendChild(body);
@@ -2184,7 +2192,7 @@ async function downloadLabPdf(which) {
       image: { type: 'jpeg', quality: 0.93 },
       html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false, windowWidth: 710 },
       jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
-      pagebreak: { mode: ['css', 'legacy'], avoid: ['.rp-mirror', '.lt-table-wrap', '.lt-graph', '.lt-figure', '.lt-figure-row', 'tr', '.lt-answer', '.lt-photo', 'h2', 'h3', '.lt-callout', 'li'] }
+      pagebreak: { mode: ['css', 'legacy'], avoid: ['.pdf-keep', '.rp-mirror', '.lt-table-wrap', '.lt-graph', '.lt-figure', '.lt-figure-row', 'tr', '.lt-answer', '.lt-photo', 'h2', 'h3', '.lt-callout', 'li'] }
     }).from(doc).save();
     logEvent('print', { lab_id: lab.id, path: location.hash });
     toast(getText('pdfReady'));
