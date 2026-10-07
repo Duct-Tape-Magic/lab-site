@@ -507,7 +507,11 @@
   .lt-figure img { max-width: 100%; display: block; }
   .lt-figure.size-small { max-width: 33%; }
   .lt-figure.size-medium { max-width: 60%; }
-  @media (max-width: 600px) { .lt-figure.size-small { max-width: 50%; } .lt-figure.size-medium { max-width: 80%; } }
+  .lt-figure-row { display: grid; gap: 1rem; margin: 1.5rem 0; align-items: start; }
+  .lt-figure-row.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .lt-figure-row.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .lt-figure-row .lt-figure { max-width: 100%; margin: 0; }
+  @media (max-width: 600px) { .lt-figure.size-small { max-width: 50%; } .lt-figure.size-medium { max-width: 80%; } .lt-figure-row.cols-3 { grid-template-columns: repeat(2, 1fr); } .lt-figure-row.cols-2 { grid-template-columns: 1fr; } }
   .lt-figure figcaption { font-size: 12px; color: var(--muted); margin-top: 0.4rem; }
   .lt-figure-pending { border: 1.5px dashed var(--rule-strong); padding: 2rem; text-align: center; color: var(--muted); font-size: 13px; }
   .lt-figure-upload-hint { display: none; margin-top: 0.4rem; color: var(--accent); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
@@ -3550,6 +3554,24 @@ function ltInner(md, ctx) { // render nested markdown that may itself contain ta
   return ltInject(marked.parse(t), widgets);
 }
 function ltInline(md, ctx) { const widgets = []; const t = ltExtractTags(md, ctx, widgets); return ltInject(marked.parseInline(t), widgets); }
+// Adjacent small/medium figures sit side by side: small in rows of three, medium in rows of two.
+function ltGroupFigures(root) {
+  const isWs = n => n.nodeType === 3 && !n.textContent.trim();
+  const sizeOf = n => n.nodeType === 1 && n.classList.contains('lt-figure') ? (n.classList.contains('size-small') ? 'small' : n.classList.contains('size-medium') ? 'medium' : '') : '';
+  let node = root.firstChild;
+  while (node) {
+    const size = sizeOf(node);
+    if (!size) { node = node.nextSibling; continue; }
+    const run = [node]; let probe = node.nextSibling;
+    while (probe) { if (isWs(probe)) { probe = probe.nextSibling; continue; } if (sizeOf(probe) === size) { run.push(probe); probe = probe.nextSibling; continue; } break; }
+    if (run.length > 1) {
+      const row = document.createElement('div'); row.className = `lt-figure-row cols-${size === 'small' ? 3 : 2}`;
+      node.parentNode.insertBefore(row, node);
+      run.forEach(f => row.appendChild(f));
+      node = row.nextSibling;
+    } else node = probe;
+  }
+}
 function ltInject(html, widgets) {
   return html.replace(/<p>\s*(LTTAG\d+X)\s*<\/p>/g, '$1').replace(/LTTAG(\d+)X/g, (m, i) => widgets[+i] ? widgets[+i].html : '');
 }
@@ -3654,6 +3676,7 @@ function ltRender(source) {
     tpl.content.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.removeAttribute('disabled'); cb.dataset.check = 'check' + (++n); });
     tpl.content.querySelectorAll('a[href^="http"]').forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
     tpl.content.querySelectorAll('img').forEach(img => { const src = img.getAttribute('src') || ''; if (src && !/^(https?:|data:|blob:)/.test(src)) img.setAttribute('src', fileUrl(src.replace(/^img:/, ''))); });
+    ltGroupFigures(tpl.content);
     // The page already has the lab title as its h1, so demote the file's headings one level
     if (tpl.content.querySelector('h1')) [5, 4, 3, 2, 1].forEach(n => tpl.content.querySelectorAll('h' + n).forEach(h => { const d = document.createElement('h' + (n + 1)); d.innerHTML = h.innerHTML; h.replaceWith(d); }));
     let reportHtml = '';
@@ -3663,6 +3686,7 @@ function ltRender(source) {
       reportHtml = ltRestore(ltInject(marked.parse(rt), rw), rctx);
       const rtpl = document.createElement('template'); rtpl.innerHTML = reportHtml;
       rtpl.content.querySelectorAll('img').forEach(img => { const src = img.getAttribute('src') || ''; if (src && !/^(https?:|data:|blob:)/.test(src)) img.setAttribute('src', fileUrl(src.replace(/^img:/, ''))); });
+      ltGroupFigures(rtpl.content);
       reportHtml = rtpl.innerHTML; ctx.errors.push(...rctx.errors);
     }
     let styleHtml = '';
