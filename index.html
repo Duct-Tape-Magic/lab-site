@@ -583,8 +583,8 @@
   .rp-doc-title { font-family: var(--font-heading); font-size: 1.8rem; }
   .rp-doc-meta { font-size: 12px; color: #444; margin-top: 0.2rem; }
   /* ---------- PDF export document ---------- */
-  .pdf-host { position: fixed; left: -10000px; top: 0; width: 760px; background: #fff; z-index: -1; }
-  .pdf-doc { width: 760px; padding: 0; background: #fff; color: #111; font-family: var(--font-body); font-size: 13.5px; line-height: 1.6; }
+  .pdf-host { position: fixed; left: -10000px; top: 0; width: 710px; background: #fff; z-index: -1; }
+  .pdf-doc { width: 710px; padding: 0; background: #fff; color: #111; font-family: var(--font-body); font-size: 13.5px; line-height: 1.6; }
   .pdf-head { border-bottom: 1px solid #222; padding-bottom: 8px; margin-bottom: 18px; }
   .pdf-title { font-family: var(--font-heading); font-size: 24px; line-height: 1.15; }
   .pdf-meta { font-size: 11px; color: #555; margin-top: 4px; }
@@ -596,7 +596,13 @@
   .pdf-doc .pdf-field { border: 0.5px solid #bbb; background: #fff; padding: 6px 8px; min-height: 0; white-space: pre-wrap; border-radius: 0; box-shadow: none; }
   .pdf-doc .pdf-field.pdf-empty { min-height: 2.2em; }
   .pdf-doc td.pdf-field { border: none; padding: 4px 6px; background: #fff; }
-  .pdf-doc .lt-table th, .pdf-doc .lt-table td { border: 0.5px solid #888; }
+  .pdf-doc .lt-table-wrap { overflow: visible; }
+  .pdf-doc .lt-table { font-size: 12px; width: 100%; }
+  .pdf-doc .lt-table th, .pdf-doc .lt-table td { border: 0.5px solid #888; padding: 3px 5px; }
+  .pdf-doc .lt-table td.lt-cell { min-width: 3em; }
+  .pdf-doc .lt-field:empty::before { content: none; }
+  .pdf-doc .rp-mirror, .pdf-doc .lt-graph, .pdf-doc .lt-figure, .pdf-doc .lt-figure-row, .pdf-doc .lt-answer, .pdf-doc .lt-photo, .pdf-doc .lt-callout, .pdf-doc .lt-table tr { break-inside: avoid; page-break-inside: avoid; }
+  .pdf-doc h2, .pdf-doc h3, .pdf-doc .rp-title, .pdf-doc .lt-table-title { break-after: avoid; page-break-after: avoid; }
   .pdf-doc .lt-table th { background: #f2f2f2; }
   .pdf-doc .lt-graph-svg { border: 0.5px solid #ccc; background: #fff; }
   .pdf-doc .lt-callout { background: #f6f6f6; border-left-color: #444; }
@@ -2176,9 +2182,9 @@ async function downloadLabPdf(which) {
     await html2pdf().set({
       margin: [14, 14, 16, 14], filename: name,
       image: { type: 'jpeg', quality: 0.93 },
-      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false, windowWidth: 800 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false, windowWidth: 710 },
       jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
-      pagebreak: { mode: ['css', 'legacy'], avoid: ['.rp-section', '.lt-table-wrap', '.lt-graph', 'tr', '.lt-answer', '.lt-photo', 'h2', 'h3', '.lt-callout', 'li'] }
+      pagebreak: { mode: ['css', 'legacy'], avoid: ['.rp-mirror', '.lt-table-wrap', '.lt-graph', '.lt-figure', '.lt-figure-row', 'tr', '.lt-answer', '.lt-photo', 'h2', 'h3', '.lt-callout', 'li'] }
     }).from(doc).save();
     logEvent('print', { lab_id: lab.id, path: location.hash });
     toast(getText('pdfReady'));
