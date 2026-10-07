@@ -2051,7 +2051,7 @@ function rpRefreshMirrors(area) {
     if (!field) { box.innerHTML = `<div class="lt-error">${escapeHTML(getText('reportMissingRef'))} \\useanswer{${escapeHTML(id)}}</div>`; return; }
     const wrap = field.closest('.lt-answer, .lt-notes, .lt-step-notes');
     const prompt = wrap ? wrap.querySelector('.lt-prompt, summary') : null;
-    box.innerHTML = `<div class="rp-copy-answer">${prompt ? `<div class="lt-prompt">${prompt.innerHTML}</div>` : ''}<div class="lt-field rp-copy" data-copy-of="${escapeHTML(id)}">${escapeHTML(field.textContent)}</div></div>`;
+    box.innerHTML = `<div class="rp-copy-answer">${prompt ? `<div class="lt-prompt">${prompt.innerHTML}</div>` : ''}<div class="lt-field rp-copy" data-copy-of="${escapeHTML(id)}">${escapeHTML(ltFieldText(field))}</div></div>`;
   });
   area.querySelectorAll('.rp-mirror[data-mirror-photo]').forEach(box => {
     const id = box.dataset.mirrorPhoto;
@@ -2157,7 +2157,7 @@ function buildPdfDocument(which, lab) {
   // remove interactive chrome
   body.querySelectorAll('.rp-toolbar, .rp-doc-header, .rp-meter, .lab-toolbar, .lt-table-add, .lt-photo-actions, .lt-status, .rp-hint, .admin-inline, .review-banner, .lab-footer-nav, button, input[type="file"]').forEach(el => el.remove());
   // answer boxes and cells → static text
-  body.querySelectorAll('[contenteditable]').forEach(el => { const live = src.querySelector(`[data-field="${el.dataset.field}"]`); el.textContent = live ? live.textContent : el.textContent; el.removeAttribute('contenteditable'); el.classList.add('pdf-field'); if (!el.textContent.trim()) { el.classList.add('pdf-empty'); if (el.tagName === 'TD') el.textContent = '\u00a0'; } });
+  body.querySelectorAll('[contenteditable]').forEach(el => { const live = src.querySelector(`[data-field="${el.dataset.field}"]`); el.textContent = live ? ltFieldText(live) : ltFieldText(el); el.removeAttribute('contenteditable'); el.classList.add('pdf-field'); if (!el.textContent.trim()) { el.classList.add('pdf-empty'); if (el.tagName === 'TD') el.textContent = '\u00a0'; } });
   body.querySelectorAll('details').forEach(d => { const f = d.querySelector('.lt-field'); if (f && f.textContent.trim()) d.open = true; else if (!d.classList.contains('rp-hint')) d.remove(); });
   body.querySelectorAll('input[type="checkbox"]').forEach(cb => { const live = src.querySelector(`[data-check="${cb.dataset.check}"]`); const on = live ? live.checked : cb.checked; const m = document.createElement('span'); m.className = 'pdf-check'; m.textContent = on ? '☑' : '☐'; cb.replaceWith(m); });
   body.querySelectorAll('.lt-photo').forEach(p => { const img = p.querySelector('img'); if (!img) p.remove(); });
@@ -3789,6 +3789,20 @@ async function ltFetchCloud(labId) {
   try { const { data } = await sb.from('lab_entries').select('data, updated_at').eq('lab_id', labId).maybeSingle(); return data || null; }
   catch (e) { return null; }
 }
+// Text of an answer box with its line breaks. Chrome's insertText wraps pasted lines in <div>s, which textContent would flatten;
+// innerText turns block boundaries back into newlines (on a hidden pane it falls back to textContent, which is still correct for typed text).
+function ltFieldText(el) { const t = el.innerText != null ? el.innerText : el.textContent; return t.replace(/\r\n?/g, '\n').replace(/\n$/, ''); }
+// Paste as plain text while keeping the newlines, by inserting a text node at the caret (execCommand('insertText') splits lines into <div>s).
+function ltInsertPlainText(el, text) {
+  text = String(text || '').replace(/\r\n?/g, '\n');
+  const sel = window.getSelection();
+  let range = sel && sel.rangeCount && el.contains(sel.anchorNode) ? sel.getRangeAt(0) : null;
+  if (!range) { range = document.createRange(); range.selectNodeContents(el); range.collapse(false); }
+  range.deleteContents();
+  const node = document.createTextNode(text); range.insertNode(node);
+  range.setStartAfter(node); range.collapse(true); sel.removeAllRanges(); sel.addRange(range);
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+}
 function ltBind(area, labId, cloud = null, readOnly = false) {
   let entries = readOnly ? { ...(cloud?.data || {}) } : ltLoad(labId);
   if (!readOnly) {
@@ -3824,8 +3838,8 @@ function ltBind(area, labId, cloud = null, readOnly = false) {
     if (!el || el.dataset.bound) return; el.dataset.bound = '1';
     const id = el.dataset.field;
     if (entries[id]) el.textContent = entries[id];
-    el.addEventListener('input', () => { entries[id] = el.textContent; save(); });
-    el.addEventListener('paste', e => { e.preventDefault(); document.execCommand('insertText', false, (e.clipboardData || window.clipboardData).getData('text')); });
+    el.addEventListener('input', () => { entries[id] = ltFieldText(el); save(); });
+    el.addEventListener('paste', e => { e.preventDefault(); ltInsertPlainText(el, (e.clipboardData || window.clipboardData).getData('text')); });
     const det = el.closest('details.lt-notes'); if (det && entries[id]) det.open = true;
   }
   area.querySelectorAll('[data-field]').forEach(bindField);
