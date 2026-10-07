@@ -1868,6 +1868,33 @@ function renderPrivacy(view) {
     <div class="home-intro rich-content editable" data-edit="privacyBody" data-rich="true" onclick="handleEditableClick(event, 'privacyBody', true)">${getText('privacyBody')}</div></section>`;
 }
 async function signOutStudent() { await sb.auth.signOut(); state.session = null; state.role = null; renderChrome(); navigate('#/'); }
+
+/* ---------- Admin idle timeout: an admin who has not touched the site for 24 hours is signed out.
+   Students are governed only by the Supabase inactivity limit (14 days). The last-activity time lives in
+   localStorage so it carries across tabs and reloads. ---------- */
+const ADMIN_IDLE_MS = 24 * 60 * 60 * 1000, ADMIN_IDLE_KEY = 'labsite.admin.lastActive';
+let adminIdleStamp = 0;
+function adminTouch() {
+  if (!isAdmin()) return;
+  const now = Date.now(); if (now - adminIdleStamp < 60000) return;   // write at most once a minute
+  adminIdleStamp = now; try { localStorage.setItem(ADMIN_IDLE_KEY, String(now)); } catch (e) { /* ignore */ }
+}
+async function adminIdleCheck() {
+  if (!isAdmin() || !sb) return;
+  let last = 0; try { last = parseInt(localStorage.getItem(ADMIN_IDLE_KEY), 10) || 0; } catch (e) { last = 0; }
+  if (!last) { adminTouch(); return; }
+  if (Date.now() - last < ADMIN_IDLE_MS) return;
+  try { localStorage.removeItem(ADMIN_IDLE_KEY); } catch (e) { /* ignore */ }
+  await sb.auth.signOut(); state.session = null; state.role = null;
+  document.body.classList.remove('admin-mode'); renderChrome(); render();
+  toast('Signed out after 24 hours without activity. Log in again to keep editing.');
+}
+function startAdminIdleWatch() {
+  ['pointerdown', 'keydown', 'scroll', 'touchstart'].forEach(ev => document.addEventListener(ev, adminTouch, { passive: true }));
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) adminIdleCheck(); });
+  setInterval(adminIdleCheck, 5 * 60 * 1000);
+  adminIdleCheck();
+}
 async function deleteMyAccount() {
   if (!confirm(getText('accountDeleteConfirm'))) return;
   const { error } = await sb.rpc('delete_my_account');
@@ -6500,6 +6527,7 @@ function buEquivalenceCheck(text) {
     loadDesignFromSiteContent();
     renderChrome();
     render();
+    startAdminIdleWatch();
     if (sb) sb.auth.onAuthStateChange((event, session) => {
       // The library fires SIGNED_IN / TOKEN_REFRESHED whenever the tab regains focus; only react when the user actually changes.
       const prevUser = state.session?.user?.id || null, nextUser = session?.user?.id || null;
@@ -6509,6 +6537,7 @@ function buEquivalenceCheck(text) {
       document.body.classList.toggle('admin-mode', isAdmin());
       closeModal('login-modal');
       if (was !== isAdmin() && isAdmin() && event === 'SIGNED_IN') toast('Welcome back');
+      if (isAdmin()) { adminIdleStamp = 0; adminTouch(); }
       reloadCatalogue();
     });
   } catch (e) {
