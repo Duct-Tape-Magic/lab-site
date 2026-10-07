@@ -505,6 +505,9 @@
   .lt-photo-actions input[type="file"] { display: none; }
   .lt-figure { margin: 1.5rem 0; }
   .lt-figure img { max-width: 100%; display: block; }
+  .lt-figure.size-small { max-width: 33%; }
+  .lt-figure.size-medium { max-width: 60%; }
+  @media (max-width: 600px) { .lt-figure.size-small { max-width: 50%; } .lt-figure.size-medium { max-width: 80%; } }
   .lt-figure figcaption { font-size: 12px; color: var(--muted); margin-top: 0.4rem; }
   .lt-figure-pending { border: 1.5px dashed var(--rule-strong); padding: 2rem; text-align: center; color: var(--muted); font-size: 13px; }
   .lt-figure-upload-hint { display: none; margin-top: 0.4rem; color: var(--accent); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
@@ -3596,8 +3599,9 @@ function ltWidget(name, o, body, ctx, widgets) {
     case 'figure': {
       const src = (body || '').trim().replace(/^img:/, '');
       const cap = o.caption ? `<figcaption>${ltInline(o.caption, ctx)}</figcaption>` : '';
+      const size = ['small', 'medium'].includes(String(o.size || '').toLowerCase()) ? ` size-${String(o.size).toLowerCase()}` : '';
       if (!src || /^(IMAGE|FIGURE)[_-]?\w*$/i.test(src)) return `<figure class="lt-figure"><div class="lt-figure-pending" data-pending="${escapeHTML(src)}">${escapeHTML(getText('figurePending'))}${src ? ` (${escapeHTML(src)})` : ''}<span class="lt-figure-upload-hint">Click to upload this picture</span></div>${cap}</figure>`;
-      return `<figure class="lt-figure"><img src="${escapeHTML(fileUrl(src))}" alt="${escapeHTML(o.caption || '')}" loading="lazy"/>${cap}</figure>`;
+      return `<figure class="lt-figure${size}"><img src="${escapeHTML(fileUrl(src))}" alt="${escapeHTML(o.caption || '')}" loading="lazy"/>${cap}</figure>`;
     }
     case 'pagebreak': return `<div class="lt-pagebreak"></div>`;
     case 'usetable': return `<div class="rp-mirror" data-mirror-table="${ltSafeId((body || '').trim())}"></div>`;
@@ -4094,7 +4098,7 @@ const BM_TYPES = {
   notes:     { tag: 'notes',     label: 'Notes box',       list: 'both', kind: 'notes', idBase: 'notes',    known: ['id'], nameOf: b => b.label },
   photo:     { tag: 'photo',     label: 'Photo slot',      list: 'both', kind: 'photo', idBase: 'photo',    known: ['id'] },
   video:     { tag: 'video',     label: 'Video',           list: 'procedure', known: [] },
-  figure:    { tag: 'figure',    label: 'Picture',         list: 'procedure', known: ['caption'] },
+  figure:    { tag: 'figure',    label: 'Picture',         list: 'procedure', known: ['caption', 'size'] },
   callout:   { tag: null,        label: 'Callout',         list: 'procedure', known: ['label'] },
   graph:     { tag: 'graph',     label: 'Graph',           list: 'both', kind: 'graph', idBase: 'graph',    known: ['id', 'table', 'x', 'y', 'series', 'type', 'fit', 'title', 'xlabel', 'ylabel', 'xmin', 'xmax', 'ymin', 'ymax'], nameOf: b => b.opts.title },
   pagebreak: { tag: 'pagebreak', label: 'Page break',      list: 'procedure', known: [] },
@@ -5615,6 +5619,8 @@ function buFormFigure(b) {
   let pics = []; try { pics = (buHost.pictures() || []).filter(p => p && p !== shown); } catch (e) { pics = []; }
   if (pics.length) h += buRow('Use an uploaded picture', `<select data-bind="path" data-kind="picture"><option value="">Choose…</option>${pics.map(p => `<option value="${buEsc(p)}">${buEsc(String(p).split('/').pop())}</option>`).join('')}</select>`);
   h += buRow('Caption', buInput('opts.caption', buOptStr(b, 'caption'), 'opt'), 'Shown under the picture.');
+  const size = String(buOptStr(b, 'size') || '').toLowerCase();
+  h += buRow('Size on the page', `<select data-bind="opts.size" data-kind="opt"><option value="" ${!['small', 'medium'].includes(size) ? 'selected' : ''}>Full width (default)</option><option value="medium" ${size === 'medium' ? 'selected' : ''}>Medium (about 60%)</option><option value="small" ${size === 'small' ? 'selected' : ''}>Small (about a third)</option></select>`, 'How wide the picture is shown. The file itself is always shrunk on upload; this only changes the display.');
   return h;
 }
 function buFormAnswer(b) {
