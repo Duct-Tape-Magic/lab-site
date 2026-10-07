@@ -2780,8 +2780,17 @@ async function openLabModal(id) {
   const lab = id ? state.labs.find(l => l.id === id) : null;
   let entry = null;
   if (lab) {
-    try { entry = await getLabContent(lab); } catch (e) { /* fall through */ }
-    if (!entry) entry = { media: [], content: '', attachments: [] };
+    // Never open an existing lab as an empty editor: saving that would wipe its content. Retry once, then say what went wrong.
+    let err = null;
+    for (let attempt = 1; attempt <= 2 && !entry; attempt++) {
+      try { entry = await getLabContent(lab); } catch (e) { err = e; if (attempt < 2) await sleep(600); }
+    }
+    if (!entry) {
+      const why = err ? (err.message || String(err)) : (state.source !== 'live' ? 'the site is showing a saved copy, not the live database' : 'no content row was returned');
+      console.warn('openLabModal: content not loaded for', lab.id, why);
+      toast(`Could not load this lab for editing (${why}). Please try again in a moment.`, true);
+      return;
+    }
   }
   editingLabId = lab ? lab.id : 'l-' + Date.now();
   labWork = null; labWorkPromise = lab ? loadLabWork(lab.id, entry?.format === 'labtags' ? (entry?.content || '') : '') : null;
