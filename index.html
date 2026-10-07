@@ -4130,8 +4130,8 @@ const BM_TYPES = {
   answer:    { tag: 'answer',    label: 'Question',        list: 'both', kind: 'q',     idBase: 'question', known: ['id', 'lines', 'title', 'required', 'words', 'hint'] },
   notes:     { tag: 'notes',     label: 'Notes box',       list: 'both', kind: 'notes', idBase: 'notes',    known: ['id'], nameOf: b => b.label },
   photo:     { tag: 'photo',     label: 'Photo slot',      list: 'both', kind: 'photo', idBase: 'photo',    known: ['id'] },
-  video:     { tag: 'video',     label: 'Video',           list: 'procedure', known: [] },
-  figure:    { tag: 'figure',    label: 'Picture',         list: 'procedure', known: ['caption', 'size'] },
+  video:     { tag: 'video',     label: 'Video',           list: 'both', known: [] },
+  figure:    { tag: 'figure',    label: 'Picture',         list: 'both', known: ['caption', 'size'] },
   callout:   { tag: null,        label: 'Callout',         list: 'procedure', known: ['label'] },
   graph:     { tag: 'graph',     label: 'Graph',           list: 'both', kind: 'graph', idBase: 'graph',    known: ['id', 'table', 'x', 'y', 'series', 'type', 'fit', 'title', 'xlabel', 'ylabel', 'xmin', 'xmax', 'ymin', 'ymax'], nameOf: b => b.opts.title },
   pagebreak: { tag: 'pagebreak', label: 'Page break',      list: 'procedure', known: [] },
@@ -5154,7 +5154,7 @@ const BU_PALETTE = {
   style:     'Your writing rules, shown at the top of the Report tab.',
 };
 const BU_PROCEDURE_PALETTE = ['heading', 'text', 'steps', 'table', 'answer', 'notes', 'photo', 'video', 'figure', 'callout', 'graph', 'pagebreak'];
-const BU_REPORT_PALETTE = ['answer', 'table', 'photo', 'notes', 'graph', 'usetable', 'usegraph', 'useanswer', 'usephoto', 'heading', 'text'];
+const BU_REPORT_PALETTE = ['answer', 'table', 'photo', 'notes', 'graph', 'usetable', 'usegraph', 'useanswer', 'usephoto', 'heading', 'text', 'figure', 'video'];
 const BU_ID_TYPES = ['steps', 'table', 'answer', 'notes', 'photo', 'graph'];
 const BU_CALLOUT_LABELS = { safety: 'Safety', warning: 'Warning', info: 'Information', tip: 'Tip', hint: 'Hint' };
 const BU_LEVELS = [[1, 'Big heading'], [2, 'Heading'], [3, 'Small heading'], [4, 'Level 4'], [5, 'Level 5'], [6, 'Level 6']];
@@ -6162,9 +6162,9 @@ function buShowBlock(b) {
     case 'usegraph': t = { attr: 'data-mirror-graph', value: b.ref }; break;
     case 'useanswer': t = { attr: 'data-mirror-answer', value: b.ref }; break;
     case 'usephoto': t = { attr: 'data-mirror-photo', value: b.ref }; break;
-    case 'heading': t = { selector: 'h1, h2, h3, h4, h5, h6', nth: buModel.procedure.filter(x => x.type === 'heading').indexOf(b) }; break;
-    case 'callout': t = { selector: '.lt-callout', nth: buModel.procedure.filter(x => x.type === 'callout').indexOf(b) }; break;
-    case 'figure': t = { selector: '.lt-figure, .lt-figure-pending', nth: buModel.procedure.filter(x => x.type === 'figure').indexOf(b) }; break;
+    case 'heading': t = { selector: 'h1, h2, h3, h4, h5, h6', nth: buAllBlocks().filter(x => x.type === 'heading').indexOf(b) }; break;
+    case 'callout': t = { selector: '.lt-callout', nth: buAllBlocks().filter(x => x.type === 'callout').indexOf(b) }; break;
+    case 'figure': t = { selector: '.lt-figure, .lt-figure-pending', nth: buAllBlocks().filter(x => x.type === 'figure').indexOf(b) }; break;
     default: t = null;
   }
   if (!t || (t.attr && !t.value)) { buHost.toast('The preview cannot jump to this kind of block.'); return; }

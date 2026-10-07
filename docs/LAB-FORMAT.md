@@ -85,7 +85,7 @@ Inside `\report{…}` use ordinary Markdown plus:
 | `\usegraph{id}` | Shows the `\graph` with that id (give the graph an `id=` option), drawn from the student's data, captioned "Figure n". |
 | `\useanswer{id}` | Shows a procedure `\answer` or `\notes` box (by its id): the prompt plus what the student wrote there. Read-only; the student edits it on the Procedure tab. |
 | `\usephoto{id}` | Shows the photo the student added in the procedure `\photo` slot with that id, with its prompt. |
-| `\answer`, `\datatable`, `\photo`, `\notes`, `\graph` | Work inside the report exactly as in the procedure: use them when the report should *ask* for something new (a fresh data table to fill in, a question answered only in the write-up, a photo of the final result) instead of copying it from the procedure. |
+| `\answer`, `\datatable`, `\photo`, `\notes`, `\graph`, `\figure`, `\video` | Work inside the report exactly as in the procedure (a `\figure` in the report is the teacher's own picture, e.g. a table of literature values to compare against): use them when the report should *ask* for something new (a fresh data table to fill in, a question answered only in the write-up, a photo of the final result) instead of copying it from the procedure. |
 
 The `\use…` commands only refer to blocks in the procedure, so every referenced block needs an explicit `id=`.
 
