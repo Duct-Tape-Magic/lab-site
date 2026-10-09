@@ -2131,11 +2131,12 @@ function helpAdminRenderThread() {
 }
 async function helpAdminSend() {
   const ta = $('help-reply'); const body = (ta.value || '').trim(); if (!body || !helpAdmin.thread) return;
+  ta.value = '';   // clear first: the realtime echo re-renders the thread (and would keep whatever is in the box)
   try {
-    await rpc('help_reply', { p_thread: helpAdmin.thread.id, p_body: body }); ta.value = '';
+    await rpc('help_reply', { p_thread: helpAdmin.thread.id, p_body: body });
     const { data } = await sb.from('help_messages').select('*').eq('thread_id', helpAdmin.thread.id).order('created_at'); if (data) helpAdmin.messages = data;
     helpAdminRenderThread();
-  } catch (e) { toast('Could not send: ' + e.message, true); }
+  } catch (e) { const t2 = $('help-reply'); if (t2) t2.value = body; toast('Could not send: ' + e.message, true); }
 }
 async function helpAdminStatus(id, status) {
   try { await rpc('help_set_status', { p_thread: id, p_status: status }); await helpAdminRefresh(); }
