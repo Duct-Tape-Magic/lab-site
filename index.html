@@ -574,6 +574,34 @@
   .rp-meter.low, .rp-meter.high { color: var(--warn); }
   .rp-meter.empty { color: var(--muted); font-style: italic; }
   .rp-mirror { margin: 1rem 0 1.6rem; }
+  /* Get help */
+  .help-box { max-width: var(--measure); margin: 0 0 1.5rem; }
+  .help-top { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+  .help-n, .help-count { display: inline-block; min-width: 1.5em; padding: 0 0.4em; border-radius: 999px; background: var(--accent); color: #fff; font-size: 10px; line-height: 1.6; text-align: center; margin-left: 0.35em; }
+  .help-count { background: var(--warn); }
+  .help-banner { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); border: 0.5px solid var(--accent); padding: 2px 8px; }
+  .help-panel { border: 0.5px solid var(--rule-strong); padding: 1rem 1.25rem; margin-top: 0.75rem; background: var(--card-bg); border-radius: var(--border-radius); }
+  .help-intro, .help-note { font-size: 13px; color: var(--muted); margin: 0 0 0.75rem; }
+  .help-msgs { display: flex; flex-direction: column; gap: 0.6rem; max-height: 320px; overflow-y: auto; margin-bottom: 0.9rem; }
+  .help-msgs.admin { max-height: 50vh; }
+  .help-msg { padding: 0.5rem 0.75rem; border: 0.5px solid var(--rule); background: var(--bg); max-width: 85%; font-size: 13.5px; line-height: 1.5; }
+  .help-msg.student { align-self: flex-end; }
+  .help-msg.admin { align-self: flex-start; border-left: 3px solid var(--accent); }
+  .help-who { font-size: 11px; color: var(--muted); letter-spacing: 0.04em; margin-bottom: 0.2rem; }
+  .help-where { font-size: 11.5px; color: var(--muted); font-style: italic; margin-bottom: 0.2rem; }
+  .help-body { white-space: pre-wrap; word-break: break-word; }
+  .help-form { display: flex; flex-direction: column; gap: 0.6rem; }
+  .help-form label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); display: flex; flex-direction: column; gap: 0.3rem; }
+  .help-form input, .help-form textarea { font: inherit; font-size: 14px; letter-spacing: 0; text-transform: none; padding: 0.45rem 0.6rem; border: 0.5px solid var(--rule-strong); background: var(--bg); color: var(--ink); width: 100%; border-radius: var(--border-radius); }
+  .help-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+  .help-status { font-size: 12px; color: var(--muted); }
+  .help-tabs { display: flex; gap: 1rem; align-items: center; margin-bottom: 1.25rem; border-bottom: 0.5px solid var(--rule); padding-bottom: 0.5rem; flex-wrap: wrap; }
+  .help-group { margin-bottom: 1.5rem; }
+  .help-group-head { display: flex; align-items: center; gap: 0.6rem; font-family: var(--font-heading); font-size: 1.2rem; margin-bottom: 0.3rem; }
+  .help-row { cursor: pointer; }
+  .help-row:hover { background: var(--card-bg); }
+  .help-row.unread strong { color: var(--accent); }
+  .help-last { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .rp-table td.rp-cell { background: transparent; cursor: default; }
   .rp-copy { background: transparent; white-space: pre-wrap; min-height: 2em; }
   .rp-copy-photo { border-style: solid; }
@@ -773,6 +801,7 @@
     <button onclick="openSiteTextModal()">Site text</button>
     <button onclick="openDesignModal()">Design</button>
     <button onclick="openStatsModal()">Stats</button>
+    <button onclick="openHelpModal()">Help<span class="help-count" id="help-count" hidden></span></button>
     <button onclick="openClassesModal()">Classes</button>
     <button onclick="openAdminsModal()">Admins</button>
     <button onclick="logoutAdmin()">Log out</button>
@@ -869,6 +898,7 @@
       </div>
     </div>
     <div class="form-row access-list" id="lab-access-list" hidden></div>
+    <div class="form-row"><label style="display:flex; align-items:center; gap:0.5rem; text-transform:none; letter-spacing:0; font-size:14px;"><input type="checkbox" id="lab-help"/> Show a "Get help" button at the top of this lab</label><div class="hint">Signed-in students can send you a question from the lab page. You get an email and reply from the Help panel; the student sees the reply on the lab page.</div></div>
 
     <div class="form-row">
       <label>Cover image (optional — the first photo is used if empty)</label>
@@ -1073,6 +1103,15 @@
   </div>
 </div>
 
+<!-- Help requests -->
+<div class="modal-backdrop" id="help-modal">
+  <div class="modal modal-wide">
+    <button class="modal-close" onclick="closeModal('help-modal')">×</button>
+    <h2>Help requests</h2>
+    <div id="help-body"></div>
+  </div>
+</div>
+
 <!-- Classes (access-code accounts) -->
 <div class="modal-backdrop" id="classes-modal">
   <div class="modal modal-wide">
@@ -1258,7 +1297,24 @@ const DEFAULTS = {
   reportTableLabel: 'Table',
   reportFigureLabel: 'Figure',
   reportMissingRef: 'Nothing in the procedure matches',
-  reportNoPhotoYet: 'No photo added yet. Add it on the Procedure tab.'
+  reportNoPhotoYet: 'No photo added yet. Add it on the Procedure tab.',
+  helpButton: 'Get help',
+  helpIntro: 'Stuck? Send a question. Replies show up right here.',
+  helpLoginNudge: 'Log in to ask for help.',
+  helpWhereLabel: 'Where are you stuck?',
+  helpWherePlaceholder: 'e.g. Question 3, the data table…',
+  helpMessageLabel: 'Your question',
+  helpMessagePlaceholder: 'What is giving you trouble?',
+  helpSend: 'Send',
+  helpSent: 'Sent. Replies will show up here.',
+  helpError: 'Could not send. Please try again.',
+  helpReplied: 'Teacher replied',
+  helpYou: 'You',
+  helpTeacher: 'Teacher',
+  helpResolvedNote: 'This question was marked as answered. You can still write back.',
+  helpNotifyEmails: 'whclark09@gmail.com',
+  helpEmailFrom: 'OHS Chem Labs <help@ohschemlabs.com>',
+  helpEmailSubject: 'Help request: {lab}'
 };
 
 const SITE_TEXT_GROUPS = [
@@ -1272,6 +1328,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'accessTitle', 'accessHint', 'accessButton', 'accessWrong', 'accessArchived', 'seatName', 'seatShort', 'seatUnknown', 'seatManaged', 'privacyLink', 'privacyTitle'] },
   { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
   { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef', 'reportNoPhotoYet'] },
+  { label: 'Get help', keys: ['helpButton', 'helpIntro', 'helpLoginNudge', 'helpWhereLabel', 'helpWherePlaceholder', 'helpMessageLabel', 'helpMessagePlaceholder', 'helpSend', 'helpSent', 'helpError', 'helpReplied', 'helpYou', 'helpTeacher', 'helpResolvedNote', 'helpNotifyEmails', 'helpEmailFrom', 'helpEmailSubject'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
 ];
 
@@ -1295,7 +1352,8 @@ const TEXT_LABELS = {
   notesLabel: 'Notes toggle', notesPlaceholder: 'Notes placeholder', answerPlaceholder: 'Answer placeholder', tableAddRow: 'Add row button',
   photoAdd: 'Add photo button', photoChange: 'Change photo button', photoRemove: 'Remove photo button',
   calloutSafety: 'Safety box label', calloutWarning: 'Caution box label', calloutInfo: 'Note box label', calloutTip: 'Tip box label', calloutHint: 'Hint box label', figurePending: 'Missing figure text', graphEmpty: 'Empty graph message',
-  procedureTab: 'Procedure tab label', reportTab: 'Report tab label', reportPreview: 'Preview report button', reportStyleTitle: 'Style guide heading', reportRequired: 'Required badge', reportHint: 'Hint toggle', reportWords: 'Word count', reportWordsAim: 'Word range hint', reportEmptyRequired: 'Empty required question note', reportTableLabel: 'Table caption word', reportFigureLabel: 'Figure caption word', reportMissingRef: 'Missing table/graph message', reportNoPhotoYet: 'No photo yet message'
+  procedureTab: 'Procedure tab label', reportTab: 'Report tab label', reportPreview: 'Preview report button', reportStyleTitle: 'Style guide heading', reportRequired: 'Required badge', reportHint: 'Hint toggle', reportWords: 'Word count', reportWordsAim: 'Word range hint', reportEmptyRequired: 'Empty required question note', reportTableLabel: 'Table caption word', reportFigureLabel: 'Figure caption word', reportMissingRef: 'Missing table/graph message', reportNoPhotoYet: 'No photo yet message',
+  helpButton: 'Get help button', helpIntro: 'Help panel intro', helpLoginNudge: 'Help: log-in nudge', helpWhereLabel: 'Help: where label', helpWherePlaceholder: 'Help: where placeholder', helpMessageLabel: 'Help: question label', helpMessagePlaceholder: 'Help: question placeholder', helpSend: 'Help: send button', helpSent: 'Help: sent confirmation', helpError: 'Help: send failed', helpReplied: 'Help: reply banner', helpYou: 'Help: your name in the thread', helpTeacher: 'Help: teacher name in the thread', helpResolvedNote: 'Help: resolved note', helpNotifyEmails: 'Help: notification emails (comma separated)', helpEmailFrom: 'Help: email sender', helpEmailSubject: 'Help: email subject ({lab} = lab title)'
 };
 
 /* ============================================================
@@ -1599,6 +1657,7 @@ function parseRoute() {
   if (parts[0] === 'search') return { view: 'search', q: params.get('q') || '' };
   if (parts[0] === 'signin') return { view: 'signin' };
   if (parts[0] === 'privacy') return { view: 'privacy' };
+  if (parts[0] === 'help') return { view: 'help', id: parts[1] || null };
   return { view: 'notfound' };
 }
 function navigate(hash) { if (location.hash === hash) render(); else location.hash = hash; }
@@ -1667,6 +1726,7 @@ function renderMathIn(elements) {
    ============================================================ */
 function render() {
   state.route = parseRoute();
+  helpUnmount();
   const view = $('view');
   try {
     switch (state.route.view) {
@@ -1676,6 +1736,7 @@ function render() {
       case 'search': renderSearch(view); break;
       case 'signin': renderSignIn(view); break;
       case 'privacy': renderPrivacy(view); break;
+      case 'help': renderHome(view); if (isAdmin()) openHelpModal(state.route.id); else if (!state.session) openLogin(); break;
       default: renderNotFound(view);
     }
   } catch (e) {
@@ -1876,6 +1937,211 @@ function renderPrivacy(view) {
 }
 async function signOutStudent() { await sb.auth.signOut(); state.session = null; state.role = null; renderChrome(); navigate('#/'); }
 
+/* ============================================================
+   GET HELP — one private thread per student per lab, live both ways.
+   Student side renders into #help-host on the lab page; admin side is the Help panel.
+   Writes go through SQL functions (help_post / help_reply / help_set_status / help_seen); reads use RLS.
+   ============================================================ */
+let help = { lab: null, thread: null, messages: [], channel: null, where: '', open: false };
+function helpWhen(x) { const d = new Date(x); return isNaN(d) ? '' : d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
+function helpUnmount() {
+  if (help.channel && sb) { try { sb.removeChannel(help.channel); } catch (e) { /* ignore */ } }
+  help = { lab: null, thread: null, messages: [], channel: null, where: '', open: false };
+}
+async function helpMount(lab) {
+  if (!$('help-host')) return;
+  help.lab = lab;
+  if (isStudent() && sb && state.source === 'live') {
+    try {
+      const { data: t } = await sb.from('help_threads').select('*').eq('lab_id', lab.id).eq('user_id', state.session.user.id).maybeSingle();
+      if (t) { help.thread = t; await helpLoadMessages(); helpSubscribe(); }
+    } catch (e) { console.warn('help load failed:', e.message); }
+  }
+  if (help.lab === lab) helpRender();
+}
+async function helpLoadMessages() {
+  if (!help.thread) return;
+  const { data } = await sb.from('help_messages').select('*').eq('thread_id', help.thread.id).order('created_at');
+  if (data) help.messages = data;
+}
+function helpSubscribe() {
+  if (!help.thread || help.channel || !sb) return;
+  const id = help.thread.id;
+  help.channel = sb.channel('help-' + id)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'help_messages', filter: 'thread_id=eq.' + id }, p => {
+      if (!help.thread || help.messages.some(m => m.id === p.new.id)) return;
+      help.messages.push(p.new);
+      if (p.new.role === 'admin') { if (help.open) { help.thread.unread_student = false; rpc('help_seen', { p_thread: id }).catch(() => {}); } else help.thread.unread_student = true; }
+      helpRender();
+    })
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'help_threads', filter: 'id=eq.' + id }, p => {
+      if (!help.thread) return;
+      const open = help.open; help.thread = { ...help.thread, ...p.new }; if (open && help.thread.unread_student) help.thread.unread_student = false;
+      helpRender();
+    })
+    .subscribe();
+}
+function helpRender() {
+  const host = $('help-host'); if (!host || !help.lab) return;
+  const keepWhere = $('help-where') ? $('help-where').value : null, keepText = $('help-text') ? $('help-text').value : '';
+  const t = help.thread, unread = !!(t && t.unread_student);
+  let h = `<div class="help-box${help.open ? ' open' : ''}">
+    <div class="help-top">
+      <button type="button" class="btn-small help-btn" onclick="helpToggle()">${escapeHTML(getText('helpButton'))}${t && help.messages.length ? ` <span class="help-n">${help.messages.length}</span>` : ''}</button>
+      ${unread ? `<span class="help-banner">${escapeHTML(getText('helpReplied'))}</span>` : ''}
+    </div>`;
+  if (help.open) {
+    h += `<div class="help-panel">`;
+    if (!isStudent()) h += `<p class="help-intro">${escapeHTML(getText('helpLoginNudge'))} <a href="#/signin">${escapeHTML(getText('signInLink'))}</a></p>`;
+    else {
+      h += `<p class="help-intro">${escapeHTML(getText('helpIntro'))}</p>`;
+      if (help.messages.length) h += `<div class="help-msgs">${help.messages.map(helpMsgHTML).join('')}</div>`;
+      if (t && t.status === 'resolved') h += `<p class="help-note">${escapeHTML(getText('helpResolvedNote'))}</p>`;
+      h += `<div class="help-form">
+        <label>${escapeHTML(getText('helpWhereLabel'))}<input type="text" id="help-where" maxlength="200" placeholder="${escapeHTML(getText('helpWherePlaceholder'))}" value="${escapeHTML(keepWhere != null ? keepWhere : help.where)}"/></label>
+        <label>${escapeHTML(getText('helpMessageLabel'))}<textarea id="help-text" rows="3" maxlength="4000" placeholder="${escapeHTML(getText('helpMessagePlaceholder'))}">${escapeHTML(keepText)}</textarea></label>
+        <div class="help-actions"><button type="button" class="btn" id="help-send" onclick="helpSend()">${escapeHTML(getText('helpSend'))}</button><span class="help-status" id="help-status"></span></div>
+      </div>`;
+    }
+    h += `</div>`;
+  }
+  host.innerHTML = h + `</div>`;
+  const list = host.querySelector('.help-msgs'); if (list) list.scrollTop = list.scrollHeight;
+}
+function helpMsgHTML(m) {
+  const mine = m.role === 'student';
+  return `<div class="help-msg ${mine ? 'student' : 'admin'}"><div class="help-who">${escapeHTML(mine ? getText('helpYou') : getText('helpTeacher'))} · ${escapeHTML(helpWhen(m.created_at))}</div>${m.block ? `<div class="help-where">${escapeHTML(m.block)}</div>` : ''}<div class="help-body">${escapeHTML(m.body)}</div></div>`;
+}
+function helpToggle() {
+  help.open = !help.open;
+  if (help.open && help.thread && help.thread.unread_student) { help.thread.unread_student = false; rpc('help_seen', { p_thread: help.thread.id }).catch(() => {}); }
+  helpRender();
+  if (help.open) { const ta = $('help-text'); if (ta) ta.focus(); }
+}
+async function helpSend() {
+  const ta = $('help-text'), where = $('help-where'), btn = $('help-send'), st = $('help-status');
+  const body = (ta.value || '').trim(); if (!body) { ta.focus(); return; }
+  help.where = where.value.trim();
+  btn.disabled = true; st.textContent = '…';
+  try {
+    const id = await rpc('help_post', { p_lab_id: help.lab.id, p_body: body, p_block: help.where || null });
+    if (!help.thread) { const { data: t } = await sb.from('help_threads').select('*').eq('id', id).maybeSingle(); help.thread = t || { id, status: 'open', unread_student: false }; helpSubscribe(); }
+    else help.thread.status = 'open';
+    await helpLoadMessages();
+    ta.value = ''; helpRender();
+    const s2 = $('help-status'); if (s2) s2.textContent = getText('helpSent');
+  } catch (e) { btn.disabled = false; st.textContent = getText('helpError') + ' ' + (e.message || ''); }
+}
+// Remember which block the student last worked in, to prefill "where are you stuck".
+document.addEventListener('focusin', e => {
+  if (!help.lab || !e.target.closest) return;
+  const el = e.target.closest('.lt-answer, .lt-table-wrap, .lt-photo, .lt-notes, .lt-steps li, ol li'); if (!el) return;
+  const p = el.querySelector('.lt-prompt, .lt-table-title, summary');
+  const plain = node => { const c = node.cloneNode(true); c.querySelectorAll('.katex-mathml').forEach(x => x.remove()); return c.textContent.replace(/\s+/g, ' ').trim(); };   // KaTeX renders math twice (MathML + HTML)
+  let label = p ? plain(p) : (el.tagName === 'LI' && el.firstChild ? String(el.firstChild.textContent || '').trim() : '');
+  if (!label) return;
+  help.where = label.slice(0, 120);
+  const w = $('help-where'); if (w && !w.value) w.value = help.where;
+});
+
+/* ---------- admin side ---------- */
+let helpAdmin = { threads: [], tab: 'open', thread: null, messages: [], channel: null, timer: null, loaded: false };
+function helpAdminWatch() {
+  if (!isAdmin() || !sb || helpAdmin.channel) return;
+  helpAdminRefresh();
+  helpAdmin.channel = sb.channel('help-admin')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'help_threads' }, () => helpAdminRefreshSoon())
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'help_messages' }, p => {
+      if (helpAdmin.thread && p.new.thread_id === helpAdmin.thread.id && !helpAdmin.messages.some(m => m.id === p.new.id)) {
+        helpAdmin.messages.push(p.new);
+        if (p.new.role === 'student') rpc('help_seen', { p_thread: helpAdmin.thread.id }).catch(() => {});
+        helpAdminRenderThread();
+      }
+      helpAdminRefreshSoon();
+    })
+    .subscribe();
+}
+function helpAdminStop() {
+  if (helpAdmin.channel && sb) { try { sb.removeChannel(helpAdmin.channel); } catch (e) { /* ignore */ } }
+  clearTimeout(helpAdmin.timer);
+  helpAdmin = { threads: [], tab: 'open', thread: null, messages: [], channel: null, timer: null, loaded: false };
+  helpAdminCount();
+}
+function helpAdminRefreshSoon() { clearTimeout(helpAdmin.timer); helpAdmin.timer = setTimeout(helpAdminRefresh, 300); }
+async function helpAdminRefresh() {
+  if (!isAdmin() || !sb) return;
+  try { helpAdmin.threads = (await rpc('list_help_threads')) || []; helpAdmin.loaded = true; } catch (e) { console.warn('help list failed:', e.message); return; }
+  helpAdminCount();
+  if ($('help-modal').classList.contains('open')) {
+    if (helpAdmin.thread) { const t = helpAdmin.threads.find(x => x.id === helpAdmin.thread.id); if (t) { helpAdmin.thread = t; helpAdminRenderThread(); } else { helpAdmin.thread = null; helpAdminRenderList(); } }
+    else helpAdminRenderList();
+  }
+}
+function helpAdminCount() {
+  const n = helpAdmin.threads.filter(t => t.unread_admin && t.status === 'open').length;
+  const el = $('help-count'); if (el) { el.textContent = n ? String(n) : ''; el.hidden = !n; }
+  document.title = document.title.replace(/^\(\d+\) /, ''); if (n && isAdmin()) document.title = `(${n}) ` + document.title;
+}
+async function openHelpModal(threadId) {
+  if (!isAdmin()) return;
+  openModal('help-modal'); $('help-body').innerHTML = '<p style="color:var(--muted);">Loading…</p>';
+  if (!helpAdmin.loaded) await helpAdminRefresh();
+  if (threadId) { const t = helpAdmin.threads.find(x => String(x.id) === String(threadId)); if (t) { helpAdmin.tab = 'all'; helpAdminOpen(t.id); return; } }
+  helpAdmin.thread = null; helpAdminRenderList();
+}
+function helpAdminTab(tab) { helpAdmin.tab = tab; helpAdmin.thread = null; helpAdminRenderList(); }
+function helpAdminRenderList() {
+  const body = $('help-body'), tab = helpAdmin.tab;
+  const threads = helpAdmin.threads.filter(t => tab === 'all' ? true : t.status === tab);
+  let h = `<div class="help-tabs">${['open', 'resolved', 'all'].map(k => `<button type="button" class="design-tab ${tab === k ? 'active' : ''}" onclick="helpAdminTab('${k}')">${k[0].toUpperCase() + k.slice(1)}</button>`).join('')}<span class="hint" style="margin:0 0 0 auto;">Students see your replies on the lab page, live.</span></div>`;
+  if (!threads.length) { body.innerHTML = h + `<p style="color:var(--muted);">No ${tab === 'all' ? '' : tab + ' '}help threads yet.</p>`; return; }
+  const byLab = new Map();
+  threads.forEach(t => { if (!byLab.has(t.lab_id)) byLab.set(t.lab_id, []); byLab.get(t.lab_id).push(t); });
+  const groups = [...byLab.entries()].map(([labId, ts]) => ({ labId, ts, unread: ts.filter(t => t.unread_admin).length, latest: Math.max(...ts.map(t => +new Date(t.updated_at))) }))
+    .sort((a, b) => (b.unread - a.unread) || (b.latest - a.latest));
+  h += groups.map(g => {
+    const lab = state.labs.find(l => l.id === g.labId);
+    const rows = g.ts.sort((a, b) => ((b.unread_admin ? 1 : 0) - (a.unread_admin ? 1 : 0)) || (new Date(b.updated_at) - new Date(a.updated_at)));
+    return `<div class="help-group"><div class="help-group-head"><span>${escapeHTML(lab ? lab.title : g.labId)}</span>${g.unread ? `<span class="badge">${g.unread} new</span>` : ''}<span class="hint" style="margin:0 0 0 auto;">${g.ts.length} student${g.ts.length === 1 ? '' : 's'}</span></div>
+      <ul class="attach-list">${rows.map(t => `<li class="help-row ${t.unread_admin ? 'unread' : ''}" onclick="helpAdminOpen(${t.id})">
+        <div style="flex:1; min-width:0;"><div><strong>${escapeHTML(t.who || 'Student')}</strong> <span class="hint" style="margin:0;">· ${escapeHTML(helpWhen(t.updated_at))}${t.status === 'resolved' ? ' · resolved' : ''}</span></div>
+        <div class="help-last">${t.last_role === 'admin' ? '<em>You:</em> ' : ''}${escapeHTML((t.last_body || '').slice(0, 140))}</div></div>
+        ${t.unread_admin ? '<span class="badge">new</span>' : ''}</li>`).join('')}</ul></div>`;
+  }).join('');
+  body.innerHTML = h;
+}
+async function helpAdminOpen(id) {
+  const t = helpAdmin.threads.find(x => x.id === id); if (!t) return;
+  helpAdmin.thread = t;
+  try { const { data } = await sb.from('help_messages').select('*').eq('thread_id', id).order('created_at'); helpAdmin.messages = data || []; } catch (e) { helpAdmin.messages = []; }
+  if (t.unread_admin) { t.unread_admin = false; helpAdminCount(); rpc('help_seen', { p_thread: id }).catch(() => {}); }
+  helpAdminRenderThread();
+}
+function helpAdminRenderThread() {
+  const t = helpAdmin.thread; if (!t) return;
+  const lab = state.labs.find(l => l.id === t.lab_id);
+  const prev = $('help-reply') ? $('help-reply').value : '';
+  $('help-body').innerHTML = `<div class="lt-toolbar" style="margin-bottom:1rem; align-items:center;"><button type="button" class="btn-small" onclick="helpAdmin.thread = null; helpAdminRenderList()">← All threads</button>
+      <span style="font-family:var(--font-heading); font-size:1.3rem;">${escapeHTML(t.who || 'Student')}</span>
+      ${lab ? `<a class="hint" style="margin:0;" href="#/lab/${encodeURIComponent(lab.slug)}" onclick="closeModal('help-modal')">${escapeHTML(lab.title)}</a>` : ''}
+      <button type="button" class="btn-small" style="margin-left:auto;" onclick="helpAdminStatus(${t.id}, '${t.status === 'open' ? 'resolved' : 'open'}')">${t.status === 'open' ? 'Mark resolved' : 'Reopen'}</button></div>
+    <div class="help-msgs admin">${helpAdmin.messages.map(m => `<div class="help-msg ${m.role}"><div class="help-who">${m.role === 'admin' ? 'You' : escapeHTML(t.who || 'Student')} · ${escapeHTML(helpWhen(m.created_at))}</div>${m.block ? `<div class="help-where">${escapeHTML(m.block)}</div>` : ''}<div class="help-body">${escapeHTML(m.body)}</div></div>`).join('') || '<p class="hint">No messages.</p>'}</div>
+    <div class="help-form"><textarea id="help-reply" rows="3" maxlength="4000" placeholder="Reply…">${escapeHTML(prev)}</textarea><div class="help-actions"><button type="button" class="btn" onclick="helpAdminSend()">Send reply</button><span class="hint" style="margin:0;">Lands on the student's lab page instantly, or as a banner next time they open it.</span></div></div>`;
+  const list = $('help-body').querySelector('.help-msgs'); if (list) list.scrollTop = list.scrollHeight;
+}
+async function helpAdminSend() {
+  const ta = $('help-reply'); const body = (ta.value || '').trim(); if (!body || !helpAdmin.thread) return;
+  try {
+    await rpc('help_reply', { p_thread: helpAdmin.thread.id, p_body: body }); ta.value = '';
+    const { data } = await sb.from('help_messages').select('*').eq('thread_id', helpAdmin.thread.id).order('created_at'); if (data) helpAdmin.messages = data;
+    helpAdminRenderThread();
+  } catch (e) { toast('Could not send: ' + e.message, true); }
+}
+async function helpAdminStatus(id, status) {
+  try { await rpc('help_set_status', { p_thread: id, p_status: status }); await helpAdminRefresh(); }
+  catch (e) { toast(e.message, true); }
+}
+
 /* ---------- Admin idle timeout: an admin who has not touched the site for 24 hours is signed out.
    Students are governed only by the Supabase inactivity limit (14 days). The last-activity time lives in
    localStorage so it carries across tabs and reloads. ---------- */
@@ -1892,6 +2158,7 @@ async function adminIdleCheck() {
   if (!last) { adminTouch(); return; }
   if (Date.now() - last < ADMIN_IDLE_MS) return;
   try { localStorage.removeItem(ADMIN_IDLE_KEY); } catch (e) { /* ignore */ }
+  helpAdminStop();
   await sb.auth.signOut(); state.session = null; state.role = null;
   document.body.classList.remove('admin-mode'); renderChrome(); render();
   toast('Signed out after 24 hours without activity. Log in again to keep editing.');
@@ -1927,9 +2194,11 @@ async function renderLab(view) {
       <h1 class="lab-title">${escapeHTML(lab.title)} <span class="admin-inline"><button class="btn-small" onclick="openLabModal('${lab.id}')">Edit lab</button></span></h1>
       <div class="lab-meta">${labBadges(lab)}${meta.join('')}</div>
     </header>
+    ${lab.help_enabled && !isAdmin() ? '<div id="help-host"></div>' : ''}
     <div id="lab-content-area"><p style="color:var(--muted);">${escapeHTML(getText('loadingText'))}</p></div>
   </section>`;
 
+  if (lab.help_enabled && !isAdmin()) helpMount(lab);
   const area = $('lab-content-area');
   let entry = null, cloud = null;
   const reviewing = isAdmin() && state.reviewing && state.reviewing.lab_id === lab.id ? state.reviewing : null;
@@ -2355,6 +2624,7 @@ async function signInWithGoogle(returnHash) {
   if (q.has('code') || q.has('error')) history.replaceState(null, '', location.pathname + location.hash);
 })();
 async function logoutAdmin() {
+  helpAdminStop();
   await sb.auth.signOut();
   state.session = null; state.role = null; state.content = {};
   document.body.classList.remove('admin-mode');
@@ -2853,6 +3123,7 @@ async function openLabModal(id) {
   onLabStatusChange();
   accessListState.lab = null;
   $('lab-access').value = lab?.access || 'inherit'; updateAccessHint();
+  $('lab-help').checked = !!lab?.help_enabled;
   labCoverItem = lab?.cover_path ? parseMediaEntry(lab.cover_path) : null;
   labMediaItems = (entry?.media || []).map(parseMediaEntry).filter(Boolean);
   labAttachmentItems = (entry?.attachments || []).map(a => ({ ...a }));
@@ -2915,7 +3186,8 @@ async function saveLab() {
     access: $('lab-access').value,
     tags: $('lab-tags').value.split(',').map(t => t.trim()).filter(Boolean),
     estimated_minutes: parseInt($('lab-minutes').value, 10) || null,
-    sort_order: parseInt($('lab-order').value, 10) || 0
+    sort_order: parseInt($('lab-order').value, 10) || 0,
+    help_enabled: $('lab-help').checked
   };
   const btn = $('save-lab-btn'); btn.disabled = true; btn.textContent = 'Saving…';
   try {
@@ -6556,6 +6828,7 @@ function buEquivalenceCheck(text) {
     renderChrome();
     render();
     startAdminIdleWatch();
+    if (isAdmin()) helpAdminWatch();
     if (sb) sb.auth.onAuthStateChange((event, session) => {
       // The library fires SIGNED_IN / TOKEN_REFRESHED whenever the tab regains focus; only react when the user actually changes.
       const prevUser = state.session?.user?.id || null, nextUser = session?.user?.id || null;
@@ -6565,7 +6838,7 @@ function buEquivalenceCheck(text) {
       document.body.classList.toggle('admin-mode', isAdmin());
       closeModal('login-modal');
       if (was !== isAdmin() && isAdmin() && event === 'SIGNED_IN') toast('Welcome back');
-      if (isAdmin()) { adminIdleStamp = 0; adminTouch(); }
+      if (isAdmin()) { adminIdleStamp = 0; adminTouch(); helpAdminWatch(); } else helpAdminStop();
       reloadCatalogue();
     });
   } catch (e) {
