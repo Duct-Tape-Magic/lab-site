@@ -422,6 +422,8 @@
   footer { border-top: 0.5px solid var(--rule); padding: 2rem 3rem; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--muted); margin-top: 4rem; gap: 1rem; flex-wrap: wrap; }
   footer a { color: var(--muted); text-decoration: none; letter-spacing: 0.08em; text-transform: uppercase; font-size: 11px; }
   footer a:hover { color: var(--ink); }
+  .theme-pick { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .theme-pick select { font: inherit; font-size: 11px; letter-spacing: 0.04em; text-transform: none; color: var(--ink); background: var(--bg); border: 0.5px solid var(--rule-strong); padding: 0.2rem 0.4rem; border-radius: var(--border-radius); }
 
   /* ---------- Editable hover state ---------- */
   .editable { position: relative; }
@@ -831,7 +833,7 @@
 
 <footer>
   <span id="footer-text" class="editable" data-edit="footerText" onclick="handleEditableClick(event, 'footerText')">© Labs</span>
-  <span style="display:flex; gap:1.25rem;"><a href="#/privacy" id="footer-privacy">Privacy</a><a href="#/signin" id="footer-signin" hidden>Student sign in</a></span>
+  <span style="display:flex; gap:1.25rem; align-items:center;"><label class="theme-pick"><span id="theme-label">Theme</span><select id="theme-select" onchange="setUserTheme(this.value)"></select></label><a href="#/privacy" id="footer-privacy">Privacy</a><a href="#/signin" id="footer-signin" hidden>Student sign in</a></span>
 </footer>
 
 <!-- Log in (students and admins) -->
@@ -1311,6 +1313,8 @@ const DEFAULTS = {
   helpSend: 'Send',
   helpSent: 'Sent. Replies will show up here.',
   helpError: 'Could not send. Please try again.',
+  themeLabel: 'Theme',
+  themeSiteDefault: 'Site default',
   helpAutoReply: 'One of your TAs has been notified and will help you soon.',
   helpAutoLabel: 'Automatic message',
   helpYou: 'You',
@@ -1331,6 +1335,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'accessTitle', 'accessHint', 'accessButton', 'accessWrong', 'accessArchived', 'seatName', 'seatShort', 'seatUnknown', 'seatManaged', 'privacyLink', 'privacyTitle'] },
   { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'entriesClearFailed', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
   { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef', 'reportNoPhotoYet'] },
+  { label: 'Appearance', keys: ['themeLabel', 'themeSiteDefault'] },
   { label: 'Get help', keys: ['helpButton', 'helpIntro', 'helpLoginNudge', 'helpMessagePlaceholder', 'helpSend', 'helpSent', 'helpError', 'helpAutoReply', 'helpAutoLabel', 'helpYou', 'helpTeacher', 'helpResolvedNote', 'helpEmailFrom', 'helpEmailSubject'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
 ];
@@ -1356,7 +1361,7 @@ const TEXT_LABELS = {
   photoAdd: 'Add photo button', photoChange: 'Change photo button', photoRemove: 'Remove photo button',
   calloutSafety: 'Safety box label', calloutWarning: 'Caution box label', calloutInfo: 'Note box label', calloutTip: 'Tip box label', calloutHint: 'Hint box label', figurePending: 'Missing figure text', graphEmpty: 'Empty graph message',
   procedureTab: 'Procedure tab label', reportTab: 'Report tab label', reportPreview: 'Preview report button', reportStyleTitle: 'Style guide heading', reportRequired: 'Required badge', reportHint: 'Hint toggle', reportWords: 'Word count', reportWordsAim: 'Word range hint', reportEmptyRequired: 'Empty required question note', reportTableLabel: 'Table caption word', reportFigureLabel: 'Figure caption word', reportMissingRef: 'Missing table/graph message', reportNoPhotoYet: 'No photo yet message',
-  helpButton: 'Get help button', helpIntro: 'Help panel intro', helpLoginNudge: 'Help: log-in nudge', helpMessagePlaceholder: 'Help: question placeholder', helpSend: 'Help: send button', helpSent: 'Help: sent confirmation', helpError: 'Help: send failed', helpAutoReply: 'Help: automatic first reply (site default)', helpAutoLabel: 'Help: label on the automatic reply', helpYou: 'Help: your name in the thread', helpTeacher: 'Help: teacher name in the thread', helpResolvedNote: 'Help: resolved note', helpEmailFrom: 'Help: email sender', helpEmailSubject: 'Help: email subject ({lab} = lab title)'
+  themeLabel: 'Theme picker label', themeSiteDefault: 'Theme: site default option', helpButton: 'Get help button', helpIntro: 'Help panel intro', helpLoginNudge: 'Help: log-in nudge', helpMessagePlaceholder: 'Help: question placeholder', helpSend: 'Help: send button', helpSent: 'Help: sent confirmation', helpError: 'Help: send failed', helpAutoReply: 'Help: automatic first reply (site default)', helpAutoLabel: 'Help: label on the automatic reply', helpYou: 'Help: your name in the thread', helpTeacher: 'Help: teacher name in the thread', helpResolvedNote: 'Help: resolved note', helpEmailFrom: 'Help: email sender', helpEmailSubject: 'Help: email subject ({lab} = lab title)'
 };
 
 /* ============================================================
@@ -1691,6 +1696,7 @@ function renderChrome() {
   $('login-admin-toggle').textContent = getText('loginAdminToggle');
   $('access-title').textContent = getText('accessTitle'); $('access-hint').textContent = getText('accessHint'); $('access-code-btn').textContent = getText('accessButton');
   $('footer-privacy').textContent = getText('privacyLink');
+  renderThemePicker();
   $('announce-dismiss').textContent = 'Dismiss';
   renderAnnouncement();
 }
@@ -1892,11 +1898,13 @@ function renderSignIn(view) {
         <p>${fmt('accountSignedInAs', { name: studentName() })}</p>
         <p style="color:var(--muted); font-size:14px; margin-top:0.5rem;">${escapeHTML(getText('accountSyncOn'))}</p>
         ${isSeat() ? `<p style="color:var(--muted); font-size:14px; margin-top:0.5rem;">${escapeHTML(getText('seatManaged'))}</p>` : ''}
+        <p style="margin-top:1.25rem;"><label class="theme-pick"><span>${escapeHTML(getText('themeLabel'))}</span><select data-theme-pick onchange="setUserTheme(this.value)"></select></label></p>
         <div class="lab-toolbar" style="margin-top:1.5rem;">
           <button class="btn" onclick="signOutStudent()">${escapeHTML(getText('signOutLink'))}</button>
           ${isSeat() ? '' : `<button class="btn btn-danger" onclick="deleteMyAccount()">${escapeHTML(getText('accountDelete'))}</button>`}
         </div>
       </div></section>`;
+    renderThemePicker();
     return;
   }
   view.innerHTML = `<section class="page"><h1 class="page-title">${escapeHTML(getText('signInTitle'))}</h1>
@@ -3783,26 +3791,60 @@ function previewDesign() {
   designState.cardSize = $('dc-card-size').value; designState.cardAspect = $('dc-card-aspect').value; designState.cardDivider = $('dc-card-divider').value;
   applyDesign(designState);
 }
-function cancelDesign() { if (designStateBackup) { designState = { ...designStateBackup }; applyDesign(designState); } closeModal('design-modal'); }
+function cancelDesign() { if (designStateBackup) { designState = { ...designStateBackup }; } applySiteDesign(); closeModal('design-modal'); }
 async function saveDesign() {
   previewDesign();
   const btn = $('save-design-btn'); btn.disabled = true; btn.textContent = 'Saving…';
   const { error } = await sb.from('site_content').upsert({ key: '_design', value: JSON.stringify(designState) });
   btn.disabled = false; btn.textContent = 'Save';
   if (error) { toast('Could not save: ' + error.message, true); return; }
-  state.text._design = JSON.stringify(designState); designStateBackup = null; closeModal('design-modal'); toast('Design saved');
+  state.text._design = JSON.stringify(designState); designStateBackup = null; closeModal('design-modal'); applySiteDesign(); toast('Design saved');
 }
 async function resetDesign() {
   if (!confirm('Reset the design to the default look?')) return;
   designState = { palette: 'default', custom: false, ...DESIGN_DEFAULTS }; applyDesign(designState);
   const { error } = await sb.from('site_content').upsert({ key: '_design', value: JSON.stringify(designState) });
   if (error) { toast('Reset locally but could not save', true); return; }
-  state.text._design = JSON.stringify(designState); designStateBackup = null; closeModal('design-modal'); toast('Design reset');
+  state.text._design = JSON.stringify(designState); designStateBackup = null; closeModal('design-modal'); applySiteDesign(); toast('Design reset');
 }
 function loadDesignFromSiteContent() {
   const raw = state.text._design;
   if (raw) { try { designState = { ...DESIGN_DEFAULTS, palette: 'default', custom: false, ...JSON.parse(raw) }; } catch (e) { console.warn('Could not parse design settings', e); } }
-  applyDesign(designState);
+  applySiteDesign();
+}
+
+/* ---------- Personal theme: each visitor/account can override the site's colours with one of the palettes.
+   Kept in localStorage (instant, works for visitors) and, for signed-in users, in user_prefs so it follows the account. ---------- */
+const THEME_KEY = 'labsite.theme';
+let userTheme = 'site';
+try { userTheme = localStorage.getItem(THEME_KEY) || 'site'; } catch (e) { /* ignore */ }
+function themedDesign() {
+  const p = userTheme !== 'site' ? findPaletteById(userTheme) : null;
+  return p ? { ...designState, ink: p.ink, muted: p.muted, bg: p.bg, cardBg: p.cardBg, accent: p.accent, topoBg: p.bg } : designState;
+}
+function applySiteDesign() { applyDesign(themedDesign()); renderThemePicker(); }
+function renderThemePicker() {
+  document.querySelectorAll('select[data-theme-pick], #theme-select').forEach(sel => {
+    sel.innerHTML = `<option value="site">${escapeHTML(getText('themeSiteDefault'))}</option>` + PALETTES.map(p => `<option value="${p.id}">${escapeHTML(p.name)}</option>`).join('');
+    sel.value = PALETTES.some(p => p.id === userTheme) ? userTheme : 'site';
+  });
+  const l = $('theme-label'); if (l) l.textContent = getText('themeLabel');
+}
+async function setUserTheme(id) {
+  userTheme = PALETTES.some(p => p.id === id) ? id : 'site';
+  try { localStorage.setItem(THEME_KEY, userTheme); } catch (e) { /* ignore */ }
+  applySiteDesign();
+  if (sb && state.session && state.source === 'live') {
+    const { error } = await sb.from('user_prefs').upsert({ user_id: state.session.user.id, theme: userTheme, updated_at: new Date().toISOString() });
+    if (error) console.warn('theme not saved to account:', error.message);
+  }
+}
+async function loadUserTheme() {   // the account's choice wins over this browser's, so it follows the student between devices
+  if (!sb || !state.session || state.source !== 'live') return;
+  try {
+    const { data } = await sb.from('user_prefs').select('theme').eq('user_id', state.session.user.id).maybeSingle();
+    if (data && data.theme && data.theme !== userTheme) { userTheme = data.theme; try { localStorage.setItem(THEME_KEY, userTheme); } catch (e) { /* ignore */ } applySiteDesign(); }
+  } catch (e) { /* keep the local choice */ }
 }
 
 /* ============================================================
@@ -6854,6 +6896,7 @@ function buEquivalenceCheck(text) {
     await checkSession();
     await loadCatalogue();
     loadDesignFromSiteContent();
+    loadUserTheme();
     renderChrome();
     render();
     startAdminIdleWatch();
@@ -6864,6 +6907,7 @@ function buEquivalenceCheck(text) {
       const was = isAdmin(); state.session = session; state.role = roleFromSession(session);
       if (prevUser === nextUser) return;
       loadMySeat().then(() => { renderChrome(); if (state.route.view === 'signin') render(); });
+      if (nextUser) loadUserTheme();
       document.body.classList.toggle('admin-mode', isAdmin());
       closeModal('login-modal');
       if (was !== isAdmin() && isAdmin() && event === 'SIGNED_IN') toast('Welcome back');
