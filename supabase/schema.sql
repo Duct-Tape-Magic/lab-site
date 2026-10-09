@@ -868,6 +868,7 @@ create or replace function public.list_help_threads()
 returns table(id bigint, lab_id text, user_id uuid, status text, unread_admin boolean, unread_student boolean, created_at timestamptz, updated_at timestamptz,
               who text, class_id text, last_body text, last_role text, last_block text, last_at timestamptz, messages bigint)
 language plpgsql stable security definer set search_path = public as $$
+#variable_conflict use_column
 begin
   if not is_admin() then raise exception 'admin only'; end if;
   return query
@@ -877,7 +878,7 @@ begin
            (select count(*) from help_messages x where x.thread_id = t.id)
     from help_threads t
     left join seats s on s.user_id = t.user_id
-    left join lateral (select body, role, block, created_at from help_messages x where x.thread_id = t.id order by created_at desc limit 1) m on true
+    left join lateral (select x.body, x.role, x.block, x.created_at from help_messages x where x.thread_id = t.id order by x.created_at desc limit 1) m on true
     order by t.updated_at desc;
 end $$;
 revoke execute on function public.list_help_threads() from public, anon;
