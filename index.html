@@ -898,7 +898,8 @@
       </div>
     </div>
     <div class="form-row access-list" id="lab-access-list" hidden></div>
-    <div class="form-row"><label style="display:flex; align-items:center; gap:0.5rem; text-transform:none; letter-spacing:0; font-size:14px;"><input type="checkbox" id="lab-help"/> Show a "Get help" button at the top of this lab</label><div class="hint">Signed-in students can send you a question from the lab page. You get an email and reply from the Help panel; the student sees the reply on the lab page.</div></div>
+    <div class="form-row"><label style="display:flex; align-items:center; gap:0.5rem; text-transform:none; letter-spacing:0; font-size:14px;"><input type="checkbox" id="lab-help" onchange="renderLabHelpAdmins()"/> Show a "Get help" button at the top of this lab</label><div class="hint">Signed-in students can send a question from the lab page. Replies come from the Help panel; the student sees them on the lab page.</div>
+      <div id="lab-help-admins" style="margin-top:0.6rem;"></div></div>
 
     <div class="form-row">
       <label>Cover image (optional — the first photo is used if empty)</label>
@@ -1312,7 +1313,6 @@ const DEFAULTS = {
   helpYou: 'You',
   helpTeacher: 'Teacher',
   helpResolvedNote: 'This question was marked as answered. You can still write back.',
-  helpNotifyEmails: 'whclark09@gmail.com',
   helpEmailFrom: 'OHS Chem Labs <help@ohschemlabs.com>',
   helpEmailSubject: 'Help request: {lab}'
 };
@@ -1328,7 +1328,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'accessTitle', 'accessHint', 'accessButton', 'accessWrong', 'accessArchived', 'seatName', 'seatShort', 'seatUnknown', 'seatManaged', 'privacyLink', 'privacyTitle'] },
   { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
   { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef', 'reportNoPhotoYet'] },
-  { label: 'Get help', keys: ['helpButton', 'helpIntro', 'helpLoginNudge', 'helpWhereLabel', 'helpWherePlaceholder', 'helpMessageLabel', 'helpMessagePlaceholder', 'helpSend', 'helpSent', 'helpError', 'helpReplied', 'helpYou', 'helpTeacher', 'helpResolvedNote', 'helpNotifyEmails', 'helpEmailFrom', 'helpEmailSubject'] },
+  { label: 'Get help', keys: ['helpButton', 'helpIntro', 'helpLoginNudge', 'helpWhereLabel', 'helpWherePlaceholder', 'helpMessageLabel', 'helpMessagePlaceholder', 'helpSend', 'helpSent', 'helpError', 'helpReplied', 'helpYou', 'helpTeacher', 'helpResolvedNote', 'helpEmailFrom', 'helpEmailSubject'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
 ];
 
@@ -1353,7 +1353,7 @@ const TEXT_LABELS = {
   photoAdd: 'Add photo button', photoChange: 'Change photo button', photoRemove: 'Remove photo button',
   calloutSafety: 'Safety box label', calloutWarning: 'Caution box label', calloutInfo: 'Note box label', calloutTip: 'Tip box label', calloutHint: 'Hint box label', figurePending: 'Missing figure text', graphEmpty: 'Empty graph message',
   procedureTab: 'Procedure tab label', reportTab: 'Report tab label', reportPreview: 'Preview report button', reportStyleTitle: 'Style guide heading', reportRequired: 'Required badge', reportHint: 'Hint toggle', reportWords: 'Word count', reportWordsAim: 'Word range hint', reportEmptyRequired: 'Empty required question note', reportTableLabel: 'Table caption word', reportFigureLabel: 'Figure caption word', reportMissingRef: 'Missing table/graph message', reportNoPhotoYet: 'No photo yet message',
-  helpButton: 'Get help button', helpIntro: 'Help panel intro', helpLoginNudge: 'Help: log-in nudge', helpWhereLabel: 'Help: where label', helpWherePlaceholder: 'Help: where placeholder', helpMessageLabel: 'Help: question label', helpMessagePlaceholder: 'Help: question placeholder', helpSend: 'Help: send button', helpSent: 'Help: sent confirmation', helpError: 'Help: send failed', helpReplied: 'Help: reply banner', helpYou: 'Help: your name in the thread', helpTeacher: 'Help: teacher name in the thread', helpResolvedNote: 'Help: resolved note', helpNotifyEmails: 'Help: notification emails (comma separated)', helpEmailFrom: 'Help: email sender', helpEmailSubject: 'Help: email subject ({lab} = lab title)'
+  helpButton: 'Get help button', helpIntro: 'Help panel intro', helpLoginNudge: 'Help: log-in nudge', helpWhereLabel: 'Help: where label', helpWherePlaceholder: 'Help: where placeholder', helpMessageLabel: 'Help: question label', helpMessagePlaceholder: 'Help: question placeholder', helpSend: 'Help: send button', helpSent: 'Help: sent confirmation', helpError: 'Help: send failed', helpReplied: 'Help: reply banner', helpYou: 'Help: your name in the thread', helpTeacher: 'Help: teacher name in the thread', helpResolvedNote: 'Help: resolved note', helpEmailFrom: 'Help: email sender', helpEmailSubject: 'Help: email subject ({lab} = lab title)'
 };
 
 /* ============================================================
@@ -3087,6 +3087,23 @@ function labWorkWarning(problems, oldText) {
   return `This change affects saved student work:\n\n${lines.join('\n')}\n\nNothing is deleted from the database, but students will not see this work on the site until the lab has these blocks again. Save anyway?`;
 }
 
+// Which admins get the email when a student asks for help on this lab (table help_notify).
+let labHelpAdmins = { admins: [], checked: new Set() };
+async function loadLabHelpAdmins(labId) {
+  try {
+    const [admins, rows] = await Promise.all([rpc('list_admins'), labId ? sb.from('help_notify').select('user_id').eq('lab_id', labId) : Promise.resolve({ data: [] })]);
+    labHelpAdmins.admins = admins || [];
+    if (labId) labHelpAdmins.checked = new Set((rows.data || []).map(r => r.user_id));
+  } catch (e) { console.warn('help admins:', e.message); }
+  renderLabHelpAdmins();
+}
+function renderLabHelpAdmins() {
+  const box = $('lab-help-admins'); if (!box) return;
+  if (!$('lab-help').checked) { box.innerHTML = ''; return; }
+  const me = state.session?.user?.id;
+  box.innerHTML = `<div class="hint" style="margin-bottom:0.3rem;">Email these admins when a student asks (untick everyone for panel-only):</div>` +
+    labHelpAdmins.admins.map(a => `<label style="display:flex; align-items:center; gap:0.5rem; text-transform:none; letter-spacing:0; font-size:13px; margin:0.2rem 0;"><input type="checkbox" data-help-admin="${escapeHTML(a.user_id)}" ${labHelpAdmins.checked.has(a.user_id) ? 'checked' : ''} onchange="this.checked ? labHelpAdmins.checked.add(this.dataset.helpAdmin) : labHelpAdmins.checked.delete(this.dataset.helpAdmin)"/> ${escapeHTML(a.email)}${a.user_id === me ? ' <span class="badge">you</span>' : ''}</label>`).join('') || '<div class="hint">No admins found.</div>';
+}
 async function openLabModal(id) {
   if (!isAdmin()) return;
   const lab = id ? state.labs.find(l => l.id === id) : null;
@@ -3125,6 +3142,8 @@ async function openLabModal(id) {
   accessListState.lab = null;
   $('lab-access').value = lab?.access || 'inherit'; updateAccessHint();
   $('lab-help').checked = !!lab?.help_enabled;
+  labHelpAdmins = { admins: [], checked: new Set(lab ? [] : [state.session?.user?.id].filter(Boolean)) };
+  loadLabHelpAdmins(lab ? lab.id : null);
   labCoverItem = lab?.cover_path ? parseMediaEntry(lab.cover_path) : null;
   labMediaItems = (entry?.media || []).map(parseMediaEntry).filter(Boolean);
   labAttachmentItems = (entry?.attachments || []).map(a => ({ ...a }));
@@ -3211,6 +3230,10 @@ async function saveLab() {
       if (r.error) throw r.error;
     }
     await saveAccessList('lab', lab.id);
+    // Who gets emailed about help requests on this lab.
+    r = await sb.from('help_notify').delete().eq('lab_id', lab.id); if (r.error) throw r.error;
+    const notify = lab.help_enabled ? [...labHelpAdmins.checked] : [];
+    if (notify.length) { r = await sb.from('help_notify').insert(notify.map(uid => ({ lab_id: lab.id, user_id: uid }))); if (r.error) throw r.error; }
     // Remove files under this lab's folder that are no longer referenced.
     const newEntry = { media: mediaArr, content, format, attachments: labAttachmentItems };
     const stillUsed = new Set(referencedPaths(lab, newEntry));
