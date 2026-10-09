@@ -575,8 +575,11 @@
   .rp-meter.empty { color: var(--muted); font-style: italic; }
   .rp-mirror { margin: 1rem 0 1.6rem; }
   /* Get help */
-  .help-box { max-width: var(--measure); margin: 0 0 1.5rem; }
+  .help-box { max-width: var(--measure); margin: 0.25rem 0 1.5rem; }
   .help-top { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+  .help-btn { background: var(--accent); color: var(--bg); border-color: var(--accent); padding: 0.55rem 1.1rem; font-size: 12px; letter-spacing: 0.12em; box-shadow: 0 1px 3px rgba(0,0,0,0.18); }
+  .help-btn:hover { filter: brightness(1.1); background: var(--accent); color: var(--bg); }
+  .help-btn .help-n { background: var(--bg); color: var(--accent); }
   .help-n, .help-count { display: inline-block; min-width: 1.5em; padding: 0 0.4em; border-radius: 999px; background: var(--accent); color: #fff; font-size: 10px; line-height: 1.6; text-align: center; margin-left: 0.35em; }
   .help-count { background: var(--warn); }
   .help-banner { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); border: 0.5px solid var(--accent); padding: 2px 8px; }
@@ -1992,7 +1995,8 @@ function helpRender() {
     </div>`;
   if (help.open) {
     h += `<div class="help-panel">`;
-    if (!isStudent()) h += `<p class="help-intro">${escapeHTML(getText('helpLoginNudge'))} <a href="#/signin">${escapeHTML(getText('signInLink'))}</a></p>`;
+    if (isAdmin()) h += `<p class="help-intro">This is what students see. Their questions arrive in the Help panel.</p><p><button type="button" class="btn-small" onclick="openHelpModal()">Open Help panel</button></p>`;
+    else if (!isStudent()) h += `<p class="help-intro">${escapeHTML(getText('helpLoginNudge'))} <a href="#/signin">${escapeHTML(getText('signInLink'))}</a></p>`;
     else {
       h += `<p class="help-intro">${escapeHTML(getText('helpIntro'))}</p>`;
       if (help.messages.length) h += `<div class="help-msgs">${help.messages.map(helpMsgHTML).join('')}</div>`;
@@ -2195,11 +2199,11 @@ async function renderLab(view) {
       <h1 class="lab-title">${escapeHTML(lab.title)} <span class="admin-inline"><button class="btn-small" onclick="openLabModal('${lab.id}')">Edit lab</button></span></h1>
       <div class="lab-meta">${labBadges(lab)}${meta.join('')}</div>
     </header>
-    ${lab.help_enabled && !isAdmin() ? '<div id="help-host"></div>' : ''}
+    ${lab.help_enabled ? '<div id="help-host"></div>' : ''}
     <div id="lab-content-area"><p style="color:var(--muted);">${escapeHTML(getText('loadingText'))}</p></div>
   </section>`;
 
-  if (lab.help_enabled && !isAdmin()) helpMount(lab);
+  if (lab.help_enabled) helpMount(lab);
   const area = $('lab-content-area');
   let entry = null, cloud = null;
   const reviewing = isAdmin() && state.reviewing && state.reviewing.lab_id === lab.id ? state.reviewing : null;
