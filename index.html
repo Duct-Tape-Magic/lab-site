@@ -1275,6 +1275,7 @@ const DEFAULTS = {
   entriesSaved: 'Saved',
   entriesClear: 'Clear my entries',
   entriesClearConfirm: 'This will permanently erase everything you have typed into this lab, including any photos you added. There is no undo. Erase it all?',
+  entriesClearFailed: 'Could not clear the saved copy on the server. Check your connection and try again.',
   notesLabel: 'My notes',
   notesPlaceholder: 'Type your notes…',
   answerPlaceholder: 'Type your answer…',
@@ -1328,7 +1329,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Lab page', keys: ['labMinutes', 'labUpdated', 'labFilesLabel', 'labDownloadFile', 'labViewInline', 'labPrint', 'labDownloadPdf', 'pdfPreparing', 'pdfReady', 'pdfFailed', 'labCopyLink', 'labLinkCopied', 'labNoContent'] },
   { label: 'Locked labs', keys: ['lockPasswordTitle', 'lockPasswordPrompt', 'lockPasswordPlaceholder', 'lockPasswordButton', 'lockPasswordWrong', 'lockTooMany', 'lockAccountsTitle', 'lockAccountsPrompt', 'lockNotAllowed', 'lockAdminOnly', 'lockUnavailable'] },
   { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'accessTitle', 'accessHint', 'accessButton', 'accessWrong', 'accessArchived', 'seatName', 'seatShort', 'seatUnknown', 'seatManaged', 'privacyLink', 'privacyTitle'] },
-  { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
+  { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'entriesClearFailed', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
   { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef', 'reportNoPhotoYet'] },
   { label: 'Get help', keys: ['helpButton', 'helpIntro', 'helpLoginNudge', 'helpMessagePlaceholder', 'helpSend', 'helpSent', 'helpError', 'helpAutoReply', 'helpAutoLabel', 'helpYou', 'helpTeacher', 'helpResolvedNote', 'helpEmailFrom', 'helpEmailSubject'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
@@ -1350,7 +1351,7 @@ const TEXT_LABELS = {
   accountTitle: 'Account page title', accountSignedInAs: 'Signed-in-as line', accountSyncOn: 'Syncing note', accountHello: 'Greeting in the menu', accountDelete: 'Delete account button', accountDeleteConfirm: 'Delete account confirmation', accountDeleted: 'Account deleted message', accessTitle: 'Access code heading', accessHint: 'Access code hint', accessButton: 'Access code button', accessWrong: 'Wrong access code message', accessArchived: 'Closed access code message', seatName: 'Seat name ({cls}, {n})', seatShort: 'Short seat name ({n})', seatUnknown: 'Seat fallback name', seatManaged: 'Seat account note', privacyLink: 'Privacy link', privacyTitle: 'Privacy page title', privacyBody: 'Privacy page text',
   notFoundTitle: 'Not found title', notFoundBody: 'Not found text', notFoundHome: 'Not found home link', unavailableTitle: 'Unavailable title', unavailableBody: 'Unavailable text',
   fallbackBanner: 'Saved-copy banner', errorBanner: 'Error banner',
-  entriesInfo: 'Autosave notice', entriesSaved: 'Saved flash', entriesClear: 'Clear entries button', entriesClearConfirm: 'Clear entries confirmation',
+  entriesInfo: 'Autosave notice', entriesSaved: 'Saved flash', entriesClear: 'Clear entries button', entriesClearFailed: 'Clear entries failed message', entriesClearConfirm: 'Clear entries confirmation',
   notesLabel: 'Notes toggle', notesPlaceholder: 'Notes placeholder', answerPlaceholder: 'Answer placeholder', tableAddRow: 'Add row button',
   photoAdd: 'Add photo button', photoChange: 'Change photo button', photoRemove: 'Remove photo button',
   calloutSafety: 'Safety box label', calloutWarning: 'Caution box label', calloutInfo: 'Note box label', calloutTip: 'Tip box label', calloutHint: 'Hint box label', figurePending: 'Missing figure text', graphEmpty: 'Empty graph message',
@@ -4159,6 +4160,11 @@ function ltBind(area, labId, cloud = null, readOnly = false) {
   const clearBtn = area.querySelector('.lt-clear');
   if (clearBtn) clearBtn.addEventListener('click', async () => {
     if (!confirm(getText('entriesClearConfirm'))) return;
+    clearTimeout(timer); clearTimeout(cloudTimer);   // a pending autosave must not re-create what we are clearing
+    if (isStudent() && sb && state.source === 'live') {   // the account copy too, or the next load would just restore it
+      const { error } = await sb.from('lab_entries').delete().eq('lab_id', labId).eq('user_id', state.session.user.id);
+      if (error) { toast(getText('entriesClearFailed'), true); return; }
+    }
     try { localStorage.removeItem(LT_STORE + labId); } catch (e) { /* ignore */ }
     for (const k of await ltPhotoKeys(labId + '|')) await ltPhotoDel(k);
     render();
