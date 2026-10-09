@@ -422,8 +422,12 @@
   footer { border-top: 0.5px solid var(--rule); padding: 2rem 3rem; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--muted); margin-top: 4rem; gap: 1rem; flex-wrap: wrap; }
   footer a { color: var(--muted); text-decoration: none; letter-spacing: 0.08em; text-transform: uppercase; font-size: 11px; }
   footer a:hover { color: var(--ink); }
-  .theme-pick { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-  .theme-pick select { font: inherit; font-size: 11px; letter-spacing: 0.04em; text-transform: none; color: var(--ink); background: var(--bg); border: 0.5px solid var(--rule-strong); padding: 0.2rem 0.4rem; border-radius: var(--border-radius); }
+  .theme-pick { display: inline-flex; gap: 0.5rem; }
+  .theme-pick .palette-option { padding: 0.4rem; min-width: 84px; }
+  .theme-pick .palette-option.active { padding: calc(0.4rem - 0.5px); }
+  .theme-pick .palette-swatches { height: 18px; margin-bottom: 0.3rem; }
+  .theme-pick .palette-name { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .theme-pick .palette-option.active .palette-name { color: var(--ink); }
 
   /* ---------- Editable hover state ---------- */
   .editable { position: relative; }
@@ -833,7 +837,7 @@
 
 <footer>
   <span id="footer-text" class="editable" data-edit="footerText" onclick="handleEditableClick(event, 'footerText')">© Labs</span>
-  <span style="display:flex; gap:1.25rem; align-items:center;"><label class="theme-pick"><span id="theme-label">Theme</span><select id="theme-select" onchange="setUserTheme(this.value)"></select></label><a href="#/privacy" id="footer-privacy">Privacy</a><a href="#/signin" id="footer-signin" hidden>Student sign in</a></span>
+  <span style="display:flex; gap:1.25rem; align-items:center;"><span class="theme-pick" data-theme-pick></span><a href="#/privacy" id="footer-privacy">Privacy</a><a href="#/signin" id="footer-signin" hidden>Student sign in</a></span>
 </footer>
 
 <!-- Log in (students and admins) -->
@@ -1313,8 +1317,6 @@ const DEFAULTS = {
   helpSend: 'Send',
   helpSent: 'Sent. Replies will show up here.',
   helpError: 'Could not send. Please try again.',
-  themeLabel: 'Theme',
-  themeSiteDefault: 'Site default',
   helpAutoReply: 'One of your TAs has been notified and will help you soon.',
   helpAutoLabel: 'Automatic message',
   helpYou: 'You',
@@ -1335,7 +1337,6 @@ const SITE_TEXT_GROUPS = [
   { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'accessTitle', 'accessHint', 'accessButton', 'accessWrong', 'accessArchived', 'seatName', 'seatShort', 'seatUnknown', 'seatManaged', 'privacyLink', 'privacyTitle'] },
   { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'entriesClearFailed', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
   { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef', 'reportNoPhotoYet'] },
-  { label: 'Appearance', keys: ['themeLabel', 'themeSiteDefault'] },
   { label: 'Get help', keys: ['helpButton', 'helpIntro', 'helpLoginNudge', 'helpMessagePlaceholder', 'helpSend', 'helpSent', 'helpError', 'helpAutoReply', 'helpAutoLabel', 'helpYou', 'helpTeacher', 'helpResolvedNote', 'helpEmailFrom', 'helpEmailSubject'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
 ];
@@ -1361,7 +1362,7 @@ const TEXT_LABELS = {
   photoAdd: 'Add photo button', photoChange: 'Change photo button', photoRemove: 'Remove photo button',
   calloutSafety: 'Safety box label', calloutWarning: 'Caution box label', calloutInfo: 'Note box label', calloutTip: 'Tip box label', calloutHint: 'Hint box label', figurePending: 'Missing figure text', graphEmpty: 'Empty graph message',
   procedureTab: 'Procedure tab label', reportTab: 'Report tab label', reportPreview: 'Preview report button', reportStyleTitle: 'Style guide heading', reportRequired: 'Required badge', reportHint: 'Hint toggle', reportWords: 'Word count', reportWordsAim: 'Word range hint', reportEmptyRequired: 'Empty required question note', reportTableLabel: 'Table caption word', reportFigureLabel: 'Figure caption word', reportMissingRef: 'Missing table/graph message', reportNoPhotoYet: 'No photo yet message',
-  themeLabel: 'Theme picker label', themeSiteDefault: 'Theme: site default option', helpButton: 'Get help button', helpIntro: 'Help panel intro', helpLoginNudge: 'Help: log-in nudge', helpMessagePlaceholder: 'Help: question placeholder', helpSend: 'Help: send button', helpSent: 'Help: sent confirmation', helpError: 'Help: send failed', helpAutoReply: 'Help: automatic first reply (site default)', helpAutoLabel: 'Help: label on the automatic reply', helpYou: 'Help: your name in the thread', helpTeacher: 'Help: teacher name in the thread', helpResolvedNote: 'Help: resolved note', helpEmailFrom: 'Help: email sender', helpEmailSubject: 'Help: email subject ({lab} = lab title)'
+  helpButton: 'Get help button', helpIntro: 'Help panel intro', helpLoginNudge: 'Help: log-in nudge', helpMessagePlaceholder: 'Help: question placeholder', helpSend: 'Help: send button', helpSent: 'Help: sent confirmation', helpError: 'Help: send failed', helpAutoReply: 'Help: automatic first reply (site default)', helpAutoLabel: 'Help: label on the automatic reply', helpYou: 'Help: your name in the thread', helpTeacher: 'Help: teacher name in the thread', helpResolvedNote: 'Help: resolved note', helpEmailFrom: 'Help: email sender', helpEmailSubject: 'Help: email subject ({lab} = lab title)'
 };
 
 /* ============================================================
@@ -1898,7 +1899,7 @@ function renderSignIn(view) {
         <p>${fmt('accountSignedInAs', { name: studentName() })}</p>
         <p style="color:var(--muted); font-size:14px; margin-top:0.5rem;">${escapeHTML(getText('accountSyncOn'))}</p>
         ${isSeat() ? `<p style="color:var(--muted); font-size:14px; margin-top:0.5rem;">${escapeHTML(getText('seatManaged'))}</p>` : ''}
-        <p style="margin-top:1.25rem;"><label class="theme-pick"><span>${escapeHTML(getText('themeLabel'))}</span><select data-theme-pick onchange="setUserTheme(this.value)"></select></label></p>
+        <div style="margin-top:1.25rem;"><span class="theme-pick" data-theme-pick></span></div>
         <div class="lab-toolbar" style="margin-top:1.5rem;">
           <button class="btn" onclick="signOutStudent()">${escapeHTML(getText('signOutLink'))}</button>
           ${isSeat() ? '' : `<button class="btn btn-danger" onclick="deleteMyAccount()">${escapeHTML(getText('accountDelete'))}</button>`}
@@ -3824,11 +3825,12 @@ function themedDesign() {
 }
 function applySiteDesign() { applyDesign(themedDesign()); renderThemePicker(); }
 function renderThemePicker() {
-  document.querySelectorAll('select[data-theme-pick], #theme-select').forEach(sel => {
-    sel.innerHTML = `<option value="site">${escapeHTML(getText('themeSiteDefault'))}</option>` + PALETTES.map(p => `<option value="${p.id}">${escapeHTML(p.name)}</option>`).join('');
-    sel.value = PALETTES.some(p => p.id === userTheme) ? userTheme : 'site';
+  const current = PALETTES.some(p => p.id === userTheme) ? userTheme : designState.palette;
+  document.querySelectorAll('[data-theme-pick]').forEach(box => {
+    box.innerHTML = PALETTES.map(p => `<div class="palette-option ${current === p.id ? 'active' : ''}" data-palette="${p.id}" onclick="setUserTheme('${p.id}')" title="${escapeHTML(p.name)}">
+      <div class="palette-swatches"><div class="palette-swatch" style="background:${p.bg}"></div><div class="palette-swatch" style="background:${p.ink}"></div><div class="palette-swatch" style="background:${p.accent}"></div><div class="palette-swatch" style="background:${p.cardBg}"></div></div>
+      <div class="palette-name">${escapeHTML(p.name)}</div></div>`).join('');
   });
-  const l = $('theme-label'); if (l) l.textContent = getText('themeLabel');
 }
 async function setUserTheme(id) {
   userTheme = PALETTES.some(p => p.id === id) ? id : 'site';
