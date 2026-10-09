@@ -3079,12 +3079,14 @@ function labWorkWarning(problems, oldText) {
 }
 
 // Which admins get the email when a student asks for help on this lab (table help_notify).
-let labHelpAdmins = { admins: [], checked: new Set() };
+let labHelpAdmins = { admins: [], checked: new Set(), loaded: false };
 async function loadLabHelpAdmins(labId) {
+  labHelpAdmins.loaded = false;
   try {
     const [admins, rows] = await Promise.all([rpc('list_admins'), labId ? sb.from('help_notify').select('user_id').eq('lab_id', labId) : Promise.resolve({ data: [] })]);
     labHelpAdmins.admins = admins || [];
     if (labId) labHelpAdmins.checked = new Set((rows.data || []).map(r => r.user_id));
+    labHelpAdmins.loaded = true;
   } catch (e) { console.warn('help admins:', e.message); }
   renderLabHelpAdmins();
 }
@@ -3093,6 +3095,8 @@ function renderLabHelpAdmins() {
   const autoRow = $('lab-help-auto-row'); if (autoRow) autoRow.style.display = $('lab-help').checked ? '' : 'none';
   if (!$('lab-help').checked) { box.innerHTML = ''; return; }
   const me = state.session?.user?.id;
+  if (me && labHelpAdmins.checked.size === 0 && labHelpAdmins.admins.some(a => a.user_id === me)) labHelpAdmins.checked.add(me);   // switching Get help on: you are the default recipient
+  if (!labHelpAdmins.loaded) { box.innerHTML = '<div class="hint">Loading admins…</div>'; return; }
   box.innerHTML = `<div class="hint" style="margin-bottom:0.3rem;">Email these admins when a student asks (untick everyone for panel-only):</div>` +
     labHelpAdmins.admins.map(a => `<label style="display:flex; align-items:center; gap:0.5rem; text-transform:none; letter-spacing:0; font-size:13px; margin:0.2rem 0;"><input type="checkbox" data-help-admin="${escapeHTML(a.user_id)}" ${labHelpAdmins.checked.has(a.user_id) ? 'checked' : ''} onchange="this.checked ? labHelpAdmins.checked.add(this.dataset.helpAdmin) : labHelpAdmins.checked.delete(this.dataset.helpAdmin)"/> ${escapeHTML(a.email)}${a.user_id === me ? ' <span class="badge">you</span>' : ''}</label>`).join('') || '<div class="hint">No admins found.</div>';
 }
@@ -3135,7 +3139,7 @@ async function openLabModal(id) {
   $('lab-access').value = lab?.access || 'inherit'; updateAccessHint();
   $('lab-help').checked = !!lab?.help_enabled;
   $('lab-help-auto').value = lab?.help_auto_reply || ''; $('lab-help-auto').placeholder = getText('helpAutoReply');
-  labHelpAdmins = { admins: [], checked: new Set(lab ? [] : [state.session?.user?.id].filter(Boolean)) };
+  labHelpAdmins = { admins: [], checked: new Set(), loaded: false };
   loadLabHelpAdmins(lab ? lab.id : null);
   labCoverItem = lab?.cover_path ? parseMediaEntry(lab.cover_path) : null;
   labMediaItems = (entry?.media || []).map(parseMediaEntry).filter(Boolean);
@@ -3224,10 +3228,12 @@ async function saveLab() {
       if (r.error) throw r.error;
     }
     await saveAccessList('lab', lab.id);
-    // Who gets emailed about help requests on this lab.
-    r = await sb.from('help_notify').delete().eq('lab_id', lab.id); if (r.error) throw r.error;
-    const notify = lab.help_enabled ? [...labHelpAdmins.checked] : [];
-    if (notify.length) { r = await sb.from('help_notify').insert(notify.map(uid => ({ lab_id: lab.id, user_id: uid }))); if (r.error) throw r.error; }
+    // Who gets emailed about help requests on this lab (only rewritten once the admin list has loaded, so a quick save cannot wipe it).
+    if (labHelpAdmins.loaded || !lab.help_enabled) {
+      r = await sb.from('help_notify').delete().eq('lab_id', lab.id); if (r.error) throw r.error;
+      const notify = lab.help_enabled ? [...labHelpAdmins.checked] : [];
+      if (notify.length) { r = await sb.from('help_notify').insert(notify.map(uid => ({ lab_id: lab.id, user_id: uid }))); if (r.error) throw r.error; }
+    }
     // Remove files under this lab's folder that are no longer referenced.
     const newEntry = { media: mediaArr, content, format, attachments: labAttachmentItems };
     const stillUsed = new Set(referencedPaths(lab, newEntry));
