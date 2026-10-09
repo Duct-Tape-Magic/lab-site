@@ -1306,10 +1306,7 @@ const DEFAULTS = {
   helpButton: 'Get help',
   helpIntro: 'Stuck? Send a question. Replies show up right here.',
   helpLoginNudge: 'Log in to ask for help.',
-  helpWhereLabel: 'Where are you stuck?',
-  helpWherePlaceholder: 'e.g. Question 3, the data table…',
-  helpMessageLabel: 'Your question',
-  helpMessagePlaceholder: 'What is giving you trouble?',
+  helpMessagePlaceholder: 'Ask your question…',
   helpSend: 'Send',
   helpSent: 'Sent. Replies will show up here.',
   helpError: 'Could not send. Please try again.',
@@ -1333,7 +1330,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'accessTitle', 'accessHint', 'accessButton', 'accessWrong', 'accessArchived', 'seatName', 'seatShort', 'seatUnknown', 'seatManaged', 'privacyLink', 'privacyTitle'] },
   { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
   { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef', 'reportNoPhotoYet'] },
-  { label: 'Get help', keys: ['helpButton', 'helpIntro', 'helpLoginNudge', 'helpWhereLabel', 'helpWherePlaceholder', 'helpMessageLabel', 'helpMessagePlaceholder', 'helpSend', 'helpSent', 'helpError', 'helpAutoReply', 'helpAutoLabel', 'helpYou', 'helpTeacher', 'helpResolvedNote', 'helpEmailFrom', 'helpEmailSubject'] },
+  { label: 'Get help', keys: ['helpButton', 'helpIntro', 'helpLoginNudge', 'helpMessagePlaceholder', 'helpSend', 'helpSent', 'helpError', 'helpAutoReply', 'helpAutoLabel', 'helpYou', 'helpTeacher', 'helpResolvedNote', 'helpEmailFrom', 'helpEmailSubject'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
 ];
 
@@ -1358,7 +1355,7 @@ const TEXT_LABELS = {
   photoAdd: 'Add photo button', photoChange: 'Change photo button', photoRemove: 'Remove photo button',
   calloutSafety: 'Safety box label', calloutWarning: 'Caution box label', calloutInfo: 'Note box label', calloutTip: 'Tip box label', calloutHint: 'Hint box label', figurePending: 'Missing figure text', graphEmpty: 'Empty graph message',
   procedureTab: 'Procedure tab label', reportTab: 'Report tab label', reportPreview: 'Preview report button', reportStyleTitle: 'Style guide heading', reportRequired: 'Required badge', reportHint: 'Hint toggle', reportWords: 'Word count', reportWordsAim: 'Word range hint', reportEmptyRequired: 'Empty required question note', reportTableLabel: 'Table caption word', reportFigureLabel: 'Figure caption word', reportMissingRef: 'Missing table/graph message', reportNoPhotoYet: 'No photo yet message',
-  helpButton: 'Get help button', helpIntro: 'Help panel intro', helpLoginNudge: 'Help: log-in nudge', helpWhereLabel: 'Help: where label', helpWherePlaceholder: 'Help: where placeholder', helpMessageLabel: 'Help: question label', helpMessagePlaceholder: 'Help: question placeholder', helpSend: 'Help: send button', helpSent: 'Help: sent confirmation', helpError: 'Help: send failed', helpAutoReply: 'Help: automatic first reply (site default)', helpAutoLabel: 'Help: label on the automatic reply', helpYou: 'Help: your name in the thread', helpTeacher: 'Help: teacher name in the thread', helpResolvedNote: 'Help: resolved note', helpEmailFrom: 'Help: email sender', helpEmailSubject: 'Help: email subject ({lab} = lab title)'
+  helpButton: 'Get help button', helpIntro: 'Help panel intro', helpLoginNudge: 'Help: log-in nudge', helpMessagePlaceholder: 'Help: question placeholder', helpSend: 'Help: send button', helpSent: 'Help: sent confirmation', helpError: 'Help: send failed', helpAutoReply: 'Help: automatic first reply (site default)', helpAutoLabel: 'Help: label on the automatic reply', helpYou: 'Help: your name in the thread', helpTeacher: 'Help: teacher name in the thread', helpResolvedNote: 'Help: resolved note', helpEmailFrom: 'Help: email sender', helpEmailSubject: 'Help: email subject ({lab} = lab title)'
 };
 
 /* ============================================================
@@ -1947,11 +1944,11 @@ async function signOutStudent() { await sb.auth.signOut(); state.session = null;
    Student side renders into #help-host on the lab page; admin side is the Help panel.
    Writes go through SQL functions (help_post / help_reply / help_set_status / help_seen); reads use RLS.
    ============================================================ */
-let help = { lab: null, thread: null, messages: [], channel: null, where: '', open: false };
+let help = { lab: null, thread: null, messages: [], channel: null, open: false };
 function helpWhen(x) { const d = new Date(x); return isNaN(d) ? '' : d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
 function helpUnmount() {
   if (help.channel && sb) { try { sb.removeChannel(help.channel); } catch (e) { /* ignore */ } }
-  help = { lab: null, thread: null, messages: [], channel: null, where: '', open: false };
+  help = { lab: null, thread: null, messages: [], channel: null, open: false };
 }
 async function helpMount(lab) {
   if (!$('help-host')) return;
@@ -1988,7 +1985,7 @@ function helpSubscribe() {
 }
 function helpRender() {
   const host = $('help-host'); if (!host || !help.lab) return;
-  const keepWhere = $('help-where') ? $('help-where').value : null, keepText = $('help-text') ? $('help-text').value : '';
+  const keepText = $('help-text') ? $('help-text').value : '';
   const t = help.thread;
   let h = `<div class="help-box${help.open ? ' open' : ''}">
     <div class="help-top">
@@ -2003,8 +2000,7 @@ function helpRender() {
       if (help.messages.length) h += `<div class="help-msgs">${help.messages.map(helpMsgHTML).join('')}</div>`;
       if (t && t.status === 'resolved') h += `<p class="help-note">${escapeHTML(getText('helpResolvedNote'))}</p>`;
       h += `<div class="help-form">
-        <label>${escapeHTML(getText('helpWhereLabel'))}<input type="text" id="help-where" maxlength="200" placeholder="${escapeHTML(getText('helpWherePlaceholder'))}" value="${escapeHTML(keepWhere != null ? keepWhere : help.where)}"/></label>
-        <label>${escapeHTML(getText('helpMessageLabel'))}<textarea id="help-text" rows="3" maxlength="4000" placeholder="${escapeHTML(getText('helpMessagePlaceholder'))}">${escapeHTML(keepText)}</textarea></label>
+        <textarea id="help-text" rows="3" maxlength="4000" placeholder="${escapeHTML(getText('helpMessagePlaceholder'))}">${escapeHTML(keepText)}</textarea>
         <div class="help-actions"><button type="button" class="btn" id="help-send" onclick="helpSend()">${escapeHTML(getText('helpSend'))}</button><span class="help-status" id="help-status"></span></div>
       </div>`;
     }
@@ -2025,12 +2021,11 @@ function helpToggle() {
   if (help.open) { const ta = $('help-text'); if (ta) ta.focus(); }
 }
 async function helpSend() {
-  const ta = $('help-text'), where = $('help-where'), btn = $('help-send'), st = $('help-status');
+  const ta = $('help-text'), btn = $('help-send'), st = $('help-status');
   const body = (ta.value || '').trim(); if (!body) { ta.focus(); return; }
-  help.where = where.value.trim();
   btn.disabled = true; st.textContent = '…';
   try {
-    const id = await rpc('help_post', { p_lab_id: help.lab.id, p_body: body, p_block: help.where || null });
+    const id = await rpc('help_post', { p_lab_id: help.lab.id, p_body: body, p_block: null });
     if (!help.thread) { const { data: t } = await sb.from('help_threads').select('*').eq('id', id).maybeSingle(); help.thread = t || { id, status: 'open', unread_student: false }; helpSubscribe(); }
     else help.thread.status = 'open';
     await helpLoadMessages();
@@ -2038,17 +2033,6 @@ async function helpSend() {
     const s2 = $('help-status'); if (s2) s2.textContent = getText('helpSent');
   } catch (e) { btn.disabled = false; st.textContent = getText('helpError') + ' ' + (e.message || ''); }
 }
-// Remember which block the student last worked in, to prefill "where are you stuck".
-document.addEventListener('focusin', e => {
-  if (!help.lab || !e.target.closest) return;
-  const el = e.target.closest('.lt-answer, .lt-table-wrap, .lt-photo, .lt-notes, .lt-steps li, ol li'); if (!el) return;
-  const p = el.querySelector('.lt-prompt, .lt-table-title, summary');
-  const plain = node => { const c = node.cloneNode(true); c.querySelectorAll('.katex-mathml').forEach(x => x.remove()); return c.textContent.replace(/\s+/g, ' ').trim(); };   // KaTeX renders math twice (MathML + HTML)
-  let label = p ? plain(p) : (el.tagName === 'LI' && el.firstChild ? String(el.firstChild.textContent || '').trim() : '');
-  if (!label) return;
-  help.where = label.slice(0, 120);
-  const w = $('help-where'); if (w && !w.value) w.value = help.where;
-});
 
 /* ---------- admin side ---------- */
 let helpAdmin = { threads: [], tab: 'open', thread: null, messages: [], channel: null, timer: null, loaded: false };
