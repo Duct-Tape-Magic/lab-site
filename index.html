@@ -582,7 +582,7 @@
   .help-btn .help-n { background: var(--bg); color: var(--accent); }
   .help-n, .help-count { display: inline-block; min-width: 1.5em; padding: 0 0.4em; border-radius: 999px; background: var(--accent); color: #fff; font-size: 10px; line-height: 1.6; text-align: center; margin-left: 0.35em; }
   .help-count { background: var(--warn); }
-  .help-banner { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); border: 0.5px solid var(--accent); padding: 2px 8px; }
+  .help-msg.auto { border-left-color: var(--rule-strong); color: var(--muted); font-style: italic; }
   .help-panel { border: 0.5px solid var(--rule-strong); padding: 1rem 1.25rem; margin-top: 0.75rem; background: var(--card-bg); border-radius: var(--border-radius); }
   .help-intro, .help-note { font-size: 13px; color: var(--muted); margin: 0 0 0.75rem; }
   .help-msgs { display: flex; flex-direction: column; gap: 0.6rem; max-height: 320px; overflow-y: auto; margin-bottom: 0.9rem; }
@@ -902,7 +902,8 @@
     </div>
     <div class="form-row access-list" id="lab-access-list" hidden></div>
     <div class="form-row"><label style="display:flex; align-items:center; gap:0.5rem; text-transform:none; letter-spacing:0; font-size:14px;"><input type="checkbox" id="lab-help" onchange="renderLabHelpAdmins()"/> Show a "Get help" button at the top of this lab</label><div class="hint">Signed-in students can send a question from the lab page. Replies come from the Help panel; the student sees them on the lab page.</div>
-      <div id="lab-help-admins" style="margin-top:0.6rem;"></div></div>
+      <div id="lab-help-admins" style="margin-top:0.6rem;"></div>
+      <div id="lab-help-auto-row" style="margin-top:0.8rem;"><label>Automatic reply to a student's first question (this lab)</label><textarea id="lab-help-auto" rows="2"></textarea><div class="hint">Shown in the student's thread right after they send, so they know it went somewhere. Leave empty to use the site-wide text from Site text ("Help: automatic first reply").</div></div></div>
 
     <div class="form-row">
       <label>Cover image (optional — the first photo is used if empty)</label>
@@ -1312,7 +1313,8 @@ const DEFAULTS = {
   helpSend: 'Send',
   helpSent: 'Sent. Replies will show up here.',
   helpError: 'Could not send. Please try again.',
-  helpReplied: 'Teacher replied',
+  helpAutoReply: 'One of your TAs has been notified and will help you soon.',
+  helpAutoLabel: 'Automatic message',
   helpYou: 'You',
   helpTeacher: 'Teacher',
   helpResolvedNote: 'This question was marked as answered. You can still write back.',
@@ -1331,7 +1333,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'accessTitle', 'accessHint', 'accessButton', 'accessWrong', 'accessArchived', 'seatName', 'seatShort', 'seatUnknown', 'seatManaged', 'privacyLink', 'privacyTitle'] },
   { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
   { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef', 'reportNoPhotoYet'] },
-  { label: 'Get help', keys: ['helpButton', 'helpIntro', 'helpLoginNudge', 'helpWhereLabel', 'helpWherePlaceholder', 'helpMessageLabel', 'helpMessagePlaceholder', 'helpSend', 'helpSent', 'helpError', 'helpReplied', 'helpYou', 'helpTeacher', 'helpResolvedNote', 'helpEmailFrom', 'helpEmailSubject'] },
+  { label: 'Get help', keys: ['helpButton', 'helpIntro', 'helpLoginNudge', 'helpWhereLabel', 'helpWherePlaceholder', 'helpMessageLabel', 'helpMessagePlaceholder', 'helpSend', 'helpSent', 'helpError', 'helpAutoReply', 'helpAutoLabel', 'helpYou', 'helpTeacher', 'helpResolvedNote', 'helpEmailFrom', 'helpEmailSubject'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
 ];
 
@@ -1356,7 +1358,7 @@ const TEXT_LABELS = {
   photoAdd: 'Add photo button', photoChange: 'Change photo button', photoRemove: 'Remove photo button',
   calloutSafety: 'Safety box label', calloutWarning: 'Caution box label', calloutInfo: 'Note box label', calloutTip: 'Tip box label', calloutHint: 'Hint box label', figurePending: 'Missing figure text', graphEmpty: 'Empty graph message',
   procedureTab: 'Procedure tab label', reportTab: 'Report tab label', reportPreview: 'Preview report button', reportStyleTitle: 'Style guide heading', reportRequired: 'Required badge', reportHint: 'Hint toggle', reportWords: 'Word count', reportWordsAim: 'Word range hint', reportEmptyRequired: 'Empty required question note', reportTableLabel: 'Table caption word', reportFigureLabel: 'Figure caption word', reportMissingRef: 'Missing table/graph message', reportNoPhotoYet: 'No photo yet message',
-  helpButton: 'Get help button', helpIntro: 'Help panel intro', helpLoginNudge: 'Help: log-in nudge', helpWhereLabel: 'Help: where label', helpWherePlaceholder: 'Help: where placeholder', helpMessageLabel: 'Help: question label', helpMessagePlaceholder: 'Help: question placeholder', helpSend: 'Help: send button', helpSent: 'Help: sent confirmation', helpError: 'Help: send failed', helpReplied: 'Help: reply banner', helpYou: 'Help: your name in the thread', helpTeacher: 'Help: teacher name in the thread', helpResolvedNote: 'Help: resolved note', helpEmailFrom: 'Help: email sender', helpEmailSubject: 'Help: email subject ({lab} = lab title)'
+  helpButton: 'Get help button', helpIntro: 'Help panel intro', helpLoginNudge: 'Help: log-in nudge', helpWhereLabel: 'Help: where label', helpWherePlaceholder: 'Help: where placeholder', helpMessageLabel: 'Help: question label', helpMessagePlaceholder: 'Help: question placeholder', helpSend: 'Help: send button', helpSent: 'Help: sent confirmation', helpError: 'Help: send failed', helpAutoReply: 'Help: automatic first reply (site default)', helpAutoLabel: 'Help: label on the automatic reply', helpYou: 'Help: your name in the thread', helpTeacher: 'Help: teacher name in the thread', helpResolvedNote: 'Help: resolved note', helpEmailFrom: 'Help: email sender', helpEmailSubject: 'Help: email subject ({lab} = lab title)'
 };
 
 /* ============================================================
@@ -1987,11 +1989,10 @@ function helpSubscribe() {
 function helpRender() {
   const host = $('help-host'); if (!host || !help.lab) return;
   const keepWhere = $('help-where') ? $('help-where').value : null, keepText = $('help-text') ? $('help-text').value : '';
-  const t = help.thread, unread = !!(t && t.unread_student);
+  const t = help.thread;
   let h = `<div class="help-box${help.open ? ' open' : ''}">
     <div class="help-top">
       <button type="button" class="btn-small help-btn" onclick="helpToggle()">${escapeHTML(getText('helpButton'))}${t && help.messages.length ? ` <span class="help-n">${help.messages.length}</span>` : ''}</button>
-      ${unread ? `<span class="help-banner">${escapeHTML(getText('helpReplied'))}</span>` : ''}
     </div>`;
   if (help.open) {
     h += `<div class="help-panel">`;
@@ -2014,7 +2015,8 @@ function helpRender() {
 }
 function helpMsgHTML(m) {
   const mine = m.role === 'student';
-  return `<div class="help-msg ${mine ? 'student' : 'admin'}"><div class="help-who">${escapeHTML(mine ? getText('helpYou') : getText('helpTeacher'))} · ${escapeHTML(helpWhen(m.created_at))}</div>${m.block ? `<div class="help-where">${escapeHTML(m.block)}</div>` : ''}<div class="help-body">${escapeHTML(m.body)}</div></div>`;
+  const who = mine ? getText('helpYou') : m.role === 'auto' ? getText('helpAutoLabel') : getText('helpTeacher');
+  return `<div class="help-msg ${mine ? 'student' : m.role === 'auto' ? 'admin auto' : 'admin'}"><div class="help-who">${escapeHTML(who)} · ${escapeHTML(helpWhen(m.created_at))}</div>${m.block ? `<div class="help-where">${escapeHTML(m.block)}</div>` : ''}<div class="help-body">${escapeHTML(m.body)}</div></div>`;
 }
 function helpToggle() {
   help.open = !help.open;
@@ -2109,7 +2111,7 @@ function helpAdminRenderList() {
     return `<div class="help-group"><div class="help-group-head"><span>${escapeHTML(lab ? lab.title : g.labId)}</span>${g.unread ? `<span class="badge">${g.unread} new</span>` : ''}<span class="hint" style="margin:0 0 0 auto;">${g.ts.length} student${g.ts.length === 1 ? '' : 's'}</span></div>
       <ul class="attach-list">${rows.map(t => `<li class="help-row ${t.unread_admin ? 'unread' : ''}" onclick="helpAdminOpen(${t.id})">
         <div style="flex:1; min-width:0;"><div><strong>${escapeHTML(t.who || 'Student')}</strong> <span class="hint" style="margin:0;">· ${escapeHTML(helpWhen(t.updated_at))}${t.status === 'resolved' ? ' · resolved' : ''}</span></div>
-        <div class="help-last">${t.last_role === 'admin' ? '<em>You:</em> ' : ''}${escapeHTML((t.last_body || '').slice(0, 140))}</div></div>
+        <div class="help-last">${t.last_role === 'admin' ? '<em>You:</em> ' : t.last_role === 'auto' ? '<em>Auto:</em> ' : ''}${escapeHTML((t.last_body || '').slice(0, 140))}</div></div>
         ${t.unread_admin ? '<span class="badge">new</span>' : ''}</li>`).join('')}</ul></div>`;
   }).join('');
   body.innerHTML = h;
@@ -2129,7 +2131,7 @@ function helpAdminRenderThread() {
       <span style="font-family:var(--font-heading); font-size:1.3rem;">${escapeHTML(t.who || 'Student')}</span>
       ${lab ? `<a class="hint" style="margin:0;" href="#/lab/${encodeURIComponent(lab.slug)}" onclick="closeModal('help-modal')">${escapeHTML(lab.title)}</a>` : ''}
       <button type="button" class="btn-small" style="margin-left:auto;" onclick="helpAdminStatus(${t.id}, '${t.status === 'open' ? 'resolved' : 'open'}')">${t.status === 'open' ? 'Mark resolved' : 'Reopen'}</button></div>
-    <div class="help-msgs admin">${helpAdmin.messages.map(m => `<div class="help-msg ${m.role}"><div class="help-who">${m.role === 'admin' ? 'You' : escapeHTML(t.who || 'Student')} · ${escapeHTML(helpWhen(m.created_at))}</div>${m.block ? `<div class="help-where">${escapeHTML(m.block)}</div>` : ''}<div class="help-body">${escapeHTML(m.body)}</div></div>`).join('') || '<p class="hint">No messages.</p>'}</div>
+    <div class="help-msgs admin">${helpAdmin.messages.map(m => `<div class="help-msg ${m.role}"><div class="help-who">${m.role === 'admin' ? 'You' : m.role === 'auto' ? 'Automatic message' : escapeHTML(t.who || 'Student')} · ${escapeHTML(helpWhen(m.created_at))}</div>${m.block ? `<div class="help-where">${escapeHTML(m.block)}</div>` : ''}<div class="help-body">${escapeHTML(m.body)}</div></div>`).join('') || '<p class="hint">No messages.</p>'}</div>
     <div class="help-form"><textarea id="help-reply" rows="3" maxlength="4000" placeholder="Reply…">${escapeHTML(prev)}</textarea><div class="help-actions"><button type="button" class="btn" onclick="helpAdminSend()">Send reply</button><span class="hint" style="margin:0;">Lands on the student's lab page instantly, or as a banner next time they open it.</span></div></div>`;
   const list = $('help-body').querySelector('.help-msgs'); if (list) list.scrollTop = list.scrollHeight;
 }
@@ -3103,6 +3105,7 @@ async function loadLabHelpAdmins(labId) {
 }
 function renderLabHelpAdmins() {
   const box = $('lab-help-admins'); if (!box) return;
+  const autoRow = $('lab-help-auto-row'); if (autoRow) autoRow.style.display = $('lab-help').checked ? '' : 'none';
   if (!$('lab-help').checked) { box.innerHTML = ''; return; }
   const me = state.session?.user?.id;
   box.innerHTML = `<div class="hint" style="margin-bottom:0.3rem;">Email these admins when a student asks (untick everyone for panel-only):</div>` +
@@ -3146,6 +3149,7 @@ async function openLabModal(id) {
   accessListState.lab = null;
   $('lab-access').value = lab?.access || 'inherit'; updateAccessHint();
   $('lab-help').checked = !!lab?.help_enabled;
+  $('lab-help-auto').value = lab?.help_auto_reply || ''; $('lab-help-auto').placeholder = getText('helpAutoReply');
   labHelpAdmins = { admins: [], checked: new Set(lab ? [] : [state.session?.user?.id].filter(Boolean)) };
   loadLabHelpAdmins(lab ? lab.id : null);
   labCoverItem = lab?.cover_path ? parseMediaEntry(lab.cover_path) : null;
@@ -3211,7 +3215,8 @@ async function saveLab() {
     tags: $('lab-tags').value.split(',').map(t => t.trim()).filter(Boolean),
     estimated_minutes: parseInt($('lab-minutes').value, 10) || null,
     sort_order: parseInt($('lab-order').value, 10) || 0,
-    help_enabled: $('lab-help').checked
+    help_enabled: $('lab-help').checked,
+    help_auto_reply: $('lab-help-auto').value.trim() || null
   };
   const btn = $('save-lab-btn'); btn.disabled = true; btn.textContent = 'Saving…';
   try {
