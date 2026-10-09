@@ -17,6 +17,7 @@
 
 - **Log in:** click the small ⚙ at the top right, enter your admin email and password. A dark admin bar appears.
 - **Add a folder:** admin bar → + Folder. Folders can sit inside other folders. "Show in navigation" off makes a folder reachable only by its link.
+- **View as student:** the admin bar's "View as student" button shows the site exactly as a student sees it (no edit buttons, no drafts). A small "Back to admin mode" pill in the corner returns you.
 - **Theme picker:** everyone can pick Original, Paper or Graphite (dark) for themselves from the footer, or from their account page. It follows a signed-in student between devices. The Design panel still sets the site default that "Site default" means.
 - **Get help:** tick "Show a Get help button" in a lab's edit form. Signed-in students can send you a question from the lab page; you see it under Help in the admin bar (with a count), and the admins you ticked in that lab's edit form get an email from help@ohschemlabs.com within seconds (tick nobody for panel-only). Reply there and the student sees it on the lab page instantly, or as a banner next time. Mark resolved when done. Every label and the email subject/recipients are in Site text under "Get help".
 - **Staying logged in:** students stay logged in until they have not opened the site for 14 days, then they type their code again. Admins are signed out after 24 hours without touching the site.

@@ -347,6 +347,9 @@
     justify-content: space-between; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; flex-wrap: wrap; gap: 0.5rem;
   }
   body.admin-mode .admin-bar { display: flex; }
+  .admin-preview-pill { display: none; position: fixed; right: 1rem; bottom: 1rem; z-index: 50; align-items: center; gap: 0.75rem; background: #1a1a18; color: #f3f1ec; padding: 0.5rem 0.6rem 0.5rem 0.9rem; border-radius: 999px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; box-shadow: 0 2px 10px rgba(0,0,0,0.25); }
+  body.admin-preview .admin-preview-pill { display: flex; }
+  .admin-preview-pill button { background: #f3f1ec; color: #1a1a18; border: none; padding: 0.35rem 0.7rem; border-radius: 999px; font: inherit; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; }
   .admin-bar button {
     background: transparent; border: 0.5px solid rgba(255,255,255,0.4); color: var(--bg); padding: 0.4rem 0.9rem;
     font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; font-family: inherit; margin-left: 0.4rem;
@@ -813,9 +816,11 @@
     <button onclick="openHelpModal()">Help<span class="help-count" id="help-count" hidden></span></button>
     <button onclick="openClassesModal()">Classes</button>
     <button onclick="openAdminsModal()">Admins</button>
+    <button onclick="toggleAdminPreview()">View as student</button>
     <button onclick="logoutAdmin()">Log out</button>
   </div>
 </div>
+<div class="admin-preview-pill" id="admin-preview-pill"><span>Student view</span><button type="button" onclick="toggleAdminPreview()">Back to admin mode</button></div>
 
 <div class="banner error" id="error-banner" hidden><span id="error-banner-text"></span><button onclick="location.reload()">Reload</button></div>
 <div class="banner" id="fallback-banner" hidden><span id="fallback-banner-text"></span></div>
@@ -1613,7 +1618,16 @@ function effectiveFolderAccess(folder) {
   for (const f of chain) if (f.access && f.access !== 'inherit') return f.access;
   return 'public';
 }
-function isAdmin() { return state.role === 'admin'; }
+function isRealAdmin() { return state.role === 'admin'; }
+function isAdmin() { return state.role === 'admin' && !state.adminPreview; }   // false while an admin is viewing as a student
+function toggleAdminPreview() {
+  if (!isRealAdmin()) return;
+  state.adminPreview = !state.adminPreview;
+  try { sessionStorage.setItem('labsite.adminPreview', state.adminPreview ? '1' : ''); } catch (e) { /* ignore */ }
+  document.body.classList.toggle('admin-mode', isAdmin());
+  document.body.classList.toggle('admin-preview', !!state.adminPreview);
+  closeModal('lab-modal'); renderChrome(); render();
+}
 function labIsLive(lab) {
   if (lab.status === 'published') return true;
   if (lab.status === 'scheduled' && lab.publish_at) return new Date(lab.publish_at) <= new Date();
@@ -1884,7 +1898,7 @@ function renderNotFound(view) {
     <p style="margin-top:1.5rem;"><a class="btn" href="#/">${escapeHTML(getText('notFoundHome'))}</a></p></section>`;
 }
 
-function isStudent() { return !!state.session && !isAdmin(); }
+function isStudent() { return !!state.session && !isRealAdmin(); }
 function studentName() {
   if (isSeat()) { const st = state.seat; return st ? fmt('seatName', { cls: st.class_name, n: st.seat_no }) + (st.nickname ? ` (${st.nickname})` : '') : getText('seatUnknown'); }
   const u = state.session?.user; return u?.user_metadata?.full_name || u?.user_metadata?.name || u?.email || '';
@@ -2004,6 +2018,7 @@ function helpRender() {
   if (help.open) {
     h += `<div class="help-panel">`;
     if (isAdmin()) h += `<p class="help-intro">This is what students see. Their questions arrive in the Help panel.</p><p><button type="button" class="btn-small" onclick="openHelpModal()">Open Help panel</button></p>`;
+    else if (isRealAdmin()) h += `<p class="help-intro">Student view: a signed-in student gets a question box here.</p>`;
     else if (!isStudent()) h += `<p class="help-intro">${escapeHTML(getText('helpLoginNudge'))} <a href="#/signin">${escapeHTML(getText('signInLink'))}</a></p>`;
     else {
       h += `<p class="help-intro">${escapeHTML(getText('helpIntro'))}</p>`;
@@ -2149,12 +2164,12 @@ async function helpAdminStatus(id, status) {
 const ADMIN_IDLE_MS = 24 * 60 * 60 * 1000, ADMIN_IDLE_KEY = 'labsite.admin.lastActive';
 let adminIdleStamp = 0;
 function adminTouch() {
-  if (!isAdmin()) return;
+  if (!isRealAdmin()) return;
   const now = Date.now(); if (now - adminIdleStamp < 60000) return;   // write at most once a minute
   adminIdleStamp = now; try { localStorage.setItem(ADMIN_IDLE_KEY, String(now)); } catch (e) { /* ignore */ }
 }
 async function adminIdleCheck() {
-  if (!isAdmin() || !sb) return;
+  if (!isRealAdmin() || !sb) return;
   let last = 0; try { last = parseInt(localStorage.getItem(ADMIN_IDLE_KEY), 10) || 0; } catch (e) { last = 0; }
   if (!last) { adminTouch(); return; }
   if (Date.now() - last < ADMIN_IDLE_MS) return;
@@ -2540,6 +2555,7 @@ function logEvent(type, fields = {}) {
    ============================================================ */
 function roleFromSession(session) { return session?.user?.app_metadata?.role || null; }
 async function checkSession() {
+  try { state.adminPreview = sessionStorage.getItem('labsite.adminPreview') === '1'; } catch (e) { state.adminPreview = false; }
   if (!sb) return;
   try {
     const { data } = await sb.auth.getSession();
@@ -2547,6 +2563,7 @@ async function checkSession() {
     await loadMySeat();
   } catch (e) { console.warn('session check failed', e); }
   document.body.classList.toggle('admin-mode', isAdmin());
+  document.body.classList.toggle('admin-preview', isRealAdmin() && !!state.adminPreview);
 }
 function openLogin() {
   if (!sb) { toast('This copy of the site is not connected to Supabase yet (see CONFIG in index.html).', true); return; }
@@ -2625,6 +2642,7 @@ async function signInWithGoogle(returnHash) {
   if (q.has('code') || q.has('error')) history.replaceState(null, '', location.pathname + location.hash);
 })();
 async function logoutAdmin() {
+  state.adminPreview = false; document.body.classList.remove('admin-preview'); try { sessionStorage.removeItem('labsite.adminPreview'); } catch (e) { /* ignore */ }
   helpAdminStop();
   await sb.auth.signOut();
   state.session = null; state.role = null; state.content = {};
@@ -6911,6 +6929,7 @@ function buEquivalenceCheck(text) {
       loadMySeat().then(() => { renderChrome(); if (state.route.view === 'signin') render(); });
       if (nextUser) loadUserTheme();
       document.body.classList.toggle('admin-mode', isAdmin());
+      document.body.classList.toggle('admin-preview', isRealAdmin() && !!state.adminPreview);
       closeModal('login-modal');
       if (was !== isAdmin() && isAdmin() && event === 'SIGNED_IN') toast('Welcome back');
       if (isAdmin()) { adminIdleStamp = 0; adminTouch(); helpAdminWatch(); } else helpAdminStop();
