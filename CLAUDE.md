@@ -105,6 +105,8 @@ Not built yet: Phase 3 access control (Edge Functions, private bucket flow, pass
 
 ## Guardrails
 
+- Keep the `<meta name="robots" content="noindex">` tag: the owner decided (2026-10-10) the site should not appear in search results; students reach it by link.
+
 - Keep `index.html` single-file with vendored libraries; no build step; never add a CDN script.
 - Never commit the service key. The publishable key belongs in `CONFIG` and in Action secrets only.
 - Every student-facing string goes through `getText`/`fmt` so the owner can edit it.
