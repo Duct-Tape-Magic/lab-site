@@ -171,7 +171,8 @@ create table labs (
   publish_at        timestamptz,
   access            text not null default 'inherit',
   tags              text[] not null default '{}',
-  estimated_minutes integer,
+  estimated_minutes integer,                      -- procedure time
+  report_minutes    integer,                      -- optional write-up time
   sort_order        integer not null default 0,
   created_at        timestamptz not null default now(),
   updated_at        timestamptz not null default now()
@@ -444,7 +445,7 @@ All three verify the caller's JWT server-side and use the service key only insid
 Login via the gear icon as on the knife site (admin accounts only; a student signing in there is told to use the student sign-in). Admin bar: **+ Lab · + Folder · Organize · Accounts · Site text · Design · Activity · Storage · Backup · Log out**.
 
 **Lab editor (modal)**
-- Fields: title, slug (auto, editable, uniqueness checked), folder, summary, tags, estimated minutes, status (draft / published / scheduled with date-time), cover image.
+- Fields: title, slug (auto, editable, uniqueness checked), folder, summary, tags, estimated minutes, optional report write-up minutes, status (draft / published / scheduled with date-time), cover image.
 - **Access**: Inherit from folder (shows the resolved level) / Public / Password (set or change password; "show password" toggle; a note that changing it logs everyone out of the lab) / Accounts (multi-select of groups) / Admin only. Saving a change between public and locked calls `move-files` and shows progress.
 - Media manager: drag-drop upload with compression, add YouTube URL, drag-to-reorder, remove, alt-text per image. Ported from `renderKnifeMediaManager`.
 - Quill content editor: existing toolbar (headers, fonts, colors, lists, links, images, Σ LaTeX, ▶ video) plus **Insert lab template** (Objectives · Safety · Materials · Procedure · Data · Analysis questions) and **Table** (via `quill-table-better`, confirmed with a prototype in Phase 1).

@@ -326,6 +326,7 @@
   .form-row input[type="checkbox"] { width: auto; -webkit-appearance: checkbox; accent-color: var(--accent); }
   .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+  .form-grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem; }
 
   .btn {
     display: inline-block; padding: 0.75rem 1.8rem; border: 0.5px solid var(--ink); color: var(--ink); text-decoration: none;
@@ -766,7 +767,7 @@
     footer { padding: 1.5rem 1.25rem; flex-direction: column; align-items: flex-start; gap: 0.5rem; }
     .admin-bar { padding: 0.6rem 1.25rem; flex-direction: column; gap: 0.5rem; align-items: flex-start; }
     .modal { padding: 1.5rem; }
-    .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; }
+    .form-grid-2, .form-grid-3, .form-grid-4 { grid-template-columns: 1fr; }
     .pdf-frame { height: 60vh; }
     .lab-footer-nav { flex-direction: column; }
   }
@@ -884,9 +885,10 @@
     </div>
     <div class="form-row"><label>Folder</label><select id="lab-folder"></select></div>
     <div class="form-row"><label>Summary (one or two sentences, shown only on the lab card and in search)</label><textarea id="lab-summary" style="min-height:56px;"></textarea></div>
-    <div class="form-grid-3">
+    <div class="form-grid-4">
       <div class="form-row"><label>Search tags (comma separated, never shown to students)</label><input type="text" id="lab-tags" placeholder="chemistry, acids"/></div>
-      <div class="form-row"><label>Estimated minutes</label><input type="number" id="lab-minutes" min="0" step="5"/></div>
+      <div class="form-row"><label>Estimated minutes (procedure)</label><input type="number" id="lab-minutes" min="0" step="5"/></div>
+      <div class="form-row"><label>Report write-up minutes (optional)</label><input type="number" id="lab-report-minutes" min="0" step="5"/><div class="hint">Leave blank for labs without a report.</div></div>
       <div class="form-row"><label>Order on the page</label><input type="number" id="lab-order" step="1" value="0"/><div class="hint">Lower numbers come first. Folders and labs share one order, so a lab can sit before a folder. The ← → buttons on the cards set this too.</div></div>
     </div>
     <div class="form-grid-3">
@@ -949,7 +951,7 @@
       <label>Lab file</label>
       <div class="lt-toolbar">
         <label class="btn-small">Import file… <input type="file" id="lab-markup-file" accept=".md,.txt,.tex,text/plain,text/markdown" onchange="importLabMarkupFile(this)"/></label>
-        <button type="button" class="btn-small" onclick="applyLabMarkupMeta(true)" title="Copy the file's \\title, \\summary, \\tags and \\minutes into the fields above (asks before replacing anything you typed)">Apply header to fields</button>
+        <button type="button" class="btn-small" onclick="applyLabMarkupMeta(true)" title="Copy the file's \\title, \\summary, \\tags, \\minutes and \\reportminutes into the fields above (asks before replacing anything you typed)">Apply header to fields</button>
         <button type="button" class="btn-small" onclick="previewLabMarkup(true)">Refresh preview</button>
         <span class="hint" style="margin:0;">Paste or import the file. Importing fills only empty fields above; your own summary, tags and time are kept.</span>
       </div>
@@ -957,6 +959,7 @@
 \summary{One or two sentences for the card.}
 \tags{acids, Ka}
 \minutes{90}
+\reportminutes{45}
 
 # Objectives
 ..." oninput="previewLabMarkup()"></textarea>
@@ -1216,10 +1219,12 @@ const DEFAULTS = {
   homeLoginNudge: 'Labs for your class appear after you log in.',
   folderEmpty: 'Nothing here yet.',
   cardMinutes: '{n} min',
+  cardReportMinutes: '+ {n} min report',
   cardUpdated: 'Updated {date}',
   lockedBadge: 'Locked',
   signInRequiredBadge: 'Sign in required',
   labMinutes: 'About {n} minutes',
+  labReportMinutes: 'Report: about {n} minutes',
   labUpdated: 'Last updated {date}',
   labFilesLabel: 'Files',
   labDownloadFile: 'Download',
@@ -1336,8 +1341,8 @@ const SITE_TEXT_GROUPS = [
   { label: 'Search', keys: ['searchPlaceholder', 'searchButton', 'searchResultsTitle', 'searchNoResults'] },
   { label: 'Home page', keys: ['homeEmpty', 'homeLoginNudge'] },
   { label: 'Folder pages', keys: ['folderEmpty'] },
-  { label: 'Cards', keys: ['cardMinutes', 'cardUpdated', 'lockedBadge', 'signInRequiredBadge', 'draftBadge', 'scheduledBadge', 'hiddenBadge'] },
-  { label: 'Lab page', keys: ['labMinutes', 'labUpdated', 'labFilesLabel', 'labDownloadFile', 'labViewInline', 'labPrint', 'labDownloadPdf', 'pdfPreparing', 'pdfReady', 'pdfFailed', 'labCopyLink', 'labLinkCopied', 'labNoContent'] },
+  { label: 'Cards', keys: ['cardMinutes', 'cardReportMinutes', 'cardUpdated', 'lockedBadge', 'signInRequiredBadge', 'draftBadge', 'scheduledBadge', 'hiddenBadge'] },
+  { label: 'Lab page', keys: ['labMinutes', 'labReportMinutes', 'labUpdated', 'labFilesLabel', 'labDownloadFile', 'labViewInline', 'labPrint', 'labDownloadPdf', 'pdfPreparing', 'pdfReady', 'pdfFailed', 'labCopyLink', 'labLinkCopied', 'labNoContent'] },
   { label: 'Locked labs', keys: ['lockPasswordTitle', 'lockPasswordPrompt', 'lockPasswordPlaceholder', 'lockPasswordButton', 'lockPasswordWrong', 'lockTooMany', 'lockAccountsTitle', 'lockAccountsPrompt', 'lockNotAllowed', 'lockAdminOnly', 'lockUnavailable'] },
   { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'accessTitle', 'accessHint', 'accessButton', 'accessWrong', 'accessArchived', 'seatName', 'seatShort', 'seatUnknown', 'seatManaged', 'privacyLink', 'privacyTitle'] },
   { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'entriesClearFailed', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
@@ -1351,9 +1356,9 @@ const TEXT_LABELS = {
   searchPlaceholder: 'Search box placeholder', searchButton: 'Search button', searchResultsTitle: 'Search results title', searchNoResults: 'No results message',
   homeEmpty: 'Empty site message', homeLoginNudge: 'Log-in nudge for visitors',
   folderEmpty: 'Empty folder message',
-  cardMinutes: 'Minutes on cards', cardUpdated: 'Updated date on cards', lockedBadge: 'Locked badge', signInRequiredBadge: 'Sign-in badge',
+  cardMinutes: 'Minutes on cards', cardReportMinutes: 'Report minutes on cards', cardUpdated: 'Updated date on cards', lockedBadge: 'Locked badge', signInRequiredBadge: 'Sign-in badge',
   draftBadge: 'Draft badge (admins)', scheduledBadge: 'Scheduled badge (admins)', hiddenBadge: 'Unlisted badge (admins)',
-  labMinutes: 'Minutes line', labUpdated: 'Updated line', labFilesLabel: 'Files heading', labDownloadFile: 'Download button', labViewInline: 'View-here button',
+  labMinutes: 'Minutes line', labReportMinutes: 'Report minutes line', labUpdated: 'Updated line', labFilesLabel: 'Files heading', labDownloadFile: 'Download button', labViewInline: 'View-here button',
   labPrint: 'Print button', labDownloadPdf: 'Download PDF button', pdfPreparing: 'PDF preparing message', pdfReady: 'PDF done message', pdfFailed: 'PDF failed message', labCopyLink: 'Copy link button', labLinkCopied: 'Link copied message', labNoContent: 'No procedure text message',
   lockPasswordTitle: 'Password lock title', lockPasswordPrompt: 'Password lock prompt', lockPasswordPlaceholder: 'Password field placeholder', lockPasswordButton: 'Unlock button',
   lockPasswordWrong: 'Wrong password message', lockTooMany: 'Too many attempts message', lockAccountsTitle: 'Account lock title', lockAccountsPrompt: 'Account lock prompt',
@@ -1802,6 +1807,7 @@ function labCardHTML(lab) {
   else img = `<img src="${escapeHTML(cover.url)}" alt="${escapeHTML(cover.alt || '')}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'card-img-placeholder',textContent:''}))"/>`;
   const meta = [];
   if (lab.estimated_minutes) meta.push(`<span>${fmt('cardMinutes', { n: lab.estimated_minutes })}</span>`);
+  if (lab.report_minutes) meta.push(`<span>${fmt('cardReportMinutes', { n: lab.report_minutes })}</span>`);
   if (lab.updated_at) meta.push(`<span>${fmt('cardUpdated', { date: formatDate(lab.updated_at) })}</span>`);
   return `
     <a class="card" href="#/lab/${encodeURIComponent(lab.slug)}">
@@ -2202,6 +2208,7 @@ async function renderLab(view) {
   const access = effectiveAccess(lab);
   const meta = [];
   if (lab.estimated_minutes) meta.push(`<span>${fmt('labMinutes', { n: lab.estimated_minutes })}</span>`);
+  if (lab.report_minutes) meta.push(`<span>${fmt('labReportMinutes', { n: lab.report_minutes })}</span>`);
   if (lab.updated_at) meta.push(`<span>${fmt('labUpdated', { date: formatDate(lab.updated_at) })}</span>`);
 
   view.innerHTML = `<section class="page lab-page">
@@ -3158,6 +3165,7 @@ async function openLabModal(id) {
   $('lab-summary').value = lab?.summary || '';
   $('lab-tags').value = (lab?.tags || []).join(', ');
   $('lab-minutes').value = lab?.estimated_minutes || '';
+  $('lab-report-minutes').value = lab?.report_minutes || '';
   $('lab-order').value = lab?.sort_order ?? 0;
   $('lab-status').value = lab?.status || 'draft';
   $('lab-publish-at').value = toLocalDatetime(lab?.publish_at);
@@ -3230,6 +3238,7 @@ async function saveLab() {
     access: $('lab-access').value,
     tags: $('lab-tags').value.split(',').map(t => t.trim()).filter(Boolean),
     estimated_minutes: parseInt($('lab-minutes').value, 10) || null,
+    report_minutes: parseInt($('lab-report-minutes').value, 10) || null,
     sort_order: parseInt($('lab-order').value, 10) || 0,
     help_enabled: $('lab-help').checked,
     help_auto_reply: $('lab-help-auto').value.trim() || null
@@ -3871,8 +3880,8 @@ async function loadUserTheme() {   // the account's choice wins over this browse
    LAB TAGS — markdown + LaTeX-style commands for interactive lab reports.
    Spec for authors (and for Claude converting PDFs): docs/LAB-FORMAT.md
    ============================================================ */
-const LT_TAGS = new Set(['title', 'summary', 'tags', 'minutes', 'video', 'datatable', 'answer', 'notes', 'photo', 'input', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'report', 'style', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto']);
-const LT_META = new Set(['title', 'summary', 'tags', 'minutes', 'report', 'style']);   // stored on ctx, not rendered in place
+const LT_TAGS = new Set(['title', 'summary', 'tags', 'minutes', 'reportminutes', 'video', 'datatable', 'answer', 'notes', 'photo', 'input', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'report', 'style', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto']);
+const LT_META = new Set(['title', 'summary', 'tags', 'minutes', 'reportminutes', 'report', 'style']);   // stored on ctx, not rendered in place
 const LT_BLOCK = new Set(['video', 'datatable', 'answer', 'notes', 'photo', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto']);
 
 if (window.marked) marked.use({ gfm: true, breaks: false, mangle: false, headerIds: false });
@@ -4105,12 +4114,12 @@ function ltRender(source) {
     return { html: `<div class="lt-error">Could not render this lab file: ${escapeHTML(e.message)}</div>`, meta: ctx.meta, errors: [e.message], report: '', style: '' };
   }
 }
-function ltParseMeta(source) { // quick header read for the importer: title/summary/tags/minutes exactly as typed
+function ltParseMeta(source) { // quick header read for the importer: title/summary/tags/minutes/reportminutes exactly as typed
   const ctx = ltNewContext(); const widgets = [];
   // bmProtect (the builder's mirror of ltProtect) stashes chemistry as typed, where ltProtect wraps bare \ce{} in $…$ for rendering
   try { ltExtractTags(bmProtect(String(source || '').replace(/\r\n?/g, '\n'), ctx), ctx, widgets); } catch (e) { /* ignore */ }
   const meta = {};
-  for (const k of ['title', 'summary', 'tags', 'minutes']) if (ctx.meta[k] !== undefined) meta[k] = bmRestore(ctx.meta[k], ctx);
+  for (const k of ['title', 'summary', 'tags', 'minutes', 'reportminutes']) if (ctx.meta[k] !== undefined) meta[k] = bmRestore(ctx.meta[k], ctx);
   return meta;
 }
 
@@ -4489,7 +4498,7 @@ function uploadPendingFigure(token) {
 function applyLabMarkupMeta(force) {
   const meta = ltParseMeta($('lab-markup').value);
   if (force) {
-    const filled = [['title', $('lab-title').value], ['summary', $('lab-summary').value], ['tags', $('lab-tags').value], ['minutes', $('lab-minutes').value]]
+    const filled = [['title', $('lab-title').value], ['summary', $('lab-summary').value], ['tags', $('lab-tags').value], ['minutes', $('lab-minutes').value], ['reportminutes', $('lab-report-minutes').value]]
       .filter(([k, v]) => v && meta[k] !== undefined && String(meta[k]) !== String(v)).map(([k]) => k);
     if (filled.length && !confirm(`Replace what you typed for ${filled.join(', ')} with the values from the lab file's header?`)) return;
   }
@@ -4497,6 +4506,7 @@ function applyLabMarkupMeta(force) {
   if (meta.summary && (force || !$('lab-summary').value)) $('lab-summary').value = meta.summary;
   if (meta.tags && (force || !$('lab-tags').value)) $('lab-tags').value = meta.tags;
   if (meta.minutes && (force || !$('lab-minutes').value)) $('lab-minutes').value = parseInt(meta.minutes, 10) || '';
+  if (meta.reportminutes && (force || !$('lab-report-minutes').value)) $('lab-report-minutes').value = parseInt(meta.reportminutes, 10) || '';
 }
 let ltPreviewTimer = null;
 function previewLabMarkup(now) {
@@ -4532,11 +4542,11 @@ function previewLabMarkup(now) {
    Public globals: builderParse, builderSerialize, builderNewBlock, builderTemplates (+ bm* helpers, BM_* constants).
    ============================================================ */
 
-const BM_TAGS = new Set(['title', 'summary', 'tags', 'minutes', 'video', 'datatable', 'answer', 'notes', 'photo', 'input', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'report', 'style', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto']);
-const BM_META = new Set(['title', 'summary', 'tags', 'minutes', 'report', 'style']);
+const BM_TAGS = new Set(['title', 'summary', 'tags', 'minutes', 'reportminutes', 'video', 'datatable', 'answer', 'notes', 'photo', 'input', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'report', 'style', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto']);
+const BM_META = new Set(['title', 'summary', 'tags', 'minutes', 'reportminutes', 'report', 'style']);
 const BM_BLOCK = new Set(['video', 'datatable', 'answer', 'notes', 'photo', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto']);
 const BM_CALLOUT_KINDS = ['safety', 'warning', 'info', 'tip', 'hint'];
-const BM_HEADER_KEYS = ['title', 'summary', 'tags', 'minutes'];
+const BM_HEADER_KEYS = ['title', 'summary', 'tags', 'minutes', 'reportminutes'];
 
 const BM_TYPES = {
   heading:   { label: 'Heading',          list: 'both' },
@@ -4679,7 +4689,7 @@ function bmTableCells(Bp) {
 /* ---------- parse ---------- */
 let bmKeyCounter = 0;
 function bmKey() { return ++bmKeyCounter; }
-function bmEmptyModel() { return { header: { title: '', summary: '', tags: '', minutes: '' }, style: null, reportPresent: false, procedure: [], report: [], warnings: [] }; }
+function bmEmptyModel() { return { header: { title: '', summary: '', tags: '', minutes: '', reportminutes: '' }, style: null, reportPresent: false, procedure: [], report: [], warnings: [] }; }
 
 const BM_W = {
   midline: 'A command inside a sentence is kept as raw text.',
@@ -4694,7 +4704,7 @@ const BM_W = {
   nestedMeta: 'A report or style guide is tucked inside another block, and the file also has one at the top level. Students only see the tucked-in one, so the whole file is kept as raw text to leave it as it is.',
   nestedMetaOnly: 'A report or style guide is tucked inside another block; the site still uses it, but the builder cannot edit it as a form.',
 };
-const BM_META_WORDS = { title: 'title', summary: 'summary', tags: 'tags', minutes: 'time', report: 'report', style: 'style guide' };
+const BM_META_WORDS = { title: 'title', summary: 'summary', tags: 'tags', minutes: 'time', reportminutes: 'report time', report: 'report', style: 'style guide' };
 // True when a widget body (callout, step, prompt…) hides a \report or \style; the renderer honours those, and the last one wins.
 function bmHasNestedMeta(p, top = true) {
   for (const occ of bmScanTags(p)) {
@@ -5631,7 +5641,7 @@ function buMakeHost(h) {
     fields: h.fields || (() => {
       if (!document.getElementById('lab-title')) return null;
       const v = id => { const el = document.getElementById(id); return el ? String(el.value) : ''; };
-      return { title: v('lab-title'), summary: v('lab-summary'), tags: v('lab-tags'), minutes: v('lab-minutes') };
+      return { title: v('lab-title'), summary: v('lab-summary'), tags: v('lab-tags'), minutes: v('lab-minutes'), reportminutes: v('lab-report-minutes') };
     }),
     applyHeaderToFields: h.applyHeaderToFields || (() => { if (typeof applyLabMarkupMeta === 'function') applyLabMarkupMeta(true); }),
     showInPreview: h.showInPreview || buDefaultShowInPreview,
@@ -5675,7 +5685,7 @@ function builderDestroy() {
 function buEnsureKeys() {
   if (!buModel) return;
   ['procedure', 'report'].forEach(list => { if (!Array.isArray(buModel[list])) buModel[list] = []; buModel[list].forEach(b => { if (b._k == null) b._k = bmKey(); }); });
-  if (!buModel.header) buModel.header = { title: '', summary: '', tags: '', minutes: '' };
+  if (!buModel.header) buModel.header = { title: '', summary: '', tags: '', minutes: '', reportminutes: '' };
   if (buModel.style === undefined) buModel.style = null;
   if (!Array.isArray(buModel.warnings)) buModel.warnings = [];
 }
@@ -5826,9 +5836,9 @@ function buRenderHeader() {
   const el = buQ('#bu-header'); if (!el) return;
   let f = null; try { f = buHost.fields(); } catch (e) { f = null; }
   const h = buModel.header || {};
-  const diff = !!f && ['title', 'summary', 'tags', 'minutes'].some(key => String(h[key] || '').trim() && String(h[key] || '').trim() !== String(f[key] || '').trim());
+  const diff = !!f && BM_HEADER_KEYS.some(key => String(h[key] || '').trim() && String(h[key] || '').trim() !== String(f[key] || '').trim());
   el.hidden = !diff;
-  el.innerHTML = diff ? `<div class="bu-warn">This file carries its own title, summary, tags or time, and they differ from the fields above. The fields win when you save. <button type="button" class="btn-small" data-act="apply-header">Use the file's values in the fields</button></div>` : '';
+  el.innerHTML = diff ? `<div class="bu-warn">This file carries its own title, summary, tags, time or report time, and they differ from the fields above. The fields win when you save. <button type="button" class="btn-small" data-act="apply-header">Use the file's values in the fields</button></div>` : '';
 }
 
 /* ---------- cards ---------- */
@@ -6818,7 +6828,7 @@ function buOnDragEnd() {
 /* ---------- Builder mode glue (spec section D): wires the builder to the lab modal ---------- */
 let buLabModel = null, buLabFormatPrev = null, buLastSerialized = null;
 function builderActive() { const s = $('lab-format'); return !!s && s.value === 'builder'; }
-function buHeaderFromFields() { return { title: $('lab-title').value.trim(), summary: $('lab-summary').value.trim(), tags: $('lab-tags').value.trim(), minutes: $('lab-minutes').value.trim() }; }
+function buHeaderFromFields() { return { title: $('lab-title').value.trim(), summary: $('lab-summary').value.trim(), tags: $('lab-tags').value.trim(), minutes: $('lab-minutes').value.trim(), reportminutes: $('lab-report-minutes').value.trim() }; }
 function buLabLive() { return (typeof builderGetModel === 'function' && builderGetModel()) || buLabModel; }   // the model the builder is showing right now (templates and "give permanent names" swap it)
 function buLabOnChange(model, info) {
   // Every builder change lands in the textarea (the single stored format) and in the preview.
@@ -6832,7 +6842,7 @@ function buLabHost() {
   return {
     upload: uploadFigureFile, fileUrl, youtubeId: extractYoutubeId,
     pictures: () => [...new Set([...labFigureUploads, ...labFilePaths($('lab-markup').value)])].filter(p => /\.(png|jpe?g|gif|webp|svg)$/i.test(p)),
-    fields: () => ({ title: $('lab-title').value, summary: $('lab-summary').value, tags: $('lab-tags').value, minutes: $('lab-minutes').value }),
+    fields: () => ({ title: $('lab-title').value, summary: $('lab-summary').value, tags: $('lab-tags').value, minutes: $('lab-minutes').value, reportminutes: $('lab-report-minutes').value }),
     applyHeaderToFields: () => applyLabMarkupMeta(true),
     workOn: id => labWorkOn(id),   // students with saved work under a block id
     confirm: m => confirm(m), toast,

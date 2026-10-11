@@ -13,7 +13,7 @@ A lab file is plain text: **Markdown for the writing**, plus a small set of **La
 3. **Every blank the student would fill in on paper becomes a field.** Blank table cells become `___`. Blank lines under a question become `\answer`. A single value to record (a mass, a temperature) becomes `\input`.
 4. **Math and chemistry become LaTeX**: `$c = \frac{n}{V}$`, `$$K_a = \frac{[H^+][A^-]}{[HA]}$$`, `\ce{CH3COOH + NaOH -> CH3COONa + H2O}`. Units like $\pu{0.100 M}$ are fine.
 5. **Figures in the PDF cannot be copied by you.** Put `\figure[caption=...]{IMAGE_1}`, `{IMAGE_2}`, … where they belong and, at the very end of the file, list them under a `<!-- Figures needed -->` comment with a one-line description of each so the teacher can upload them.
-6. **Start with the header commands** (`\title`, `\summary`, `\tags`, `\minutes`). Write the summary yourself (one or two sentences) if the PDF has none.
+6. **Start with the header commands** (`\title`, `\summary`, `\tags`, `\minutes`, and `\reportminutes` when the lab has a `\report{…}` block). Write the summary yourself (one or two sentences) if the PDF has none.
 7. Give every field an `id` when there is any chance the lab will be edited later (ids keep students' saved entries attached to the right field). Use short lowercase ids: `trial1`, `q3`, `setup-photo`.
 8. Output only the lab file, nothing else.
 
@@ -25,7 +25,7 @@ Headings (`#`, `##`, `###`), paragraphs, **bold**, *italic*, numbered lists (`1.
 
 | Command | What it does |
 |---|---|
-| `\title{…}` `\summary{…}` `\tags{a, b}` `\minutes{90}` | Header. Not shown in the lab; the website uses them to fill in the lab's title, card summary, tags, and estimated time. |
+| `\title{…}` `\summary{…}` `\tags{a, b}` `\minutes{90}` `\reportminutes{45}` | Header. Not shown in the lab; the website uses them to fill in the lab's title, card summary, tags, estimated procedure time, and (optional) report write-up time. `\minutes` is the time to do the procedure; `\reportminutes` is the extra time to write the report, shown as a separate line. Leave `\reportminutes` out of a lab without a report. |
 | `\datatable[id=…, title=…, addrows]{ table }` | A table students fill in. Write a normal Markdown table inside; every cell containing `___` becomes an editable cell, other cells are fixed text. `addrows` lets students add rows. |
 | `\input[id=…, label=…, unit=…]` | A small inline box for one value, e.g. `Mass of sample: \input[id=mass, unit=g]`. |
 | `\answer[id=…, lines=4]{Optional prompt}` | A multi-line answer box, `lines` tall. Usually placed right after a question. |
@@ -116,6 +116,7 @@ Rules for converting a PDF: if the PDF includes report instructions, a rubric, o
 \summary{Titrate acetic acid and oxalic acid with standardized NaOH to determine their acid dissociation constants.}
 \tags{acids, Ka, titration}
 \minutes{130}
+\reportminutes{60}
 
 # Purpose
 

@@ -49,11 +49,14 @@ create table if not exists public.labs (
   access            text not null default 'inherit'
                     check (access in ('inherit','public','password','accounts','admin')),
   tags              text[] not null default '{}',
-  estimated_minutes integer,
+  estimated_minutes integer,                 -- procedure time shown on cards and the lab page
+  report_minutes    integer,                 -- optional write-up time (labs with a Report tab)
   sort_order        integer not null default 0,
   created_at        timestamptz not null default now(),
   updated_at        timestamptz not null default now()
 );
+
+alter table public.labs add column if not exists report_minutes integer;
 
 drop trigger if exists labs_updated_at on public.labs;
 create trigger labs_updated_at before update on public.labs
