@@ -986,3 +986,6 @@ create table if not exists public.user_prefs (
 alter table public.user_prefs enable row level security;
 drop policy if exists "own prefs" on public.user_prefs;
 create policy "own prefs" on public.user_prefs for all using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- Optional write-up time estimate shown beside the procedure time.
+alter table public.labs add column if not exists report_minutes integer;
