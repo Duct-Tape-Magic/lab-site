@@ -180,6 +180,9 @@
     justify-content: center; overflow: hidden; position: relative; border-radius: var(--border-radius);
   }
   .card-img img { width: 100%; height: 100%; object-fit: cover; }
+  /* A transparent image (icon, molecule render) gets no box: the symbol sits whole on the card colour */
+  .card-img.transparent { background: transparent; }
+  .card-img.transparent img { object-fit: contain; padding: 8%; }
   .card-img-placeholder { color: var(--muted); opacity: 0.5; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
   .card-img .folder-glyph { font-family: var(--font-heading); font-size: 2.6rem; color: var(--muted); opacity: 0.5; }
   .video-overlay {
@@ -1847,6 +1850,34 @@ function folderCardHTML(f) {
     </a>`;
 }
 
+// Cards with a transparent cover drop the grey image box. The check reads the pixels once per image URL and is remembered.
+const transparentImageCache = new Map();
+function markTransparentCovers(root) {
+  (root || document).querySelectorAll('.card-img img:not([data-alpha-checked])').forEach(img => {
+    img.dataset.alphaChecked = '1';
+    const src = img.getAttribute('src') || '';
+    if (!/\.(png|webp|gif|svg)(\?|$)/i.test(src)) return;   // JPEGs cannot be transparent
+    const apply = t => { if (t) img.closest('.card-img').classList.add('transparent'); };
+    if (transparentImageCache.has(src)) { apply(transparentImageCache.get(src)); return; }
+    const probe = new Image(); probe.crossOrigin = 'anonymous';
+    probe.onload = () => {
+      let t = /\.svg(\?|$)/i.test(src);
+      if (!t) {
+        try {
+          const w = Math.min(probe.naturalWidth, 160), h = Math.min(probe.naturalHeight, 160);
+          const c = document.createElement('canvas'); c.width = w; c.height = h;
+          const ctx = c.getContext('2d', { willReadFrequently: true }); ctx.drawImage(probe, 0, 0, w, h);
+          const d = ctx.getImageData(0, 0, w, h).data; let clear = 0;
+          for (let i = 3; i < d.length; i += 4) if (d[i] < 128) clear++;
+          t = clear > d.length / 4 * 0.05;   // at least 5% of the pixels see-through
+        } catch (e) { t = false; }   // cross-origin block: leave the box
+      }
+      transparentImageCache.set(src, t); apply(t);
+    };
+    probe.onerror = () => transparentImageCache.set(src, false);
+    probe.src = src;
+  });
+}
 function gridOrEmpty(cards, emptyText) {
   return cards.length ? `<div class="card-grid">${cards.join('')}</div>` : `<div class="empty-state">${escapeHTML(emptyText)}</div>`;
 }
@@ -1862,6 +1893,7 @@ function renderHome(view) {
   else html += `<div style="margin-top:2rem;">${gridOrEmpty(items.map(itemCardHTML), '')}</div>`;
   html += `</section>`;
   view.innerHTML = html;
+  markTransparentCovers(view);
   renderMathIn(view.querySelectorAll('.rich-content'));
 }
 
@@ -1878,6 +1910,7 @@ function renderFolder(view) {
   else html += `<div style="margin-top:1.5rem;">${gridOrEmpty(items.map(itemCardHTML), '')}</div>`;
   html += `</section>`;
   view.innerHTML = html;
+  markTransparentCovers(view);
   logEvent('view', { folder_id: f.id, path: location.hash });
 }
 
@@ -1894,6 +1927,7 @@ function renderSearch(view) {
     <h1 class="page-title" style="font-size:2rem;">${fmt('searchResultsTitle', { q })}</h1>
     ${gridOrEmpty(results.map(labCardHTML), getText('searchNoResults'))}
   </section>`;
+  markTransparentCovers(view);
   if (q) logEvent('search', { path: 'search:' + q.slice(0, 120) });
 }
 
