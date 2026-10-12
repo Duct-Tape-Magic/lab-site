@@ -50,6 +50,10 @@
     --section-padding-x: 3rem;
     --border-radius: 0px;
     --measure: 760px;
+    --lab-top: 3.5rem;          /* page padding above the breadcrumb on lab pages */
+    --lab-header-gap: 2rem;     /* below the title block and below the tab bar */
+    --lab-body-top: 2.5rem;     /* above the lab text */
+    --lab-title-max: 2.9rem;    /* largest size of the lab title */
   }
 
   html, body {
@@ -220,13 +224,14 @@
   .admin-controls button.delete:hover { background: var(--danger); border-color: var(--danger); color: white; }
 
   /* ---------- Lab page ---------- */
-  .lab-page { max-width: var(--page-max-width); }
-  .lab-header { margin-bottom: 2rem; }
-  .lab-title { font-family: var(--font-heading); font-size: clamp(2rem, 4vw, 2.9rem); font-weight: 300; line-height: 1.12; margin-bottom: 0.75rem; }
+  .lab-page { max-width: var(--page-max-width); padding-top: var(--lab-top); }
+  body.lab-centered .lab-page { max-width: calc(var(--measure) + 2 * var(--section-padding-x)); }   /* title, tabs and text share one centred column */
+  .lab-header { margin-bottom: var(--lab-header-gap); }
+  .lab-title { font-family: var(--font-heading); font-size: clamp(1.8rem, 4vw, var(--lab-title-max)); font-weight: 300; line-height: 1.12; margin-bottom: 0.75rem; }
   .lab-meta { display: flex; flex-wrap: wrap; gap: 0.5rem 1.2rem; align-items: center; font-size: 12px; color: var(--muted); letter-spacing: 0.04em; }
   .lab-summary { font-size: 1.05rem; max-width: var(--measure); margin-top: 1rem; color: var(--ink); opacity: 0.9; }
   .lab-toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.5rem 0 0; }
-  .lab-body { max-width: var(--measure); margin-top: 2.5rem; }
+  .lab-body { max-width: var(--measure); margin-top: var(--lab-body-top); }
   .lab-media { margin: 2rem 0; }
   .lab-footer-nav { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3rem; padding-top: 1.5rem; border-top: 0.5px solid var(--rule); }
   .lab-footer-nav a { color: var(--muted); text-decoration: none; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
@@ -571,7 +576,7 @@
   .btn-small.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
   .review-banner { background: var(--card-bg); border: 0.5px solid var(--rule-strong); padding: 0.7rem 1rem; margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; font-size: 13px; max-width: var(--measure); }
   /* ---------- Report tab ---------- */
-  .lab-tabs { display: flex; gap: 1.5rem; border-bottom: 0.5px solid var(--rule); margin: 0.5rem 0 2rem; max-width: var(--measure); }
+  .lab-tabs { display: flex; gap: 1.5rem; border-bottom: 0.5px solid var(--rule); margin: 0.5rem 0 var(--lab-header-gap); max-width: var(--measure); }
   .lab-tab { background: none; border: none; border-bottom: 1.5px solid transparent; margin-bottom: -0.5px; padding: 0.6rem 0; font-family: var(--font-body); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); cursor: pointer; }
   .lab-tab.active { color: var(--ink); border-bottom-color: var(--ink); }
   .lab-tab:hover { color: var(--ink); }
@@ -1078,6 +1083,7 @@
     <div style="display:flex; gap:1rem; margin-bottom:2rem; border-bottom:0.5px solid var(--rule); padding-bottom:0.5rem; flex-wrap:wrap;">
       <button type="button" class="design-tab active" data-tab="palette" onclick="switchDesignTab(event)">Palette</button>
       <button type="button" class="design-tab" data-tab="cards" onclick="switchDesignTab(event)">Cards</button>
+      <button type="button" class="design-tab" data-tab="layout" onclick="switchDesignTab(event)">Layout</button>
     </div>
 
     <div class="design-tab-panel" id="design-panel-palette">
@@ -1105,6 +1111,23 @@
           <option value="">Tight grid with dividers (default)</option>
           <option value="cards-no-divider">Separated cards with spacing</option>
         </select></div>
+    </div>
+
+    <div class="design-tab-panel" id="design-panel-layout" style="display:none;">
+      <p class="text-group-label" style="margin-bottom:0.75rem;">Widths</p>
+      <div class="form-grid-2">
+        <div class="form-row"><label>Page width <span id="dl-page-width-val"></span></label><input type="range" id="dl-page-width" min="800" max="1400" step="20" oninput="previewDesign()"/><div class="hint">The whole page, including the home grid.</div></div>
+        <div class="form-row"><label>Reading width <span id="dl-measure-val"></span></label><input type="range" id="dl-measure" min="600" max="1000" step="10" oninput="previewDesign()"/><div class="hint">Lab text, tables and answer boxes.</div></div>
+      </div>
+      <div class="form-row"><label style="display:flex; align-items:center; gap:0.5rem; text-transform:none; letter-spacing:0; font-size:14px;"><input type="checkbox" id="dl-centered" onchange="previewDesign()"/> Centre the lab column (title, tabs and text line up in one centred column)</label></div>
+      <p class="text-group-label" style="margin:1.5rem 0 0.75rem;">Space above a lab</p>
+      <div class="form-grid-2">
+        <div class="form-row"><label>Top padding <span id="dl-lab-top-val"></span></label><input type="range" id="dl-lab-top" min="0.5" max="5" step="0.25" oninput="previewDesign()"/></div>
+        <div class="form-row"><label>Under title and tabs <span id="dl-header-gap-val"></span></label><input type="range" id="dl-header-gap" min="0.5" max="3" step="0.25" oninput="previewDesign()"/></div>
+        <div class="form-row"><label>Above the lab text <span id="dl-body-top-val"></span></label><input type="range" id="dl-body-top" min="0" max="4" step="0.25" oninput="previewDesign()"/></div>
+        <div class="form-row"><label>Title size <span id="dl-title-max-val"></span></label><input type="range" id="dl-title-max" min="1.8" max="3.5" step="0.1" oninput="previewDesign()"/></div>
+      </div>
+      <div class="hint">Open a lab page in another tab, or behind this panel, to see these change live. Values are in rem (1 rem is the base text size).</div>
     </div>
 
     <div class="modal-actions">
@@ -1389,6 +1412,7 @@ const DESIGN_DEFAULTS = {
   ink: '#1a1a18', muted: '#7d7c75', bg: '#faf9f6', cardBg: '#f3f1ec', accent: '#2f5d8a',
   fontHeading: "'Cormorant Garamond', serif", fontBody: "'DM Sans', sans-serif", baseFontSize: '16',
   pageWidth: '1100', measure: '760', sectionPaddingY: '3.5', slideshowHeight: '480', borderRadius: '0',
+  labCentered: false, labTop: '3.5', labHeaderGap: '2', labBodyTop: '2.5', labTitleMax: '2.9',
   cardSize: 'medium', cardAspect: '', cardDivider: '',
   bgPattern: '', topoLine: '#2f5d8a', topoBg: '#faf9f6', topoOpacity: '0.18', topoDensity: '12', topoScale: '600', topoThickness: '1.0', topoSeed: '1234'
 };
@@ -3800,6 +3824,9 @@ function applyDesign(d) {
   root.style.setProperty('--page-max-width', d.pageWidth + 'px'); root.style.setProperty('--measure', d.measure + 'px');
   root.style.setProperty('--section-padding-y', d.sectionPaddingY + 'rem'); root.style.setProperty('--slideshow-height', d.slideshowHeight + 'px');
   root.style.setProperty('--border-radius', d.borderRadius + 'px');
+  root.style.setProperty('--lab-top', (d.labTop ?? 3.5) + 'rem'); root.style.setProperty('--lab-header-gap', (d.labHeaderGap ?? 2) + 'rem');
+  root.style.setProperty('--lab-body-top', (d.labBodyTop ?? 2.5) + 'rem'); root.style.setProperty('--lab-title-max', (d.labTitleMax ?? 2.9) + 'rem');
+  document.body.classList.toggle('lab-centered', !!d.labCentered);
   const preset = CARD_SIZE_PRESETS[d.cardSize] || CARD_SIZE_PRESETS.medium;
   root.style.setProperty('--card-min-width', preset.minWidth); root.style.setProperty('--card-img-height', preset.imgHeight);
   document.body.classList.remove('cards-no-divider', 'card-aspect-square', 'card-aspect-landscape', 'card-aspect-portrait');
@@ -3855,7 +3882,15 @@ function openDesignModal() {
       <div class="palette-swatches"><div class="palette-swatch" style="background:${p.bg}"></div><div class="palette-swatch" style="background:${p.ink}"></div><div class="palette-swatch" style="background:${p.accent}"></div><div class="palette-swatch" style="background:${p.cardBg}"></div><div class="palette-swatch" style="background:${p.muted}"></div></div>
       <div class="palette-name">${p.name}</div></div>`).join('');
   $('dc-card-size').value = designState.cardSize; $('dc-card-aspect').value = designState.cardAspect; $('dc-card-divider').value = designState.cardDivider;
+  $('dl-page-width').value = designState.pageWidth; $('dl-measure').value = designState.measure; $('dl-centered').checked = !!designState.labCentered;
+  $('dl-lab-top').value = designState.labTop ?? 3.5; $('dl-header-gap').value = designState.labHeaderGap ?? 2; $('dl-body-top').value = designState.labBodyTop ?? 2.5; $('dl-title-max').value = designState.labTitleMax ?? 2.9;
+  updateLayoutLabels();
   openModal('design-modal');
+}
+function updateLayoutLabels() {
+  $('dl-page-width-val').textContent = $('dl-page-width').value + ' px'; $('dl-measure-val').textContent = $('dl-measure').value + ' px';
+  $('dl-lab-top-val').textContent = $('dl-lab-top').value + ' rem'; $('dl-header-gap-val').textContent = $('dl-header-gap').value + ' rem';
+  $('dl-body-top-val').textContent = $('dl-body-top').value + ' rem'; $('dl-title-max-val').textContent = $('dl-title-max').value + ' rem';
 }
 function switchDesignTab(event) {
   const tab = event.target.dataset.tab;
@@ -3870,6 +3905,9 @@ function selectPalette(id) {
 }
 function previewDesign() {
   designState.cardSize = $('dc-card-size').value; designState.cardAspect = $('dc-card-aspect').value; designState.cardDivider = $('dc-card-divider').value;
+  designState.pageWidth = $('dl-page-width').value; designState.measure = $('dl-measure').value; designState.labCentered = $('dl-centered').checked;
+  designState.labTop = $('dl-lab-top').value; designState.labHeaderGap = $('dl-header-gap').value; designState.labBodyTop = $('dl-body-top').value; designState.labTitleMax = $('dl-title-max').value;
+  updateLayoutLabels();
   applyDesign(designState);
 }
 function cancelDesign() { if (designStateBackup) { designState = { ...designStateBackup }; } applySiteDesign(); closeModal('design-modal'); }
