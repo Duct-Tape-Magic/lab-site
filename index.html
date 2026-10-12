@@ -179,7 +179,11 @@
     height: var(--card-img-height); background: var(--card-bg); display: flex; align-items: center;
     justify-content: center; overflow: hidden; position: relative; border-radius: var(--border-radius);
   }
-  .card-img img { width: 100%; height: 100%; object-fit: cover; }
+  .card-img img { width: 100%; height: 100%; object-fit: cover; transform-origin: center; }
+  .cover-zoom { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.6rem; font-size: 12px; color: var(--muted); }
+  .cover-zoom label { margin: 0; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+  .cover-zoom input[type="range"] { flex: 1; max-width: 260px; }
+  .media-item.zoomable { overflow: hidden; }
   /* A transparent image (icon, molecule render) gets no box: the symbol sits whole on the card colour */
   .card-img.transparent { background: transparent; }
   .card-img.transparent img { object-fit: contain; padding: 8%; }
@@ -1416,10 +1420,10 @@ let state = {
   unlockTokens: {}    // governingId -> token (password labs, kept for the session)
 };
 let labEditor = null, richTextEditor = null;
-let labMediaItems = [], labCoverItem = null, labAttachmentItems = [];
+let labMediaItems = [], labCoverItem = null, labAttachmentItems = [], labCoverZoom = 100;
 let labSlugTouched = false, folderSlugTouched = false;
 let editingLabId = null; // id used for upload paths while the lab modal is open
-let editingFolderId = null, folderCoverItem = null;
+let editingFolderId = null, folderCoverItem = null, folderCoverZoom = 100;
 
 /* ============================================================
    SMALL HELPERS
@@ -1808,6 +1812,7 @@ function labCardHTML(lab) {
   if (!cover) img = `<span class="folder-glyph">≣</span>`;
   else if (cover.type === 'youtube') img = `<img src="${escapeHTML(youtubeThumb(cover.id))}" alt="" loading="lazy"/><div class="video-overlay"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>`;
   else img = `<img src="${escapeHTML(cover.url)}" alt="${escapeHTML(cover.alt || '')}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'card-img-placeholder',textContent:''}))"/>`;
+  if (cover && lab.cover_zoom && lab.cover_zoom !== 100) img = img.replace('<img ', `<img style="transform:scale(${(+lab.cover_zoom / 100).toFixed(2)})" `);
   const meta = [];
   if (lab.estimated_minutes) meta.push(`<span>${fmt('cardMinutes', { n: lab.estimated_minutes })}</span>`);
   if (lab.report_minutes) meta.push(`<span>${fmt('cardReportMinutes', { n: lab.report_minutes })}</span>`);
@@ -1843,7 +1848,7 @@ function folderCardHTML(f) {
         <button onclick="openFolderModal('${f.id}')">Edit</button>
         <button class="delete" onclick="confirmDeleteFolder('${f.id}')">Delete</button>
       </div>
-      <div class="card-img">${f.cover_path ? `<img src="${escapeHTML(fileUrl(f.cover_path))}" alt="" loading="lazy"/>` : '<span class="folder-glyph">▤</span>'}</div>
+      <div class="card-img">${f.cover_path ? `<img src="${escapeHTML(fileUrl(f.cover_path))}" alt="" loading="lazy" ${f.cover_zoom && f.cover_zoom !== 100 ? `style="transform:scale(${(+f.cover_zoom / 100).toFixed(2)})"` : ''}/>` : '<span class="folder-glyph">▤</span>'}</div>
       <div class="card-title">${escapeHTML(f.name)}</div>
       ${f.description ? `<div class="card-summary">${escapeHTML(f.description)}</div>` : ''}
       <div class="card-meta">${badges.join('')}<span>${count} ${count === 1 ? 'item' : 'items'}</span></div>
@@ -2871,6 +2876,11 @@ function insertYoutube() {
    ============================================================ */
 function labUploadFolder() { return `labs/${editingLabId}`; }
 
+// Cover zoom (50–200%) so PNG icons and screenshots can be brought to a similar visual size on the cards.
+function coverZoomRowHTML(id, value) {
+  const v = value || 100;
+  return `<div class="cover-zoom"><label>Zoom <span id="${id}-val">${v}%</span></label><input type="range" id="${id}" min="50" max="200" step="5" value="${v}" oninput="$('${id}-val').textContent = this.value + '%'; const im = this.closest('.media-manager').querySelector('.media-item img'); if (im) im.style.transform = 'scale(' + (this.value / 100) + ')';"/></div>`;
+}
 function renderCoverManager() {
   const c = $('lab-cover-manager');
   c.innerHTML = `
@@ -2886,7 +2896,9 @@ function renderCoverManager() {
   const p = $('cover-preview');
   if (labCoverItem) {
     const thumb = labCoverItem.type === 'youtube' ? `<div class="media-item-video"><img src="${escapeHTML(youtubeThumb(labCoverItem.id))}" alt=""/><span class="media-item-video-icon">▶</span></div>` : `<img src="${escapeHTML(labCoverItem.url)}" alt=""/>`;
-    p.innerHTML = `<div class="media-item" style="cursor:default;">${thumb}<button type="button" class="media-item-remove" onclick="labCoverItem = null; renderCoverManager();">×</button></div>`;
+    p.innerHTML = `<div class="media-item zoomable" style="cursor:default;">${thumb}<button type="button" class="media-item-remove" onclick="labCoverItem = null; renderCoverManager();">×</button></div>`;
+    const im = p.querySelector('.media-item img'); if (im) im.style.transform = `scale(${labCoverZoom / 100})`;
+    p.insertAdjacentHTML('afterend', coverZoomRowHTML('lab-cover-zoom', labCoverZoom));
   }
 }
 
@@ -3211,6 +3223,7 @@ async function openLabModal(id) {
   labHelpAdmins = { admins: [], checked: new Set(), loaded: false };
   loadLabHelpAdmins(lab ? lab.id : null);
   labCoverItem = lab?.cover_path ? parseMediaEntry(lab.cover_path) : null;
+  labCoverZoom = lab?.cover_zoom || 100;
   labMediaItems = (entry?.media || []).map(parseMediaEntry).filter(Boolean);
   labAttachmentItems = (entry?.attachments || []).map(a => ({ ...a }));
   // New labs and existing lab files open in the Builder; rich-text labs keep their editor.
@@ -3268,6 +3281,7 @@ async function saveLab() {
     folder_id: $('lab-folder').value || null,
     summary: $('lab-summary').value.trim() || null,
     cover_path: labCoverItem ? serializeMediaItem({ ...labCoverItem, alt: '' }) : null,
+    cover_zoom: labCoverItem && $('lab-cover-zoom') ? (parseInt($('lab-cover-zoom').value, 10) || 100) : 100,
     status, publish_at: publishAt,
     access: $('lab-access').value,
     tags: $('lab-tags').value.split(',').map(t => t.trim()).filter(Boolean),
@@ -3353,7 +3367,10 @@ function renderFolderCoverManager() {
     try { toast('Uploading…'); const up = await uploadFile(files[0], `folders/${editingFolderId}`); folderCoverItem = up.path; renderFolderCoverManager(); toast('Cover set'); }
     catch (e) { toast('Upload failed: ' + e.message, true); }
   }, f => f.type.startsWith('image/'));
-  if (folderCoverItem) $('folder-cover-preview').innerHTML = `<div class="media-item" style="cursor:default;"><img src="${escapeHTML(fileUrl(folderCoverItem))}" alt=""/><button type="button" class="media-item-remove" onclick="folderCoverItem = null; renderFolderCoverManager();">×</button></div>`;
+  if (folderCoverItem) {
+    $('folder-cover-preview').innerHTML = `<div class="media-item zoomable" style="cursor:default;"><img src="${escapeHTML(fileUrl(folderCoverItem))}" alt="" style="transform:scale(${folderCoverZoom / 100})"/><button type="button" class="media-item-remove" onclick="folderCoverItem = null; renderFolderCoverManager();">×</button></div>`;
+    $('folder-cover-preview').insertAdjacentHTML('afterend', coverZoomRowHTML('folder-cover-zoom', folderCoverZoom));
+  }
 }
 function openFolderModal(id) {
   if (!isAdmin()) return;
@@ -3371,6 +3388,7 @@ function openFolderModal(id) {
   $('folder-listed').checked = f ? f.listed !== false : true;
   editingFolderId = f ? f.id : 'f-' + Date.now();
   folderCoverItem = f?.cover_path || null;
+  folderCoverZoom = f?.cover_zoom || 100;
   renderFolderCoverManager();
   accessListState.folder = null; onAccessSelectChange('folder');
   openModal('folder-modal');
@@ -3387,6 +3405,7 @@ async function saveFolder() {
   const original = existingId ? folderById(existingId) : null;
   const folder = {
     id: existingId || editingFolderId, name, cover_path: folderCoverItem || null,
+    cover_zoom: folderCoverItem && $('folder-cover-zoom') ? (parseInt($('folder-cover-zoom').value, 10) || 100) : 100,
     slug: uniqueSlug(slugify($('folder-slug').value || name), null, existingId || null, state.folders),
     parent_id: parentId, description: $('folder-description').value.trim() || null,
     sort_order: parseInt($('folder-order').value, 10) || 0,
