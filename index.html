@@ -671,7 +671,7 @@
   .lt-error { background: #fde3e3; color: #6b1e1e; padding: 0.6rem 0.8rem; font-size: 13px; margin: 0.6rem 0; }
   .lt-markup { width: 100%; min-height: 340px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; line-height: 1.5; border: 0.5px solid var(--rule-strong); padding: 0.75rem; background: var(--bg); color: var(--ink); resize: vertical; outline: none; border-radius: 4px; }
   .lt-markup:focus { border-color: var(--ink); }
-  .lt-preview { border: 0.5px solid var(--rule); padding: 1rem 1.25rem; margin-top: 0.75rem; max-height: 520px; overflow: auto; background: var(--bg); }
+  .lt-preview { border: 0.5px solid var(--rule); padding: 1rem 1.25rem; margin-top: 0.75rem; max-height: 520px; overflow: auto; background: var(--bg); position: relative; }   /* position: relative keeps KaTeX's absolutely positioned MathML copies inside this scroll box; without it they stretched the modal's scroll area by the lab's full height */
   .lt-toolbar { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 0.6rem; }
   .lt-toolbar input[type="file"] { display: none; }
   .media-item-copy { position: absolute; top: 4px; left: 4px; background: rgba(255,255,255,0.95); border: none; font-size: 10px; padding: 2px 6px; cursor: pointer; border-radius: 2px; font-family: var(--font-body); display: none; }
@@ -3808,7 +3808,7 @@ async function exportLabEntriesCsv(labId) {
 /* ============================================================
    MODALS
    ============================================================ */
-function openModal(id) { $(id).classList.add('open'); }
+function openModal(id) { const bd = $(id); bd.classList.add('open'); const m = bd.querySelector('.modal'); if (m) m.scrollTop = 0; bd.scrollTop = 0; }
 function closeModal(id) { $(id).classList.remove('open'); }
 document.querySelectorAll('.modal-backdrop').forEach(bd => bd.addEventListener('mousedown', e => { if (e.target === bd) bd.classList.remove('open'); }));
 
