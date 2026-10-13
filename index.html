@@ -2931,9 +2931,10 @@ function insertYoutube() {
 function labUploadFolder() { return `labs/${editingLabId}`; }
 
 // Cover zoom (50–200%) so PNG icons and screenshots can be brought to a similar visual size on the cards.
+function setCoverZoom(id, v) { const z = parseInt(v, 10) || 100; if (id === 'lab-cover-zoom') labCoverZoom = z; else folderCoverZoom = z; }
 function coverZoomRowHTML(id, value) {
   const v = value || 100;
-  return `<div class="cover-zoom"><label>Zoom <span id="${id}-val">${v}%</span></label><input type="range" id="${id}" min="50" max="200" step="5" value="${v}" oninput="$('${id}-val').textContent = this.value + '%'; const im = this.closest('.media-manager').querySelector('.media-item img'); if (im) im.style.transform = 'scale(' + (this.value / 100) + ')';"/></div>`;
+  return `<div class="cover-zoom"><label>Zoom <span id="${id}-val">${v}%</span></label><input type="range" id="${id}" min="50" max="200" step="5" value="${v}" oninput="setCoverZoom('${id}', this.value); $('${id}-val').textContent = this.value + '%'; const im = this.closest('.media-manager').querySelector('.media-item img'); if (im) im.style.transform = 'scale(' + (this.value / 100) + ')';"/></div>`;
 }
 function renderCoverManager() {
   const c = $('lab-cover-manager');
@@ -3285,7 +3286,8 @@ async function openLabModal(id) {
   labAttachmentItems = (entry?.attachments || []).map(a => ({ ...a }));
   // New labs and existing lab files open in the Builder; rich-text labs keep their editor.
   const fmt = entry?.format === 'labtags' ? 'builder' : (lab ? 'html' : 'builder');
-  $('lab-format').value = fmt; buLabFormatPrev = null; buLabModel = null; buLastSerialized = null; builderDestroy();
+  $('lab-format').value = fmt; builderDestroy(); buLabFormatPrev = null; buLabModel = null; buLastSerialized = null;   // destroy first: its flush may write the old model into the glue state
+  try { localStorage.removeItem(LT_STORE + 'preview'); } catch (e) { /* ignore */ } ltPhotoKeys('preview|').then(keys => keys.forEach(k => ltPhotoDel(k))).catch(() => {});   // the preview's scratch entries never carry over
   $('lab-markup').value = entry?.format === 'labtags' ? (entry?.content || '') : '';
   $('lab-markup-errors').innerHTML = ''; $('lab-markup-preview').innerHTML = '';
   onLabFormatChange();
@@ -3349,6 +3351,8 @@ async function saveLab() {
     help_auto_reply: $('lab-help-auto').value.trim() || null
   };
   if (original && originalEntry?.format === 'labtags' && format === 'html' && !confirm('This lab is a lab file. Saving it as Rich text replaces the whole procedure with what is in the rich-text box (empty unless you typed there). Continue?')) return;
+  if (original && originalEntry?.format === 'html' && format === 'labtags' && isEmpty && (originalEntry.content || '').replace('<p><br></p>', '').trim() && !confirm('This lab is rich text. Saving it as an empty lab file discards that rich text. Continue?')) return;
+  if ($('lab-access').value === 'accounts' && !accessListState.lab) { toast('The list of classes and accounts has not loaded yet, so nobody could open this lab. Wait a moment (or reopen the lab) and save again.', true); return; }
   const btn = $('save-lab-btn'); btn.disabled = true; btn.textContent = 'Saving…';
   try {
     if (original) {
@@ -4547,7 +4551,7 @@ function onLabFormatChange() {
   $('lab-figures-head').style.display = fmt === 'labtags' ? '' : 'none';   // pictures are added through Picture blocks in the Builder
   if (fmt === 'builder') {
     const text = $('lab-markup').value;
-    if (!buLabModel || text !== buLastSerialized) buLabLoad(text);   // first open, or the text was hand-edited: re-parse (ids in the text are now explicit)
+    if (!builderGetModel() || !buLabModel || text !== buLastSerialized) buLabLoad(text);   // first open, unmounted builder, or hand-edited text: re-parse
     // else: a peek at Lab file / Rich text and back → keep the model, so fresh ids keep following their titles
     previewLabMarkup(true);
   } else if (fmt === 'labtags') {
@@ -4624,15 +4628,14 @@ function renderFiguresManager() {
 }
 function insertFigureRef(path) { insertLineAtCursor($('lab-markup'), `\\figure[caption=]{${path}}`); previewLabMarkup(true); toast('Figure inserted below the current line'); }
 async function removeFigure(path) {
-  if (!confirm('Remove this picture from the lab file and delete the uploaded file?')) return;
+  if (!confirm('Remove this picture from the lab file? The uploaded file is deleted when you save the lab.')) return;
   const ta = $('lab-markup');
   const esc = path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   ta.value = ta.value
     .replace(new RegExp('^[ \\t]*\\\\figure(\\[[^\\]]*\\])?\\{\\s*(img:)?' + esc + '\\s*\\}[ \\t]*\\n?', 'gm'), '')
     .replace(new RegExp('!\\[[^\\]]*\\]\\(\\s*(img:)?' + esc + '\\s*\\)', 'g'), '');
   ta.value = ta.value.replace(/\n{3,}/g, '\n\n');
-  labFigureUploads = labFigureUploads.filter(p => p !== path);
-  await removeStoragePaths([path]);
+  labFigureUploads = labFigureUploads.filter(p => p !== path);   // the file itself is cleaned up by saveLab (referencedPaths), so Cancel keeps the lab intact
   previewLabMarkup(true); toast('Picture removed');
 }
 function uploadPendingFigure(token) {
@@ -4672,7 +4675,7 @@ function applyLabMarkupMeta(force) {
       .filter(([k, v]) => v && meta[k] !== undefined && String(meta[k]) !== String(v)).map(([k]) => k);
     if (filled.length && !confirm(`Replace what you typed for ${filled.join(', ')} with the values from the lab file's header?`)) return;
   }
-  if (meta.title && (force || !$('lab-title').value)) { $('lab-title').value = meta.title; if (!labSlugTouched || force) { labSlugTouched = false; onLabTitleInput(); } }
+  if (meta.title && (force || !$('lab-title').value)) { $('lab-title').value = meta.title; if (!labSlugTouched || (force && !$('lab-id').value)) { labSlugTouched = false; onLabTitleInput(); } }   // an existing lab keeps its link
   if (meta.summary && (force || !$('lab-summary').value)) $('lab-summary').value = meta.summary;
   if (meta.tags && (force || !$('lab-tags').value)) $('lab-tags').value = meta.tags;
   if (meta.minutes && (force || !$('lab-minutes').value)) $('lab-minutes').value = parseInt(meta.minutes, 10) || '';
@@ -4774,6 +4777,11 @@ function bmBalanced(text, open) {
   return -1;
 }
 function bmSafeId(s) { return String(s || '').replace(/[^a-zA-Z0-9_.-]/g, '-'); }
+function bmExplicitIds(source) {   // mirror of ltExplicitIds: every id=… written in the file, normalised like bmSafeId
+  const out = new Set(); const re = /\\[a-z]+\[([^\]\n]*)\]/g; let m;
+  while ((m = re.exec(source || ''))) { const im = /(?:^|[\s,])id\s*=\s*["']?([A-Za-z0-9_.-]+)/.exec(m[1]); if (im) out.add(bmSafeId(im[1])); }
+  return out;
+}
 function bmSlugify(s) {
   return String(s || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
@@ -5209,7 +5217,7 @@ function bmTraverse(p, ctx, handler, st, depth = 0, where = 'body') {
     const name = occ.name, po = bmParseOptions(occ.opts || ''), o = bmOptsFromOcc(occ, ctx);
     const kind = BM_KIND[name] || name;
     const explicit = !!o.id;
-    if (!explicit) st.counters[kind] = (st.counters[kind] || 0) + 1;
+    if (!explicit) { do { st.counters[kind] = (st.counters[kind] || 0) + 1; } while (st.explicit && st.explicit.has(kind + st.counters[kind])); }   // like ltNextId: never reuse an id the file assigns explicitly
     const id = explicit ? bmSafeId(String(o.id)) : kind + st.counters[kind];
     const info = { name, kind, id, explicit, opts: o, occ, depth, where };
     let give = handler(info) || null;
@@ -5262,7 +5270,7 @@ function bmWalk(p, ctx, visit, counters = {}) { bmWalkDoc(p, ctx, info => { visi
 
 function bmAutoIds(model) {
   const byBlock = new Map(), inline = new Map(), all = new Set(), explicit = new Set(), dups = new Set();
-  const st = { counters: {}, refused: false, count: 0 };
+  const st = { counters: {}, refused: false, count: 0, explicit: bmExplicitIds(builderSerialize(model)) };
   const lists = [['procedure', model.procedure || []], ['report', model.report || []]];
   for (const [, blocks] of lists) for (const b of blocks) {
     const { p, ctx } = bmProtectOnly(bmSerializeBlock(b));
@@ -5285,14 +5293,14 @@ function bmTakenIds(model) {
 }
 function bmRewriteTags(text, decide) {
   const { p, ctx } = bmProtectOnly(text);
-  const st = { counters: {}, refused: false, count: 0 };
+  const st = { counters: {}, refused: false, count: 0, explicit: bmExplicitIds(text) };
   const out = bmWalkDoc(p, ctx, decide, st);
   return bmRestore(out, ctx);
 }
 function bmPinText(text) {
   const src = String(text ?? '').replace(/\r\n?/g, '\n');
   const { p, ctx } = bmProtectOnly(src);
-  const st = { counters: {}, refused: false, count: 0 };
+  const st = { counters: {}, refused: false, count: 0, explicit: bmExplicitIds(src) };
   const out = bmWalkDoc(p, ctx, info => {
     if (info.explicit || !BM_PIN_KINDS.has(info.kind)) return null;
     if (info.where === 'option' && info.occ.opts == null) { st.refused = true; return null; }
@@ -5510,7 +5518,7 @@ function bmWidgetSignature(text) {
     else if (body != null) shape = bmRestore(body, ctx).trim();
     widgets.push([name, info.id, opts, info.depth, info.where, shape]);
     return null;
-  }, { counters: {}, refused: false, count: 0 });
+  }, { counters: {}, refused: false, count: 0, explicit: bmExplicitIds(src) });
   const meta = {}; let lastReport = null, lastStyle = null;
   for (const occ of bmScanTags(p)) {
     if (occ.broken || !BM_META.has(occ.name)) continue;
