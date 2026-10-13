@@ -2286,7 +2286,9 @@ async function deleteMyAccount() {
   if (!confirm(getText('accountDeleteConfirm'))) return;
   const { error } = await sb.rpc('delete_my_account');
   if (error) { toast(error.message, true); return; }
-  try { Object.keys(localStorage).filter(k => k.startsWith(LT_STORE)).forEach(k => localStorage.removeItem(k)); } catch (e) { /* ignore */ }
+  const mine = ltScope();   // only this account's compartment on the device, entries and photos
+  try { Object.keys(localStorage).filter(k => k.startsWith(LT_STORE + mine)).forEach(k => localStorage.removeItem(k)); } catch (e) { /* ignore */ }
+  try { for (const k of await ltPhotoKeys(mine)) await ltPhotoDel(k); } catch (e) { /* ignore */ }
   await sb.auth.signOut(); state.session = null; state.role = null;
   renderChrome(); navigate('#/'); toast(getText('accountDeleted'));
 }
@@ -3287,7 +3289,7 @@ async function openLabModal(id) {
   // New labs and existing lab files open in the Builder; rich-text labs keep their editor.
   const fmt = entry?.format === 'labtags' ? 'builder' : (lab ? 'html' : 'builder');
   $('lab-format').value = fmt; builderDestroy(); buLabFormatPrev = null; buLabModel = null; buLastSerialized = null;   // destroy first: its flush may write the old model into the glue state
-  try { localStorage.removeItem(LT_STORE + 'preview'); } catch (e) { /* ignore */ } ltPhotoKeys('preview|').then(keys => keys.forEach(k => ltPhotoDel(k))).catch(() => {});   // the preview's scratch entries never carry over
+  try { localStorage.removeItem(ltKey('preview')); } catch (e) { /* ignore */ } ltPhotoKeys(ltScope() + 'preview|').then(keys => keys.forEach(k => ltPhotoDel(k))).catch(() => {});   // the preview's scratch entries never carry over
   $('lab-markup').value = entry?.format === 'labtags' ? (entry?.content || '') : '';
   $('lab-markup-errors').innerHTML = ''; $('lab-markup-preview').innerHTML = '';
   onLabFormatChange();
@@ -4276,22 +4278,32 @@ function ltParseMeta(source) { // quick header read for the importer: title/summ
 
 /* ---------- Student entries: localStorage for text, IndexedDB for photos ---------- */
 const LT_STORE = 'labsite.entries.';
-// Device storage belongs to one account at a time. When a different account signs in on this device, the previous account's
-// local entries and photos are cleared first (its typed work already lives in its account; photos are device-only).
-// An anonymous visitor's local work is kept and adopted by the first account that signs in (the "finish, then log in" case).
-const LT_LAST_USER = 'labsite.lastUser';
-async function ltSwitchUser(userId) {
+// Local work is kept per account on the device: entries under 'labsite.entries.<user>:<lab>' and photos under '<user>:<lab>|<photo>'.
+// Anonymous work uses the unscoped keys and is adopted by the next account that signs in (the "finish, then log in" case).
+// Switching accounts therefore hides the other account's local work instead of deleting it; switching back restores it.
+function ltScope() { const uid = state.session?.user?.id; return uid ? uid + ':' : ''; }
+function ltKey(labId) { return LT_STORE + ltScope() + labId; }
+async function ltSwitchUser(userId) {   // on sign-in: move anonymous local work into this account's compartment (never overwriting what it already has)
   if (!userId) return;
-  let last = null; try { last = localStorage.getItem(LT_LAST_USER); } catch (e) { last = null; }
-  if (last && last !== userId) {
-    try { Object.keys(localStorage).filter(k => k.startsWith(LT_STORE)).forEach(k => localStorage.removeItem(k)); } catch (e) { /* ignore */ }
-    try { for (const k of await ltPhotoKeys('')) await ltPhotoDel(k); } catch (e) { /* ignore */ }
-    console.info('A different account signed in: cleared the previous account\'s local lab work on this device.');
-  }
-  try { localStorage.setItem(LT_LAST_USER, userId); } catch (e) { /* ignore */ }
+  const scope = userId + ':';
+  try {
+    Object.keys(localStorage).filter(k => k.startsWith(LT_STORE) && !k.slice(LT_STORE.length).includes(':')).forEach(k => {
+      const labId = k.slice(LT_STORE.length), target = LT_STORE + scope + labId;
+      if (!localStorage.getItem(target)) localStorage.setItem(target, localStorage.getItem(k));
+      localStorage.removeItem(k);
+    });
+  } catch (e) { /* ignore */ }
+  try {
+    for (const k of await ltPhotoKeys('')) {
+      if (String(k).includes(':')) continue;   // already scoped to an account
+      const target = scope + k;
+      if (!(await ltPhotoGet(target))) { const v = await ltPhotoGet(k); if (v) await ltPhotoSet(target, v); }
+      await ltPhotoDel(k);
+    }
+  } catch (e) { /* ignore */ }
 }
-function ltLoad(labId) { try { return JSON.parse(localStorage.getItem(LT_STORE + labId) || '{}'); } catch (e) { return {}; } }
-function ltStore(labId, entries) { try { localStorage.setItem(LT_STORE + labId, JSON.stringify(entries)); return true; } catch (e) { return false; } }
+function ltLoad(labId) { try { return JSON.parse(localStorage.getItem(ltKey(labId)) || '{}'); } catch (e) { return {}; } }
+function ltStore(labId, entries) { try { localStorage.setItem(ltKey(labId), JSON.stringify(entries)); return true; } catch (e) { return false; } }
 function idb() {
   if (idb._p) return idb._p;
   idb._p = new Promise((res, rej) => {
@@ -4389,7 +4401,7 @@ function ltBind(area, labId, cloud = null, readOnly = false) {
     cb.addEventListener('change', () => { entries[cb.dataset.check] = cb.checked ? 1 : 0; save(); });
   });
   if (!readOnly) area.querySelectorAll('.lt-photo').forEach(async box => {
-    const key = `${labId}|${box.dataset.photo}`, prev = box.querySelector('.lt-photo-preview');
+    const key = ltScope() + `${labId}|${box.dataset.photo}`, prev = box.querySelector('.lt-photo-preview');
     const input = box.querySelector('input[type="file"]'), addLbl = box.querySelector('.lt-photo-add'), rm = box.querySelector('.lt-photo-remove');
     const show = url => { prev.innerHTML = url ? `<img src="${url}" alt=""/>` : ''; box.classList.toggle('has-photo', !!url); rm.hidden = !url; addLbl.firstChild.textContent = getText(url ? 'photoChange' : 'photoAdd'); };
     show(await ltPhotoGet(key));
@@ -4415,8 +4427,8 @@ function ltBind(area, labId, cloud = null, readOnly = false) {
       const { error } = await sb.from('lab_entries').delete().eq('lab_id', labId).eq('user_id', state.session.user.id);
       if (error) { toast(getText('entriesClearFailed'), true); return; }
     }
-    try { localStorage.removeItem(LT_STORE + labId); } catch (e) { /* ignore */ }
-    for (const k of await ltPhotoKeys(labId + '|')) await ltPhotoDel(k);
+    try { localStorage.removeItem(ltKey(labId)); } catch (e) { /* ignore */ }
+    for (const k of await ltPhotoKeys(ltScope() + labId + '|')) await ltPhotoDel(k);
     render();
   });
 }
@@ -7067,7 +7079,7 @@ Value: \\input[id=f]{}
 }`;
   const fixture = { 'steps.step1': 'note 1', 'tbl.r1c1': '1.5', 'tbl.r1c2': '2', 'tbl.rows': 1, 'tbl.r2c1': 'added', q: 'answer', n: 'my notes', q1: 'auto answer', f: '42', rq: 'report text', _savedAt: '2026-01-01T00:00:00.000Z' };
   const labId = 'selftest-' + Date.now();
-  localStorage.setItem(LT_STORE + labId, JSON.stringify(fixture));
+  localStorage.setItem(ltKey(labId), JSON.stringify(fixture));
   const host = document.createElement('div'); host.style.cssText = 'position:absolute;left:-9999px;top:0;width:800px'; document.body.appendChild(host);
   try {
     const r = ltRender(src); if (r.errors.length) throw new Error('render errors: ' + r.errors.join('; '));
@@ -7080,12 +7092,12 @@ Value: \\input[id=f]{}
     }
     const q = host.querySelector('[data-field="q"]'); q.textContent = 'changed'; q.dispatchEvent(new Event('input', { bubbles: true }));
     await new Promise(res => setTimeout(res, 500));
-    const saved = JSON.parse(localStorage.getItem(LT_STORE + labId) || '{}');
+    const saved = JSON.parse(localStorage.getItem(ltKey(labId)) || '{}');
     for (const k of Object.keys(fixture)) if (!k.startsWith('_') && !(k in saved)) throw new Error(`key ${k} was dropped on save`);
     if (saved.q !== 'changed') throw new Error('edit was not saved');
     const mirror = host.querySelector('[data-mirror-table="tbl"] .rp-table'); if (!mirror || !mirror.textContent.includes('1.5')) throw new Error('report mirror missing data');
     console.log('entriesSelfTest: OK'); return true;
-  } finally { host.remove(); localStorage.removeItem(LT_STORE + labId); }
+  } finally { host.remove(); localStorage.removeItem(ltKey(labId)); }
 }
 function buEquivalenceCheck(text) {
   const a = buRenderSignature(text), b = buRenderSignature(builderSerialize(builderParse(text)));
