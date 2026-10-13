@@ -1,192 +1,194 @@
-OHS CHEM LABS - ADMIN GUIDE
-===========================
+Welcome to OHS Chem Labs
+========================
 
-The site: https://ohschemlabs.com
-Students open labs, fill in answers, tables and photos, and download a PDF
-report to submit in Canvas. Admins build the labs and run the site from the
-site itself. Nothing needs installing.
+This is the site where our students do their labs. They open a lab, read the
+procedure, type their data and answers straight into the page, add a photo or
+two, and download a PDF of their report to turn in on Canvas. Everything you
+need to run it is on the site itself. There is nothing to install and no code
+to touch.
 
-
-1. LOGGING IN
--------------
-Click "Log in" (top right). Admins sign in with Google, or with email and
-password under "Admin sign in". After you log in, a dark admin bar appears at
-the top of every page. You are signed out after 24 hours without activity.
-
-Admin bar buttons, left to right:
-  + Lab            create a lab
-  + Folder         create a folder (a course, a unit, anything)
-  Site text        edit every piece of wording students see
-  Design           colours, card layout, page widths and spacing
-  Stats            activity, students, and their saved entries
-  Help             questions students sent from the "Get help" button
-  Classes          access codes for students (see section 6)
-  Admins           add or remove other admins
-  View as student  see the site exactly as a student does
-  Log out
+This guide walks you through the parts you will actually use. It takes about
+ten minutes to read, and most of it will make sense the moment you see the
+screens.
 
 
-2. THE HOME PAGE
-----------------
-Folders and labs appear together in one grid, in the order you choose. In
-admin mode every card has Edit and Delete buttons plus left/right arrows that
-move it earlier or later. A lab can sit before a folder; the order is yours.
-
-Hidden or admin-only folders and draft labs show a badge and are invisible to
-students. "View as student" is the quickest way to check what they see.
-
-
-3. CREATING AND EDITING A LAB
------------------------------
-Click "+ Lab", or "Edit lab" on an existing one. The form, top to bottom:
-
-  Title and link name   The link name becomes the address (#/lab/your-name).
-                        Once a lab is published, leave the link name alone so
-                        students' bookmarks keep working.
-  Folder, Summary       Summary shows on the card and in search only.
-  Search tags           Never shown to students; help the search box.
-  Estimated minutes     Procedure time, shown on the card and lab page.
-  Report write-up       Optional second estimate for the write-up.
-  Order on the page     Lower numbers come first.
-  Status                Draft (admins only), Published, or Scheduled.
-  Who can open it       Everyone, password, selected classes/accounts, or
-                        admins only. "Same as its folder" is the default.
-  Get help button       Tick to show a "Get help" button at the top of the
-                        lab. Then tick which admins get an email when a
-                        student asks, and optionally write the automatic reply
-                        the student sees the moment they send.
-  Cover image           A picture for the card. Transparent PNGs sit on the
-                        card colour with no box. Use the Zoom slider to make
-                        icons and screenshots a similar size.
-  Photos and videos     A slideshow shown under the lab.
-  Procedure format      Builder (the normal choice), Lab file (the plain-text
-                        form of the same lab), or Rich text (a simple editor
-                        for pages with no interactive parts).
-  Files                 PDFs, Word, Excel and so on, offered as downloads.
-
-Click Save at the bottom. A copy of the previous version is kept
-automatically every time you save.
-
-Safety: if students have already saved work in a lab, the site warns you
-before any change that would hide it, such as deleting a question, renaming
-its permanent name, or changing a table's columns. Rewording, reordering and
-adding blocks are always safe. Deleting a lab or a seat that has student work
-asks you to type DELETE.
-
-
-4. THE BUILDER
---------------
-The Builder shows the lab as a list of blocks. Students see them in order.
-Each block is a card: click the small triangle to open it, use the arrows to
-move it, the copy icon to duplicate, the eye to jump to it in the preview,
-the plus to insert a block after it, and the cross to delete it. Drag the
-handle on the left to reorder.
-
-Procedure blocks (the buttons under the Procedure list):
-  Heading         A title for a part of the lab.
-  Text            Writing. Markdown works (## headings, **bold**, lists).
-                  Maths goes between dollar signs: $\Delta H$ or $$...$$.
-                  "Insert a fill-in box" adds a small one-value box inside
-                  a sentence.
-  Numbered steps  Steps to follow; each step gets its own notes box.
-  Data table      A table students fill in. Click a cell to make it blank
-                  (students type there) or fixed. "Students can add rows"
-                  lets them extend it.
-  Question        A prompt with an answer box. "More options" adds a heading,
-                  a hint, a required flag and a word-count target.
-  Notes box       A collapsible box for the student's own notes.
-  Photo slot      A place for students to add a photo of their work.
-  Video           A YouTube link (unlisted videos work).
-  Picture         A picture you upload. Choose Full, Medium or Small; small
-                  and medium pictures placed one after another sit side by
-                  side.
-  Callout         A highlighted safety, warning, info, tip or hint box.
-  Graph           A live chart drawn from one of your data tables; it fills
-                  in as students type.
-  Page break      Starts a new page when printed or downloaded.
-
-Report tab blocks (the buttons under the Report list):
-  Everything above, plus "Include a table", "Include a graph", "Include an
-  answer" and "Include a photo", which copy a procedure block into the
-  report so the student sees their own data there. Add anything to the Report
-  list and students get a Report tab with a guided write-up.
-
-Permanent names: every block that stores student work has a permanent name
-(shown on the right of its card). The site assigns one when you first save.
-Never change a permanent name on a lab students have started; their saved
-answers hang off it.
-
-Preview: the box under the Builder shows the lab exactly as students see it
-and updates as you type. Click Refresh if it falls behind.
-
-Importing: the Lab file view has "Import file", which loads a lab file
-written outside the site. Claude can convert a PDF lab into this format using
-the guide docs/LAB-FORMAT.md from the repository.
-
-
-5. FOLDERS
+Getting in
 ----------
-"+ Folder" or Edit on a folder card. A folder has a name, a link name, a
-description, an optional cover photo with the same Zoom slider, an order
-number, and "Who can open it". Folders can sit inside folders. Setting a
-folder to "Selected student accounts" and ticking classes is the usual way
-to give one course access to all its labs at once.
+Go to ohschemlabs.com and click Log in at the top right. Sign in with your
+Google account, or open "Admin sign in" and use your email and password. Once
+you are in, a dark bar appears across the top of every page. That bar is
+admin mode. Students never see it.
+
+The bar has nine buttons. "+ Lab" and "+ Folder" create things. "Site text"
+lets you reword anything students see. "Design" controls colours and layout.
+"Stats" shows who has been doing what. "Help" is where students' questions
+arrive. "Classes" is where you make access codes. "Admins" is where you add
+colleagues. And "View as student" shows you the site exactly as a student
+sees it, which is the single most useful button when you are not sure how
+something looks. A small pill in the corner brings you back.
+
+If you leave the site alone for a day it signs you out. Just log in again.
 
 
-6. CLASSES AND ACCESS CODES
----------------------------
-Students do not create accounts. You create a class, and the site makes one
-access code per seat. Classes -> New class: give it a name, a short code
-such as P3, and the number of seats.
+The home page
+-------------
+The home page is a grid of folders and labs. A folder is just a container,
+so you might have one per course or one per unit. In admin mode every card
+gets Edit and Delete buttons and a pair of arrows. The arrows move a card
+earlier or later in the grid, and folders and labs share one order, so a lab
+can sit before a folder if you want it to.
 
-Open a class to see its seats. Show reveals a seat's code; Copy list copies
-all of them for a mail merge from your own email. Students click Log in ->
-Access Code Login and type the code. It works on any number of devices, and
-everything they type follows the code. The site stores no names or emails.
-You can give a seat a nickname only you see, give it a new code if one is
-shared or lost (the old one stops working at once), add seats, or close the
-class at the end of term, which keeps all work but stops logins.
+Draft labs and admin-only folders show a little badge and are invisible to
+students. When in doubt, click View as student.
 
 
-7. STUDENT WORK AND SAFETY
---------------------------
-Everything a logged-in student types is saved to their account as they type,
-and their photos are saved too, so a cleared browser or a new device gets it
-all back on login. Visitors without a login keep work only in their browser.
+Making a lab
+------------
+Click "+ Lab" and you get a form. The top half is housekeeping: a title, the
+link name that becomes the lab's web address, the folder it lives in, a
+one-line summary for the card, and two time estimates, one for the procedure
+and an optional one for the write-up. Fill in what you have; most of it can
+be changed later. The one thing to leave alone once a lab is live is the link
+name, because students will have bookmarked it.
 
-Stats -> Students lists accounts; Classes lists seats. Either lets you open a
-student's saved entries for any lab, read-only, with their photos, and export
-a CSV. Do not delete seats or classes mid-term; close the class instead.
+Status is where you decide who sees it. Draft means only admins. Published
+means everyone who is allowed to open it, and "Who can open it" sets that:
+everyone, anyone with a password, only certain classes and accounts, or only
+admins. Most labs simply inherit whatever their folder says.
+
+Lower down you can give the lab a cover picture for its card, a slideshow of
+photos or videos, and files to download such as a PDF of the original
+handout. Transparent PNGs look best as covers; the Zoom slider lets you make
+a small icon and a big screenshot look the same size.
+
+Then comes the part that matters, the procedure itself, which you build in
+the Builder.
 
 
-8. GET HELP
+The Builder
 -----------
-When Get help is on for a lab, a logged-in student can send a question from
-the lab page. The ticked admins get an email within seconds, the Help button
-in the admin bar shows a count, and the browser tab title shows it too.
-Open Help, click the thread, type a reply. The student sees it on their lab
-page immediately, or in their thread next time they open the lab. Mark
-resolved when done; the student can still write back.
+The Builder shows your lab as a stack of blocks, in the order students will
+read them. Think of each block as one thing on the page: a heading, a
+paragraph, a table to fill in, a question with an answer box, a photo slot.
+You add blocks with the row of buttons under the list, open a block by
+clicking its little triangle, and move it with the arrows or by dragging the
+handle on its left. The copy icon duplicates a block, the plus inserts one
+after it, the eye jumps to it in the preview, and the cross deletes it.
+
+A few blocks are worth knowing well. Text is for writing, and it understands
+simple formatting: two hashes for a heading, stars around a word for bold,
+and maths between dollar signs, so $\Delta H$ comes out as a proper delta.
+Numbered steps is for the procedure proper; every step gets its own notes
+box for students. Data table is a table where you choose which cells are
+blank for students to fill in and which are fixed, and you can let them add
+rows. Question is a prompt with an answer box, and under "More options" you
+can give it a heading, a hint, a required flag or a word target. Photo slot
+is where a student adds a picture of their work. Picture is a picture you
+supply, in three sizes, and small or medium pictures placed one after another
+line up side by side. Graph draws a live chart from one of your data tables
+and fills in as students type. Callout gives you the coloured safety, warning
+and tip boxes.
+
+Below the Procedure list is a second list called Report. Anything you put
+there gives students a Report tab with a guided write-up, and the "Include"
+buttons let you pull a table, a graph, an answer or a photo from the
+procedure into the report so students see their own data in context.
+
+Under the Builder is a preview that shows the lab exactly as students will
+see it and updates as you type. Click Refresh if it ever lags behind.
+
+One rule to remember: every block that stores student work has a permanent
+name, shown on the right of its card. The site assigns these when you first
+save. On a lab that students have already started, do not rename them,
+because their saved answers are attached to those names. The site will warn
+you if a change would hide anyone's work, and rewording, reordering and
+adding blocks are always safe.
+
+Click Save at the bottom when you are done. The site keeps a copy of the
+previous version every time you save.
+
+If you have a lab as a PDF, there is a shortcut: Claude can convert it into
+the site's lab-file format using the guide in the repository, and the Lab
+file view has an Import button that turns that file into blocks.
 
 
-9. SITE TEXT, DESIGN AND THEMES
--------------------------------
-Site text: every label, button and message students see, grouped by page.
-Change wording there, never in the code.
-
-Design: Palette (the site's default colours), Cards (size, image shape,
-dividers) and Layout (page width, reading width, centring the lab column,
-space above a lab, title size). Changes preview live; Save publishes them,
-Cancel discards, Reset returns to the original look.
-
-Theme boxes in the footer let each person pick Original, Paper or Graphite
-(dark) for themselves. That choice follows a logged-in student between
-devices and does not change the site for anyone else.
+Folders
+-------
+Folders work much like labs: a name, a link name, a description, an optional
+cover picture, an order number, and the same "Who can open it" choice.
+Folders can sit inside folders. The usual arrangement is one folder per
+course, set to "Selected student accounts" with the right classes ticked, so
+every lab inside is open to that course and closed to everyone else.
 
 
-10. IF SOMETHING LOOKS WRONG
-----------------------------
-Hard-refresh first (Cmd+Shift+R). Every change to the site goes out as a
-new version and a cached old copy is the usual cause. If the site shows a
-"saved copy" banner, the database could not be reached; wait a minute. Do
-not edit labs while that banner is up.
+Classes and access codes
+------------------------
+Students do not make accounts, and the site never stores their names or
+emails. Instead you create a class, and the site makes one access code for
+every seat in it. Open Classes, click New class, give it a name, a short
+prefix such as P3, and the number of seats, and the codes are ready.
+
+Open the class to see them. Show reveals a code; Copy list copies all of them
+so you can mail-merge them from your own email. A student clicks Log in, then
+Access Code Login, and types their code. It works on as many devices as they
+like, and everything they type follows the code. You can give a seat a
+nickname that only you see, issue a new code if one gets shared (the old one
+stops working immediately), add seats mid-term, and at the end of term close
+the class, which keeps all the work but stops logins. Please close classes
+rather than deleting them.
+
+
+Students' work, and keeping it safe
+-----------------------------------
+Everything a logged-in student types is saved to their account as they type,
+and so are their photos. A cleared browser, a crashed laptop or a new device
+makes no difference; they log in and it is all there. Someone browsing
+without logging in keeps their work in the browser only.
+
+You can look at any student's saved work. Stats, then Students, lists
+accounts; Classes lists seats. Either one opens a read-only copy of a
+student's entries for a lab, photos included, and can export a spreadsheet.
+
+The site is built to never lose student work through an ordinary action, and
+it will stop and ask before anything risky. If a warning ever mentions
+students' saved work, read it twice.
+
+
+Get help
+--------
+Tick "Get help" in a lab's form and a Get help button appears at the top of
+that lab. A logged-in student can type a question and send it. Within seconds
+the admins you ticked get an email, the Help button in the admin bar shows a
+count, and the browser tab title shows it too. Open Help, click the thread,
+and reply. The student sees your answer on their lab page immediately, or
+waiting in their thread next time they open the lab. Mark it resolved when
+you are done; they can still write back.
+
+You can also write an automatic reply that students see the moment they send,
+so they know someone has been notified.
+
+
+Words, colours and layout
+-------------------------
+Site text is where every label, button and message lives, grouped by page.
+If you want the site to say "TA" instead of "teacher", that is where you
+change it.
+
+Design has three tabs. Palette sets the site's default colours. Cards sets
+how the home grid looks. Layout sets page width, reading width, whether the
+lab column is centred, and how much space sits above a lab. Everything
+previews live; Save publishes it, Cancel undoes it, and Reset brings back the
+original look.
+
+Separately, the three little boxes in the footer let anyone pick Original,
+Paper or Graphite, which is dark mode, for themselves. That choice is
+personal and follows a student between devices.
+
+
+When something looks odd
+------------------------
+Hard-refresh first: hold Shift and click reload, or press Cmd+Shift+R. Every
+change to the site goes out as a new version, and an old cached copy explains
+most oddities. If a yellow banner says the site is showing a saved copy, the
+database could not be reached for a moment; wait a minute and reload, and do
+not edit labs until it clears.
