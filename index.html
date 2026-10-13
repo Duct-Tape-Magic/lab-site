@@ -1324,6 +1324,7 @@ const DEFAULTS = {
   entriesClearConfirm: 'This will permanently erase everything you have typed into this lab, including any photos you added. There is no undo. Erase it all?',
   entriesClearFailed: 'Could not clear the saved copy on the server. Check your connection and try again.',
   entriesSaveFailed: 'This browser is not letting the site save your work (storage is blocked or full). Copy your answers somewhere safe.',
+  photoSyncFailed: 'The photo is saved on this device but could not be saved to your account. Check your connection and try again.',
   notesLabel: 'My notes',
   notesPlaceholder: 'Type your notes…',
   answerPlaceholder: 'Type your answer…',
@@ -1377,7 +1378,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Lab page', keys: ['labMinutes', 'labReportMinutes', 'labUpdated', 'labFilesLabel', 'labDownloadFile', 'labViewInline', 'labPrint', 'labDownloadPdf', 'pdfPreparing', 'pdfReady', 'pdfFailed', 'labCopyLink', 'labLinkCopied', 'labNoContent'] },
   { label: 'Locked labs', keys: ['lockPasswordTitle', 'lockPasswordPrompt', 'lockPasswordPlaceholder', 'lockPasswordButton', 'lockPasswordWrong', 'lockTooMany', 'lockAccountsTitle', 'lockAccountsPrompt', 'lockNotAllowed', 'lockAdminOnly', 'lockUnavailable'] },
   { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'accessTitle', 'accessHint', 'accessButton', 'accessWrong', 'accessArchived', 'seatName', 'seatShort', 'seatUnknown', 'seatManaged', 'privacyLink', 'privacyTitle'] },
-  { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'entriesClearFailed', 'entriesSaveFailed', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
+  { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'entriesClearFailed', 'entriesSaveFailed', 'photoSyncFailed', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
   { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef', 'reportNoPhotoYet'] },
   { label: 'Get help', keys: ['helpButton', 'helpIntro', 'helpLoginNudge', 'helpMessagePlaceholder', 'helpSend', 'helpSent', 'helpError', 'helpAutoReply', 'helpAutoLabel', 'helpYou', 'helpTeacher', 'helpResolvedNote', 'helpEmailFrom', 'helpEmailSubject'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
@@ -1399,7 +1400,7 @@ const TEXT_LABELS = {
   accountTitle: 'Account page title', accountSignedInAs: 'Signed-in-as line', accountSyncOn: 'Syncing note', accountHello: 'Greeting in the menu', accountDelete: 'Delete account button', accountDeleteConfirm: 'Delete account confirmation', accountDeleted: 'Account deleted message', accessTitle: 'Access code heading', accessHint: 'Access code hint', accessButton: 'Access code button', accessWrong: 'Wrong access code message', accessArchived: 'Closed access code message', seatName: 'Seat name ({cls}, {n})', seatShort: 'Short seat name ({n})', seatUnknown: 'Seat fallback name', seatManaged: 'Seat account note', privacyLink: 'Privacy link', privacyTitle: 'Privacy page title', privacyBody: 'Privacy page text',
   notFoundTitle: 'Not found title', notFoundBody: 'Not found text', notFoundHome: 'Not found home link', unavailableTitle: 'Unavailable title', unavailableBody: 'Unavailable text',
   fallbackBanner: 'Saved-copy banner', errorBanner: 'Error banner',
-  entriesInfo: 'Autosave notice', entriesSaved: 'Saved flash', entriesClear: 'Clear entries button', entriesClearFailed: 'Clear entries failed message', entriesSaveFailed: 'Local save failed message', entriesClearConfirm: 'Clear entries confirmation',
+  entriesInfo: 'Autosave notice', entriesSaved: 'Saved flash', entriesClear: 'Clear entries button', entriesClearFailed: 'Clear entries failed message', entriesSaveFailed: 'Local save failed message', photoSyncFailed: 'Photo account save failed message', entriesClearConfirm: 'Clear entries confirmation',
   notesLabel: 'Notes toggle', notesPlaceholder: 'Notes placeholder', answerPlaceholder: 'Answer placeholder', tableAddRow: 'Add row button',
   photoAdd: 'Add photo button', photoChange: 'Change photo button', photoRemove: 'Remove photo button',
   calloutSafety: 'Safety box label', calloutWarning: 'Caution box label', calloutInfo: 'Note box label', calloutTip: 'Tip box label', calloutHint: 'Hint box label', figurePending: 'Missing figure text', graphEmpty: 'Empty graph message',
@@ -2284,6 +2285,7 @@ function startAdminIdleWatch() {
 }
 async function deleteMyAccount() {
   if (!confirm(getText('accountDeleteConfirm'))) return;
+  try { await removePrivatePrefix(`photos/${state.session.user.id}`); } catch (e) { /* ignore */ }
   const { error } = await sb.rpc('delete_my_account');
   if (error) { toast(error.message, true); return; }
   const mine = ltScope();   // only this account's compartment on the device, entries and photos
@@ -3677,14 +3679,14 @@ async function deleteSeatConfirm(uid, seatNo) {
   const work = n ? `This seat has saved work in ${n} lab${n === 1 ? '' : 's'}. Deleting the seat erases that work permanently; there is no undo.` : 'Its access code and any entries saved under it are deleted. This cannot be undone.';
   if (!confirm(`Remove seat ${seatNo}? ${work}`)) return;
   if (n && prompt(`Type DELETE to confirm erasing seat ${seatNo}'s saved work:`) !== 'DELETE') { toast('Nothing deleted'); return; }
-  try { await rpc('delete_seat', { p_user: uid }); toast(`Seat ${seatNo} removed`); await openClass(classesView.classId); } catch (e) { toast(e.message, true); }
+  try { await removePrivatePrefix(`photos/${uid}`).catch(() => {}); await rpc('delete_seat', { p_user: uid }); toast(`Seat ${seatNo} removed`); await openClass(classesView.classId); } catch (e) { toast(e.message, true); }
 }
 async function deleteClassConfirm() {
   const c = classesView.cls;
   const labsWithWork = (classesView.seats || []).reduce((a, s) => a + (+s.entries || 0), 0);
   if (!confirm(`Delete "${c.name}" and all ${classesView.seats.length} seats, including every entry saved under them?${labsWithWork ? ` That is ${labsWithWork} saved lab${labsWithWork === 1 ? '' : 's'} of student work, erased permanently.` : ''} This cannot be undone. Consider "Close class" instead, which keeps everything.`)) return;
   if (prompt(`Type the class name to confirm deleting it:`) !== c.name) { toast('Name did not match; nothing deleted'); return; }
-  try { await rpc('delete_class', { p_class_id: c.id }); toast('Class deleted'); await renderClassesList(); } catch (e) { toast(e.message, true); }
+  try { for (const s of classesView.seats || []) await removePrivatePrefix(`photos/${s.user_id}`).catch(() => {}); await rpc('delete_class', { p_class_id: c.id }); toast('Class deleted'); await renderClassesList(); } catch (e) { toast(e.message, true); }
 }
 function copyText(t) { navigator.clipboard.writeText(t).then(() => toast('Copied'), () => prompt('Copy:', t)); }
 function copyCodeList() {
@@ -4318,6 +4320,39 @@ async function idbOp(mode, fn) { const db = await idb(); return new Promise((res
 const ltPhotoGet = key => idbOp('readonly', s => s.get(key)).catch(() => null);
 const ltPhotoSet = (key, val) => idbOp('readwrite', s => s.put(val, key));
 const ltPhotoDel = key => idbOp('readwrite', s => s.delete(key)).catch(() => null);
+/* ---------- Photo sync: a signed-in student's photos also live in the private bucket (photos/<user>/<lab>/<slot>.jpg),
+   so a cleared browser or a new device gets them back on login. The browser copy stays as the fast cache; admins read all. ---------- */
+function ltPhotoPath(uid, labId, photoId) { return `photos/${uid}/${labId}/${photoId}.jpg`; }
+async function dataUrlToBlob(url) { return (await fetch(url)).blob(); }
+function blobToDataUrl(blob) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); }); }
+async function ltPhotoRemoteList(uid, labId) {   // slot ids present in the account; null when the list could not be fetched (then nothing is pushed or pulled)
+  if (!sb || state.source !== 'live') return null;
+  const { data, error } = await sb.storage.from(CONFIG.PRIVATE_BUCKET).list(`photos/${uid}/${labId}`, { limit: 1000 });
+  if (error) { console.warn('photo list failed:', error.message); return null; }
+  return new Set((data || []).filter(o => o.id).map(o => o.name.replace(/\.jpg$/, '')));
+}
+async function ltPhotoUpload(uid, labId, photoId, dataUrl) {
+  const blob = await dataUrlToBlob(dataUrl);
+  const { error } = await sb.storage.from(CONFIG.PRIVATE_BUCKET).upload(ltPhotoPath(uid, labId, photoId), blob, { upsert: true, contentType: 'image/jpeg', cacheControl: '0' });
+  if (error) throw error;
+}
+async function ltPhotoDownload(uid, labId, photoId) {
+  const { data, error } = await sb.storage.from(CONFIG.PRIVATE_BUCKET).download(ltPhotoPath(uid, labId, photoId));
+  if (error || !data) return null;
+  return blobToDataUrl(data);
+}
+async function ltPhotoRemoteRemove(uid, labId, photoId) {
+  const { error } = await sb.storage.from(CONFIG.PRIVATE_BUCKET).remove([ltPhotoPath(uid, labId, photoId)]);
+  if (error) throw error;
+}
+async function removePrivatePrefix(prefix) {   // delete everything under photos/<user>[/<lab>] (the owner, or an admin)
+  if (!sb) return;
+  const { data, error } = await sb.storage.from(CONFIG.PRIVATE_BUCKET).list(prefix, { limit: 1000 });
+  if (error || !data) return;
+  const files = data.filter(o => o.id).map(o => `${prefix}/${o.name}`), folders = data.filter(o => !o.id).map(o => `${prefix}/${o.name}`);
+  for (const f of folders) await removePrivatePrefix(f);
+  if (files.length) await sb.storage.from(CONFIG.PRIVATE_BUCKET).remove(files);
+}
 async function ltPhotoKeys(prefix) { try { const keys = await idbOp('readonly', s => s.getAllKeys()); return (keys || []).filter(k => String(k).startsWith(prefix)); } catch (e) { return []; } }
 
 async function fileToDataUrl(file, maxEdge = 1400, quality = 0.8) {
@@ -4400,17 +4435,32 @@ function ltBind(area, labId, cloud = null, readOnly = false) {
     cb.checked = !!entries[cb.dataset.check];
     cb.addEventListener('change', () => { entries[cb.dataset.check] = cb.checked ? 1 : 0; save(); });
   });
-  if (!readOnly) area.querySelectorAll('.lt-photo').forEach(async box => {
-    const key = ltScope() + `${labId}|${box.dataset.photo}`, prev = box.querySelector('.lt-photo-preview');
+  // Photos: the device copy first, then the account copy (a signed-in student's own, or the reviewed student's for an admin).
+  const photoUid = readOnly ? (state.reviewing && state.reviewing.user_id) || null : (isStudent() && sb && state.source === 'live' ? state.session.user.id : null);
+  const remoteSlots = photoUid ? ltPhotoRemoteList(photoUid, labId) : Promise.resolve(null);   // one list request per lab
+  area.querySelectorAll('.lt-photo').forEach(async box => {
+    const photoId = box.dataset.photo, key = ltScope() + `${labId}|${photoId}`, prev = box.querySelector('.lt-photo-preview');
     const input = box.querySelector('input[type="file"]'), addLbl = box.querySelector('.lt-photo-add'), rm = box.querySelector('.lt-photo-remove');
-    const show = url => { prev.innerHTML = url ? `<img src="${url}" alt=""/>` : ''; box.classList.toggle('has-photo', !!url); rm.hidden = !url; addLbl.firstChild.textContent = getText(url ? 'photoChange' : 'photoAdd'); };
-    show(await ltPhotoGet(key));
+    const show = url => { prev.innerHTML = url ? `<img src="${url}" alt=""/>` : ''; box.classList.toggle('has-photo', !!url); if (rm) rm.hidden = !url; if (addLbl && addLbl.firstChild) addLbl.firstChild.textContent = getText(url ? 'photoChange' : 'photoAdd'); };
+    const local = readOnly ? null : await ltPhotoGet(key);
+    show(local);
+    if (photoUid) {
+      const remote = await remoteSlots;
+      if (remote) {
+        if (!local && remote.has(photoId)) { const url = await ltPhotoDownload(photoUid, labId, photoId); if (url) { if (!readOnly) await ltPhotoSet(key, url); show(url); } }   // new device or cleared browser: the account copy comes back
+        else if (local && !readOnly && !remote.has(photoId)) ltPhotoUpload(photoUid, labId, photoId, local).catch(e => console.warn('photo upload failed:', e.message));   // taken before sync existed: push it now
+      }
+    }
+    if (readOnly || !input) return;
     input.addEventListener('change', async () => {
       const f = input.files[0]; if (!f) return;
-      try { const url = await fileToDataUrl(f); await ltPhotoSet(key, url); show(url); flash(); } catch (e) { toast(e.message, true); }
+      try {
+        const url = await fileToDataUrl(f); await ltPhotoSet(key, url); show(url); flash();
+        if (photoUid) ltPhotoUpload(photoUid, labId, photoId, url).catch(e => { console.warn('photo upload failed:', e.message); toast(getText('photoSyncFailed'), true); });
+      } catch (e) { toast(e.message, true); }
       input.value = '';
     });
-    rm.addEventListener('click', async () => { await ltPhotoDel(key); show(null); });
+    rm.addEventListener('click', async () => { await ltPhotoDel(key); show(null); if (photoUid) ltPhotoRemoteRemove(photoUid, labId, photoId).catch(() => {}); });
   });
   ltBindGraphs(area);
   if (readOnly) {
@@ -4429,6 +4479,7 @@ function ltBind(area, labId, cloud = null, readOnly = false) {
     }
     try { localStorage.removeItem(ltKey(labId)); } catch (e) { /* ignore */ }
     for (const k of await ltPhotoKeys(ltScope() + labId + '|')) await ltPhotoDel(k);
+    if (isStudent() && sb && state.source === 'live') { try { await removePrivatePrefix(`photos/${state.session.user.id}/${labId}`); } catch (e) { /* ignore */ } }
     render();
   });
 }
