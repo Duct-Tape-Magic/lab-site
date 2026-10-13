@@ -421,9 +421,7 @@ create trigger on_auth_user_created after insert on auth.users
   for each row execute function public.handle_new_user();
 
 -- Students may update their own display name
-drop policy if exists "student updates self" on public.students;
-create policy "student updates self" on public.students for update
-  using (user_id = auth.uid()) with check (user_id = auth.uid());
+drop policy if exists "student updates self" on public.students;   -- removed 2026-10-13: nothing on the site needs it, and it allowed self-renaming
 
 -- A student can delete their own account (cascades to students, lab_entries, group_members)
 create or replace function public.delete_my_account() returns void
@@ -595,6 +593,7 @@ begin
   update auth.users set email = v_email, encrypted_password = crypt(v_code, gen_salt('bf', 10)), updated_at = now() where id = p_user;
   update auth.identities set identity_data = identity_data || jsonb_build_object('email', v_email), updated_at = now() where auth.identities.user_id = p_user and provider = 'email';
   update seats set passcode = v_code where user_id = p_user;
+  delete from auth.sessions where user_id = p_user;   -- the old code stops working now, not at the next token refresh
   return v_code;
 end $$;
 
@@ -621,6 +620,7 @@ begin
   update classes set archived = p_archived where id = p_class_id;
   update auth.users set banned_until = case when p_archived then 'infinity'::timestamptz else null end, updated_at = now()
     where id in (select s.user_id from seats s where s.class_id = p_class_id);
+  if p_archived then delete from auth.sessions where user_id in (select s.user_id from seats s where s.class_id = p_class_id); end if;
 end $$;
 
 create or replace function public.list_classes()
@@ -803,6 +803,7 @@ language sql stable security definer set search_path = public as $$
   left join students st on st.user_id = t.user_id
   where t.id = p_thread
 $$;
+revoke execute on function public.help_thread_who(bigint) from public, anon, authenticated;   -- admin list and email trigger only (they run as owner)
 
 -- Student sends a question (creates the thread on first use). Reopens a resolved thread.
 create or replace function public.help_post(p_lab_id text, p_body text, p_block text default null) returns bigint

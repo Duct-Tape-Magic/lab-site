@@ -39,7 +39,7 @@ Headings (`#`, `##`, `###`), paragraphs, **bold**, *italic*, numbered lists (`1.
 | `\pagebreak` | Starts a new page when printed. |
 
 Notes on syntax:
-- Options go in square brackets, comma-separated: `[id=q1, lines=3]`. Values with commas or spaces can be quoted: `[title="Trial 1, run A"]`.
+- Options go in square brackets, comma-separated: `[id=ka-calc, lines=3]`. Ids should be descriptive words (`ka-acetic`, `mass-data`), never the automatic pattern of a letter plus a number such as `q1` or `table2`, which the site uses for blocks without an id. Values with commas or spaces can be quoted: `[title="Trial 1, run A"]`.
 - Content goes in curly braces and may span many lines. Braces must balance (LaTeX inside is fine).
 - Commands that stand alone (`\datatable`, `\answer`, `\photo`, `\video`, `\figure`, callouts, `\procedure`) go on their own line. `\input` sits inside a sentence.
 - Anything inside `$…$`, `$$…$$`, `\ce{…}` or backticks is left alone, so LaTeX like `\frac{}` never conflicts with commands.
@@ -164,11 +164,11 @@ To determine the $K_a$ of acetic acid (monoprotic) and the second $K_a$ of oxali
 
 1. At the half-equivalence point, $\text{pH} = \text{p}K_a$. Read the pH at half the equivalence volume and calculate $K_a$.
 
-\answer[id=q1, lines=3]{Show your calculation of $K_a$ for acetic acid.}
+\answer[id=ka-acetic, lines=3]{Show your calculation of $K_a$ for acetic acid.}
 
 2. Explain why the pH at the equivalence point is above 7.
 
-\answer[id=q2, lines=4]
+\answer[id=ka-oxalic, lines=4]
 
 \notes[id=reflection]{Reflection}
 

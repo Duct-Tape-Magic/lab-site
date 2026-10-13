@@ -58,6 +58,7 @@ language sql stable security definer set search_path = public as $$
   left join students st on st.user_id = t.user_id
   where t.id = p_thread
 $$;
+revoke execute on function public.help_thread_who(bigint) from public, anon, authenticated;
 
 -- Student sends a question (creates the thread on first use). Reopens a resolved thread.
 create or replace function public.help_post(p_lab_id text, p_body text, p_block text default null) returns bigint

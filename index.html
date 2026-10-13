@@ -664,6 +664,7 @@
   .pdf-doc .pdf-video { font-size: 12px; color: #444; margin: 8px 0; }
   .pdf-doc .rp-caption { color: #333; text-transform: none; letter-spacing: 0; font-style: italic; font-size: 11.5px; }
   .pdf-doc .lt-figure-pending { display: none; }
+  .pdf-doc .lt-pagebreak { display: block; height: 0; break-before: page; page-break-before: always; }
   .pdf-doc .badge { border-color: #888; color: #444; }
   .pdf-doc a { color: #111; text-decoration: none; }
   .pdf-doc li.task-list-item { list-style: none; margin-left: -1.2rem; }
@@ -927,7 +928,7 @@
       </div>
     </div>
     <div class="form-row access-list" id="lab-access-list" hidden></div>
-    <div class="form-row"><label style="display:flex; align-items:center; gap:0.5rem; text-transform:none; letter-spacing:0; font-size:14px;"><input type="checkbox" id="lab-help" onchange="renderLabHelpAdmins()"/> Show a "Get help" button at the top of this lab</label><div class="hint">Signed-in students can send a question from the lab page. Replies come from the Help panel; the student sees them on the lab page.</div>
+    <div class="form-row"><label style="display:flex; align-items:center; gap:0.5rem; text-transform:none; letter-spacing:0; font-size:14px;"><input type="checkbox" id="lab-help" onchange="if (this.checked) labHelpAdmins.autoTick = true; renderLabHelpAdmins()"/> Show a "Get help" button at the top of this lab</label><div class="hint">Signed-in students can send a question from the lab page. Replies come from the Help panel; the student sees them on the lab page.</div>
       <div id="lab-help-admins" style="margin-top:0.6rem;"></div>
       <div id="lab-help-auto-row" style="margin-top:0.8rem;"><label>Automatic reply to a student's first question (this lab)</label><textarea id="lab-help-auto" rows="2"></textarea><div class="hint">Shown in the student's thread right after they send, so they know it went somewhere. Leave empty to use the site-wide text from Site text ("Help: automatic first reply").</div></div></div>
 
@@ -1322,6 +1323,7 @@ const DEFAULTS = {
   entriesClear: 'Clear my entries',
   entriesClearConfirm: 'This will permanently erase everything you have typed into this lab, including any photos you added. There is no undo. Erase it all?',
   entriesClearFailed: 'Could not clear the saved copy on the server. Check your connection and try again.',
+  entriesSaveFailed: 'This browser is not letting the site save your work (storage is blocked or full). Copy your answers somewhere safe.',
   notesLabel: 'My notes',
   notesPlaceholder: 'Type your notes…',
   answerPlaceholder: 'Type your answer…',
@@ -1375,7 +1377,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Lab page', keys: ['labMinutes', 'labReportMinutes', 'labUpdated', 'labFilesLabel', 'labDownloadFile', 'labViewInline', 'labPrint', 'labDownloadPdf', 'pdfPreparing', 'pdfReady', 'pdfFailed', 'labCopyLink', 'labLinkCopied', 'labNoContent'] },
   { label: 'Locked labs', keys: ['lockPasswordTitle', 'lockPasswordPrompt', 'lockPasswordPlaceholder', 'lockPasswordButton', 'lockPasswordWrong', 'lockTooMany', 'lockAccountsTitle', 'lockAccountsPrompt', 'lockNotAllowed', 'lockAdminOnly', 'lockUnavailable'] },
   { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'accessTitle', 'accessHint', 'accessButton', 'accessWrong', 'accessArchived', 'seatName', 'seatShort', 'seatUnknown', 'seatManaged', 'privacyLink', 'privacyTitle'] },
-  { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'entriesClearFailed', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
+  { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'entriesClearFailed', 'entriesSaveFailed', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
   { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef', 'reportNoPhotoYet'] },
   { label: 'Get help', keys: ['helpButton', 'helpIntro', 'helpLoginNudge', 'helpMessagePlaceholder', 'helpSend', 'helpSent', 'helpError', 'helpAutoReply', 'helpAutoLabel', 'helpYou', 'helpTeacher', 'helpResolvedNote', 'helpEmailFrom', 'helpEmailSubject'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
@@ -1397,7 +1399,7 @@ const TEXT_LABELS = {
   accountTitle: 'Account page title', accountSignedInAs: 'Signed-in-as line', accountSyncOn: 'Syncing note', accountHello: 'Greeting in the menu', accountDelete: 'Delete account button', accountDeleteConfirm: 'Delete account confirmation', accountDeleted: 'Account deleted message', accessTitle: 'Access code heading', accessHint: 'Access code hint', accessButton: 'Access code button', accessWrong: 'Wrong access code message', accessArchived: 'Closed access code message', seatName: 'Seat name ({cls}, {n})', seatShort: 'Short seat name ({n})', seatUnknown: 'Seat fallback name', seatManaged: 'Seat account note', privacyLink: 'Privacy link', privacyTitle: 'Privacy page title', privacyBody: 'Privacy page text',
   notFoundTitle: 'Not found title', notFoundBody: 'Not found text', notFoundHome: 'Not found home link', unavailableTitle: 'Unavailable title', unavailableBody: 'Unavailable text',
   fallbackBanner: 'Saved-copy banner', errorBanner: 'Error banner',
-  entriesInfo: 'Autosave notice', entriesSaved: 'Saved flash', entriesClear: 'Clear entries button', entriesClearFailed: 'Clear entries failed message', entriesClearConfirm: 'Clear entries confirmation',
+  entriesInfo: 'Autosave notice', entriesSaved: 'Saved flash', entriesClear: 'Clear entries button', entriesClearFailed: 'Clear entries failed message', entriesSaveFailed: 'Local save failed message', entriesClearConfirm: 'Clear entries confirmation',
   notesLabel: 'Notes toggle', notesPlaceholder: 'Notes placeholder', answerPlaceholder: 'Answer placeholder', tableAddRow: 'Add row button',
   photoAdd: 'Add photo button', photoChange: 'Change photo button', photoRemove: 'Remove photo button',
   calloutSafety: 'Safety box label', calloutWarning: 'Caution box label', calloutInfo: 'Note box label', calloutTip: 'Tip box label', calloutHint: 'Hint box label', figurePending: 'Missing figure text', graphEmpty: 'Empty graph message',
@@ -1663,6 +1665,7 @@ function toggleAdminPreview() {
   document.body.classList.toggle('admin-mode', isAdmin());
   document.body.classList.toggle('admin-preview', !!state.adminPreview);
   closeModal('lab-modal'); renderChrome(); render();
+  if (!state.adminPreview) { helpAdminWatch(); helpAdminRefresh(); }
 }
 function labIsLive(lab) {
   if (lab.status === 'published') return true;
@@ -1775,7 +1778,8 @@ function renderMathIn(elements) {
     try {
       renderMathInElement(el, {
         delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }, { left: '\\(', right: '\\)', display: false }, { left: '\\[', right: '\\]', display: true }],
-        throwOnError: false, ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code', 'option']
+        throwOnError: false, ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code', 'option'],
+        ignoredClasses: ['lt-field', 'rp-copy', 'pdf-field', 'lt-graph', 'help-body', 'help-msgs']   // students' own text (e.g. "$4 and $8") must never be turned into math
       });
     } catch (e) { /* ignore */ }
   });
@@ -1788,6 +1792,11 @@ function render() {
   state.route = parseRoute();
   helpUnmount();
   const view = $('view');
+  if (state.source === 'none' && !state.labs.length && !state.folders.length) {   // live, snapshot and cache all failed
+    view.innerHTML = `<section class="page"><h1 class="page-title">${escapeHTML(getText('unavailableTitle'))}</h1><p style="max-width:var(--measure); color:var(--muted);">${escapeHTML(getText('unavailableBody'))}</p></section>`;
+    showBanner('error-banner', getText('unavailableBody'));
+    return;
+  }
   try {
     switch (state.route.view) {
       case 'home': renderHome(view); break;
@@ -1796,7 +1805,7 @@ function render() {
       case 'search': renderSearch(view); break;
       case 'signin': renderSignIn(view); break;
       case 'privacy': renderPrivacy(view); break;
-      case 'help': renderHome(view); if (isAdmin()) openHelpModal(state.route.id); else if (!state.session) openLogin(); break;
+      case 'help': { const id = state.route.id; renderHome(view); if (isAdmin()) { openHelpModal(id); try { history.replaceState(null, '', location.pathname + '#/'); } catch (e) { /* ignore */ } state.route = { view: 'home' }; } else if (!state.session) openLogin(); break; }
       default: renderNotFound(view);
     }
   } catch (e) {
@@ -1804,6 +1813,7 @@ function render() {
     view.innerHTML = `<section class="page"><h1 class="page-title">${escapeHTML(getText('unavailableTitle'))}</h1><p>${escapeHTML(getText('unavailableBody'))}</p></section>`;
   }
   window.scrollTo({ top: 0 });
+  if (helpAdmin.loaded) helpAdminCount();   // each view sets document.title; put the unread prefix back
 }
 
 function breadcrumbHTML(folderId, includeCurrent = true) {
@@ -2038,6 +2048,14 @@ async function signOutStudent() { await sb.auth.signOut(); state.session = null;
    Writes go through SQL functions (help_post / help_reply / help_set_status / help_seen); reads use RLS.
    ============================================================ */
 let help = { lab: null, thread: null, messages: [], channel: null, open: false };
+// Re-render a box without stealing the caret from a text field inside it (realtime events arrive while people type).
+function withFocusKept(render) {
+  const a = document.activeElement, id = a && a.id, sel = a && a.selectionStart != null ? [a.selectionStart, a.selectionEnd] : null;
+  render();
+  if (!id) return;
+  const el = $(id); if (!el || el === document.activeElement) return;
+  el.focus({ preventScroll: true }); if (sel && el.setSelectionRange) { try { el.setSelectionRange(sel[0], sel[1]); } catch (e) { /* ignore */ } }
+}
 function helpWhen(x) { const d = new Date(x); return isNaN(d) ? '' : d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
 function helpUnmount() {
   if (help.channel && sb) { try { sb.removeChannel(help.channel); } catch (e) { /* ignore */ } }
@@ -2045,14 +2063,15 @@ function helpUnmount() {
 }
 async function helpMount(lab) {
   if (!$('help-host')) return;
-  help.lab = lab;
+  const mine = help; help.lab = lab;   // `help` is replaced on every navigation; a late response for an old lab must not touch the new one
   if (isStudent() && sb && state.source === 'live') {
     try {
       const { data: t } = await sb.from('help_threads').select('*').eq('lab_id', lab.id).eq('user_id', state.session.user.id).maybeSingle();
-      if (t) { help.thread = t; await helpLoadMessages(); helpSubscribe(); }
+      if (help !== mine) return;
+      if (t) { help.thread = t; await helpLoadMessages(); if (help !== mine) return; helpSubscribe(); }
     } catch (e) { console.warn('help load failed:', e.message); }
   }
-  if (help.lab === lab) helpRender();
+  if (help === mine) helpRender();
 }
 async function helpLoadMessages() {
   if (!help.thread) return;
@@ -2100,7 +2119,7 @@ function helpRender() {
     }
     h += `</div>`;
   }
-  host.innerHTML = h + `</div>`;
+  withFocusKept(() => { host.innerHTML = h + `</div>`; });
   const list = host.querySelector('.help-msgs'); if (list) list.scrollTop = list.scrollHeight;
 }
 function helpMsgHTML(m) {
@@ -2118,11 +2137,13 @@ async function helpSend() {
   const ta = $('help-text'), btn = $('help-send'), st = $('help-status');
   const body = (ta.value || '').trim(); if (!body) { ta.focus(); return; }
   btn.disabled = true; st.textContent = '…';
+  const mine = help;
   try {
     const id = await rpc('help_post', { p_lab_id: help.lab.id, p_body: body, p_block: null });
-    if (!help.thread) { const { data: t } = await sb.from('help_threads').select('*').eq('id', id).maybeSingle(); help.thread = t || { id, status: 'open', unread_student: false }; helpSubscribe(); }
+    if (help !== mine) return;
+    if (!help.thread) { const { data: t } = await sb.from('help_threads').select('*').eq('id', id).maybeSingle(); if (help !== mine) return; help.thread = t || { id, status: 'open', unread_student: false }; helpSubscribe(); }
     else help.thread.status = 'open';
-    await helpLoadMessages();
+    await helpLoadMessages(); if (help !== mine) return;
     ta.value = ''; helpRender();
     const s2 = $('help-status'); if (s2) s2.textContent = getText('helpSent');
   } catch (e) { btn.disabled = false; st.textContent = getText('helpError') + ' ' + (e.message || ''); }
@@ -2131,12 +2152,13 @@ async function helpSend() {
 /* ---------- admin side ---------- */
 let helpAdmin = { threads: [], tab: 'open', thread: null, messages: [], channel: null, timer: null, loaded: false };
 function helpAdminWatch() {
-  if (!isAdmin() || !sb || helpAdmin.channel) return;
+  if (!isRealAdmin() || !sb || helpAdmin.channel) return;
   helpAdminRefresh();
   helpAdmin.channel = sb.channel('help-admin')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'help_threads' }, () => helpAdminRefreshSoon())
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'help_messages' }, p => {
-      if (helpAdmin.thread && p.new.thread_id === helpAdmin.thread.id && !helpAdmin.messages.some(m => m.id === p.new.id)) {
+      const open = $('help-modal').classList.contains('open');   // only a thread the admin is actually looking at counts as read
+      if (open && helpAdmin.thread && p.new.thread_id === helpAdmin.thread.id && !helpAdmin.messages.some(m => m.id === p.new.id)) {
         helpAdmin.messages.push(p.new);
         if (p.new.role === 'student') rpc('help_seen', { p_thread: helpAdmin.thread.id }).catch(() => {});
         helpAdminRenderThread();
@@ -2153,8 +2175,9 @@ function helpAdminStop() {
 }
 function helpAdminRefreshSoon() { clearTimeout(helpAdmin.timer); helpAdmin.timer = setTimeout(helpAdminRefresh, 300); }
 async function helpAdminRefresh() {
-  if (!isAdmin() || !sb) return;
-  try { helpAdmin.threads = (await rpc('list_help_threads')) || []; helpAdmin.loaded = true; } catch (e) { console.warn('help list failed:', e.message); return; }
+  if (!isRealAdmin() || !sb) return;
+  try { helpAdmin.threads = (await rpc('list_help_threads')) || []; helpAdmin.loaded = true; helpAdmin.error = null; }
+  catch (e) { console.warn('help list failed:', e.message); helpAdmin.error = e.message || String(e); if ($('help-modal').classList.contains('open') && !helpAdmin.thread) helpAdminRenderList(); return; }
   helpAdminCount();
   if ($('help-modal').classList.contains('open')) {
     if (helpAdmin.thread) { const t = helpAdmin.threads.find(x => x.id === helpAdmin.thread.id); if (t) { helpAdmin.thread = t; helpAdminRenderThread(); } else { helpAdmin.thread = null; helpAdminRenderList(); } }
@@ -2164,7 +2187,7 @@ async function helpAdminRefresh() {
 function helpAdminCount() {
   const n = helpAdmin.threads.filter(t => t.unread_admin && t.status === 'open').length;
   const el = $('help-count'); if (el) { el.textContent = n ? String(n) : ''; el.hidden = !n; }
-  document.title = document.title.replace(/^\(\d+\) /, ''); if (n && isAdmin()) document.title = `(${n}) ` + document.title;
+  document.title = document.title.replace(/^\(\d+\) /, ''); if (n && isRealAdmin()) document.title = `(${n}) ` + document.title;
 }
 async function openHelpModal(threadId) {
   if (!isAdmin()) return;
@@ -2177,8 +2200,9 @@ function helpAdminTab(tab) { helpAdmin.tab = tab; helpAdmin.thread = null; helpA
 function helpAdminRenderList() {
   const body = $('help-body'), tab = helpAdmin.tab;
   const threads = helpAdmin.threads.filter(t => tab === 'all' ? true : t.status === tab);
-  let h = `<div class="help-tabs">${['open', 'resolved', 'all'].map(k => `<button type="button" class="design-tab ${tab === k ? 'active' : ''}" onclick="helpAdminTab('${k}')">${k[0].toUpperCase() + k.slice(1)}</button>`).join('')}<span class="hint" style="margin:0 0 0 auto;">Students see your replies on the lab page, live.</span></div>`;
-  if (!threads.length) { body.innerHTML = h + `<p style="color:var(--muted);">No ${tab === 'all' ? '' : tab + ' '}help threads yet.</p>`; return; }
+  let h = helpAdmin.error ? `<div class="lt-error">Could not load help threads: ${escapeHTML(helpAdmin.error)} <button type="button" class="btn-small" onclick="helpAdminRefresh()">Retry</button></div>` : '';
+  h += `<div class="help-tabs">${['open', 'resolved', 'all'].map(k => `<button type="button" class="design-tab ${tab === k ? 'active' : ''}" onclick="helpAdminTab('${k}')">${k[0].toUpperCase() + k.slice(1)}</button>`).join('')}<span class="hint" style="margin:0 0 0 auto;">Students see your replies on the lab page, live.</span></div>`;
+  if (!threads.length) { body.innerHTML = h + (helpAdmin.error ? '' : `<p style="color:var(--muted);">No ${tab === 'all' ? '' : tab + ' '}help threads yet.</p>`); return; }
   const byLab = new Map();
   threads.forEach(t => { if (!byLab.has(t.lab_id)) byLab.set(t.lab_id, []); byLab.get(t.lab_id).push(t); });
   const groups = [...byLab.entries()].map(([labId, ts]) => ({ labId, ts, unread: ts.filter(t => t.unread_admin).length, latest: Math.max(...ts.map(t => +new Date(t.updated_at))) }))
@@ -2197,7 +2221,10 @@ function helpAdminRenderList() {
 async function helpAdminOpen(id) {
   const t = helpAdmin.threads.find(x => x.id === id); if (!t) return;
   helpAdmin.thread = t;
-  try { const { data } = await sb.from('help_messages').select('*').eq('thread_id', id).order('created_at'); helpAdmin.messages = data || []; } catch (e) { helpAdmin.messages = []; }
+  let msgs = [];
+  try { const { data } = await sb.from('help_messages').select('*').eq('thread_id', id).order('created_at'); msgs = data || []; } catch (e) { msgs = []; }
+  if (!helpAdmin.thread || helpAdmin.thread.id !== id) return;   // the admin moved on to another thread while this one loaded
+  helpAdmin.messages = msgs;
   if (t.unread_admin) { t.unread_admin = false; helpAdminCount(); rpc('help_seen', { p_thread: id }).catch(() => {}); }
   helpAdminRenderThread();
 }
@@ -2205,12 +2232,12 @@ function helpAdminRenderThread() {
   const t = helpAdmin.thread; if (!t) return;
   const lab = state.labs.find(l => l.id === t.lab_id);
   const prev = $('help-reply') ? $('help-reply').value : '';
-  $('help-body').innerHTML = `<div class="lt-toolbar" style="margin-bottom:1rem; align-items:center;"><button type="button" class="btn-small" onclick="helpAdmin.thread = null; helpAdminRenderList()">← All threads</button>
+  withFocusKept(() => { $('help-body').innerHTML = `<div class="lt-toolbar" style="margin-bottom:1rem; align-items:center;"><button type="button" class="btn-small" onclick="helpAdmin.thread = null; helpAdminRenderList()">← All threads</button>
       <span style="font-family:var(--font-heading); font-size:1.3rem;">${escapeHTML(t.who || 'Student')}</span>
       ${lab ? `<a class="hint" style="margin:0;" href="#/lab/${encodeURIComponent(lab.slug)}" onclick="closeModal('help-modal')">${escapeHTML(lab.title)}</a>` : ''}
       <button type="button" class="btn-small" style="margin-left:auto;" onclick="helpAdminStatus(${t.id}, '${t.status === 'open' ? 'resolved' : 'open'}')">${t.status === 'open' ? 'Mark resolved' : 'Reopen'}</button></div>
     <div class="help-msgs admin">${helpAdmin.messages.map(m => `<div class="help-msg ${m.role}"><div class="help-who">${m.role === 'admin' ? 'You' : m.role === 'auto' ? 'Automatic message' : escapeHTML(t.who || 'Student')} · ${escapeHTML(helpWhen(m.created_at))}</div>${m.block ? `<div class="help-where">${escapeHTML(m.block)}</div>` : ''}<div class="help-body">${escapeHTML(m.body)}</div></div>`).join('') || '<p class="hint">No messages.</p>'}</div>
-    <div class="help-form"><textarea id="help-reply" rows="3" maxlength="4000" placeholder="Reply…">${escapeHTML(prev)}</textarea><div class="help-actions"><button type="button" class="btn" onclick="helpAdminSend()">Send reply</button><span class="hint" style="margin:0;">Lands on the student's lab page instantly, or as a banner next time they open it.</span></div></div>`;
+    <div class="help-form"><textarea id="help-reply" rows="3" maxlength="4000" placeholder="Reply…">${escapeHTML(prev)}</textarea><div class="help-actions"><button type="button" class="btn" onclick="helpAdminSend()">Send reply</button><span class="hint" style="margin:0;">Lands on the student's lab page instantly, or in their thread next time they open it.</span></div></div>`; });
   const list = $('help-body').querySelector('.help-msgs'); if (list) list.scrollTop = list.scrollHeight;
 }
 async function helpAdminSend() {
@@ -2244,8 +2271,9 @@ async function adminIdleCheck() {
   if (Date.now() - last < ADMIN_IDLE_MS) return;
   try { localStorage.removeItem(ADMIN_IDLE_KEY); } catch (e) { /* ignore */ }
   helpAdminStop();
+  state.adminPreview = false; try { sessionStorage.removeItem('labsite.adminPreview'); } catch (e) { /* ignore */ }
   await sb.auth.signOut(); state.session = null; state.role = null;
-  document.body.classList.remove('admin-mode'); renderChrome(); render();
+  document.body.classList.remove('admin-mode', 'admin-preview'); renderChrome(); render();
   toast('Signed out after 24 hours without activity. Log in again to keep editing.');
 }
 function startAdminIdleWatch() {
@@ -2630,6 +2658,7 @@ async function checkSession() {
   try {
     const { data } = await sb.auth.getSession();
     state.session = data.session; state.role = roleFromSession(data.session);
+    await ltSwitchUser(data.session?.user?.id || null);
     await loadMySeat();
   } catch (e) { console.warn('session check failed', e); }
   document.body.classList.toggle('admin-mode', isAdmin());
@@ -2656,7 +2685,8 @@ async function tryLogin() {
     toast('That account is not an admin account.', true); return;
   }
   state.session = data.session; state.role = 'admin';
-  document.body.classList.add('admin-mode');
+  state.adminPreview = false; try { sessionStorage.removeItem('labsite.adminPreview'); } catch (e) { /* ignore */ }
+  document.body.classList.add('admin-mode'); document.body.classList.remove('admin-preview');
   closeModal('login-modal');
   await reloadCatalogue();
   toast('Welcome back');
@@ -3183,15 +3213,15 @@ function labWorkWarning(problems, oldText) {
 }
 
 // Which admins get the email when a student asks for help on this lab (table help_notify).
-let labHelpAdmins = { admins: [], checked: new Set(), loaded: false };
+let labHelpAdmins = { admins: [], checked: new Set(), loaded: false, autoTick: false, error: null, labId: null };
 async function loadLabHelpAdmins(labId) {
-  labHelpAdmins.loaded = false;
+  labHelpAdmins.loaded = false; labHelpAdmins.error = null; labHelpAdmins.labId = labId;
   try {
     const [admins, rows] = await Promise.all([rpc('list_admins'), labId ? sb.from('help_notify').select('user_id').eq('lab_id', labId) : Promise.resolve({ data: [] })]);
     labHelpAdmins.admins = admins || [];
     if (labId) labHelpAdmins.checked = new Set((rows.data || []).map(r => r.user_id));
     labHelpAdmins.loaded = true;
-  } catch (e) { console.warn('help admins:', e.message); }
+  } catch (e) { console.warn('help admins:', e.message); labHelpAdmins.error = e.message || String(e); }
   renderLabHelpAdmins();
 }
 function renderLabHelpAdmins() {
@@ -3199,13 +3229,16 @@ function renderLabHelpAdmins() {
   const autoRow = $('lab-help-auto-row'); if (autoRow) autoRow.style.display = $('lab-help').checked ? '' : 'none';
   if (!$('lab-help').checked) { box.innerHTML = ''; return; }
   const me = state.session?.user?.id;
-  if (me && labHelpAdmins.checked.size === 0 && labHelpAdmins.admins.some(a => a.user_id === me)) labHelpAdmins.checked.add(me);   // switching Get help on: you are the default recipient
+  // You are the default recipient only when Get help is switched on (new lab, or ticked in this session); an "untick everyone" choice stays.
+  if (labHelpAdmins.autoTick && me && labHelpAdmins.checked.size === 0 && labHelpAdmins.admins.some(a => a.user_id === me)) { labHelpAdmins.checked.add(me); labHelpAdmins.autoTick = false; }
+  if (labHelpAdmins.error) { box.innerHTML = `<div class="lt-error">Could not load the admin list (${escapeHTML(labHelpAdmins.error)}). <button type="button" class="btn-small" onclick="loadLabHelpAdmins(labHelpAdmins.labId)">Retry</button></div>`; return; }
   if (!labHelpAdmins.loaded) { box.innerHTML = '<div class="hint">Loading admins…</div>'; return; }
   box.innerHTML = `<div class="hint" style="margin-bottom:0.3rem;">Email these admins when a student asks (untick everyone for panel-only):</div>` +
     labHelpAdmins.admins.map(a => `<label style="display:flex; align-items:center; gap:0.5rem; text-transform:none; letter-spacing:0; font-size:13px; margin:0.2rem 0;"><input type="checkbox" data-help-admin="${escapeHTML(a.user_id)}" ${labHelpAdmins.checked.has(a.user_id) ? 'checked' : ''} onchange="this.checked ? labHelpAdmins.checked.add(this.dataset.helpAdmin) : labHelpAdmins.checked.delete(this.dataset.helpAdmin)"/> ${escapeHTML(a.email)}${a.user_id === me ? ' <span class="badge">you</span>' : ''}</label>`).join('') || '<div class="hint">No admins found.</div>';
 }
 async function openLabModal(id) {
   if (!isAdmin()) return;
+  if (state.source !== 'live') { toast('The site is showing a saved copy of its content right now, so labs cannot be edited safely. Try again in a minute.', true); return; }
   const lab = id ? state.labs.find(l => l.id === id) : null;
   let entry = null;
   if (lab) {
@@ -3244,7 +3277,7 @@ async function openLabModal(id) {
   $('lab-access').value = lab?.access || 'inherit'; updateAccessHint();
   $('lab-help').checked = !!lab?.help_enabled;
   $('lab-help-auto').value = lab?.help_auto_reply || ''; $('lab-help-auto').placeholder = getText('helpAutoReply');
-  labHelpAdmins = { admins: [], checked: new Set(), loaded: false };
+  labHelpAdmins = { admins: [], checked: new Set(), loaded: false, autoTick: !lab, error: null, labId: lab ? lab.id : null };
   loadLabHelpAdmins(lab ? lab.id : null);
   labCoverItem = lab?.cover_path ? parseMediaEntry(lab.cover_path) : null;
   labCoverZoom = lab?.cover_zoom || 100;
@@ -3315,6 +3348,7 @@ async function saveLab() {
     help_enabled: $('lab-help').checked,
     help_auto_reply: $('lab-help-auto').value.trim() || null
   };
+  if (original && originalEntry?.format === 'labtags' && format === 'html' && !confirm('This lab is a lab file. Saving it as Rich text replaces the whole procedure with what is in the rich-text box (empty unless you typed there). Continue?')) return;
   const btn = $('save-lab-btn'); btn.disabled = true; btn.textContent = 'Saving…';
   try {
     if (original) {
@@ -3353,6 +3387,7 @@ async function saveLab() {
   }
   btn.disabled = false; btn.textContent = 'Save';
   if (sel === 'builder' && buLabLive()) { bmFreezeAll(buLabLive()); buLastSerialized = $('lab-markup').value; }   // saved ids are now permanent
+  if (lab.help_enabled && !labHelpAdmins.loaded) toast('Saved, but the email recipients for Get help could not be loaded. Open the lab again to check who gets emailed.', true);
   closeModal('lab-modal');
   delete state.content[lab.id];
   await reloadCatalogue();
@@ -3362,10 +3397,11 @@ async function saveLab() {
 
 async function deleteLabById(id) {
   const lab = state.labs.find(l => l.id === id); if (!lab) return false;
-  let n = 0; try { const r = await sb.from('lab_entries').select('user_id', { count: 'exact', head: true }).eq('lab_id', id); n = r.count || 0; } catch (e) { /* unknown */ }
-  const work = n ? `\n\n${n} student${n === 1 ? ' has' : 's have'} saved work in this lab. Their entries stay in the database, but nothing on the site will show them any more.` : '';
+  let n = 0, unknown = false;
+  try { const r = await sb.from('lab_entries').select('user_id', { count: 'exact', head: true }).eq('lab_id', id); if (r.error || r.count == null) unknown = true; else n = r.count; } catch (e) { unknown = true; }
+  const work = unknown ? `\n\nCould not check whether students have saved work in this lab.` : n ? `\n\n${n} student${n === 1 ? ' has' : 's have'} saved work in this lab. Their entries stay in the database, but nothing on the site will show them any more.` : '';
   if (!confirm(`Delete "${lab.title}"? Its photos and files are removed too. This cannot be undone.${work}`)) return false;
-  if (n && prompt(`Type DELETE to confirm removing a lab with student work:`) !== 'DELETE') { toast('Nothing deleted'); return false; }
+  if ((n || unknown) && prompt(`Type DELETE to confirm removing a lab that may have student work:`) !== 'DELETE') { toast('Nothing deleted'); return false; }
   const { error } = await sb.from('labs').delete().eq('id', id);
   if (error) { toast('Could not delete: ' + error.message, true); return false; }
   await removeStoragePaths(await listStorageFolder(`labs/${id}`));
@@ -3548,8 +3584,13 @@ async function createClass() {
   if (!name) { toast('Give the class a name', true); return; }
   if (count < 1 || count > 200) { toast('Seats must be between 1 and 200', true); return; }
   const btn = $('cls-create-btn'); btn.disabled = true; btn.textContent = 'Creating…';
-  try { const id = await rpc('create_class', { p_name: name, p_prefix: prefix }); await rpc('add_seats', { p_class_id: id, p_count: count }); toast(`${name} created with ${count} access codes`); await openClass(id); }
-  catch (e) { toast('Could not create the class: ' + e.message, true); btn.disabled = false; btn.textContent = 'Create class'; }
+  let id = null;
+  try { id = await rpc('create_class', { p_name: name, p_prefix: prefix }); }
+  catch (e) { toast('Could not create the class: ' + e.message, true); btn.disabled = false; btn.textContent = 'Create class'; return; }
+  try { await rpc('add_seats', { p_class_id: id, p_count: count }); toast(`${name} created with ${count} access codes`); }
+  catch (e) { toast(`"${name}" was created, but its seats could not be added (${e.message}). Open it and use "Add seats…".`, true); }
+  btn.disabled = false; btn.textContent = 'Create class';
+  await openClass(id);
 }
 async function openClass(id) {
   const body = $('classes-body'); body.innerHTML = '<p style="color:var(--muted);">Loading…</p>';
@@ -3681,7 +3722,7 @@ $('admin-email').addEventListener('keydown', e => { if (e.key === 'Enter') addAd
 /* ============================================================
    STATS PANEL (admin): activity, students, results
    ============================================================ */
-let statsRange = 30, statsTab = 'overview', statsCache = {};
+let statsRange = 30, statsTab = 'overview', statsCache = {}, statsReq = 0;
 async function openStatsModal() {
   openModal('stats-modal');
   statsCache = {};
@@ -3691,7 +3732,8 @@ function switchStatsTab(tab) {
   statsTab = tab;
   document.querySelectorAll('#stats-tabs .design-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
   const body = $('stats-body'); body.innerHTML = '<p style="color:var(--muted);">Loading…</p>';
-  ({ overview: renderStatsOverview, students: renderStatsStudents, results: renderStatsResults })[tab]().catch(e => { body.innerHTML = `<div class="lt-error">${escapeHTML(e.message || String(e))}</div>`; });
+  const req = ++statsReq;   // a slower earlier request must not overwrite the tab the admin is now looking at
+  ({ overview: renderStatsOverview, students: renderStatsStudents, results: renderStatsResults })[tab](req).catch(e => { if (req !== statsReq) return; body.innerHTML = `<div class="lt-error">${escapeHTML(e.message || String(e))}</div>`; });
 }
 function setStatsRange(n) { statsRange = n; statsCache = {}; switchStatsTab('overview'); }
 function labTitle(id) { const l = state.labs.find(x => x.id === id); return l ? l.title : id; }
@@ -3710,7 +3752,7 @@ function barChart(rows, key, label) {
   return svg + '</svg>';
 }
 async function rpc(name, args) { const { data, error } = await sb.rpc(name, args); if (error) throw error; return data; }
-async function renderStatsOverview() {
+async function renderStatsOverview(req) {
   const body = $('stats-body'); const n = statsRange;
   const [summary, daily, top, labDaily] = await Promise.all([
     rpc('stats_summary', { n_days: n }), rpc('stats_daily', { n_days: n }), rpc('stats_top_labs', { n_days: n, lim: 100 }),
@@ -3721,6 +3763,7 @@ async function renderStatsOverview() {
   const devices = Object.entries(summary.devices || {}).map(([k, v]) => `${k}: ${v}`).join(' · ') || 'no data';
   const perLab = {};
   if (Array.isArray(labDaily)) labDaily.forEach(r => { (perLab[r.lab_id] = perLab[r.lab_id] || []).push(r); });
+  if (req !== undefined && req !== statsReq) return;
   body.innerHTML = `
     <div class="lt-toolbar" style="margin-bottom:1rem;">${[7, 30, 90].map(d => `<button type="button" class="btn-small ${statsRange === d ? 'active' : ''}" onclick="setStatsRange(${d})">Last ${d} days</button>`).join('')}<span class="hint" style="margin:0 0 0 auto;">Devices: ${escapeHTML(devices)}</span></div>
     <div class="stat-tiles">${tiles}</div>
@@ -3742,11 +3785,12 @@ async function loadStudentsAndEntries() {
   statsCache.students = [...(s.data || []), ...seatRows]; statsCache.entries = e.data || [];
   return statsCache;
 }
-async function renderStatsStudents() {
+async function renderStatsStudents(req) {
   const body = $('stats-body'); const { students, entries } = await loadStudentsAndEntries();
   const adminIds = new Set(); try { (await rpc('list_admins')).forEach(a => adminIds.add(a.user_id)); } catch (e) { /* ignore */ }
   const list = students.filter(s => !adminIds.has(s.user_id));
   const byUser = {}; entries.forEach(e => { (byUser[e.user_id] = byUser[e.user_id] || []).push(e); });
+  if (req !== undefined && req !== statsReq) return;
   body.innerHTML = `
     <div class="lt-toolbar" style="margin-bottom:1rem;"><span class="hint" style="margin:0;">${list.length} student account${list.length === 1 ? '' : 's'}</span>${list.some(s => s.seat) ? `<button type="button" class="btn-small" onclick="toggleAllCodes(this)">Show all access codes</button>` : ''}<button type="button" class="btn-small" style="margin-left:auto;" onclick="exportStudentsCsv()">Export CSV</button></div>
     ${list.length ? `<div style="overflow-x:auto;"><table class="stats-table"><thead><tr><th>Name</th><th>Email / access code</th><th>Joined</th><th>Labs with entries</th><th>Last activity</th></tr></thead><tbody>${list.map(s => {
@@ -3763,12 +3807,13 @@ function revealCode(btn) {
 }
 function toggleAllCodes(btn) { document.querySelectorAll('#stats-body .code-hidden button').forEach(b => revealCode(b)); btn.remove(); }
 function showStudentLabs(uid) { const el = $('studentlabs-' + uid); if (el) el.hidden = !el.hidden; }
-async function renderStatsResults() {
+async function renderStatsResults(req) {
   const body = $('stats-body'); const { students, entries } = await loadStudentsAndEntries();
   const labIds = [...new Set(entries.map(e => e.lab_id))].filter(id => state.labs.some(l => l.id === id));
   const current = statsCache.resultsLab || labIds[0];
   const rows = entries.filter(e => e.lab_id === current);
   const byUser = Object.fromEntries(students.map(s => [s.user_id, s]));
+  if (req !== undefined && req !== statsReq) return;
   body.innerHTML = `
     <div class="form-row"><label>Lab</label><select id="stats-lab" onchange="statsCache.resultsLab = this.value; switchStatsTab('results')">${labIds.length ? labIds.map(id => `<option value="${id}" ${id === current ? 'selected' : ''}>${escapeHTML(labTitle(id))}</option>`).join('') : '<option value="">No entries saved yet</option>'}</select></div>
     ${current ? `<div class="lt-toolbar" style="margin-bottom:1rem;"><span class="hint" style="margin:0;">${rows.length} student${rows.length === 1 ? '' : 's'} with entries</span><button type="button" class="btn-small" style="margin-left:auto;" onclick="exportLabEntriesCsv('${current}')">Export all entries (CSV)</button></div>
@@ -3786,7 +3831,7 @@ async function reviewEntries(userId, labId) {
   if (lab) navigate('#/lab/' + encodeURIComponent(lab.slug));
 }
 function exitReview() { state.reviewing = null; render(); }
-function csvEscape(v) { const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+function csvEscape(v) { let s = v == null ? '' : String(v); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;   /* a leading =,+,-,@ would run as a formula in Excel/Sheets */ return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
 function downloadCsv(name, rows) {
   const csv = rows.map(r => r.map(csvEscape).join(',')).join('\n');
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv' })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
@@ -4009,7 +4054,15 @@ function ltSafeId(s) { return String(s || '').replace(/[^a-zA-Z0-9_.-]/g, '-'); 
 
 // Shared context per render: protected math/code, id counters, metadata, errors, widgets that need DOM binding
 function ltNewContext() { return { math: [], meta: {}, counters: {}, errors: [] }; }
-function ltNextId(ctx, kind) { ctx.counters[kind] = (ctx.counters[kind] || 0) + 1; return `${kind}${ctx.counters[kind]}`; }
+function ltNextId(ctx, kind) {   // skips ids the file assigns explicitly (e.g. id=q1), which would otherwise collide with the automatic q1
+  let id; do { ctx.counters[kind] = (ctx.counters[kind] || 0) + 1; id = `${kind}${ctx.counters[kind]}`; } while (ctx.explicit && ctx.explicit.has(id));
+  return id;
+}
+function ltExplicitIds(source) {   // every id=… written in the file, as ltSafeId would normalise it
+  const out = new Set(); const re = /\\[a-z]+\[([^\]\n]*)\]/g; let m;
+  while ((m = re.exec(source || ''))) { const im = /(?:^|[\s,])id\s*=\s*["']?([A-Za-z0-9_.-]+)/.exec(m[1]); if (im) out.add(ltSafeId(im[1])); }
+  return out;
+}
 // mirrored by bmProtect in the builder; the builder test guards drift
 function ltProtect(text, ctx) {
   const stash = s => { ctx.math.push(s); return `LTMATH${ctx.math.length - 1}X`; };
@@ -4128,7 +4181,7 @@ function ltWidget(name, o, body, ctx, widgets) {
     }
     case 'figure': {
       const src = (body || '').trim().replace(/^img:/, '');
-      const cap = o.caption ? `<figcaption>${ltInline(o.caption, ctx)}</figcaption>` : '';
+      const cap = o.caption && o.caption !== true ? `<figcaption>${ltInline(String(o.caption), ctx)}</figcaption>` : '';
       const size = ['small', 'medium'].includes(String(o.size || '').toLowerCase()) ? ` size-${String(o.size).toLowerCase()}` : '';
       if (!src || /^(IMAGE|FIGURE)[_-]?\w*$/i.test(src)) return `<figure class="lt-figure"><div class="lt-figure-pending" data-pending="${escapeHTML(src)}">${escapeHTML(getText('figurePending'))}${src ? ` (${escapeHTML(src)})` : ''}<span class="lt-figure-upload-hint">Click to upload this picture</span></div>${cap}</figure>`;
       return `<figure class="lt-figure${size}"><img src="${escapeHTML(fileUrl(src))}" alt="${escapeHTML(o.caption || '')}" loading="lazy"/>${cap}</figure>`;
@@ -4171,7 +4224,7 @@ function ltDataTable(id, o, body, ctx) {
 
 // Full document → { html, meta, errors }
 function ltRender(source) {
-  const ctx = ltNewContext();
+  const ctx = ltNewContext(); ctx.explicit = ltExplicitIds(source);
   if (!window.marked) return { html: '<p>Markdown library missing.</p>', meta: {}, errors: ['marked not loaded'] };
   try {
     const protectedText = ltProtect(source || '', ctx);
@@ -4189,11 +4242,14 @@ function ltRender(source) {
     if (tpl.content.querySelector('h1')) [5, 4, 3, 2, 1].forEach(n => tpl.content.querySelectorAll('h' + n).forEach(h => { const d = document.createElement('h' + (n + 1)); d.innerHTML = h.innerHTML; h.replaceWith(d); }));
     let reportHtml = '';
     if (ctx.meta.report && ctx.meta.report.trim()) {
-      const rctx = ltNewContext(); rctx.counters = { ...ctx.counters }; rctx.math = ctx.math;   // the report body was protected with ctx, so its math tokens index ctx.math
+      const rctx = ltNewContext(); rctx.counters = { ...ctx.counters }; rctx.math = ctx.math; rctx.explicit = ctx.explicit;   // the report body was protected with ctx, so its math tokens index ctx.math
       const rw = []; const rt = ltExtractTags(ltProtect(ctx.meta.report, rctx), rctx, rw);
       reportHtml = ltRestore(ltInject(marked.parse(rt), rw), rctx);
       const rtpl = document.createElement('template'); rtpl.innerHTML = reportHtml;
       rtpl.content.querySelectorAll('img').forEach(img => { const src = img.getAttribute('src') || ''; if (src && !/^(https?:|data:|blob:)/.test(src)) img.setAttribute('src', fileUrl(src.replace(/^img:/, ''))); });
+      rtpl.content.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.removeAttribute('disabled'); cb.dataset.check = 'check' + (++n); });   // continues the procedure's numbering
+      rtpl.content.querySelectorAll('a[href^="http"]').forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
+      if (rtpl.content.querySelector('h1')) [5, 4, 3, 2, 1].forEach(k => rtpl.content.querySelectorAll('h' + k).forEach(h => { const d = document.createElement('h' + (k + 1)); d.innerHTML = h.innerHTML; h.replaceWith(d); }));
       ltGroupFigures(rtpl.content);
       reportHtml = rtpl.innerHTML; ctx.errors.push(...rctx.errors);
     }
@@ -4216,6 +4272,20 @@ function ltParseMeta(source) { // quick header read for the importer: title/summ
 
 /* ---------- Student entries: localStorage for text, IndexedDB for photos ---------- */
 const LT_STORE = 'labsite.entries.';
+// Device storage belongs to one account at a time. When a different account signs in on this device, the previous account's
+// local entries and photos are cleared first (its typed work already lives in its account; photos are device-only).
+// An anonymous visitor's local work is kept and adopted by the first account that signs in (the "finish, then log in" case).
+const LT_LAST_USER = 'labsite.lastUser';
+async function ltSwitchUser(userId) {
+  if (!userId) return;
+  let last = null; try { last = localStorage.getItem(LT_LAST_USER); } catch (e) { last = null; }
+  if (last && last !== userId) {
+    try { Object.keys(localStorage).filter(k => k.startsWith(LT_STORE)).forEach(k => localStorage.removeItem(k)); } catch (e) { /* ignore */ }
+    try { for (const k of await ltPhotoKeys('')) await ltPhotoDel(k); } catch (e) { /* ignore */ }
+    console.info('A different account signed in: cleared the previous account\'s local lab work on this device.');
+  }
+  try { localStorage.setItem(LT_LAST_USER, userId); } catch (e) { /* ignore */ }
+}
 function ltLoad(labId) { try { return JSON.parse(localStorage.getItem(LT_STORE + labId) || '{}'); } catch (e) { return {}; } }
 function ltStore(labId, entries) { try { localStorage.setItem(LT_STORE + labId, JSON.stringify(entries)); return true; } catch (e) { return false; } }
 function idb() {
@@ -4244,8 +4314,11 @@ async function fileToDataUrl(file, maxEdge = 1400, quality = 0.8) {
 
 async function ltFetchCloud(labId) {
   if (!sb || !isStudent() || state.source !== 'live') return null;
-  try { const { data } = await sb.from('lab_entries').select('data, updated_at').eq('lab_id', labId).maybeSingle(); return data || null; }
-  catch (e) { return null; }
+  try {
+    const { data, error } = await sb.from('lab_entries').select('data, updated_at').eq('lab_id', labId).eq('user_id', state.session.user.id).maybeSingle();
+    if (error) return null;            // unknown state: do not push over it
+    return data || { none: true };     // the account has no copy yet: local work may be pushed
+  } catch (e) { return null; }
 }
 // Text of an answer box with its line breaks. Chrome's insertText wraps pasted lines in <div>s, which textContent would flatten;
 // innerText turns block boundaries back into newlines (on a hidden pane it falls back to textContent, which is still correct for typed text).
@@ -4267,14 +4340,18 @@ function ltBind(area, labId, cloud = null, readOnly = false) {
     // Merge with the student's account copy: newer side wins; the older side is brought up to date.
     const useCloud = !!(cloud && cloud.data && (!entries._savedAt || new Date(cloud.updated_at) > new Date(entries._savedAt)));
     if (useCloud) { entries = { ...cloud.data, _savedAt: cloud.updated_at }; ltStore(labId, entries); }
-    else if (cloud !== null && entries._savedAt && (!cloud || new Date(entries._savedAt) > new Date(cloud.updated_at))) ltPushCloud(labId, entries);
+    else if (cloud && entries._savedAt && (cloud.none || new Date(entries._savedAt) > new Date(cloud.updated_at))) ltPushCloud(labId, entries);   // local is newer, or the account has nothing yet
   }
-  let timer = null, cloudTimer = null;
+  let timer = null, cloudTimer = null, pushInFlight = null, storeWarned = false;
   const flash = () => { const el = area.querySelector('.lt-saved'); if (!el) return; el.classList.add('show'); clearTimeout(flash._t); flash._t = setTimeout(() => el.classList.remove('show'), 1200); };
   const save = () => {
     if (readOnly) return;
-    clearTimeout(timer); timer = setTimeout(() => { entries._savedAt = new Date().toISOString(); ltStore(labId, entries); flash(); }, 300);
-    if (isStudent()) { clearTimeout(cloudTimer); cloudTimer = setTimeout(() => ltPushCloud(labId, entries), 1500); }
+    clearTimeout(timer); timer = setTimeout(() => {
+      entries._savedAt = new Date().toISOString();
+      if (ltStore(labId, entries)) flash();
+      else if (!storeWarned) { storeWarned = true; toast(getText('entriesSaveFailed'), true); }   // storage blocked or full: do not pretend
+    }, 300);
+    if (isStudent()) { clearTimeout(cloudTimer); cloudTimer = setTimeout(() => { pushInFlight = ltPushCloud(labId, entries).finally(() => { pushInFlight = null; }); }, 1500); }
   };
 
   // extra table rows first, so their fields exist before restore
@@ -4329,6 +4406,7 @@ function ltBind(area, labId, cloud = null, readOnly = false) {
   if (clearBtn) clearBtn.addEventListener('click', async () => {
     if (!confirm(getText('entriesClearConfirm'))) return;
     clearTimeout(timer); clearTimeout(cloudTimer);   // a pending autosave must not re-create what we are clearing
+    if (pushInFlight) { try { await pushInFlight; } catch (e) { /* ignore */ } }   // nor an upload that already left
     if (isStudent() && sb && state.source === 'live') {   // the account copy too, or the next load would just restore it
       const { error } = await sb.from('lab_entries').delete().eq('lab_id', labId).eq('user_id', state.session.user.id);
       if (error) { toast(getText('entriesClearFailed'), true); return; }
@@ -4367,7 +4445,8 @@ function ltCompileExpr(src) {
 function ltTableRows(area, tableId) {
   const wrap = area.querySelector(`.lt-table-wrap[data-table="${tableId}"]`); if (!wrap) return { header: [], rows: [] };
   const header = Array.from(wrap.querySelectorAll('thead th')).map(th => th.textContent.trim());
-  const rows = Array.from(wrap.querySelectorAll('tbody tr')).map(tr => Array.from(tr.children).map(td => parseFloat(String(td.textContent).replace(/,/g, '').trim())));
+  const cellText = td => { if (!td.querySelector('.katex')) return td.textContent; const c = td.cloneNode(true); c.querySelectorAll('.katex-mathml').forEach(x => x.remove()); return c.textContent; };   // KaTeX keeps a hidden MathML copy
+  const rows = Array.from(wrap.querySelectorAll('tbody tr')).map(tr => Array.from(tr.children).map(td => parseFloat(String(cellText(td)).replace(/,/g, '').trim())));
   return { header, rows };
 }
 function ltNiceTicks(min, max, count = 5) {
@@ -7026,6 +7105,7 @@ function buEquivalenceCheck(text) {
       const prevUser = state.session?.user?.id || null, nextUser = session?.user?.id || null;
       const was = isAdmin(); state.session = session; state.role = roleFromSession(session);
       if (prevUser === nextUser) return;
+      if (!nextUser) { state.adminPreview = false; try { sessionStorage.removeItem('labsite.adminPreview'); } catch (e) { /* ignore */ } }
       loadMySeat().then(() => { renderChrome(); if (state.route.view === 'signin') render(); });
       if (nextUser) loadUserTheme();
       document.body.classList.toggle('admin-mode', isAdmin());
@@ -7033,7 +7113,7 @@ function buEquivalenceCheck(text) {
       closeModal('login-modal');
       if (was !== isAdmin() && isAdmin() && event === 'SIGNED_IN') toast('Welcome back');
       if (isAdmin()) { adminIdleStamp = 0; adminTouch(); helpAdminWatch(); } else helpAdminStop();
-      reloadCatalogue();
+      (async () => { if (nextUser) await ltSwitchUser(nextUser); reloadCatalogue(); })();
     });
   } catch (e) {
     console.error(e);
