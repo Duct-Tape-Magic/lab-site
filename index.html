@@ -299,9 +299,6 @@
   .rich-content .katex { font-size: 1.05em; }
   .rich-content .katex-display { margin: 1.4rem 0; overflow-x: auto; overflow-y: hidden; }
   .home-intro { max-width: var(--measure); margin-bottom: 1rem; }
-  .home-intro-add { margin: 0 0 1rem; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
-  .home-intro-add a { color: var(--muted); text-decoration: none; }
-  .home-intro-add a:hover { color: var(--accent); }
   .home-nudge { font-size: 13px; color: var(--muted); max-width: var(--measure); margin: -0.25rem 0 1rem; }
   .home-nudge a { color: var(--accent); }
 
@@ -1929,10 +1926,9 @@ function renderHome(view) {
   document.title = getText('siteTitle');
   const items = itemsIn(null);
   const intro = getText('homeIntro');
-  const introEmpty = !intro || !intro.replace(/<p><br><\/p>/g, '').replace(/&nbsp;/g, ' ').replace(/<[^>]+>/g, '').trim();   // an emptied welcome block takes no space; admins get a small link to put one back
+  const introEmpty = !intro || !intro.replace(/<p><br><\/p>/g, '').replace(/&nbsp;/g, ' ').replace(/<[^>]+>/g, '').trim();   // an emptied welcome block renders nothing at all
   let html = `<section class="page">`;
   if (!introEmpty) html += `<div class="home-intro rich-content editable" data-edit="homeIntro" data-rich="true" onclick="handleEditableClick(event, 'homeIntro', true)">${intro}</div>`;
-  else if (isAdmin()) html += `<p class="home-intro-add"><a href="#" onclick="handleEditableClick(event, 'homeIntro', true); return false;">+ Add welcome text</a></p>`;
   if (!state.session) html += `<p class="home-nudge">${escapeHTML(getText('homeLoginNudge'))} <a href="#/signin">${escapeHTML(getText('signInLink'))}</a></p>`;
   if (!items.length) html += `<div class="empty-state" style="margin-top:2rem;">${escapeHTML(getText('homeEmpty'))}</div>`;
   else html += `<div style="margin-top:2rem;">${gridOrEmpty(items.map(itemCardHTML), '')}</div>`;
