@@ -41,6 +41,7 @@ Headings (`#`, `##`, `###`), paragraphs, **bold**, *italic*, numbered lists (`1.
 Notes on syntax:
 - Options go in square brackets, comma-separated: `[id=ka-calc, lines=3]`. Ids should be descriptive words (`ka-acetic`, `mass-data`), never the automatic pattern of a letter plus a number such as `q1` or `table2`, which the site uses for blocks without an id. Values with commas or spaces can be quoted: `[title="Trial 1, run A"]`.
 - Content goes in curly braces and may span many lines. Braces must balance (LaTeX inside is fine).
+- Links: ordinary Markdown `[words to show](https://address)`; students see only the words and it opens in a new tab. Never paste a bare long address into the text.
 - Commands that stand alone (`\datatable`, `\answer`, `\photo`, `\video`, `\figure`, callouts, `\procedure`) go on their own line. `\input` sits inside a sentence.
 - Anything inside `$…$`, `$$…$$`, `\ce{…}` or backticks is left alone, so LaTeX like `\frac{}` never conflicts with commands.
 

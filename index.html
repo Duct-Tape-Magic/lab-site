@@ -6222,7 +6222,7 @@ function buForm(b, list) {
       break;
     case 'text':
       h = `<div class="form-row"><label>Text</label>${buTextarea('text', b.text, 'str', 'rows="4"')}<div class="hint">Ordinary writing. Leave a blank line between paragraphs. Formulas written between dollar signs are typeset in the preview.</div></div>
-        <div class="bu-tools"><button type="button" class="btn-small" data-act="insert-input" data-field="text">Insert a fill-in box…</button><button type="button" class="btn-small" data-act="split-text" title="Split this block in two at the cursor">Split here</button></div>
+        <div class="bu-tools"><button type="button" class="btn-small" data-act="insert-input" data-field="text">Insert a fill-in box…</button><button type="button" class="btn-small" data-act="insert-link" title="Add a link that shows a short label instead of the whole address">Insert a link…</button><button type="button" class="btn-small" data-act="split-text" title="Split this block in two at the cursor">Split here</button></div>
         ${buChips(b, ['text'])}${buCommandNote([b.text])}`;
       break;
     case 'comment':
@@ -6708,6 +6708,7 @@ function buOnClick(e) {
     case 'popover-remove': buPopoverRemove(); break;
     case 'popover-cancel': buClosePopover(); break;
     case 'split-text': buSplitText(found, card); break;
+    case 'insert-link': buInsertLink(found, card); break;
     default: break;
   }
 }
@@ -6838,6 +6839,21 @@ function buShowBlock(b) {
   if (!t || (t.attr && !t.value)) { buHost.toast('The preview cannot jump to this kind of block.'); return; }
   const ok = buHost.showInPreview(t);
   if (ok === false) buHost.toast('Not in the preview yet. Refresh the preview and try again.');
+}
+// A link in a Text block: Markdown [label](address). Students see only the label; it opens in a new tab.
+function buInsertLink(f, card) {
+  if (!f || f.block.type !== 'text') return;
+  const ta = card.querySelector('[data-bind="text"]'); if (!ta) return;
+  const sel = ta.value.slice(ta.selectionStart || 0, ta.selectionEnd || 0).trim();
+  const url = (buHost.prompt ? buHost.prompt('Paste the web address to link to:') : prompt('Paste the web address to link to:')) ;
+  if (!url || !url.trim()) return;
+  const label = (buHost.prompt ? buHost.prompt('Words to show for the link:', sel || 'this page') : prompt('Words to show for the link:', sel || 'this page'));
+  if (!label || !label.trim()) return;
+  const clean = url.trim().replace(/[()\s]/g, encodeURIComponent), md = `[${label.trim().replace(/\]/g, ')')}](${clean})`;
+  const a = ta.selectionStart || 0, b = ta.selectionEnd || a;
+  ta.value = ta.value.slice(0, a) + md + ta.value.slice(b);
+  const pos = a + md.length; try { ta.setSelectionRange(pos, pos); } catch (e) { /* ignore */ }
+  ta.focus(); ta.dispatchEvent(new Event('input', { bubbles: true }));
 }
 function buSplitText(f, card) {
   if (!f || f.block.type !== 'text') return;
