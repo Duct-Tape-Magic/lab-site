@@ -18,6 +18,7 @@ A website where students open lab procedures (rich text, photos, YouTube video, 
 | `data/snapshot.json` | Fallback content, maintained by the Action. `data/snapshot.sample.json` is demo content for local previews (copy it over `snapshot.json` temporarily, never commit that). |
 | `docs/PLAN.md` | The implementation plan (architecture, schema, features, phases, decisions). |
 | `docs/LAB-FORMAT.md` | The lab file format: Markdown + LaTeX-style `\commands` for interactive labs. The owner hands this file to Claude together with a PDF to convert it. The admin Builder produces the same format. |
+| `docs/WIDGETS.md` | Plan for in-lab widgets (camera colorimeter first): catalog-driven Widget block, Widgets admin tab, Builder picker, record-into-fields rule, failure/Get-help rules. Not built yet; read before touching widgets. |
 | `OWNER-GUIDE.md` | Setup and day-to-day instructions for the owner. |
 | `.claude/launch.json` | `lab-static`: python http.server on port 8766 for browser previews. |
 
@@ -72,6 +73,7 @@ Verified so far only against the snapshot fallback (no Supabase project yet). Fi
 
 Added 2026-09-19: Google sign-in (Supabase Google provider; Google Cloud project `ohs-chem-labs`, OAuth client "OHS Chem Labs website", app published to production; consent screen support email whclark09@gmail.com). Student accounts: `#/signin` page with "Continue with Google" (creates the account on first use), `students` row auto-created by trigger `on_auth_user_created`, per-student `lab_entries` (user_id, lab_id, data jsonb, updated_at) synced by `ltFetchCloud`/`ltPushCloud` (newer side wins; photos stay local), `delete_my_account()` RPC. Any non-admin session is a student (`isStudent()`). Admins panel: `list_admins()` / `set_admin(email, bool)` RPCs; a person must have signed in once before being made admin; role lives in `app_metadata.role` so it takes effect on next sign-in. Editable `#/privacy` page (`privacyBody`) linked from the footer and from the Google consent screen.
 
+Planned 2026-10-15: widgets (see `docs/WIDGETS.md`); first wanted widget is a camera colorimeter. Nothing built.
 Added 2026-10-14: an emptied home welcome block renders nothing for anyone (the owner wants no welcome text; to bring it back, set site_content key homeIntro to HTML). Header title 1.38rem (was 1.5rem).
 Added 2026-10-13: Text blocks have an "Insert a link…" button (`buInsertLink`): asks for the address and the label, writes a Markdown link at the cursor (selected text becomes the default label).
 Added 2026-10-13: photo sync to the private bucket for signed-in students (see invariants). Text key `photoSyncFailed`.
