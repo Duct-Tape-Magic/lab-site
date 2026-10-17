@@ -52,5 +52,5 @@ Reads two small squares the student drags into place, a Reference (card of known
 
 1. Done 2026-10-16. Widget block end to end: tag + `WIDGETS` catalog + Builder card/picker + Widgets admin tab + three-state box + `print()`. `entriesSelfTest()` extended.
 2. Done 2026-10-16. Record-to-table through the existing add-row/save path (`ltWidgetHost`): a reading fills the first row whose target cells are all empty, else adds a row when the table has `addrows`, else Record is disabled with a note. Still to confirm on the live site: a recorded row syncing to the cloud and showing in admin review and the PDF (same path as typing, so expected to hold).
-3. Built 2026-10-16 as `widgets/colorimeter.v1.js`; the owner verified it on Mac, iPad and Android. Replaced 2026-10-17 by `colorimeter.v2.js` (two squares, reference correction), verified in the desktop preview with the demo source; **a real-phone check of v2 (dragging the squares by touch) is still to do.**
+3. Built 2026-10-16 as `widgets/colorimeter.v1.js`; the owner verified it on Mac, iPad and Android. Replaced 2026-10-17 by `colorimeter.v2.js` (two squares, reference correction), verified in the desktop preview with the demo source and by the owner on a phone on 2026-10-17 (touch-dragging the squares and recording).
 4. iframe bridge only when a simulation-sized widget is actually wanted.
