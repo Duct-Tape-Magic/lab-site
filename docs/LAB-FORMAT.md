@@ -36,7 +36,7 @@ Headings (`#`, `##`, `###`), paragraphs, **bold**, *italic*, numbered lists (`1.
 | `\figure[caption=…, size=small\|medium\|full]{path or IMAGE_n}` | A figure. `size` sets how wide it is shown: `full` (default, the text column), `medium` (about 60%) or `small` (about a third); use `small` for icons and simple diagrams, `full` for anything students must read values from. Consecutive `small` figures sit side by side three to a row, consecutive `medium` ones two to a row, so put related pictures (e.g. steps of a setup) on adjacent lines. Use `IMAGE_1`, `IMAGE_2`… for pictures from the PDF that the teacher must upload; the teacher replaces them with the site's "Insert image…" button, which uploads a PNG or JPG and writes the `\figure` line. Markdown images `![caption](path)` also work. |
 | `\safety{…}` `\warning{…}` `\info{…}` `\tip{…}` `\hint{…}` | Highlighted callout boxes. Markdown works inside. `[label=…]` overrides the box label. |
 | `\graph[table=…, x=…, y=…, type=…, fit=linear, title=…, xlabel=…, ylabel=…]{Optional caption}` | A live graph drawn from a `\datatable`. It redraws as the student types. See "Graphs" below. |
-| `\widget[type=colorimeter, id=…, table=…, columns=c2;c3;c4, sample=c1]{Optional instruction}` | An in-lab tool that uses the student's device and records what it reads into a `\datatable`. See "Widgets" below. |
+| `\widget[type=colorimeter, id=…, table=…, columns=c2;c3;c4, sample=c1, reference=255;255;255]{Optional instruction}` | An in-lab tool that uses the student's device and records what it reads into a `\datatable`. See "Widgets" below. |
 | `\pagebreak` | Starts a new page when printed. |
 
 Notes on syntax:
@@ -91,11 +91,13 @@ Options common to every widget:
 
 ### Colorimeter
 
-Reads the average colour of a small square at the centre of the camera picture and records **R, G, B** (0–255), one row per reading. Phone cameras adjust their exposure, so absolute values drift with lighting: have students record a white or blank reference in the same light, and keep the lighting the same across samples (the lab does this, not the tool).
+Shows the camera picture with two small squares the student drags into place: a **Reference** square on a card of known colour (normally a white card) and a **Sample** square on what is being measured. It records the sample's **R, G, B** (0–255) *corrected against the reference*, channel by channel: corrected = sample × reference colour ÷ what the camera reads on the reference. Phone cameras keep adjusting exposure and white balance, but both squares are in the same picture, so the drift moves both readings together and mostly cancels. The lab should still keep the card and the sample in the same light and tell students to hold the phone steady; very bright squares clip at 255 (the tool warns when the reference is clipped or dark). Camera values are gamma-encoded, so ratios are only roughly proportional to light intensity; for comparing tubes and plotting trends that is fine.
 
-- `columns=c2;c3;c4` the table columns (1-based, `c1`, `c2`, …) that take R, G and B, in that order. Default `c1;c2;c3`.
+- `columns=c2;c3;c4` the table columns (1-based, `c1`, `c2`, …) that take the corrected R, G and B, in that order. Default `c1;c2;c3`.
+- `rawcolumns=c5;c6;c7` optional columns for the camera's uncorrected R, G, B, when students should see what the correction did.
 - `sample=c1` an optional column for a sample name typed on the tool before recording.
-- `region=` the side of the sampled square in picture pixels; leave it out for automatic (about 4% of the picture).
+- `reference=255;255;255` the colour the reference card should read (default white). Use a measured value for a coloured reference.
+- `region=16` the side of each square in picture pixels. The default 16 averages 256 pixels per frame and 10 frames; 5 is noisy, and above about 24 the square no longer fits a thin tube.
 
 ```
 \datatable[id=color-data, title="Colour readings", addrows]{
@@ -104,7 +106,7 @@ Reads the average colour of a small square at the centre of the camera picture a
 | blank | ___ | ___ | ___ |
 }
 
-\widget[type=colorimeter, id=color-reader, table=color-data, columns=c2;c3;c4, sample=c1]{Hold the phone 10 cm above the cuvette so the square sits on the liquid. Keep the lamp in the same place for every tube, then tap Record.}
+\widget[type=colorimeter, id=color-reader, table=color-data, columns=c2;c3;c4, sample=c1]{Put the white card beside the cuvette. Drag the Reference square onto the card and the Sample square onto the liquid, keep the lamp still, then tap Record.}
 ```
 
 ## Report tab (write-up skeleton)

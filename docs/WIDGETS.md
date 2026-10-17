@@ -1,6 +1,6 @@
 # Widgets — plan
 
-Agreed with the owner on 2026-10-15. **Built 2026-10-16** (build-order steps 1–3: Widget block, record-to-table, colorimeter in `widgets/colorimeter.v1.js`; step 4, the iframe bridge, is not built). Read this whole file before touching widgets; the rules in "Student-facing behaviour" are not optional.
+Agreed with the owner on 2026-10-15. **Built 2026-10-16** (build-order steps 1–3: Widget block, record-to-table, colorimeter; step 4, the iframe bridge, is not built). **2026-10-17:** the colorimeter became the two-square version in `widgets/colorimeter.v2.js` (a draggable Reference square and Sample square; readings corrected against an admin-set reference colour, because phones keep auto-adjusting exposure and white balance and the camera API does not report those on iPhone, iPad or desktop browsers). The owner verified v1 on Mac, iPad and Android. Read this whole file before touching widgets; the rules in "Student-facing behaviour" are not optional.
 
 Where things are in `index.html`: the `WIDGETS` catalog, `widgetDefaults`/`widgetSettings`/`widgetEnabled`, `ltWidgetBlock` (static HTML), `ltLoadWidgetFile`, `ltStopWidgets`, `ltWidgetHost` (the record path, built inside `ltBind` from the tables' shared `tableApi`) and `ltBindWidgets` (the three states) sit after `ltBindGraphs`; `openWidgetsModal`/`renderWidgetsList`/`setWidgetEnabled` (admin tab, `site_content._widgets`) sit before the personal-theme code; the Builder has `widget` in `BM_TYPES`, `buFormWidget`, `buTableSelect`, `buOpenWidgetPicker` and the `wcols`/`wcol`/`whelp` write kinds. `entriesSelfTest()` renders a widget and records a row through the real host. Student-facing strings are the `widget*` text keys. The widget file is versioned in its name: a new version is a new file plus a change to `WIDGETS.colorimeter.file`.
 
@@ -39,7 +39,7 @@ An interactive tool inside a lab that uses the device (camera, timer, sensors, a
 
 ## Widget 1: Colorimeter
 
-Reads the average colour of a small square at the centre of the camera view and records R, G, B.
+Reads two small squares the student drags into place, a Reference (card of known colour) and a Sample, and records the sample's R, G, B corrected channel by channel against the reference (corrected = sample × expected ÷ observed reference). Options `reference=r;g;b` (default white), `rawcolumns` for the uncorrected values. Square positions are remembered per lab and widget in localStorage (a convenience, not student data). The original single-square spec follows; sampling, Record and failure rules are unchanged.
 
 - **Camera:** `getUserMedia({ video: { facingMode: 'environment' } })`, falling back to any camera. `<video playsinline muted autoplay>` (iOS needs all three). HTTPS and a tap are required; the site already serves HTTPS.
 - **Sampling:** draw frames to a canvas at ~10 fps; sample a centred square of about 4% of the shorter frame side (option `region`, default ~24 px); average each channel; smooth over the last ~10 frames so the numbers steady. Show a reticle over the video, the R G B numbers large, and a swatch of the colour. Optional display extras later (hex, HSV). A **Hold** button freezes the reading; **Record** writes it.
@@ -52,5 +52,5 @@ Reads the average colour of a small square at the centre of the camera view and 
 
 1. Done 2026-10-16. Widget block end to end: tag + `WIDGETS` catalog + Builder card/picker + Widgets admin tab + three-state box + `print()`. `entriesSelfTest()` extended.
 2. Done 2026-10-16. Record-to-table through the existing add-row/save path (`ltWidgetHost`): a reading fills the first row whose target cells are all empty, else adds a row when the table has `addrows`, else Record is disabled with a note. Still to confirm on the live site: a recorded row syncing to the cloud and showing in admin review and the PDF (same path as typing, so expected to hold).
-3. Built 2026-10-16 as `widgets/colorimeter.v1.js`, verified in the desktop preview with the demo source. **Still to do: test on a real phone (iOS Safari and Android Chrome) and on a laptop without a camera.**
+3. Built 2026-10-16 as `widgets/colorimeter.v1.js`; the owner verified it on Mac, iPad and Android. Replaced 2026-10-17 by `colorimeter.v2.js` (two squares, reference correction), verified in the desktop preview with the demo source; **a real-phone check of v2 (dragging the squares by touch) is still to do.**
 4. iframe bridge only when a simulation-sized widget is actually wanted.
