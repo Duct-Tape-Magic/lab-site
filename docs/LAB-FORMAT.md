@@ -36,7 +36,7 @@ Headings (`#`, `##`, `###`), paragraphs, **bold**, *italic*, numbered lists (`1.
 | `\figure[caption=…, size=small\|medium\|full]{path or IMAGE_n}` | A figure. `size` sets how wide it is shown: `full` (default, the text column), `medium` (about 60%) or `small` (about a third); use `small` for icons and simple diagrams, `full` for anything students must read values from. Consecutive `small` figures sit side by side three to a row, consecutive `medium` ones two to a row, so put related pictures (e.g. steps of a setup) on adjacent lines. Use `IMAGE_1`, `IMAGE_2`… for pictures from the PDF that the teacher must upload; the teacher replaces them with the site's "Insert image…" button, which uploads a PNG or JPG and writes the `\figure` line. Markdown images `![caption](path)` also work. |
 | `\safety{…}` `\warning{…}` `\info{…}` `\tip{…}` `\hint{…}` | Highlighted callout boxes. Markdown works inside. `[label=…]` overrides the box label. |
 | `\graph[table=…, x=…, y=…, type=…, fit=linear, title=…, xlabel=…, ylabel=…]{Optional caption}` | A live graph drawn from a `\datatable`. It redraws as the student types. See "Graphs" below. |
-| `\widget[type=colorimeter, id=…, table=…, columns=c2;c3;c4, sample=c1, reference=255;255;255]{Optional instruction}` | An in-lab tool that uses the student's device and records what it reads into a `\datatable`. See "Widgets" below. |
+| `\widget[type=colorimeter, id=…, table=…, columns=c2;c3;c4, sample=c1]{Optional instruction}` | An in-lab tool that uses the student's device and records what it reads into a `\datatable`. See "Widgets" below. |
 | `\pagebreak` | Starts a new page when printed. |
 
 Notes on syntax:
@@ -97,7 +97,6 @@ Shows the camera picture with two small squares the student drags into place: a 
 - `rawcolumns=c5;c6;c7` optional columns for the camera's uncorrected R, G, B, when students should see what the correction did.
 - `sample=c1` an optional column for a sample name typed on the tool before recording.
 - `reference=255;255;255` the colour the reference card should read (default white). Use a measured value for a coloured reference.
-- `region=16` the side of each square in picture pixels. The default 16 averages 256 pixels per frame and 10 frames; 5 is noisy, and above about 24 the square no longer fits a thin tube.
 
 ```
 \datatable[id=color-data, title="Colour readings", addrows]{
