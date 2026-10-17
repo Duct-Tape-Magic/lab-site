@@ -1,6 +1,8 @@
 # Widgets — plan
 
-Agreed with the owner on 2026-10-15. Nothing here is built yet. Read this whole file before adding the Widget block or any widget; the rules in "Student-facing behaviour" are not optional.
+Agreed with the owner on 2026-10-15. **Built 2026-10-16** (build-order steps 1–3: Widget block, record-to-table, colorimeter in `widgets/colorimeter.v1.js`; step 4, the iframe bridge, is not built). Read this whole file before touching widgets; the rules in "Student-facing behaviour" are not optional.
+
+Where things are in `index.html`: the `WIDGETS` catalog, `widgetDefaults`/`widgetSettings`/`widgetEnabled`, `ltWidgetBlock` (static HTML), `ltLoadWidgetFile`, `ltStopWidgets`, `ltWidgetHost` (the record path, built inside `ltBind` from the tables' shared `tableApi`) and `ltBindWidgets` (the three states) sit after `ltBindGraphs`; `openWidgetsModal`/`renderWidgetsList`/`setWidgetEnabled` (admin tab, `site_content._widgets`) sit before the personal-theme code; the Builder has `widget` in `BM_TYPES`, `buFormWidget`, `buTableSelect`, `buOpenWidgetPicker` and the `wcols`/`wcol`/`whelp` write kinds. `entriesSelfTest()` renders a widget and records a row through the real host. Student-facing strings are the `widget*` text keys. The widget file is versioned in its name: a new version is a new file plus a change to `WIDGETS.colorimeter.file`.
 
 ## What a widget is
 
@@ -31,9 +33,9 @@ An interactive tool inside a lab that uses the device (camera, timer, sensors, a
 - **Report and PDF:** a widget prints nothing (or a small static snapshot such as a colour swatch); the data it recorded is in the table/field, which prints as usual. In admin read-only review the widget is not mounted.
 - **Test mode** (nice to have, not required): a `demo` option or query flag that substitutes a synthetic source (e.g. a drawn gradient) for the camera so the preview and `entriesSelfTest()` can exercise Record without hardware. Real-device testing on a phone is still needed for camera widgets.
 
-## Lab format addition (to add to LAB-FORMAT.md when built)
+## Lab format (documented in LAB-FORMAT.md, "Widgets")
 
-`\widget[type=colorimeter, id=colorReader, table=colorData, columns=c2;c3;c4, label=…]{Instruction shown above the widget}` — options are per type and documented in the catalog; `table`/`field`/`photo` name the target block by id. Stands on its own line.
+`\widget[type=colorimeter, id=color-reader, table=color-data, columns=c2;c3;c4, sample=c1, label=…, help=off]{Instruction shown above the widget}` — `type`, `id`, `table`, `label` and `help` are common; the rest are per type and listed in the catalog. Stands on its own line, in the procedure. The instruction defaults to the catalog's when the braces are empty.
 
 ## Widget 1: Colorimeter
 
@@ -48,7 +50,7 @@ Reads the average colour of a small square at the centre of the camera view and 
 
 ## Build order (each step a separate, verified push)
 
-1. Widget block end to end: tag + `WIDGETS` catalog + Builder card/picker + Widgets admin tab + three-state box + `print()`; prove it with a trivial placeholder or stopwatch widget. Run `entriesSelfTest()`; check that labs without widgets render byte-for-byte the same.
-2. Record-to-table through the existing add-row/save path; verify a recorded row syncs to the cloud and appears in admin review and the PDF.
-3. Colorimeter as a lazily loaded file, tested on a real phone (iOS Safari and Android Chrome) and on a laptop without a camera.
+1. Done 2026-10-16. Widget block end to end: tag + `WIDGETS` catalog + Builder card/picker + Widgets admin tab + three-state box + `print()`. `entriesSelfTest()` extended.
+2. Done 2026-10-16. Record-to-table through the existing add-row/save path (`ltWidgetHost`): a reading fills the first row whose target cells are all empty, else adds a row when the table has `addrows`, else Record is disabled with a note. Still to confirm on the live site: a recorded row syncing to the cloud and showing in admin review and the PDF (same path as typing, so expected to hold).
+3. Built 2026-10-16 as `widgets/colorimeter.v1.js`, verified in the desktop preview with the demo source. **Still to do: test on a real phone (iOS Safari and Android Chrome) and on a laptop without a camera.**
 4. iframe bridge only when a simulation-sized widget is actually wanted.

@@ -29,6 +29,7 @@
 - **Who can open it:** Public, password, selected student accounts, or admins only. Password and account locks are enabled in a later update; until then keep labs Public or Draft.
 - **Edit text anywhere:** in admin mode, hover any editable text (dashed outline) and click it. Every other label lives in admin bar → Site text.
 - **Look and feel:** admin bar → Design.
+- **Widgets (camera colorimeter):** in the Builder, the **Widget…** button adds a tool to a lab. The colorimeter reads R, G, B from the phone camera and, on Record, writes them as a row into the data table you pick on its card (choose the table, the three columns, and optionally a sample-name column; let that table add rows). It is passive until a student taps Start, shows a calm note on a device without a camera, and students can always type values in by hand. Admin bar → Widgets shows each tool with a live demo and an on/off switch (off = out of the Builder; existing labs keep working). Test a camera lab on a real phone before students use it.
 - **Share a lab:** open it and click Copy link. Links look like `…/#/lab/lab-3-titration` and never change unless you rename the link name.
 
 ## Interactive labs from a PDF

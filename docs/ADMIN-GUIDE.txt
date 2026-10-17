@@ -19,9 +19,10 @@ Google account, or open "Admin sign in" and use your email and password. Once
 you are in, a dark bar appears across the top of every page. That bar is
 admin mode. Students never see it.
 
-The bar has nine buttons. "+ Lab" and "+ Folder" create things. "Site text"
+The bar has ten buttons. "+ Lab" and "+ Folder" create things. "Site text"
 lets you reword anything students see. "Design" controls colours and layout.
-"Stats" shows who has been doing what. "Help" is where students' questions
+"Widgets" lists the tools a lab can include (see below) and lets you switch
+each one on or off. "Stats" shows who has been doing what. "Help" is where students' questions
 arrive. "Classes" is where you make access codes. "Admins" is where you add
 colleagues. And "View as student" shows you the site exactly as a student
 sees it, which is the single most useful button when you are not sure how
@@ -88,6 +89,22 @@ supply, in three sizes, and small or medium pictures placed one after another
 line up side by side. Graph draws a live chart from one of your data tables
 and fills in as students type. Callout gives you the coloured safety, warning
 and tip boxes.
+
+Widget… adds a tool that uses the student's device. The first one is a
+colorimeter: it opens the phone camera, reads the colour of a small square at
+the centre of the picture, and shows the red, green and blue values live.
+When the student taps Record, those three numbers go into one of your data
+tables as a new row, so they save, sync, print and review exactly like typed
+numbers. On the widget's card you choose the table, which columns take R, G
+and B, and optionally a column for a sample name the student types first.
+Put the widget right after the table it fills, and let that table add rows.
+Nothing happens until a student taps Start, so nobody reading on a laptop
+gets a camera prompt; a laptop without a camera just shows a note to open
+the lab on a phone. If the camera cannot start, the student sees a short
+note, the table to type into, and a Get help button if the lab has Get help
+on. Phone cameras adjust to the light, so write the lab to record a blank or
+white reference in the same lighting and keep the lamp still between samples.
+The Widgets button in the admin bar shows every available tool with a demo.
 
 Below the Procedure list is a second list called Report. Anything you put
 there gives students a Report tab with a guided write-up, and the "Include"

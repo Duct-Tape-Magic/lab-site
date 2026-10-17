@@ -563,6 +563,39 @@
   .lt-g-empty { font-size: 13px; fill: var(--muted); }
   .lt-graph-fit { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted); margin-top: 0.4rem; }
   .lt-graph-caption { font-size: 12px; color: var(--muted); margin-top: 0.3rem; }
+  /* ---------- Widgets: in-lab tools (docs/WIDGETS.md). The frame is the host's; .cm-* is the colorimeter's. ---------- */
+  .lt-widget { border: 0.5px solid var(--rule-strong); background: var(--card-bg); padding: 1rem 1.1rem; margin: 1.4rem 0; max-width: 680px; }
+  .lt-widget-head { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
+  .lt-widget-kind { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+  .lt-widget-title { font-family: var(--font-heading); font-size: 1.15rem; }
+  .lt-widget .lt-prompt { margin-bottom: 0.6rem; }
+  .lt-widget-foot { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-top: 0.6rem; }
+  .lt-widget-note { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+  .lt-widget-fail { border-left: 3px solid var(--rule-strong); padding: 0.6rem 0.8rem; margin-top: 0.4rem; font-size: 13px; line-height: 1.5; background: var(--bg); }
+  .lt-widget-target { outline: 2px solid var(--accent); outline-offset: 4px; }
+  .lt-widget-demo-link { background: none; border: none; color: var(--muted); font-size: 11px; text-decoration: underline; cursor: pointer; padding: 0; font-family: var(--font-body); }
+  .cm { display: grid; grid-template-columns: minmax(0, 1fr) minmax(170px, 0.8fr); gap: 1rem; align-items: start; }
+  .cm-view { position: relative; background: #000; aspect-ratio: 4 / 3; overflow: hidden; }
+  .cm-view video, .cm-view canvas.cm-src { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  .cm-reticle { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 24px; height: 24px; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(0,0,0,0.6); pointer-events: none; }
+  .cm.held .cm-view::after { content: 'HELD'; position: absolute; top: 6px; left: 8px; font-size: 10px; letter-spacing: 0.12em; color: #fff; background: rgba(0,0,0,0.55); padding: 2px 6px; }
+  .cm-swatch { width: 100%; height: 56px; border: 0.5px solid var(--rule-strong); background: #888; }
+  .cm-nums { display: flex; gap: 0.6rem; margin: 0.6rem 0 0.2rem; }
+  .cm-num { flex: 1; text-align: center; }
+  .cm-num b { display: block; font-family: var(--font-heading); font-size: 1.9rem; line-height: 1; font-weight: 400; font-variant-numeric: tabular-nums; }
+  .cm-num span { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .cm-hex { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted); }
+  .cm-sample { margin-top: 0.6rem; } .cm-sample label { display: block; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.25rem; } .cm-sample input { width: 100%; }
+  .cm-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.6rem; }
+  .cm-status { font-size: 12px; color: var(--accent); min-height: 1.2em; margin-top: 0.3rem; line-height: 1.4; }
+  .cm-status.muted { color: var(--muted); }
+  @media (max-width: 600px) { .cm { grid-template-columns: 1fr; } }
+  .wd-card { border: 0.5px solid var(--rule-strong); padding: 1.2rem 1.4rem; margin-bottom: 1.2rem; }
+  .wd-head { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; } .wd-head h3 { margin: 0; flex: 1; font-size: 1.3rem; }
+  .wd-meta { font-size: 12.5px; color: var(--muted); line-height: 1.6; } .wd-meta p { margin: 0 0 0.4rem; } .wd-meta b { color: var(--ink); font-weight: 500; } .wd-meta ul { margin: 0 0 0.6rem 1.2rem; } .wd-meta code { font-size: 11.5px; }
+  .wd-switch { display: flex; align-items: center; gap: 0.5rem; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); cursor: pointer; }
+  .wd-switch input { width: auto; accent-color: var(--accent); }
+  .wd-demo .lt-widget { margin: 0.6rem 0 0; }
   .stat-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; }
   .stat-tile { border: 0.5px solid var(--rule-strong); padding: 0.9rem 1rem; }
   .stat-num { font-family: var(--font-heading); font-size: 2rem; line-height: 1; }
@@ -727,6 +760,9 @@
   .bu-tools .btn-small { padding: 0.3rem 0.7rem; }
   .bu-palette { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.4rem 0 1rem; align-items: center; }
   .bu-palette .btn-small { font-size: 11px; padding: 4px 8px; }
+  .bu-widget-picker { flex-basis: 100%; border: 0.5px solid var(--rule-strong); background: var(--card-bg); padding: 0.7rem 0.9rem; margin-top: 0.3rem; }
+  .bu-widget-pick { display: flex; gap: 1rem; align-items: flex-start; padding: 0.5rem 0; border-top: 0.5px solid var(--rule); }
+  .bu-widget-pick b { display: block; font-weight: 500; font-size: 13px; } .bu-widget-pick p { margin: 0.15rem 0 0; font-size: 12px; color: var(--muted); line-height: 1.5; } .bu-widget-pick > div { flex: 1; }
   .bu-insert { margin: 0 0.6rem 0.6rem 2rem; padding: 0.5rem 0.6rem; border: 0.5px dashed var(--rule-strong); }
   .bu-drop-line { height: 2px; background: var(--accent); margin: -1px 0; pointer-events: none; }
   .bu-sheet-wrap { overflow-x: auto; margin: 0.5rem 0; }
@@ -797,7 +833,7 @@
     .slideshow-slide.active { display: block; }
     .slideshow-slide iframe, .embed-youtube { display: none; }
     .pdf-frame { display: none; }
-    .lt-status, .lt-photo-actions, .lt-table-add, .lt-photo:not(.has-photo) { display: none !important; }
+    .lt-status, .lt-photo-actions, .lt-table-add, .lt-photo:not(.has-photo), .lt-widget { display: none !important; }
     .lt-field, .lt-table td.lt-cell { background: white !important; border-color: #888 !important; box-shadow: none !important; }
     .lt-pagebreak { display: block; page-break-before: always; break-before: page; }
     .lt-notes:not([open]) { display: none; }
@@ -825,6 +861,7 @@
     <button onclick="openFolderModal()">+ Folder</button>
     <button onclick="openSiteTextModal()">Site text</button>
     <button onclick="openDesignModal()">Design</button>
+    <button onclick="openWidgetsModal()">Widgets</button>
     <button onclick="openStatsModal()">Stats</button>
     <button onclick="openHelpModal()">Help<span class="help-count" id="help-count" hidden></span></button>
     <button onclick="openClassesModal()">Classes</button>
@@ -1076,6 +1113,15 @@
 </div>
 
 <!-- Design -->
+<div class="modal-backdrop" id="widgets-modal">
+  <div class="modal" style="max-width:760px;">
+    <button class="modal-close" onclick="closeModal('widgets-modal')">×</button>
+    <h2>Widgets</h2>
+    <p style="font-size:13px; color:var(--muted); margin-bottom:1.5rem; line-height:1.6;">Tools a lab can include. A widget shows live readings and records them into one of the lab's ordinary data tables, so autosave, review, the report and the PDF work as usual; a student without the device types the values in by hand. In the Builder, use the <strong>Widget…</strong> button in the block row. Switching a widget off here keeps it out of the Builder; labs already using it keep working.</p>
+    <div id="widgets-list"></div>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="design-modal">
   <div class="modal" style="max-width:680px;">
     <button class="modal-close" onclick="cancelDesign()">×</button>
@@ -1366,7 +1412,23 @@ const DEFAULTS = {
   helpTeacher: 'Teacher',
   helpResolvedNote: 'This question was marked as answered. You can still write back.',
   helpEmailFrom: 'OHS Chem Labs <help@ohschemlabs.com>',
-  helpEmailSubject: 'Help request: {lab}'
+  helpEmailSubject: 'Help request: {lab}',
+  widgetStart: 'Start',
+  widgetStop: 'Stop',
+  widgetLoading: 'Starting…',
+  widgetNoCamera: 'This needs a camera. Open this lab on your phone and tap Start there.',
+  widgetPaused: 'Paused. Tap Start to continue.',
+  widgetFailed: 'The tool could not start. Type your values into the table instead.',
+  widgetDenied: 'The camera was not allowed. Allow it in your browser settings and tap Start again, or type your values into the table.',
+  widgetUnavailable: 'This tool is not available here. Type your values into the table instead.',
+  widgetGetHelp: 'Get help',
+  widgetHold: 'Hold',
+  widgetResume: 'Resume',
+  widgetRecord: 'Record',
+  widgetRecorded: 'Recorded in row {n}',
+  widgetTableFull: 'The table has no empty row left for this reading.',
+  widgetNoTable: 'This tool has no table to record into. Type your values into your data table.',
+  widgetSampleLabel: 'Sample name (optional)'
 };
 
 const SITE_TEXT_GROUPS = [
@@ -1381,6 +1443,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'entriesClearFailed', 'entriesSaveFailed', 'photoSyncFailed', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
   { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef', 'reportNoPhotoYet'] },
   { label: 'Get help', keys: ['helpButton', 'helpIntro', 'helpLoginNudge', 'helpMessagePlaceholder', 'helpSend', 'helpSent', 'helpError', 'helpAutoReply', 'helpAutoLabel', 'helpYou', 'helpTeacher', 'helpResolvedNote', 'helpEmailFrom', 'helpEmailSubject'] },
+  { label: 'Widgets (in-lab tools)', keys: ['widgetStart', 'widgetStop', 'widgetLoading', 'widgetNoCamera', 'widgetPaused', 'widgetFailed', 'widgetDenied', 'widgetUnavailable', 'widgetGetHelp', 'widgetHold', 'widgetResume', 'widgetRecord', 'widgetRecorded', 'widgetTableFull', 'widgetNoTable', 'widgetSampleLabel'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
 ];
 
@@ -1405,7 +1468,9 @@ const TEXT_LABELS = {
   photoAdd: 'Add photo button', photoChange: 'Change photo button', photoRemove: 'Remove photo button',
   calloutSafety: 'Safety box label', calloutWarning: 'Caution box label', calloutInfo: 'Note box label', calloutTip: 'Tip box label', calloutHint: 'Hint box label', figurePending: 'Missing figure text', graphEmpty: 'Empty graph message',
   procedureTab: 'Procedure tab label', reportTab: 'Report tab label', reportPreview: 'Preview report button', reportStyleTitle: 'Style guide heading', reportRequired: 'Required badge', reportHint: 'Hint toggle', reportWords: 'Word count', reportWordsAim: 'Word range hint', reportEmptyRequired: 'Empty required question note', reportTableLabel: 'Table caption word', reportFigureLabel: 'Figure caption word', reportMissingRef: 'Missing table/graph message', reportNoPhotoYet: 'No photo yet message',
-  helpButton: 'Get help button', helpIntro: 'Help panel intro', helpLoginNudge: 'Help: log-in nudge', helpMessagePlaceholder: 'Help: question placeholder', helpSend: 'Help: send button', helpSent: 'Help: sent confirmation', helpError: 'Help: send failed', helpAutoReply: 'Help: automatic first reply (site default)', helpAutoLabel: 'Help: label on the automatic reply', helpYou: 'Help: your name in the thread', helpTeacher: 'Help: teacher name in the thread', helpResolvedNote: 'Help: resolved note', helpEmailFrom: 'Help: email sender', helpEmailSubject: 'Help: email subject ({lab} = lab title)'
+  helpButton: 'Get help button', helpIntro: 'Help panel intro', helpLoginNudge: 'Help: log-in nudge', helpMessagePlaceholder: 'Help: question placeholder', helpSend: 'Help: send button', helpSent: 'Help: sent confirmation', helpError: 'Help: send failed', helpAutoReply: 'Help: automatic first reply (site default)', helpAutoLabel: 'Help: label on the automatic reply', helpYou: 'Help: your name in the thread', helpTeacher: 'Help: teacher name in the thread', helpResolvedNote: 'Help: resolved note', helpEmailFrom: 'Help: email sender', helpEmailSubject: 'Help: email subject ({lab} = lab title)',
+  widgetStart: 'Widget: Start button', widgetStop: 'Widget: Stop button', widgetLoading: 'Widget: starting message', widgetNoCamera: 'Widget: no-camera note', widgetPaused: 'Widget: paused note', widgetFailed: 'Widget: could-not-start message', widgetDenied: 'Widget: camera-not-allowed message', widgetUnavailable: 'Widget: not-available message', widgetGetHelp: 'Widget: Get help button',
+  widgetHold: 'Colorimeter: Hold button', widgetResume: 'Colorimeter: Resume button', widgetRecord: 'Colorimeter: Record button', widgetRecorded: 'Colorimeter: recorded message ({n} = row)', widgetTableFull: 'Colorimeter: table full message', widgetNoTable: 'Colorimeter: no table message', widgetSampleLabel: 'Colorimeter: sample name label'
 };
 
 /* ============================================================
@@ -1780,7 +1845,7 @@ function renderMathIn(elements) {
       renderMathInElement(el, {
         delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }, { left: '\\(', right: '\\)', display: false }, { left: '\\[', right: '\\]', display: true }],
         throwOnError: false, ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code', 'option'],
-        ignoredClasses: ['lt-field', 'rp-copy', 'pdf-field', 'lt-graph', 'help-body', 'help-msgs']   // students' own text (e.g. "$4 and $8") must never be turned into math
+        ignoredClasses: ['lt-field', 'rp-copy', 'pdf-field', 'lt-graph', 'lt-widget', 'help-body', 'help-msgs']   // students' own text (e.g. "$4 and $8") must never be turned into math
       });
     } catch (e) { /* ignore */ }
   });
@@ -1792,6 +1857,7 @@ function renderMathIn(elements) {
 function render() {
   state.route = parseRoute();
   helpUnmount();
+  ltStopWidgets($('view'));   // the page's camera widgets release the camera when the view is replaced
   const view = $('view');
   if (state.source === 'none' && !state.labs.length && !state.folders.length) {   // live, snapshot and cache all failed
     view.innerHTML = `<section class="page"><h1 class="page-title">${escapeHTML(getText('unavailableTitle'))}</h1><p style="max-width:var(--measure); color:var(--muted);">${escapeHTML(getText('unavailableBody'))}</p></section>`;
@@ -2543,7 +2609,7 @@ function buildPdfDocument(which, lab) {
   doc.innerHTML = `<div class="pdf-head"><div class="pdf-title">${escapeHTML(lab.title)}${which === 'report' ? ` — ${escapeHTML(getText('reportTab'))}` : ''}</div><div class="pdf-meta">${[who, new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })].filter(Boolean).map(escapeHTML).join(' · ')}</div></div>`;
   const body = src.cloneNode(true); body.hidden = false; body.removeAttribute('hidden');
   // remove interactive chrome
-  body.querySelectorAll('.rp-toolbar, .rp-doc-header, .rp-meter, .lab-toolbar, .lt-table-add, .lt-photo-actions, .lt-status, .rp-hint, .admin-inline, .review-banner, .lab-footer-nav, button, input[type="file"]').forEach(el => el.remove());
+  body.querySelectorAll('.rp-toolbar, .rp-doc-header, .rp-meter, .lab-toolbar, .lt-table-add, .lt-photo-actions, .lt-status, .rp-hint, .admin-inline, .lt-widget, .review-banner, .lab-footer-nav, button, input[type="file"]').forEach(el => el.remove());
   // answer boxes and cells → static text
   body.querySelectorAll('[contenteditable]').forEach(el => { const live = src.querySelector(`[data-field="${el.dataset.field}"]`); el.textContent = live ? ltFieldText(live) : ltFieldText(el); el.removeAttribute('contenteditable'); el.classList.add('pdf-field'); if (!el.textContent.trim()) { el.classList.add('pdf-empty'); if (el.tagName === 'TD') el.textContent = '\u00a0'; } });
   body.querySelectorAll('details').forEach(d => { const f = d.querySelector('.lt-field'); if (f && f.textContent.trim()) d.open = true; else if (!d.classList.contains('rp-hint')) d.remove(); });
@@ -3863,7 +3929,7 @@ async function exportLabEntriesCsv(labId) {
    MODALS
    ============================================================ */
 function openModal(id) { const bd = $(id); bd.classList.add('open'); const m = bd.querySelector('.modal'); if (m) m.scrollTop = 0; bd.scrollTop = 0; }
-function closeModal(id) { $(id).classList.remove('open'); }
+function closeModal(id) { $(id).classList.remove('open'); if (typeof ltStopWidgets === 'function') ltStopWidgets($(id)); }   // a widget running in a preview or demo stops with its modal
 document.querySelectorAll('.modal-backdrop').forEach(bd => bd.addEventListener('mousedown', e => { if (e.target === bd) bd.classList.remove('open'); }));
 
 /* ============================================================
@@ -3986,6 +4052,39 @@ function loadDesignFromSiteContent() {
   applySiteDesign();
 }
 
+/* ---------- Widgets admin tab: a showroom read from the WIDGETS catalog; per-site on/off in site_content key _widgets (JSON) ---------- */
+function openWidgetsModal() { renderWidgetsList(); openModal('widgets-modal'); }
+function renderWidgetsList() {
+  const box = $('widgets-list'); ltStopWidgets(box);
+  const s = widgetSettings();
+  box.innerHTML = Object.keys(WIDGETS).map(type => {
+    const W = WIDGETS[type], on = s[type] !== false;
+    const tag = `\\widget[type=${type}, id=…, ${W.options.filter(o => o.kind !== 'help').map(o => `${o.name}=…`).join(', ')}]{Instruction}`;
+    return `<div class="wd-card" data-type="${type}">
+      <div class="wd-head"><h3>${escapeHTML(W.label)}</h3><label class="wd-switch"><input type="checkbox" ${on ? 'checked' : ''} onchange="setWidgetEnabled('${type}', this.checked, this)"/> <span>${on ? 'On' : 'Off'}</span></label></div>
+      <div class="wd-meta">
+        <p>${escapeHTML(W.description)}</p>
+        <p><b>Needs:</b> ${escapeHTML(W.device)}</p>
+        <p><b>Records:</b> ${escapeHTML(W.records)}</p>
+        <p><b>Settings on its Builder card:</b></p><ul>${W.options.map(o => `<li>${escapeHTML(o.label)}${o.help ? ` <span>— ${escapeHTML(o.help)}</span>` : ''}</li>`).join('')}</ul>
+        <p><b>In a lab file:</b> <code>${escapeHTML(tag)}</code></p>
+        <p><b>Try it:</b> this demo reads a moving sample picture instead of the camera. Record only shows what would be written.</p>
+      </div>
+      <div class="wd-demo">${ltWidgetBlock('demo-' + type, { type, demo: true, columns: 'c2;c3;c4', sample: 'c1' }, '')}</div>
+    </div>`;
+  }).join('');
+  ltBindWidgets(box, { labId: 'demo', readOnly: false, demo: true, canRecord: () => ({ ok: true }), record: (t, o, v) => { toast(`Demo: would record ${v.join(', ')}${v.sample ? ` for "${v.sample}"` : ''}`); return { ok: true, row: 0 }; } });
+}
+async function setWidgetEnabled(type, on, input) {
+  if (!sb || state.source !== 'live') { toast('Not connected to the database; try again later.', true); if (input) input.checked = !on; return; }
+  const s = widgetSettings(); s[type] = !!on; const value = JSON.stringify(s);
+  const { error } = await sb.from('site_content').upsert({ key: '_widgets', value });
+  if (error) { toast('Could not save: ' + error.message, true); if (input) input.checked = !on; return; }
+  state.text._widgets = value;
+  const span = input && input.parentElement ? input.parentElement.querySelector('span') : null; if (span) span.textContent = on ? 'On' : 'Off';
+  toast(`${WIDGETS[type].label} switched ${on ? 'on' : 'off'}`);
+}
+
 /* ---------- Personal theme: each visitor/account can override the site's colours with one of the palettes.
    Kept in localStorage (instant, works for visitors) and, for signed-in users, in user_prefs so it follows the account. ---------- */
 const THEME_KEY = 'labsite.theme';
@@ -4025,9 +4124,9 @@ async function loadUserTheme() {   // the account's choice wins over this browse
    LAB TAGS — markdown + LaTeX-style commands for interactive lab reports.
    Spec for authors (and for Claude converting PDFs): docs/LAB-FORMAT.md
    ============================================================ */
-const LT_TAGS = new Set(['title', 'summary', 'tags', 'minutes', 'video', 'datatable', 'answer', 'notes', 'photo', 'input', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'report', 'style', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto']);
+const LT_TAGS = new Set(['title', 'summary', 'tags', 'minutes', 'video', 'datatable', 'answer', 'notes', 'photo', 'input', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'report', 'style', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto', 'widget']);
 const LT_META = new Set(['title', 'summary', 'tags', 'minutes', 'report', 'style']);   // stored on ctx, not rendered in place
-const LT_BLOCK = new Set(['video', 'datatable', 'answer', 'notes', 'photo', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto']);
+const LT_BLOCK = new Set(['video', 'datatable', 'answer', 'notes', 'photo', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto', 'widget']);
 
 if (window.marked) marked.use({ gfm: true, breaks: false, mangle: false, headerIds: false });
 
@@ -4200,6 +4299,11 @@ function ltWidget(name, o, body, ctx, widgets) {
     case 'usegraph': return `<div class="rp-mirror" data-mirror-graph="${ltSafeId((body || '').trim())}"></div>`;
     case 'useanswer': return `<div class="rp-mirror" data-mirror-answer="${ltSafeId((body || '').trim())}"></div>`;
     case 'usephoto': return `<div class="rp-mirror" data-mirror-photo="${ltSafeId((body || '').trim())}"></div>`;
+    case 'widget': {   // an in-lab tool from the WIDGETS catalog; it records into the table named by table=, never into fields of its own
+      const raw = s => String(s).replace(/LTMATH(\d+)X/g, (m, i) => ctx.math[+i] ?? m);
+      const opts = {}; for (const k of Object.keys(o)) opts[k] = typeof o[k] === 'string' ? raw(o[k]) : o[k];
+      return ltWidgetBlock(id, opts, body && body.trim() ? ltInline(body.trim(), ctx) : '');
+    }
     case 'graph': {
       // Options go into a JSON attribute: put the raw math/code back first (JSON.stringify escapes its backslashes), otherwise
       // ltRestore would later drop unescaped "\eta" into the JSON string and the graph would never draw.
@@ -4407,6 +4511,7 @@ function ltBind(area, labId, cloud = null, readOnly = false) {
   };
 
   // extra table rows first, so their fields exist before restore
+  const tableApi = new Map();   // table id → { cols, tbody, canAdd, addRow }: the Add row button and widgets share this one path (docs/WIDGETS.md)
   area.querySelectorAll('.lt-table-wrap').forEach(wrap => {
     const id = wrap.dataset.table, cols = +wrap.dataset.cols, btn = wrap.querySelector('.lt-table-add');
     const tbody = wrap.querySelector('tbody');
@@ -4418,7 +4523,9 @@ function ltBind(area, labId, cloud = null, readOnly = false) {
     };
     const extra = parseInt(entries[id + '.rows'], 10) || 0;
     for (let k = 0; k < extra; k++) addRow();
-    if (btn) btn.addEventListener('click', () => { const tr = addRow(); entries[id + '.rows'] = (parseInt(entries[id + '.rows'], 10) || 0) + 1; bindField(tr.querySelector('.lt-cell')); tr.querySelectorAll('.lt-cell').forEach(bindField); save(); });
+    const addRowBound = () => { const tr = addRow(); entries[id + '.rows'] = (parseInt(entries[id + '.rows'], 10) || 0) + 1; tr.querySelectorAll('.lt-cell').forEach(bindField); return tr; };
+    if (btn) btn.addEventListener('click', () => { addRowBound(); save(); });
+    tableApi.set(id, { id, cols, tbody, canAdd: !!btn && !readOnly, addRow: addRowBound });
   });
 
   function bindField(el) {
@@ -4464,6 +4571,7 @@ function ltBind(area, labId, cloud = null, readOnly = false) {
     rm.addEventListener('click', async () => { await ltPhotoDel(key); show(null); if (photoUid) ltPhotoRemoteRemove(photoUid, labId, photoId).catch(() => {}); });
   });
   ltBindGraphs(area);
+  area._ltWidgetHost = ltWidgetHost({ labId, readOnly, tableApi, entries, save }); ltBindWidgets(area, area._ltWidgetHost);   // the host is exposed for entriesSelfTest
   if (readOnly) {
     area.querySelectorAll('[contenteditable]').forEach(el => el.setAttribute('contenteditable', 'false'));
     area.querySelectorAll('[data-check]').forEach(cb => { cb.disabled = true; });
@@ -4595,6 +4703,152 @@ function ltBindGraphs(area) {
   let t = null;
   area.addEventListener('input', e => { if (e.target.closest('.lt-table-wrap')) { clearTimeout(t); t = setTimeout(redraw, 150); } });
   area.addEventListener('click', e => { if (e.target.closest('.lt-table-add')) setTimeout(redraw, 50); });
+}
+
+/* ---------- Widgets: in-lab tools that use the device and record into ordinary blocks (docs/WIDGETS.md) ----------
+   One catalog, read by the renderer (ltWidgetBlock), ltBind (ltBindWidgets), the Builder card and picker, the Widgets admin tab
+   and the PDF. A widget never owns student data: Record writes into the lab's own \datatable through ltBind's add-row + save path.
+   Heavy widgets live in widgets/<type>.<version>.js (vendored, no CDN), loaded the first time a student taps Start, and register
+   window.LabWidgets[type] = { mount(stage, ctx) → { stop } }. ctx: { opts, demo, text, fmt, canRecord(), record(values), fail(why) }. */
+const WIDGETS = {
+  colorimeter: {
+    label: 'Colorimeter',
+    description: 'Reads the average colour of a small square at the centre of the camera view and records the red, green and blue values (0–255), one table row per reading.',
+    device: 'Needs a camera; a phone works best. On a laptop without a camera the tool shows a calm note and students type the values in.',
+    records: 'One row per reading into a data table: R, G and B in the columns you choose, plus a sample name if you pick a column for it.',
+    file: 'widgets/colorimeter.v1.js',
+    options: [
+      { name: 'table', label: 'Data table to record into', kind: 'table', help: 'Let students add rows to that table, so every reading gets its own row.' },
+      { name: 'columns', label: 'Columns for the three values', kind: 'columns', parts: ['Red', 'Green', 'Blue'], default: 'c1;c2;c3' },
+      { name: 'sample', label: 'Column for the sample name', kind: 'column', none: 'No sample name', help: 'Students type a short name (blank, tube 3, …) before each reading.' },
+      { name: 'region', label: 'Size of the sampled square (pixels)', kind: 'num', help: 'Leave empty for automatic: about 4% of the picture.' },
+      { name: 'help', label: 'Offer Get help when it fails', kind: 'help' },
+    ],
+    instruction: 'Point the camera so the small square sits on the colour you want to read. Hold the phone steady and keep the lighting the same for every sample, then tap Record.',
+    print() { return ''; },
+  },
+};
+function widgetDefaults(type) { const out = {}; for (const o of (WIDGETS[type] && WIDGETS[type].options) || []) if (o.default != null) out[o.name] = o.default; return out; }
+function widgetSettings() { try { return JSON.parse(state.text._widgets || '{}') || {}; } catch (e) { return {}; } }
+function widgetEnabled(type) { return !!WIDGETS[type] && widgetSettings()[type] !== false; }   // on unless the owner switched it off (Widgets tab)
+
+// Static HTML for a widget block: the frame, the instruction and an empty body that ltBindWidgets fills with the Start button.
+function ltWidgetBlock(id, opts, promptHtml) {
+  const type = String(opts.type || '').trim(), W = WIDGETS[type];
+  if (!W) return `<div class="lt-widget" data-widget="${id}"><div class="lt-widget-head"><span class="lt-widget-kind">${escapeHTML(type || 'widget')}</span></div>${promptHtml ? `<div class="lt-prompt">${promptHtml}</div>` : ''}<div class="lt-widget-note">${escapeHTML(getText('widgetUnavailable'))}</div></div>`;
+  return `<div class="lt-widget" data-widget="${id}" data-widget-type="${escapeHTML(type)}" data-opts="${escapeHTML(JSON.stringify(opts))}">
+    <div class="lt-widget-head"><span class="lt-widget-kind">${escapeHTML(W.label)}</span>${opts.label ? `<span class="lt-widget-title">${escapeHTML(String(opts.label))}</span>` : ''}</div>
+    <div class="lt-prompt">${promptHtml || escapeHTML(W.instruction)}</div>
+    <div class="lt-widget-body"></div>
+  </div>`;
+}
+const ltWidgetFiles = {}, ltLiveWidgets = new Set();
+function ltLoadWidgetFile(src) {
+  if (!ltWidgetFiles[src]) ltWidgetFiles[src] = new Promise((res, rej) => {
+    const s = document.createElement('script'); s.src = src; s.async = true;
+    s.onload = () => res(); s.onerror = () => { delete ltWidgetFiles[src]; s.remove(); rej(new Error('widget file failed to load: ' + src)); };
+    document.head.appendChild(s);
+  });
+  return ltWidgetFiles[src];
+}
+function ltStopWidgets(root) {   // navigation, modal close, preview re-render: release every running widget (inside root, or all)
+  for (const w of [...ltLiveWidgets]) if (!root || root.contains(w.el)) w.stop('idle');
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) for (const w of [...ltLiveWidgets]) w.stop('paused'); });
+// The record path a lab gives its widgets: a reading fills the first row whose target cells are all empty, else a new row (addrows).
+function ltWidgetHost({ labId, readOnly, tableApi, entries, save }) {
+  const colIndex = (spec, cols) => { const m = /^c?(\d+)$/i.exec(String(spec || '').trim()); const n = m ? parseInt(m[1], 10) : 0; return n >= 1 && n <= cols ? n : 0; };
+  const columnsOf = (opts, cols) => String(opts.columns || '').split(/[;|,]/).map(s => colIndex(s, cols)).filter(Boolean);
+  const cell = (api, tr, ci) => tr.querySelector(`.lt-cell[data-field="${api.id}.r${Array.from(api.tbody.children).indexOf(tr) + 1}c${ci}"]`);
+  const freeRow = (api, cols) => Array.from(api.tbody.children).find(tr => cols.every(ci => { const td = cell(api, tr, ci); return td && !td.textContent.trim(); })) || null;
+  const targets = (api, opts) => ({ cols: columnsOf(opts, api.cols), sample: colIndex(opts.sample, api.cols) });
+  return {
+    labId, readOnly, demoLink: isRealAdmin(),
+    canRecord(tableId, opts) {
+      const api = tableApi.get(tableId); if (!api) return { ok: false, reason: getText('widgetNoTable') };
+      const t = targets(api, opts); if (!t.cols.length) return { ok: false, reason: getText('widgetNoTable') };
+      return freeRow(api, t.cols) || api.canAdd ? { ok: true } : { ok: false, reason: getText('widgetTableFull') };
+    },
+    record(tableId, opts, values) {   // values: strings in the order of opts.columns; values.sample optional
+      const api = tableApi.get(tableId); if (!api) return { ok: false, reason: getText('widgetNoTable') };
+      const t = targets(api, opts); if (!t.cols.length) return { ok: false, reason: getText('widgetNoTable') };
+      let tr = freeRow(api, t.cols);   // judged by the value columns: a row pre-labelled "blank" in a fixed sample cell is still free
+      if (!tr) { if (!api.canAdd) return { ok: false, reason: getText('widgetTableFull') }; tr = api.addRow(); }
+      const put = (ci, text) => { const td = cell(api, tr, ci); if (!td) return; td.textContent = String(text); entries[td.dataset.field] = String(text); };
+      t.cols.forEach((ci, i) => put(ci, values[i] ?? ''));
+      if (t.sample && values.sample != null && values.sample !== '') put(t.sample, values.sample);
+      save();
+      tr.dispatchEvent(new Event('input', { bubbles: true }));   // graphs, meters and report mirrors follow, exactly as after typing
+      return { ok: true, row: Array.from(api.tbody.children).indexOf(tr) + 1 };
+    },
+  };
+}
+// Three states per widget: idle (instruction + Start; nothing is asked of the device), running, failed (only after a tap broke something).
+function ltBindWidgets(area, host) {
+  area.querySelectorAll('.lt-widget[data-widget-type]').forEach(el => {
+    if (host.readOnly) { el.hidden = true; return; }   // admin review of a student's entries: the data is in the table, the tool is not mounted
+    const type = el.dataset.widgetType, W = WIDGETS[type], body = el.querySelector('.lt-widget-body');
+    if (!W || !body) return;
+    let opts = {}; try { opts = { ...widgetDefaults(type), ...JSON.parse(el.dataset.opts || '{}') }; } catch (e) { opts = widgetDefaults(type); }
+    const tableId = opts.table ? ltSafeId(opts.table) : '';
+    const target = () => (tableId ? area.querySelector(`.lt-table-wrap[data-table="${tableId}"]`) : null);
+    const needsCamera = /camera/i.test(W.device || '');
+    const live = { el, stop: null }; let running = null, gen = 0;
+    const btn = (cls, key, primary) => `<button type="button" class="btn-small${primary ? ' btn-primary-small' : ''} ${cls}">${escapeHTML(getText(key))}</button>`;
+    const stop = next => {   // next: 'idle' | 'paused' | 'failed'
+      gen++;
+      if (running) { try { running.stop(); } catch (e) { /* ignore */ } running = null; }
+      ltLiveWidgets.delete(live);
+      if (next !== 'failed') showIdle(next === 'paused' ? getText('widgetPaused') : '');
+    };
+    live.stop = stop;
+    const demoLink = () => (host.demoLink && !host.demo ? `<button type="button" class="lt-widget-demo-link">Try it with a sample image (admins)</button>` : '');
+    const wire = () => {
+      const s = body.querySelector('.lt-widget-start'); if (s) s.addEventListener('click', () => start(false));
+      const d = body.querySelector('.lt-widget-demo-link'); if (d) d.addEventListener('click', () => start(true));
+      const x = body.querySelector('.lt-widget-stop'); if (x) x.addEventListener('click', () => stop('idle'));
+      const h = body.querySelector('.lt-widget-help'); if (h) h.addEventListener('click', () => { if (typeof help !== 'undefined' && !help.open) helpToggle(); const hh = $('help-host'); if (hh) hh.scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+    };
+    const showIdle = note => {
+      body.innerHTML = `${note ? `<div class="lt-widget-note">${escapeHTML(note)}</div>` : ''}<div class="lt-widget-foot">${btn('lt-widget-start', 'widgetStart', true)}${demoLink()}</div>`;
+      wire();
+      if (needsCamera && !host.demo && !opts.demo) noCameraCheck();   // a demo= widget reads a drawn picture, so no camera is needed
+    };
+    const noCamera = () => { body.innerHTML = `<div class="lt-widget-note">${escapeHTML(getText('widgetNoCamera'))}</div>${demoLink() ? `<div class="lt-widget-foot">${demoLink()}</div>` : ''}`; wire(); };
+    const noCameraCheck = async () => {   // a calm note, never a failure: many students read on a laptop and use the tool on their phone
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { noCamera(); return; }
+      try { const devs = await navigator.mediaDevices.enumerateDevices(); if (devs.length && !devs.some(d => d.kind === 'videoinput') && body.querySelector('.lt-widget-start')) noCamera(); } catch (e) { /* unknown: keep Start */ }
+    };
+    const showFailed = msg => {
+      stop('failed');
+      const t = target(); if (t) { t.classList.add('lt-widget-target'); setTimeout(() => t.classList.remove('lt-widget-target'), 5000); }
+      const helpOk = opts.help !== 'off' && typeof help !== 'undefined' && help.lab && help.lab.help_enabled && isStudent();
+      body.innerHTML = `<div class="lt-widget-fail"><div>${escapeHTML(msg || getText('widgetFailed'))}</div><div class="lt-widget-foot">${btn('lt-widget-start', 'widgetStart')}${helpOk ? btn('lt-widget-help', 'widgetGetHelp') : ''}</div></div>`;
+      wire();
+    };
+    const start = async demo => {
+      if (running) return;
+      const g = ++gen;
+      body.innerHTML = `<div class="lt-widget-note">${escapeHTML(getText('widgetLoading'))}</div>`;
+      try {
+        if (W.file && !(window.LabWidgets && window.LabWidgets[type])) await ltLoadWidgetFile(W.file);
+        if (g !== gen) return;   // stopped (navigation, hidden page) while the file was loading
+        const mod = window.LabWidgets && window.LabWidgets[type]; if (!mod || typeof mod.mount !== 'function') throw new Error('widget module missing: ' + type);
+        body.innerHTML = `<div class="lt-widget-stage"></div><div class="lt-widget-foot">${btn('lt-widget-stop', 'widgetStop')}</div>`;
+        wire();
+        const ctx = {
+          opts, labId: host.labId, demo: !!(demo || opts.demo || host.demo), text: getText, fmt,
+          canRecord: () => host.canRecord(tableId, opts),
+          record: values => host.record(tableId, opts, values),
+          fail: why => { if (g !== gen) return; if (why === 'nocamera') { stop('idle'); noCamera(); } else showFailed(getText(why === 'denied' ? 'widgetDenied' : 'widgetFailed')); },
+        };
+        running = mod.mount(body.querySelector('.lt-widget-stage'), ctx) || { stop() {} };
+        ltLiveWidgets.add(live);
+        if (!document.body.contains(el)) stop('idle');   // the area was replaced meanwhile
+      } catch (e) { console.warn('widget', e); if (g === gen) showFailed(); }
+    };
+    showIdle('');
+  });
 }
 
 /* ---------- Editor integration ---------- */
@@ -4753,7 +5007,7 @@ function previewLabMarkup(now) {
     const live = builderActive() ? buLabLive() : null;
     if (live && (live.warnings || []).length) errs += live.warnings.map(w => `<div class="lt-note">${escapeHTML(w)}</div>`).join('');   // gentle notes about parts kept as raw text
     $('lab-markup-errors').innerHTML = errs;
-    const pv = $('lab-markup-preview'); pv.innerHTML = buildLabTagsHTML(r, null);
+    const pv = $('lab-markup-preview'); ltStopWidgets(pv); pv.innerHTML = buildLabTagsHTML(r, null);
     if (r.report) rpPrepare(pv);
     ltBind(pv, 'preview');
     if (r.report) rpBind(pv, null);
@@ -4778,9 +5032,9 @@ function previewLabMarkup(now) {
    Public globals: builderParse, builderSerialize, builderNewBlock, builderTemplates (+ bm* helpers, BM_* constants).
    ============================================================ */
 
-const BM_TAGS = new Set(['title', 'summary', 'tags', 'minutes', 'video', 'datatable', 'answer', 'notes', 'photo', 'input', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'report', 'style', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto']);
+const BM_TAGS = new Set(['title', 'summary', 'tags', 'minutes', 'video', 'datatable', 'answer', 'notes', 'photo', 'input', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'report', 'style', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto', 'widget']);
 const BM_META = new Set(['title', 'summary', 'tags', 'minutes', 'report', 'style']);
-const BM_BLOCK = new Set(['video', 'datatable', 'answer', 'notes', 'photo', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto']);
+const BM_BLOCK = new Set(['video', 'datatable', 'answer', 'notes', 'photo', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto', 'widget']);
 const BM_CALLOUT_KINDS = ['safety', 'warning', 'info', 'tip', 'hint'];
 const BM_HEADER_KEYS = ['title', 'summary', 'tags', 'minutes'];
 
@@ -4799,18 +5053,19 @@ const BM_TYPES = {
   callout:   { tag: null,        label: 'Callout',         list: 'procedure', known: ['label'] },
   graph:     { tag: 'graph',     label: 'Graph',           list: 'both', kind: 'graph', idBase: 'graph',    known: ['id', 'table', 'x', 'y', 'series', 'type', 'fit', 'title', 'xlabel', 'ylabel', 'xmin', 'xmax', 'ymin', 'ymax'], nameOf: b => b.opts.title },
   pagebreak: { tag: 'pagebreak', label: 'Page break',      list: 'procedure', known: [] },
+  widget:    { tag: 'widget',    label: 'Widget',          list: 'procedure', kind: 'widget', idBase: 'widget', known: ['id', 'type', 'label', 'table', 'columns', 'sample', 'region', 'help'], nameOf: b => b.opts.label || b.opts.type },
   usetable:  { tag: 'usetable',  label: 'Include a table', list: 'report' },
   usegraph:  { tag: 'usegraph',  label: 'Include a graph', list: 'report' },
   useanswer: { tag: 'useanswer', label: 'Include an answer', list: 'report' },
   usephoto:  { tag: 'usephoto',  label: 'Include a photo',  list: 'report' },
 };
-const BM_TAG_TYPE = { procedure: 'steps', datatable: 'table', answer: 'answer', notes: 'notes', photo: 'photo', video: 'video', figure: 'figure', graph: 'graph', pagebreak: 'pagebreak', section: 'answer', usetable: 'usetable', usegraph: 'usegraph', useanswer: 'useanswer', usephoto: 'usephoto', safety: 'callout', warning: 'callout', info: 'callout', tip: 'callout', hint: 'callout' };
+const BM_TAG_TYPE = { procedure: 'steps', datatable: 'table', answer: 'answer', notes: 'notes', photo: 'photo', video: 'video', figure: 'figure', graph: 'graph', pagebreak: 'pagebreak', widget: 'widget', section: 'answer', usetable: 'usetable', usegraph: 'usegraph', useanswer: 'useanswer', usephoto: 'usephoto', safety: 'callout', warning: 'callout', info: 'callout', tip: 'callout', hint: 'callout' };
 const BM_KIND = { datatable: 'table', answer: 'q', notes: 'notes', photo: 'photo', input: 'field', procedure: 'proc' };
-const BM_RESERVED_ID = /^(table|q|notes|photo|field|proc|graph|section|figure|video|pagebreak|safety|warning|info|tip|hint|usetable|usegraph|useanswer|usephoto)\d*$/;
-const BM_ID_TYPES = new Set(['steps', 'table', 'answer', 'notes', 'photo', 'graph']);
+const BM_RESERVED_ID = /^(table|q|notes|photo|field|proc|graph|widget|section|figure|video|pagebreak|safety|warning|info|tip|hint|usetable|usegraph|useanswer|usephoto)\d*$/;
+const BM_ID_TYPES = new Set(['steps', 'table', 'answer', 'notes', 'photo', 'graph', 'widget']);
 const BM_INPUT_KNOWN = ['id', 'label', 'unit', 'placeholder'];
 const BM_FILL = /^_{3,}$/;
-const BM_PIN_KINDS = new Set(['table', 'q', 'notes', 'photo', 'field', 'proc', 'section', 'graph']);   // widgets whose id matters (entries, references)
+const BM_PIN_KINDS = new Set(['table', 'q', 'notes', 'photo', 'field', 'proc', 'section', 'graph', 'widget']);   // widgets whose id matters (entries, references)
 
 /* ---------- mirrors of renderer helpers ---------- */
 function bmParseOptions(str) {
@@ -5169,7 +5424,7 @@ function bmBlockFromOcc(occ, ctx) {
   switch (occ.name) {
     case 'datatable': { const r = bmParseTable(Bp ?? '', ctx); return r ? { type: 'table', opts: o, headers: r.headers, rows: r.rows } : raw(BM_W.table); }
     case 'procedure': { const r = bmParseSteps(Bp ?? ''); return r ? { type: 'steps', opts: o, start: r.start, loose: r.loose, steps: r.steps.map(s => bmRestore(s, ctx)) } : raw(BM_W.steps); }
-    case 'answer': case 'photo': return { type, opts: o, prompt: B.trim() };
+    case 'answer': case 'photo': case 'widget': return { type, opts: o, prompt: B.trim() };
     case 'section': { if (o.lines == null) o.lines = 6; return { type, opts: o, prompt: B.trim() }; }   // legacy tag: becomes a question, keeps its taller box
     case 'notes': return { type: 'notes', opts: o, label: B.trim() };
     case 'video': return { type: 'video', opts: o, url: B.trim() };
@@ -5245,7 +5500,7 @@ function bmSerializeBlock(b) {
       if (rows.length) out += '\n' + rows.map(line).join('\n');
       return out + '\n}';
     }
-    case 'answer': case 'photo': return `\\${tag}${bmOpts(b)}` + (b.prompt ? `{${bmBody(b.prompt)}}` : '');
+    case 'answer': case 'photo': case 'widget': return `\\${tag}${bmOpts(b)}` + (b.prompt ? `{${bmBody(b.prompt)}}` : '');
     case 'notes': return `\\notes${bmOpts(b)}` + (b.label ? `{${bmBody(b.label)}}` : '');
     case 'graph': return `\\graph${bmOpts(b)}` + (b.caption ? `{${bmBody(b.caption)}}` : '');
     case 'video': return `\\video${bmOpts(b)}{${bmBody(b.url ?? '')}}`;
@@ -5293,7 +5548,7 @@ function bmTraverse(p, ctx, handler, st, depth = 0, where = 'body') {
         const hs = t.headers.map(c => { const r = sub(c); if (r !== c) tchg = true; return r; });
         const rs = t.rows.map(r => r.map(c => { if (BM_FILL.test(c)) return c; const x = sub(c); if (x !== c) tchg = true; return x; }));
         if (tchg) tableEmit = { headers: hs, rows: rs, cols: t.cols };
-      } else if (name === 'answer' || name === 'notes' || name === 'photo') {
+      } else if (name === 'answer' || name === 'notes' || name === 'photo' || name === 'widget') {
         const inner = body.trim();
         if (inner) { const r = sub(inner); if (r !== inner) newBody = body.slice(0, body.indexOf(inner)) + r + body.slice(body.indexOf(inner) + inner.length); }
       } else if (name === 'procedure' || BM_CALLOUT_KINDS.includes(name)) newBody = sub(body);
@@ -5388,14 +5643,14 @@ function bmNewId(model, name, base, extra) {
 function bmRenameId(model, oldId, newId) {
   if (!oldId || oldId === newId) return;
   for (const b of [...(model.procedure || []), ...(model.report || [])]) {
-    if (b.type === 'graph' && b.opts && b.opts.table === oldId) b.opts.table = newId;
+    if ((b.type === 'graph' || b.type === 'widget') && b.opts && b.opts.table === oldId) b.opts.table = newId;
     if (['usetable', 'usegraph', 'useanswer', 'usephoto'].includes(b.type) && b.ref === oldId) b.ref = newId;
   }
 }
 function bmReferencesTo(model, id) {
   const out = [];
   for (const b of [...(model.procedure || []), ...(model.report || [])]) {
-    if (b.type === 'graph' && b.opts && b.opts.table === id) out.push({ block: b, field: 'table' });
+    if ((b.type === 'graph' || b.type === 'widget') && b.opts && b.opts.table === id) out.push({ block: b, field: 'table' });
     if (['usetable', 'usegraph', 'useanswer', 'usephoto'].includes(b.type) && b.ref === id) out.push({ block: b, field: 'ref' });
   }
   return out;
@@ -5431,7 +5686,7 @@ function bmMapStrings(b, fn) {   // apply fn to every tag-scannable string field
     case 'heading': F(b, 'text'); break;
     case 'steps': b.steps = (b.steps || []).map(fn); break;
     case 'table': b.headers = (b.headers || []).map(fn); b.rows = (b.rows || []).map(r => r.map(c => (BM_FILL.test(c) ? c : fn(c)))); break;
-    case 'answer': case 'photo': F(b, 'prompt'); if (b.opts) F(b.opts, 'hint'); break;
+    case 'answer': case 'photo': case 'widget': F(b, 'prompt'); if (b.opts) F(b.opts, 'hint'); break;
     case 'notes': F(b, 'label'); break;
     case 'callout': F(b, 'body'); break;
     case 'figure': if (b.opts) F(b.opts, 'caption'); break;
@@ -5482,6 +5737,14 @@ function bmReferenceProblems(model, auto) {   // shared by builderParse (strings
       const t = b.opts && b.opts.table;
       if (t == null || t === '') { if (!tables.has('table1')) out.push({ k: b._k ?? null, msg: 'This graph has no table chosen, and there is no table it can read by default. Choose a table.' }); }
       else if (!tables.has(String(t))) out.push({ k: b._k ?? null, msg: `This graph reads a table named '${t}', but no table has that name.` });
+    }
+    if (b.type === 'widget') {
+      const ty = b.opts && b.opts.type, t = b.opts && b.opts.table;
+      if (!ty) out.push({ k: b._k ?? null, msg: 'This widget has no type. Remove it and add a widget from the picker.' });
+      else if (typeof WIDGETS !== 'undefined' && !WIDGETS[ty]) out.push({ k: b._k ?? null, msg: `No widget of type '${ty}' exists on this site.` });
+      if (t == null || t === '') out.push({ k: b._k ?? null, msg: 'Choose the data table this widget records into.' });
+      else if (!tables.has(String(t))) out.push({ k: b._k ?? null, msg: `This widget records into a table named '${t}', but no table has that name.` });
+      else { for (const [tb, id] of eff) if (tb.type === 'table' && id === String(t) && !(tb.opts && tb.opts.addrows)) out.push({ k: b._k ?? null, msg: 'The table this widget records into does not let students add rows, so only its blank rows can take readings. Tick "Students may add rows" on that table.' }); }
     }
     if (b.type === 'usetable') {
       if (!String(b.ref || '').trim()) out.push({ k: b._k ?? null, msg: 'Choose which table this block should show.' });
@@ -5577,7 +5840,7 @@ function bmWidgetSignature(text) {
     if (name === 'datatable') { const t = bmTableCells(body ?? ''); shape = { headers: t.headers.map(c => bmRestore(c, ctx)), rows: t.rows.map(r => r.map(c => (BM_FILL.test(c) ? '___' : bmRestore(c, ctx)))) }; }
     else if (name === 'procedure' || BM_CALLOUT_KINDS.includes(name)) shape = bmMdOf(body ?? '', ctx, name === 'procedure');
     else if (name === 'answer' || name === 'section') shape = [body && body.trim() ? bmMdOf(body.trim(), ctx) : '', info.opts.hint ? bmNormalizeMd(String(info.opts.hint)) : ''];
-    else if (name === 'notes' || name === 'photo') shape = body ? bmMdOf(body.trim(), ctx) : '';
+    else if (name === 'notes' || name === 'photo' || name === 'widget') shape = body ? bmMdOf(body.trim(), ctx) : '';
     else if (name === 'graph') shape = body ? bmRestore(body, ctx).trim() : '';
     else if (body != null) shape = bmRestore(body, ctx).trim();
     widgets.push([name, info.id, opts, info.depth, info.where, shape]);
@@ -5605,7 +5868,7 @@ function builderNewBlock(type) {
     table: { opts: {}, headers: ['', ''], rows: [['___', '___'], ['___', '___'], ['___', '___']] },
     answer: { opts: { lines: '4' }, prompt: '' }, notes: { opts: {}, label: '' }, photo: { opts: {}, prompt: '' },
     video: { opts: {}, url: '' }, figure: { opts: {}, path: '' }, callout: { kind: 'safety', opts: {}, body: '' },
-    graph: { opts: { fit: 'linear' }, caption: '' }, pagebreak: { opts: {} },
+    graph: { opts: { fit: 'linear' }, caption: '' }, pagebreak: { opts: {} }, widget: { opts: {}, prompt: '' },
     usetable: { ref: '' }, usegraph: { ref: '' }, useanswer: { ref: '' }, usephoto: { ref: '' },
   }[type];
   if (!d) throw new Error('Unknown block type ' + type);
@@ -5814,6 +6077,7 @@ const BU_PALETTE = {
   figure:    'A picture you upload: a diagram, a setup photo, a graph to read from.',
   callout:   'A highlighted box: safety, warning, information, tip or hint.',
   graph:     'A live graph drawn from one of your data tables. It fills in as students type.',
+  widget:    'A tool that uses the device (the camera colorimeter, for example) and records what it reads into one of your data tables.',
   pagebreak: 'Starts a new page when the lab is printed.',
   comment:   'Text only you can see in the file; students never see it.',
   usetable:  'Shows one of the lab\'s data tables, filled with the student\'s own numbers.',
@@ -5822,9 +6086,9 @@ const BU_PALETTE = {
   usephoto:  'Shows the photo the student added in one of the procedure\'s photo slots.',
   style:     'Your writing rules, shown at the top of the Report tab.',
 };
-const BU_PROCEDURE_PALETTE = ['heading', 'text', 'steps', 'table', 'answer', 'notes', 'photo', 'video', 'figure', 'callout', 'graph', 'pagebreak'];
+const BU_PROCEDURE_PALETTE = ['heading', 'text', 'steps', 'table', 'answer', 'notes', 'photo', 'video', 'figure', 'callout', 'graph', 'widget', 'pagebreak'];
 const BU_REPORT_PALETTE = ['answer', 'table', 'photo', 'notes', 'graph', 'usetable', 'usegraph', 'useanswer', 'usephoto', 'heading', 'text', 'figure', 'video'];
-const BU_ID_TYPES = ['steps', 'table', 'answer', 'notes', 'photo', 'graph'];
+const BU_ID_TYPES = ['steps', 'table', 'answer', 'notes', 'photo', 'graph', 'widget'];
 const BU_CALLOUT_LABELS = { safety: 'Safety', warning: 'Warning', info: 'Information', tip: 'Tip', hint: 'Hint' };
 const BU_LEVELS = [[1, 'Big heading'], [2, 'Heading'], [3, 'Small heading'], [4, 'Level 4'], [5, 'Level 5'], [6, 'Level 6']];
 const BU_BRACE_MSG = 'A curly bracket here has no partner. It is shown as a plain character, which is usually what you want.';
@@ -5832,7 +6096,9 @@ const BU_EXPR_MSG_FORMULA = 'The site cannot read this formula. Write it with th
 const BU_EXPR_MSG_TRANSFORM = 'The site cannot read this. Use v for the column value, numbers, + - * / ^, ln, log, exp, sqrt, abs.';
 function buExprMsg(view) { return view && view.mode === 'formula' ? BU_EXPR_MSG_FORMULA : BU_EXPR_MSG_TRANSFORM; }
 const BU_RAW_MSG = 'The builder does not have a form for this part, so here is the text itself. It works as written; you can edit it as plain text.';
-const BU_BLOCK_CMD = /\\(procedure|datatable|answer|notes|photo|video|figure|graph|pagebreak|section|usetable|usegraph|useanswer|usephoto|safety|warning|info|tip|hint)\b/;
+const BU_BLOCK_CMD = /\\(procedure|datatable|answer|notes|photo|video|figure|graph|widget|pagebreak|section|usetable|usegraph|useanswer|usephoto|safety|warning|info|tip|hint)\b/;
+function buWidgetTypes() { return typeof WIDGETS !== 'undefined' ? Object.keys(WIDGETS).filter(t => (typeof widgetEnabled === 'function' ? widgetEnabled(t) : true)) : []; }   // the catalog, minus widgets the owner switched off
+function buWidgetInfo(b) { const t = buOptStr(b, 'type'); return (typeof WIDGETS !== 'undefined' && WIDGETS[t]) || null; }
 
 function buEsc(s) {
   if (s == null) return '';
@@ -5989,7 +6255,7 @@ function buNameOf(b) {
   const t = buTypeInfo(b.type); return t.nameOf ? (t.nameOf(b) || '') : '';
 }
 function buIsNamingField(b, bind) {
-  return (['table', 'graph'].includes(b.type) && bind === 'opts.title') || (b.type === 'notes' && bind === 'label');
+  return (['table', 'graph'].includes(b.type) && bind === 'opts.title') || (b.type === 'notes' && bind === 'label') || (b.type === 'widget' && bind === 'opts.label');
 }
 
 /* ---------- top-level rendering ---------- */
@@ -6053,6 +6319,11 @@ function buPaletteButtons(list, afterK) {
     if (t === 'usegraph' && !hasGraph) { dis = 'disabled'; title = 'Add a graph first'; }
     if (t === 'useanswer' && !buAnswers().length) { dis = 'disabled'; title = 'Add a question to the procedure first'; }
     if (t === 'usephoto' && !buPhotos().length) { dis = 'disabled'; title = 'Add a photo slot to the procedure first'; }
+    if (t === 'widget') {
+      if (!buWidgetTypes().length) { dis = 'disabled'; title = 'No widgets are switched on for this site (admin bar → Widgets)'; }
+      else if (!hasTable) { dis = 'disabled'; title = 'Add a data table first: a widget records into one'; }
+      return `<button type="button" class="btn-small" data-act="palette-widget" data-list="${list}"${afterK != null ? ` data-after="${afterK}"` : ''} ${dis} title="${buEsc(title)}">Widget…</button>`;
+    }
     return `<button type="button" class="btn-small" data-act="palette-add" data-type="${t}" data-list="${list}"${afterK != null ? ` data-after="${afterK}"` : ''} ${dis} title="${buEsc(title)}">${buEsc(buTypeInfo(t).label)}</button>`;
   }).join('');
   if (list === 'report') {
@@ -6083,7 +6354,7 @@ function buRenderHeader() {
 }
 
 /* ---------- cards ---------- */
-function buKindLabel(b) { return b.type === 'callout' ? 'Callout' : buTypeInfo(b.type).label; }
+function buKindLabel(b) { if (b.type === 'callout') return 'Callout'; if (b.type === 'widget') { const W = buWidgetInfo(b); return W ? W.label + ' widget' : 'Widget'; } return buTypeInfo(b.type).label; }
 function buCardHTML(b, list, i) {
   const open = !!b._open, n = buModel[list].length;
   return `<div class="bu-card" data-k="${b._k}" data-type="${buEsc(b.type)}" data-list="${list}" tabindex="0" ${b.type === 'comment' ? 'hidden' : ''}>
@@ -6158,6 +6429,11 @@ function buSummary(b) {
     case 'callout': return `${buOptStr(b, 'label') || BU_CALLOUT_LABELS[b.kind] || b.kind} · ${buFirstLine(buPlainInputs(b.body), 60)}`;
     case 'graph': { const t = buTables().find(x => x.id && x.id === buOptStr(b, 'table')); return `${buOptStr(b, 'title') || buGraphAxesName(b)} · from "${t ? (t.title || 'Untitled table') : (buOptStr(b, 'table') || 'first table')}"`; }
     case 'pagebreak': return 'Page break';
+    case 'widget': {
+      const W = buWidgetInfo(b), t = buTables().find(x => x.id && x.id === buOptStr(b, 'table'));
+      const head = buOptStr(b, 'label') || (W ? '' : (buOptStr(b, 'type') ? `Unknown widget "${buOptStr(b, 'type')}"` : 'No type chosen'));
+      return `${head ? head + ' · ' : ''}records into "${t ? (t.title || 'Untitled table') : (buOptStr(b, 'table') || 'no table chosen')}"`;
+    }
     case 'usetable': { const t = buTables().find(x => x.id && x.id === b.ref); return t ? (t.title || 'Untitled table') : `Missing: ${b.ref || '(nothing chosen)'}`; }
     case 'usegraph': { const g = buGraphs().find(x => x.id && x.id === b.ref); return g ? g.title : `Missing: ${b.ref || '(nothing chosen)'}`; }
     case 'useanswer': { const a = buAnswers().find(x => x.id && x.id === b.ref); return a ? a.title : `Missing: ${b.ref || '(nothing chosen)'}`; }
@@ -6265,6 +6541,7 @@ function buForm(b, list) {
         + `<div class="form-row"><label>Text</label>${buTextarea('body', b.body, 'str', 'rows="4" data-brace="1"')}${buBraceLine(b.body)}<div class="hint">A highlighted box. Ordinary writing works here, including lists and formulas between dollar signs.</div></div>`;
       break;
     case 'graph': h = buFormGraph(b); break;
+    case 'widget': h = buFormWidget(b); break;
     case 'pagebreak': h = `<div class="bu-note">Starts a new page when the lab is printed.</div>`; break;
     case 'usetable':
       h = buRow('Table', buRefSelect('ref', 'ref', buTables().filter(x => buModel.procedure.includes(x.block)), b.ref || ''), 'Shows this table in the report, filled with the student\'s own numbers, with a caption like "Table 1".');
@@ -6370,9 +6647,10 @@ function buAxisControls(axis, si, view, headers) {
   }
   return `<div class="form-grid-2"><div class="form-row"><label>Column</label>${sel}</div><div class="form-row"><label>Change it first (optional)</label><input type="text" data-bind="${bind}" data-kind="${kind}"${sattr} data-part="transform" value="${buEsc(view.transform || '')}" placeholder="v" spellcheck="false"/>${errLine}<div class="hint">Use v for the value in that column, for example 1/(v+273.15) or ln(v).</div></div></div>`;
 }
-function buFormGraph(b) {
+// The "which table" select shared by Graph and Widget cards. noneLabel null → an empty choice is "Choose…".
+function buTableSelect(b, noneLabel) {
   const tables = buTables(), cur = buOptStr(b, 'table');
-  let sel = `<select data-bind="opts.table" data-kind="table-ref"><option value="" ${!cur ? 'selected' : ''}>first table (automatic)</option>`;
+  let sel = `<select data-bind="opts.table" data-kind="table-ref"><option value="" ${!cur ? 'selected' : ''}>${buEsc(noneLabel == null ? 'Choose…' : noneLabel)}</option>`;
   let found = !cur;
   tables.forEach(t => {
     const label = t.title || 'Untitled table';
@@ -6380,7 +6658,44 @@ function buFormGraph(b) {
     else sel += `<option value="__auto__:${t.block._k}">${buEsc(label)} (needs a permanent name)</option>`;
   });
   if (!found) sel += `<option value="${buEsc(cur)}" class="bu-missing" selected>Missing: ${buEsc(cur)}</option>`;
-  sel += '</select>';
+  return sel + '</select>';
+}
+// Widget card: the instruction, the target table, then the widget type's own settings as the WIDGETS catalog lists them.
+function buWidgetTable(b) { const id = buOptStr(b, 'table'); return id ? buTables().find(t => t.id && t.id === id) || null : null; }
+function buFormWidget(b) {
+  const type = buOptStr(b, 'type'), W = buWidgetInfo(b);
+  if (!W) return `<div class="bu-err">${type ? `No widget of type "${buEsc(type)}" exists on this site.` : 'This widget has no type.'} Remove this block and add a widget with the Widget… button.</div>${buIdRow(b)}`;
+  let h = `<div class="bu-note">${buEsc(W.description)} ${buEsc(W.device)}</div>`;
+  h += `<div class="form-row"><label>Instruction shown above the tool</label>${buTextarea('prompt', b.prompt, 'str', `rows="2" data-brace="1" placeholder="${buEsc(W.instruction)}"`)}${buBraceLine(b.prompt)}<div class="hint">Leave empty to use the standard instruction (shown greyed). Say where to point the camera and remind students to keep the lighting the same.</div></div>`;
+  h += buRow('Title (optional)', buInput('opts.label', buOptStr(b, 'label'), 'opt', 'placeholder="e.g. Colour reader"'), 'Shown in the tool\'s header.');
+  const tbl = buWidgetTable(b), headers = tbl ? (tbl.block.headers || []) : [];
+  const ncols = tbl ? Math.max(headers.length, ...(tbl.block.rows || []).map(r => r.length), 1) : 0;
+  const colName = i => { const hd = headers[i - 1]; return `${hd && String(hd).trim() ? buFirstLine(buPlainInputs(hd), 30) : 'Column ' + i} (c${i})`; };
+  const colSel = (attrs, cur, none) => {
+    let s = `<select ${attrs}>`; if (none != null) s += `<option value="" ${!cur ? 'selected' : ''}>${buEsc(none)}</option>`;
+    for (let i = 1; i <= ncols; i++) s += `<option value="c${i}" ${cur === 'c' + i || cur === String(i) ? 'selected' : ''}>${buEsc(colName(i))}</option>`;
+    if (cur && !/^c?\d+$/i.test(cur)) s += `<option value="${buEsc(cur)}" class="bu-missing" selected>(as typed: ${buEsc(cur)})</option>`;
+    return s + '</select>';
+  };
+  const needTable = `<div class="bu-note">Choose the table first.</div>`;
+  for (const o of W.options || []) {
+    switch (o.kind) {
+      case 'table': h += buRow(o.label, buTableSelect(b, null), o.help); break;
+      case 'columns': {
+        const cur = String(buOptStr(b, o.name) || o.default || '').split(/[;|,]/).map(s => s.trim());
+        h += `<div class="form-row"><label>${buEsc(o.label)}</label>${tbl ? `<div class="form-grid-3">${(o.parts || []).map((p, i) => `<div class="form-row" style="margin-bottom:0.3rem"><label style="font-size:11px">${buEsc(p)}</label>${colSel(`data-bind="opts.${o.name}" data-kind="wcols" data-part="${i}"`, cur[i] || '', null)}</div>`).join('')}</div>` : needTable}${o.help ? `<div class="hint">${buEsc(o.help)}</div>` : ''}</div>`;
+        break;
+      }
+      case 'column': h += buRow(o.label, tbl ? colSel(`data-bind="opts.${o.name}" data-kind="wcol"`, buOptStr(b, o.name), o.none || 'None') : needTable, o.help); break;
+      case 'num': h += buRow(o.label, buNum('opts.' + o.name, buOptStr(b, o.name), 'min="1" step="1"'), o.help); break;
+      case 'help': h += `<div class="form-row">${buCheck('opts.' + o.name, buOptStr(b, o.name) !== 'off', o.label, 'whelp')}<div class="hint">If the tool cannot start, students see a short note and the table to type into; with this on, a Get help button too (only when this lab has Get help on and the student is signed in). It opens the usual empty help box; nothing is prefilled.</div></div>`; break;
+      default: h += buRow(o.label, buInput('opts.' + o.name, buOptStr(b, o.name), 'opt'), o.help);
+    }
+  }
+  return h + buIdRow(b);
+}
+function buFormGraph(b) {
+  const sel = buTableSelect(b, 'first table (automatic)');
   const tbl = buGraphTable(b), headers = tbl ? tbl.block.headers : [];
   let h = buRow('Table', sel, 'The graph reads its numbers from this table and redraws as students type.');
   h += `<div class="bu-axis" data-axis="x"><div class="bu-axis-title">Horizontal axis</div>${buAxisControls('x', null, buExprViewOf(b.opts.x, 1), headers)}</div>`;
@@ -6577,6 +6892,9 @@ function buWrite(found, bind, kind, el, card) {
     case 'kind': b.kind = v; return true;
     case 'ref': b.ref = v; return false;
     case 'table-ref': buSetOpt(b, 'table', v); return true;
+    case 'wcols': { const sels = card.querySelectorAll(`select[data-bind="${bind}"][data-kind="wcols"]`); buSetOpt(b, key, Array.from(sels).map(s => s.value || '').join(';')); return false; }   // widget: several column selects → "c2;c3;c4"
+    case 'wcol': buSetOpt(b, key, v); return false;
+    case 'whelp': buSetOpt(b, key, v ? undefined : 'off'); return false;   // on is the default and stays implicit in the file
     case 'picture': if (v) { b.path = v; return true; } return false;
     case 'body': case 'opt': case 'str': default:
       if (key != null) buSetOpt(b, key, v === '' ? undefined : v); else buSetPath(b, bind, v);
@@ -6682,6 +7000,9 @@ function buOnClick(e) {
     case 'add': buOpenInsert(card, found); break;
     case 'cancel-insert': buCloseInserts(); break;
     case 'palette-add': buAddBlock(btn.dataset.type, btn.dataset.list, btn.dataset.after != null ? +btn.dataset.after : null); break;
+    case 'palette-widget': buOpenWidgetPicker(btn); break;
+    case 'widget-add': buAddBlock('widget', btn.dataset.list, btn.dataset.after != null ? +btn.dataset.after : null, { type: btn.dataset.type }); break;
+    case 'widget-cancel': { const p = btn.closest('.bu-widget-picker'); if (p) p.remove(); break; }
     case 'template': buApplyTemplate(btn.dataset.template); break;
     case 'add-style': buModel.style = ''; buRenderStyle(); buRenderPalette('report'); buRenderTemplates(); buChanged(null, true); { const ta = buQ('[data-kind="style"]'); if (ta) ta.focus(); } break;
     case 'remove-style':
@@ -6742,6 +7063,7 @@ function buIsBlank(b) {
     case 'figure': return !String(b.path || '').trim();
     case 'callout': return !String(b.body || '').trim();
     case 'graph': return !buOptStr(b, 'title') && !buOptStr(b, 'x') && !buOptStr(b, 'y') && !String(b.caption || '').trim();
+    case 'widget': return !buOptStr(b, 'type');
     case 'usetable': case 'usegraph': case 'useanswer': case 'usephoto': return !String(b.ref || '').trim();
     case 'pagebreak': return true;
     default: return false;
@@ -6761,8 +7083,8 @@ function buDelete(f) {
     const id = b.opts && b.opts.id;
     if (id) {
       let refs = []; try { refs = bmReferencesTo(buModel, id) || []; } catch (e) {}
-      const graphs = refs.filter(r => r.block && r.block.type === 'graph').length, rep = refs.length - graphs;
-      const who = [graphs ? `${graphs} ${graphs === 1 ? 'graph' : 'graphs'}` : '', rep ? `${rep} report ${rep === 1 ? 'block' : 'blocks'}` : ''].filter(Boolean).join(' and ');
+      const graphs = refs.filter(r => r.block && r.block.type === 'graph').length, widgets = refs.filter(r => r.block && r.block.type === 'widget').length, rep = refs.length - graphs - widgets;
+      const who = [graphs ? `${graphs} ${graphs === 1 ? 'graph' : 'graphs'}` : '', widgets ? `${widgets} ${widgets === 1 ? 'widget' : 'widgets'}` : '', rep ? `${rep} report ${rep === 1 ? 'block' : 'blocks'}` : ''].filter(Boolean).join(' and ');
       if (who) msg += ` ${who} point${refs.length === 1 ? 's' : ''} at it and will show a missing-${b.type === 'graph' ? 'graph' : 'table'} message until you change ${refs.length === 1 ? 'it' : 'them'}.`;
     }
     if (!buHost.confirm(msg)) return;
@@ -6784,12 +7106,30 @@ function buOpenInsert(card, f) {
   const first = ins.querySelector('button:not([disabled])'); if (first) first.focus({ preventScroll: true });
 }
 function buCloseInserts() { if (buContainer) buContainer.querySelectorAll('.bu-insert').forEach(el => { el.hidden = true; el.innerHTML = ''; }); }
-function buAddBlock(type, list, afterK) {
+// The Widget… button: a picker of the widgets switched on for this site, one line each, in the palette that was clicked.
+function buOpenWidgetPicker(btn) {
+  const pal = btn.closest('.bu-palette'); if (!pal) return;
+  const old = pal.querySelector('.bu-widget-picker'); if (old) { old.remove(); return; }
+  buContainer.querySelectorAll('.bu-widget-picker').forEach(p => p.remove());
+  const types = buWidgetTypes(), list = btn.dataset.list, after = btn.dataset.after;
+  const box = document.createElement('div'); box.className = 'bu-widget-picker';
+  box.innerHTML = `<div class="bu-note" style="margin:0 0 0.4rem">Choose a tool. It records into one of your data tables; students without the device type the values in by hand.</div>` +
+    types.map(t => { const W = WIDGETS[t]; return `<div class="bu-widget-pick"><div><b>${buEsc(W.label)}</b><p>${buEsc(W.description)} ${buEsc(W.device)}</p></div><button type="button" class="btn-small" data-act="widget-add" data-type="${buEsc(t)}" data-list="${buEsc(list)}"${after != null ? ` data-after="${buEsc(after)}"` : ''}>Add</button></div>`; }).join('') +
+    `<div class="bu-tools" style="margin-top:0.5rem"><button type="button" class="btn-small" data-act="widget-cancel">Cancel</button></div>`;
+  pal.appendChild(box);
+  const first = box.querySelector('button[data-act="widget-add"]'); if (first) first.focus({ preventScroll: true });
+}
+function buAddBlock(type, list, afterK, extra) {
   if (!type || !buModel[list]) return;
   const b = builderNewBlock(type);
   let index = buModel[list].length;
   if (afterK != null) { const f = buFindBlock(afterK); if (f && f.list === list) index = f.index + 1; }
-  if (type === 'graph') {
+  if (type === 'widget') {
+    const wt = extra && extra.type; if (!wt || !WIDGETS[wt]) return;
+    buSetOpt(b, 'type', wt);
+    const d = typeof widgetDefaults === 'function' ? widgetDefaults(wt) : {}; for (const k of Object.keys(d)) buSetOpt(b, k, d[k]);
+  }
+  if (type === 'graph' || type === 'widget') {
     // Default to the nearest preceding table that already has a permanent name (never touches that table).
     const before = buModel[list].slice(0, index).filter(x => x.type === 'table' && x.opts && x.opts.id).pop() || buTables().filter(t => t.id).pop();
     if (before) buSetOpt(b, 'table', before.opts ? before.opts.id : before.id);
@@ -6825,6 +7165,7 @@ function buShowBlock(b) {
   switch (b.type) {
     case 'table': t = { attr: 'data-table', value: id }; break;
     case 'graph': t = { attr: 'data-graph', value: id }; break;
+    case 'widget': t = { attr: 'data-widget', value: id }; break;
     case 'answer': case 'notes': t = { attr: 'data-field', value: id }; break;
     case 'steps': t = { attr: 'data-field', value: id + '.step1' }; break;
     case 'photo': t = { attr: 'data-photo', value: id }; break;
@@ -7121,7 +7462,7 @@ function buLabLoad(text) {
 function buRenderSignature(text) {
   const r = ltRender(text);
   const sig = html => { const t = document.createElement('template'); t.innerHTML = html;
-    return Array.from(t.content.querySelectorAll('[data-field],[data-photo],[data-table],[data-graph],[data-section],[data-check]')).map(el => (el.dataset.field || el.dataset.photo || el.dataset.table || el.dataset.graph || el.dataset.section || el.dataset.check)).join(','); };
+    return Array.from(t.content.querySelectorAll('[data-field],[data-photo],[data-table],[data-graph],[data-widget],[data-section],[data-check]')).map(el => (el.dataset.field || el.dataset.photo || el.dataset.table || el.dataset.graph || el.dataset.widget || el.dataset.section || el.dataset.check)).join(','); };
   return { errors: r.errors.length, procedure: sig(r.html), report: sig(r.report), style: (r.style || '').length > 0 };
 }
 // Release check: every widget's saved entries must survive render → bind → save unchanged. Run entriesSelfTest() in the console
@@ -7141,6 +7482,7 @@ async function entriesSelfTest() {
 \\notes[id=n]{Notes}
 \\answer{Auto question}
 Value: \\input[id=f]{}
+\\widget[type=colorimeter, id=cr, table=tbl, columns=c1;c2]
 \\report{
 \\answer[id=rq, required, words=5-10]{Report Q}
 \\usetable{tbl}
@@ -7164,6 +7506,16 @@ Value: \\input[id=f]{}
     for (const k of Object.keys(fixture)) if (!k.startsWith('_') && !(k in saved)) throw new Error(`key ${k} was dropped on save`);
     if (saved.q !== 'changed') throw new Error('edit was not saved');
     const mirror = host.querySelector('[data-mirror-table="tbl"] .rp-table'); if (!mirror || !mirror.textContent.includes('1.5')) throw new Error('report mirror missing data');
+    // widgets: render, stay idle, and record through the table's own add-row path
+    const wd = host.querySelector('.lt-widget[data-widget="cr"]'); if (!wd || !(wd.querySelector('.lt-widget-start') || wd.textContent.includes(getText('widgetNoCamera')))) throw new Error('widget did not render idle');   // Start, or the calm no-camera note on a device without one
+    const full = host._ltWidgetHost.canRecord('tbl', { columns: 'c1;c2' }); if (!full.ok) throw new Error('widget cannot record: ' + full.reason);
+    const rec = host._ltWidgetHost.record('tbl', { columns: 'c1;c2' }, ['10', '20']);
+    if (!rec.ok || rec.row !== 3) throw new Error('widget record went to row ' + (rec.row || rec.reason));   // r1 and r2 hold data, so a row is added
+    const c = host.querySelector('[data-field="tbl.r3c1"]'); if (!c || c.textContent !== '10' || host.querySelector('[data-field="tbl.r3c2"]').textContent !== '20') throw new Error('widget record did not land in the table');
+    await new Promise(res => setTimeout(res, 500));
+    const saved2 = JSON.parse(localStorage.getItem(ltKey(labId)) || '{}');
+    if (saved2['tbl.r3c1'] !== '10' || saved2['tbl.r3c2'] !== '20' || saved2['tbl.rows'] !== 2) throw new Error('widget record was not saved like a typed row: ' + JSON.stringify({ r3c1: saved2['tbl.r3c1'], r3c2: saved2['tbl.r3c2'], rows: saved2['tbl.rows'] }));
+    for (const k of Object.keys(fixture)) if (!k.startsWith('_') && !(k in saved2)) throw new Error(`key ${k} was dropped by the widget save`);
     console.log('entriesSelfTest: OK'); return true;
   } finally { host.remove(); localStorage.removeItem(ltKey(labId)); }
 }

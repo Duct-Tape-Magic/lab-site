@@ -36,6 +36,7 @@ Headings (`#`, `##`, `###`), paragraphs, **bold**, *italic*, numbered lists (`1.
 | `\figure[caption=…, size=small\|medium\|full]{path or IMAGE_n}` | A figure. `size` sets how wide it is shown: `full` (default, the text column), `medium` (about 60%) or `small` (about a third); use `small` for icons and simple diagrams, `full` for anything students must read values from. Consecutive `small` figures sit side by side three to a row, consecutive `medium` ones two to a row, so put related pictures (e.g. steps of a setup) on adjacent lines. Use `IMAGE_1`, `IMAGE_2`… for pictures from the PDF that the teacher must upload; the teacher replaces them with the site's "Insert image…" button, which uploads a PNG or JPG and writes the `\figure` line. Markdown images `![caption](path)` also work. |
 | `\safety{…}` `\warning{…}` `\info{…}` `\tip{…}` `\hint{…}` | Highlighted callout boxes. Markdown works inside. `[label=…]` overrides the box label. |
 | `\graph[table=…, x=…, y=…, type=…, fit=linear, title=…, xlabel=…, ylabel=…]{Optional caption}` | A live graph drawn from a `\datatable`. It redraws as the student types. See "Graphs" below. |
+| `\widget[type=colorimeter, id=…, table=…, columns=c2;c3;c4, sample=c1]{Optional instruction}` | An in-lab tool that uses the student's device and records what it reads into a `\datatable`. See "Widgets" below. |
 | `\pagebreak` | Starts a new page when printed. |
 
 Notes on syntax:
@@ -71,6 +72,39 @@ Rows with a blank or non-numeric x or y are skipped, so the graph simply grows a
 \graph[table=visc, x=c1, y=c2, type=both, title="Viscosity vs temperature", xlabel="Temperature (°C)", ylabel="Viscosity (mPa·s)"]{Viscosity falls as temperature rises.}
 
 \graph[table=visc, x="1/(c1+273.15)", y="ln(c2)", fit=linear, xlabel="1/T (K⁻¹)", ylabel="ln η"]{Arrhenius plot: the slope gives Eₐ/R.}
+```
+
+## Widgets (tools that record into a table)
+
+A widget is a tool inside the lab that uses the device (for now: the phone camera) and **records values into an ordinary data table**. It never stores anything of its own, so the table prints, syncs and is reviewed exactly as if the student had typed the numbers. Students without the device type the values in by hand, so a lab must make sense with the widget never started. Add a widget only where the lab asks students to take that kind of reading, and put it right after the table it fills. Widgets go in the procedure, not in `\report{}`.
+
+The widget is passive until the student taps Start (no camera prompt on page load). On a device without a camera it shows a calm note telling the student to open the lab on their phone.
+
+Options common to every widget:
+
+- `type=` which tool (required). Available: `colorimeter`.
+- `id=` a permanent name, like any block.
+- `table=` the `id` of the `\datatable` it records into (required). Give the table `addrows` so every reading gets a row; otherwise only the table's blank rows can take readings.
+- `label=` an optional title shown in the tool's header.
+- `help=off` hides the Get help button from the tool's failure note (it is offered by default, only when the lab has Get help on and the student is signed in).
+- The instruction in the braces replaces the standard one. Say where to point the camera and remind students to keep the lighting the same for every sample.
+
+### Colorimeter
+
+Reads the average colour of a small square at the centre of the camera picture and records **R, G, B** (0–255), one row per reading. Phone cameras adjust their exposure, so absolute values drift with lighting: have students record a white or blank reference in the same light, and keep the lighting the same across samples (the lab does this, not the tool).
+
+- `columns=c2;c3;c4` the table columns (1-based, `c1`, `c2`, …) that take R, G and B, in that order. Default `c1;c2;c3`.
+- `sample=c1` an optional column for a sample name typed on the tool before recording.
+- `region=` the side of the sampled square in picture pixels; leave it out for automatic (about 4% of the picture).
+
+```
+\datatable[id=color-data, title="Colour readings", addrows]{
+| Sample | R | G | B |
+|---|---|---|---|
+| blank | ___ | ___ | ___ |
+}
+
+\widget[type=colorimeter, id=color-reader, table=color-data, columns=c2;c3;c4, sample=c1]{Hold the phone 10 cm above the cuvette so the square sits on the liquid. Keep the lamp in the same place for every tube, then tap Record.}
 ```
 
 ## Report tab (write-up skeleton)
