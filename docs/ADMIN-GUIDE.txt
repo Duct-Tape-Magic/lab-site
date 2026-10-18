@@ -107,9 +107,10 @@ Nothing happens until a student taps Start, so nobody reading on a laptop
 gets a camera prompt; a laptop without a camera just shows a note to open
 the lab on a phone. If the camera cannot start, the student sees a short
 note, the table to type into, and a Get help button if the lab has Get help
-on. Keep the reference object and the sample in the same light and the lamp
-still; the tool warns when the reference is too bright for the camera, too
-dark, or has changed a lot since Set reference was tapped.
+on. The tool shows no instructions of its own, only the picture, the two
+squares, the numbers and its buttons, so put any guidance in the lab text:
+keep the reference object and the sample in the same light, keep the lamp
+still, and avoid readings near 0 or 255.
 The Widgets button in the admin bar shows every available tool with a demo.
 
 Below the Procedure list is a second list called Report. Anything you put

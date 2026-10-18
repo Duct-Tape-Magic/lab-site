@@ -573,7 +573,6 @@
   .lt-widget-note { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
   .lt-widget-fail { border-left: 3px solid var(--rule-strong); padding: 0.6rem 0.8rem; margin-top: 0.4rem; font-size: 13px; line-height: 1.5; background: var(--bg); }
   .lt-widget-target { outline: 2px solid var(--accent); outline-offset: 4px; }
-  .lt-widget-demo-link { background: none; border: none; color: var(--muted); font-size: 11px; text-decoration: underline; cursor: pointer; padding: 0; font-family: var(--font-body); }
   .cm { display: grid; grid-template-columns: minmax(0, 1fr) minmax(170px, 0.8fr); gap: 1rem; align-items: start; }
   .cm-view { position: relative; background: #000; aspect-ratio: 4 / 3; overflow: hidden; }
   .cm-view video, .cm-view canvas.cm-src { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -582,22 +581,17 @@
   .cm-sq { display: block; width: 16px; height: 16px; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(0,0,0,0.6); }
   .cm-box.ref .cm-sq { border-style: dashed; }
   .cm-tag { position: absolute; top: calc(50% + 14px); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: #fff; background: rgba(0,0,0,0.55); padding: 1px 5px; white-space: nowrap; pointer-events: none; }
-  .cm-small { font-size: 11.5px; color: var(--muted); margin-top: 0.25rem; line-height: 1.4; } .cm-k { letter-spacing: 0.1em; text-transform: uppercase; font-size: 10px; margin-right: 0.3rem; color: var(--ink); }
-  .cm-warn { margin-top: 0.4rem; font-size: 12px; color: #8a6d1f; background: rgba(138,109,31,0.1); padding: 0.4rem 0.6rem; line-height: 1.4; }
-  .cm-hint { font-size: 11.5px; color: var(--muted); margin-top: 0.5rem; line-height: 1.5; }
-  .cm-refrow { display: flex; gap: 0.6rem; align-items: flex-start; margin-top: 0.4rem; } .cm-refrow .btn-small { flex: none; } .cm-refnote { font-size: 11.5px; color: var(--muted); line-height: 1.4; }
-  .cm.uncorrected .cm-refnote { color: var(--warn, #8a6d1f); }
-  .cm.held .cm-view::after { content: 'HELD'; position: absolute; top: 6px; left: 8px; font-size: 10px; letter-spacing: 0.12em; color: #fff; background: rgba(0,0,0,0.55); padding: 2px 6px; }
+
   .cm-swatch { width: 100%; height: 56px; border: 0.5px solid var(--rule-strong); background: #888; }
   .cm-nums { display: flex; gap: 0.6rem; margin: 0.6rem 0 0.2rem; }
   .cm-num { flex: 1; text-align: center; }
   .cm-num b { display: block; font-family: var(--font-heading); font-size: 1.9rem; line-height: 1; font-weight: 400; font-variant-numeric: tabular-nums; }
   .cm-num span { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
-  .cm-hex { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted); }
-  .cm-sample { margin-top: 0.6rem; } .cm-sample label { display: block; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.25rem; } .cm-sample input { width: 100%; }
+  .cm-sample { margin-top: 0.6rem; } .cm-sample input { width: 100%; }
   .cm-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.6rem; }
-  .cm-status { font-size: 12px; color: var(--accent); min-height: 1.2em; margin-top: 0.3rem; line-height: 1.4; }
-  .cm-status.muted { color: var(--muted); }
+  .cm-setref.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .cm-record.flash { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .cm-status { font-size: 12px; color: var(--muted); min-height: 1.2em; margin-top: 0.3rem; line-height: 1.4; }
   @media (max-width: 600px) { .cm { grid-template-columns: 1fr; } }
   .wd-card { border: 0.5px solid var(--rule-strong); padding: 1.2rem 1.4rem; margin-bottom: 1.2rem; }
   .wd-head { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; } .wd-head h3 { margin: 0; flex: 1; font-size: 1.3rem; }
@@ -1426,31 +1420,17 @@ const DEFAULTS = {
   widgetStop: 'Stop',
   widgetLoading: 'Starting…',
   widgetNoCamera: 'This needs a camera. Open this lab on your phone and tap Start there.',
-  widgetPaused: 'Paused. Tap Start to continue.',
   widgetFailed: 'The tool could not start. Type your values into the table instead.',
   widgetDenied: 'The camera was not allowed. Allow it in your browser settings and tap Start again, or type your values into the table.',
   widgetUnavailable: 'This tool is not available here. Type your values into the table instead.',
   widgetGetHelp: 'Get help',
-  widgetHold: 'Hold',
-  widgetResume: 'Resume',
   widgetRecord: 'Record',
-  widgetRecorded: 'Recorded in row {n}',
   widgetTableFull: 'The table has no empty row left for this reading.',
   widgetNoTable: 'This tool has no table to record into. Type your values into your data table.',
-  widgetSampleLabel: 'Sample name (optional)',
+  widgetSampleLabel: 'Sample name',
   widgetRefLabel: 'Reference',
   widgetMeasLabel: 'Sample',
-  widgetCorrectedLabel: 'Corrected',
-  widgetCorrectedNote: 'sample × reference when it was set ÷ reference now',
-  widgetCameraLabel: 'Camera',
-  widgetSetRef: 'Set reference',
-  widgetResetRef: 'Reset reference',
-  widgetRefNotSet: 'Not set yet, so readings are uncorrected. Put the Reference square on a plain, matte object that will stay in the same light, then tap Set reference. The first Record sets it if you forget. It lasts until you tap Stop or leave the lab.',
-  widgetRefSetTo: 'Set to {rgb}',
-  widgetRefClipped: 'The reference square is too bright for the camera. Use a darker, matte object or dim the light.',
-  widgetRefDark: 'The reference square is too dark. Drag it onto your reference object.',
-  widgetRefDrift: 'The light has changed a lot since the reference was set. Check the object and the lamp, or reset the reference.',
-  widgetDragHint: 'Drag the two squares: Reference onto a plain, matte object that stays in the same light for the whole lab, Sample onto what you are measuring.'
+  widgetSetRef: 'Set reference'
 };
 
 const SITE_TEXT_GROUPS = [
@@ -1465,7 +1445,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'entriesClearFailed', 'entriesSaveFailed', 'photoSyncFailed', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
   { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef', 'reportNoPhotoYet'] },
   { label: 'Get help', keys: ['helpButton', 'helpIntro', 'helpLoginNudge', 'helpMessagePlaceholder', 'helpSend', 'helpSent', 'helpError', 'helpAutoReply', 'helpAutoLabel', 'helpYou', 'helpTeacher', 'helpResolvedNote', 'helpEmailFrom', 'helpEmailSubject'] },
-  { label: 'Widgets (in-lab tools)', keys: ['widgetStart', 'widgetStop', 'widgetLoading', 'widgetNoCamera', 'widgetPaused', 'widgetFailed', 'widgetDenied', 'widgetUnavailable', 'widgetGetHelp', 'widgetHold', 'widgetResume', 'widgetRecord', 'widgetRecorded', 'widgetTableFull', 'widgetNoTable', 'widgetSampleLabel', 'widgetRefLabel', 'widgetMeasLabel', 'widgetCorrectedLabel', 'widgetCorrectedNote', 'widgetCameraLabel', 'widgetSetRef', 'widgetResetRef', 'widgetRefNotSet', 'widgetRefSetTo', 'widgetRefClipped', 'widgetRefDark', 'widgetRefDrift', 'widgetDragHint'] },
+  { label: 'Widgets (in-lab tools)', keys: ['widgetStart', 'widgetStop', 'widgetLoading', 'widgetNoCamera', 'widgetFailed', 'widgetDenied', 'widgetUnavailable', 'widgetGetHelp', 'widgetRecord', 'widgetTableFull', 'widgetNoTable', 'widgetSampleLabel', 'widgetRefLabel', 'widgetMeasLabel', 'widgetSetRef'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
 ];
 
@@ -1491,9 +1471,9 @@ const TEXT_LABELS = {
   calloutSafety: 'Safety box label', calloutWarning: 'Caution box label', calloutInfo: 'Note box label', calloutTip: 'Tip box label', calloutHint: 'Hint box label', figurePending: 'Missing figure text', graphEmpty: 'Empty graph message',
   procedureTab: 'Procedure tab label', reportTab: 'Report tab label', reportPreview: 'Preview report button', reportStyleTitle: 'Style guide heading', reportRequired: 'Required badge', reportHint: 'Hint toggle', reportWords: 'Word count', reportWordsAim: 'Word range hint', reportEmptyRequired: 'Empty required question note', reportTableLabel: 'Table caption word', reportFigureLabel: 'Figure caption word', reportMissingRef: 'Missing table/graph message', reportNoPhotoYet: 'No photo yet message',
   helpButton: 'Get help button', helpIntro: 'Help panel intro', helpLoginNudge: 'Help: log-in nudge', helpMessagePlaceholder: 'Help: question placeholder', helpSend: 'Help: send button', helpSent: 'Help: sent confirmation', helpError: 'Help: send failed', helpAutoReply: 'Help: automatic first reply (site default)', helpAutoLabel: 'Help: label on the automatic reply', helpYou: 'Help: your name in the thread', helpTeacher: 'Help: teacher name in the thread', helpResolvedNote: 'Help: resolved note', helpEmailFrom: 'Help: email sender', helpEmailSubject: 'Help: email subject ({lab} = lab title)',
-  widgetStart: 'Widget: Start button', widgetStop: 'Widget: Stop button', widgetLoading: 'Widget: starting message', widgetNoCamera: 'Widget: no-camera note', widgetPaused: 'Widget: paused note', widgetFailed: 'Widget: could-not-start message', widgetDenied: 'Widget: camera-not-allowed message', widgetUnavailable: 'Widget: not-available message', widgetGetHelp: 'Widget: Get help button',
-  widgetHold: 'Colorimeter: Hold button', widgetResume: 'Colorimeter: Resume button', widgetRecord: 'Colorimeter: Record button', widgetRecorded: 'Colorimeter: recorded message ({n} = row)', widgetTableFull: 'Colorimeter: table full message', widgetNoTable: 'Colorimeter: no table message', widgetSampleLabel: 'Colorimeter: sample name label',
-  widgetRefLabel: 'Colorimeter: reference square label', widgetMeasLabel: 'Colorimeter: sample square label', widgetCorrectedLabel: 'Colorimeter: corrected label', widgetCorrectedNote: 'Colorimeter: how corrected is computed', widgetCameraLabel: 'Colorimeter: camera reading label', widgetSetRef: 'Colorimeter: Set reference button', widgetResetRef: 'Colorimeter: Reset reference button', widgetRefNotSet: 'Colorimeter: reference not set note', widgetRefSetTo: 'Colorimeter: reference set note ({rgb})', widgetRefClipped: 'Colorimeter: reference too bright note', widgetRefDark: 'Colorimeter: reference too dark note', widgetRefDrift: 'Colorimeter: light changed note', widgetDragHint: 'Colorimeter: drag hint'
+  widgetStart: 'Widget: Start button', widgetStop: 'Widget: Stop button', widgetLoading: 'Widget: starting message', widgetNoCamera: 'Widget: no-camera note', widgetFailed: 'Widget: could-not-start message', widgetDenied: 'Widget: camera-not-allowed message', widgetUnavailable: 'Widget: not-available message', widgetGetHelp: 'Widget: Get help button',
+  widgetRecord: 'Colorimeter: Record button', widgetTableFull: 'Colorimeter: table full message', widgetNoTable: 'Colorimeter: no table message', widgetSampleLabel: 'Colorimeter: sample name placeholder',
+  widgetRefLabel: 'Colorimeter: reference square label', widgetMeasLabel: 'Colorimeter: sample square label', widgetSetRef: 'Colorimeter: Set reference button'
 };
 
 /* ============================================================
@@ -4091,7 +4071,7 @@ function renderWidgetsList() {
         <p><b>Records:</b> ${escapeHTML(W.records)}</p>
         <p><b>Settings on its Builder card:</b></p><ul>${W.options.map(o => `<li>${escapeHTML(o.label)}${o.help ? ` <span>— ${escapeHTML(o.help)}</span>` : ''}</li>`).join('')}</ul>
         <p><b>In a lab file:</b> <code>${escapeHTML(tag)}</code></p>
-        <p><b>Try it:</b> this demo reads a moving sample picture instead of the camera. Record only shows what would be written.</p>
+        <p><b>Try it:</b> this demo reads a moving sample picture instead of the camera. Record only shows what would be written. Students see exactly this, minus the demo picture and with no text around it.</p>
       </div>
       <div class="wd-demo">${ltWidgetBlock('demo-' + type, { type, demo: true, columns: 'c2;c3;c4', sample: 'c1' }, '')}</div>
     </div>`;
@@ -4739,7 +4719,7 @@ const WIDGETS = {
     description: 'Reads two small squares in the camera picture that students drag into place: a Reference on any matte object that stays under the same light, and a Sample. Records the sample\'s red, green and blue (0–255) corrected for changes in lighting, exposure and white balance since the reference was set, one table row per reading.',
     device: 'Needs a camera; a phone works best. On a laptop without a camera the tool shows a calm note and students type the values in.',
     records: 'One row per reading into a data table: corrected R, G and B in the columns you choose; optionally the camera\'s uncorrected R, G, B and a sample name.',
-    file: 'widgets/colorimeter.v4.js',
+    file: 'widgets/colorimeter.v5.js',
     options: [
       { name: 'table', label: 'Data table to record into', kind: 'table', help: 'Let students add rows to that table, so every reading gets its own row.' },
       { name: 'columns', label: 'Columns for the corrected R, G, B', kind: 'columns', parts: ['Red', 'Green', 'Blue'], default: 'c1;c2;c3', help: 'Corrected = sample × (reference reading when the student tapped Set reference) ÷ (reference reading now), channel by channel. Lighting, exposure and white-balance drift move both squares together, so it mostly cancels. The reference lasts until the tool is stopped or the lab is left.' },
@@ -4747,7 +4727,6 @@ const WIDGETS = {
       { name: 'sample', label: 'Column for the sample name', kind: 'column', none: 'No sample name', help: 'Students type a short name (blank, tube 3, …) before each reading.' },
       { name: 'help', label: 'Offer Get help when it fails', kind: 'help' },
     ],
-    instruction: 'Put a plain, matte object (grey card or paper) beside the sample and keep both in the same light. Drag the Reference square onto it and tap Set reference once; drag the Sample square onto what you are measuring, hold the phone steady, then tap Record.',
     print() { return ''; },
   },
 };
@@ -4761,7 +4740,7 @@ function ltWidgetBlock(id, opts, promptHtml) {
   if (!W) return `<div class="lt-widget" data-widget="${id}"><div class="lt-widget-head"><span class="lt-widget-kind">${escapeHTML(type || 'widget')}</span></div>${promptHtml ? `<div class="lt-prompt">${promptHtml}</div>` : ''}<div class="lt-widget-note">${escapeHTML(getText('widgetUnavailable'))}</div></div>`;
   return `<div class="lt-widget" data-widget="${id}" data-widget-type="${escapeHTML(type)}" data-opts="${escapeHTML(JSON.stringify(opts))}">
     <div class="lt-widget-head"><span class="lt-widget-kind">${escapeHTML(W.label)}</span>${opts.label ? `<span class="lt-widget-title">${escapeHTML(String(opts.label))}</span>` : ''}</div>
-    <div class="lt-prompt">${promptHtml || escapeHTML(W.instruction)}</div>
+    ${promptHtml ? `<div class="lt-prompt">${promptHtml}</div>` : ''}
     <div class="lt-widget-body"></div>
   </div>`;
 }
@@ -4786,7 +4765,7 @@ function ltWidgetHost({ labId, readOnly, tableApi, entries, save }) {
   const freeRow = (api, cols) => Array.from(api.tbody.children).find(tr => cols.every(ci => { const td = cell(api, tr, ci); return td && !td.textContent.trim(); })) || null;
   const targets = (api, opts) => { const cols = colsOf(opts.columns, api.cols); return { cols, live: cols.filter(Boolean), sample: colIndex(opts.sample, api.cols) }; };
   return {
-    labId, readOnly, demoLink: isRealAdmin(),
+    labId, readOnly,
     canRecord(tableId, opts) {
       const api = tableApi.get(tableId); if (!api) return { ok: false, reason: getText('widgetNoTable') };
       const t = targets(api, opts); if (!t.live.length) return { ok: false, reason: getText('widgetNoTable') };
@@ -4823,22 +4802,20 @@ function ltBindWidgets(area, host) {
       gen++;
       if (running) { try { running.stop(); } catch (e) { /* ignore */ } running = null; }
       ltLiveWidgets.delete(live);
-      if (next !== 'failed') showIdle(next === 'paused' ? getText('widgetPaused') : '');
+      if (next !== 'failed') showIdle('');   // paused (page hidden) looks the same as idle: just Start
     };
     live.stop = stop;
-    const demoLink = () => (host.demoLink && !host.demo ? `<button type="button" class="lt-widget-demo-link">Try it with a sample image (admins)</button>` : '');
     const wire = () => {
       const s = body.querySelector('.lt-widget-start'); if (s) s.addEventListener('click', () => start(false));
-      const d = body.querySelector('.lt-widget-demo-link'); if (d) d.addEventListener('click', () => start(true));
       const x = body.querySelector('.lt-widget-stop'); if (x) x.addEventListener('click', () => stop('idle'));
       const h = body.querySelector('.lt-widget-help'); if (h) h.addEventListener('click', () => { if (typeof help !== 'undefined' && !help.open) helpToggle(); const hh = $('help-host'); if (hh) hh.scrollIntoView({ behavior: 'smooth', block: 'center' }); });
     };
     const showIdle = note => {
-      body.innerHTML = `${note ? `<div class="lt-widget-note">${escapeHTML(note)}</div>` : ''}<div class="lt-widget-foot">${btn('lt-widget-start', 'widgetStart', true)}${demoLink()}</div>`;
+      body.innerHTML = `${note ? `<div class="lt-widget-note">${escapeHTML(note)}</div>` : ''}<div class="lt-widget-foot">${btn('lt-widget-start', 'widgetStart', true)}</div>`;
       wire();
       if (needsCamera && !host.demo && !opts.demo) noCameraCheck();   // a demo= widget reads a drawn picture, so no camera is needed
     };
-    const noCamera = () => { body.innerHTML = `<div class="lt-widget-note">${escapeHTML(getText('widgetNoCamera'))}</div>${demoLink() ? `<div class="lt-widget-foot">${demoLink()}</div>` : ''}`; wire(); };
+    const noCamera = () => { body.innerHTML = `<div class="lt-widget-note">${escapeHTML(getText('widgetNoCamera'))}</div>`; };
     const noCameraCheck = async () => {   // a calm note, never a failure: many students read on a laptop and use the tool on their phone
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { noCamera(); return; }
       try { const devs = await navigator.mediaDevices.enumerateDevices(); if (devs.length && !devs.some(d => d.kind === 'videoinput') && body.querySelector('.lt-widget-start')) noCamera(); } catch (e) { /* unknown: keep Start */ }
@@ -6690,7 +6667,7 @@ function buFormWidget(b) {
   const type = buOptStr(b, 'type'), W = buWidgetInfo(b);
   if (!W) return `<div class="bu-err">${type ? `No widget of type "${buEsc(type)}" exists on this site.` : 'This widget has no type.'} Remove this block and add a widget with the Widget… button.</div>${buIdRow(b)}`;
   let h = `<div class="bu-note">${buEsc(W.description)} ${buEsc(W.device)}</div>`;
-  h += `<div class="form-row"><label>Instruction shown above the tool</label>${buTextarea('prompt', b.prompt, 'str', `rows="2" data-brace="1" placeholder="${buEsc(W.instruction)}"`)}${buBraceLine(b.prompt)}<div class="hint">Leave empty to use the standard instruction (shown greyed). Say where to point the camera and remind students to keep the lighting the same.</div></div>`;
+  h += `<div class="form-row"><label>Instruction shown above the tool (optional)</label>${buTextarea('prompt', b.prompt, 'str', 'rows="2" data-brace="1"')}${buBraceLine(b.prompt)}<div class="hint">The tool itself shows no text, only the picture, the two squares, the R G B readout and its buttons. Put any instructions here or in the lab text.</div></div>`;
   h += buRow('Title (optional)', buInput('opts.label', buOptStr(b, 'label'), 'opt', 'placeholder="e.g. Colour reader"'), 'Shown in the tool\'s header.');
   const tbl = buWidgetTable(b), headers = tbl ? (tbl.block.headers || []) : [];
   const ncols = tbl ? Math.max(headers.length, ...(tbl.block.rows || []).map(r => r.length), 1) : 0;
