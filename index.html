@@ -4718,7 +4718,7 @@ const WIDGETS = {
     description: 'Reads two small squares in the camera picture that students drag into place: a Reference on any matte object that stays under the same light, and a Sample. Records the sample\'s red, green and blue (0–255) corrected for changes in lighting, exposure and white balance since the reference was set, one table row per reading.',
     device: 'Needs a camera; a phone works best. On a laptop without a camera the tool shows a calm note and students type the values in.',
     records: 'One row per reading into a data table: corrected R, G and B in the columns you choose; optionally the camera\'s uncorrected R, G, B.',
-    file: 'widgets/colorimeter.v9.js',
+    file: 'widgets/colorimeter.v10.js',
     options: [
       { name: 'table', label: 'Data table to record into', kind: 'table', help: 'Let students add rows to that table, so every reading gets its own row.' },
       { name: 'columns', label: 'Columns for the corrected R, G, B', kind: 'columns', parts: ['Red', 'Green', 'Blue'], default: 'c1;c2;c3', help: 'Corrected = sample × (reference reading when the student tapped Set reference) ÷ (reference reading now), channel by channel. Lighting, exposure and white-balance drift move both squares together, so it mostly cancels. The reference lasts until the tool is stopped or the lab is left.' },

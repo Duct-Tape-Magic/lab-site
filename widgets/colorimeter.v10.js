@@ -14,7 +14,7 @@
    Nothing is stored or sent anywhere by this file; the pixels stay in the browser.
    ctx: { opts, labId, demo, text(key), fmt(key, vars), canRecord() → {ok, reason}, record(values) → {ok, row | reason}, fail(why) }
    values: corrected R, G, B as strings, plus values.also = { rawcolumns: [R, G, B] }.
-   New version → new filename (colorimeter.v10.js) and update WIDGETS.colorimeter.file in index.html. */
+   New version → new filename (colorimeter.v11.js) and update WIDGETS.colorimeter.file in index.html. */
 (function () {
   'use strict';
   var W = window.LabWidgets = window.LabWidgets || {};
@@ -50,9 +50,9 @@
       var work = document.createElement('canvas'); work.width = work.height = SAMPLE_PX;
       var wctx = work.getContext('2d', { willReadFrequently: true });
       var stream = null, timer = null, hist = { ref: [], meas: [] }, cur = null, stopped = false, demoT = 0, drag = null, sayTimer = null;
-      function say(msg) {   // green confirmation under the buttons, gone after two seconds
+      function say(msg) {   // green confirmation under the buttons, gone after one second
         status.textContent = msg; status.classList.add('ok');
-        clearTimeout(sayTimer); sayTimer = setTimeout(function () { status.classList.remove('ok'); refreshRecord(); }, 2000);
+        clearTimeout(sayTimer); sayTimer = setTimeout(function () { status.classList.remove('ok'); refreshRecord(); }, 1000);
       }
 
       function refreshRecord() {   // Record is disabled, with the reason shown, only when the table cannot take another reading
