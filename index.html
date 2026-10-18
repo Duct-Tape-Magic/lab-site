@@ -585,6 +585,8 @@
   .cm-small { font-size: 11.5px; color: var(--muted); margin-top: 0.25rem; line-height: 1.4; } .cm-k { letter-spacing: 0.1em; text-transform: uppercase; font-size: 10px; margin-right: 0.3rem; color: var(--ink); }
   .cm-warn { margin-top: 0.4rem; font-size: 12px; color: #8a6d1f; background: rgba(138,109,31,0.1); padding: 0.4rem 0.6rem; line-height: 1.4; }
   .cm-hint { font-size: 11.5px; color: var(--muted); margin-top: 0.5rem; line-height: 1.5; }
+  .cm-refrow { display: flex; gap: 0.6rem; align-items: flex-start; margin-top: 0.4rem; } .cm-refrow .btn-small { flex: none; } .cm-refnote { font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+  .cm.uncorrected .cm-refnote { color: var(--warn, #8a6d1f); }
   .cm.held .cm-view::after { content: 'HELD'; position: absolute; top: 6px; left: 8px; font-size: 10px; letter-spacing: 0.12em; color: #fff; background: rgba(0,0,0,0.55); padding: 2px 6px; }
   .cm-swatch { width: 100%; height: 56px; border: 0.5px solid var(--rule-strong); background: #888; }
   .cm-nums { display: flex; gap: 0.6rem; margin: 0.6rem 0 0.2rem; }
@@ -1439,12 +1441,16 @@ const DEFAULTS = {
   widgetRefLabel: 'Reference',
   widgetMeasLabel: 'Sample',
   widgetCorrectedLabel: 'Corrected',
-  widgetCorrectedNote: 'sample × reference colour ÷ camera reading of the reference',
+  widgetCorrectedNote: 'sample × reference when it was set ÷ reference now',
   widgetCameraLabel: 'Camera',
-  widgetExpectedLabel: 'should read',
-  widgetRefClipped: 'The reference square is too bright for the camera. Dim the light or tilt the card.',
-  widgetRefDark: 'The reference square is too dark. Drag it onto the reference card.',
-  widgetDragHint: 'Drag the two squares: Reference onto the card, Sample onto what you are measuring. Keep both in the same light.'
+  widgetSetRef: 'Set reference',
+  widgetResetRef: 'Reset reference',
+  widgetRefNotSet: 'Not set yet, so readings are uncorrected. Put the Reference square on a plain, matte object that will stay in the same light, then tap Set reference. The first Record sets it if you forget.',
+  widgetRefSetTo: 'Set to {rgb}',
+  widgetRefClipped: 'The reference square is too bright for the camera. Use a darker, matte object or dim the light.',
+  widgetRefDark: 'The reference square is too dark. Drag it onto your reference object.',
+  widgetRefDrift: 'The light has changed a lot since the reference was set. Check the object and the lamp, or reset the reference.',
+  widgetDragHint: 'Drag the two squares: Reference onto a plain, matte object that stays in the same light for the whole lab, Sample onto what you are measuring.'
 };
 
 const SITE_TEXT_GROUPS = [
@@ -1459,7 +1465,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'entriesClearFailed', 'entriesSaveFailed', 'photoSyncFailed', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
   { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef', 'reportNoPhotoYet'] },
   { label: 'Get help', keys: ['helpButton', 'helpIntro', 'helpLoginNudge', 'helpMessagePlaceholder', 'helpSend', 'helpSent', 'helpError', 'helpAutoReply', 'helpAutoLabel', 'helpYou', 'helpTeacher', 'helpResolvedNote', 'helpEmailFrom', 'helpEmailSubject'] },
-  { label: 'Widgets (in-lab tools)', keys: ['widgetStart', 'widgetStop', 'widgetLoading', 'widgetNoCamera', 'widgetPaused', 'widgetFailed', 'widgetDenied', 'widgetUnavailable', 'widgetGetHelp', 'widgetHold', 'widgetResume', 'widgetRecord', 'widgetRecorded', 'widgetTableFull', 'widgetNoTable', 'widgetSampleLabel', 'widgetRefLabel', 'widgetMeasLabel', 'widgetCorrectedLabel', 'widgetCorrectedNote', 'widgetCameraLabel', 'widgetExpectedLabel', 'widgetRefClipped', 'widgetRefDark', 'widgetDragHint'] },
+  { label: 'Widgets (in-lab tools)', keys: ['widgetStart', 'widgetStop', 'widgetLoading', 'widgetNoCamera', 'widgetPaused', 'widgetFailed', 'widgetDenied', 'widgetUnavailable', 'widgetGetHelp', 'widgetHold', 'widgetResume', 'widgetRecord', 'widgetRecorded', 'widgetTableFull', 'widgetNoTable', 'widgetSampleLabel', 'widgetRefLabel', 'widgetMeasLabel', 'widgetCorrectedLabel', 'widgetCorrectedNote', 'widgetCameraLabel', 'widgetSetRef', 'widgetResetRef', 'widgetRefNotSet', 'widgetRefSetTo', 'widgetRefClipped', 'widgetRefDark', 'widgetRefDrift', 'widgetDragHint'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
 ];
 
@@ -1487,7 +1493,7 @@ const TEXT_LABELS = {
   helpButton: 'Get help button', helpIntro: 'Help panel intro', helpLoginNudge: 'Help: log-in nudge', helpMessagePlaceholder: 'Help: question placeholder', helpSend: 'Help: send button', helpSent: 'Help: sent confirmation', helpError: 'Help: send failed', helpAutoReply: 'Help: automatic first reply (site default)', helpAutoLabel: 'Help: label on the automatic reply', helpYou: 'Help: your name in the thread', helpTeacher: 'Help: teacher name in the thread', helpResolvedNote: 'Help: resolved note', helpEmailFrom: 'Help: email sender', helpEmailSubject: 'Help: email subject ({lab} = lab title)',
   widgetStart: 'Widget: Start button', widgetStop: 'Widget: Stop button', widgetLoading: 'Widget: starting message', widgetNoCamera: 'Widget: no-camera note', widgetPaused: 'Widget: paused note', widgetFailed: 'Widget: could-not-start message', widgetDenied: 'Widget: camera-not-allowed message', widgetUnavailable: 'Widget: not-available message', widgetGetHelp: 'Widget: Get help button',
   widgetHold: 'Colorimeter: Hold button', widgetResume: 'Colorimeter: Resume button', widgetRecord: 'Colorimeter: Record button', widgetRecorded: 'Colorimeter: recorded message ({n} = row)', widgetTableFull: 'Colorimeter: table full message', widgetNoTable: 'Colorimeter: no table message', widgetSampleLabel: 'Colorimeter: sample name label',
-  widgetRefLabel: 'Colorimeter: reference square label', widgetMeasLabel: 'Colorimeter: sample square label', widgetCorrectedLabel: 'Colorimeter: corrected label', widgetCorrectedNote: 'Colorimeter: how corrected is computed', widgetCameraLabel: 'Colorimeter: camera reading label', widgetExpectedLabel: 'Colorimeter: "should read" word', widgetRefClipped: 'Colorimeter: reference too bright note', widgetRefDark: 'Colorimeter: reference too dark note', widgetDragHint: 'Colorimeter: drag hint'
+  widgetRefLabel: 'Colorimeter: reference square label', widgetMeasLabel: 'Colorimeter: sample square label', widgetCorrectedLabel: 'Colorimeter: corrected label', widgetCorrectedNote: 'Colorimeter: how corrected is computed', widgetCameraLabel: 'Colorimeter: camera reading label', widgetSetRef: 'Colorimeter: Set reference button', widgetResetRef: 'Colorimeter: Reset reference button', widgetRefNotSet: 'Colorimeter: reference not set note', widgetRefSetTo: 'Colorimeter: reference set note ({rgb})', widgetRefClipped: 'Colorimeter: reference too bright note', widgetRefDark: 'Colorimeter: reference too dark note', widgetRefDrift: 'Colorimeter: light changed note', widgetDragHint: 'Colorimeter: drag hint'
 };
 
 /* ============================================================
@@ -4730,19 +4736,18 @@ function ltBindGraphs(area) {
 const WIDGETS = {
   colorimeter: {
     label: 'Colorimeter',
-    description: 'Reads two small squares in the camera picture that students drag into place: one on a reference card of known colour, one on the sample. Records the sample\'s red, green and blue (0–255) corrected against the reference, one table row per reading.',
+    description: 'Reads two small squares in the camera picture that students drag into place: a Reference on any matte object that stays under the same light, and a Sample. Records the sample\'s red, green and blue (0–255) corrected for changes in lighting, exposure and white balance since the reference was set, one table row per reading.',
     device: 'Needs a camera; a phone works best. On a laptop without a camera the tool shows a calm note and students type the values in.',
     records: 'One row per reading into a data table: corrected R, G and B in the columns you choose; optionally the camera\'s uncorrected R, G, B and a sample name.',
-    file: 'widgets/colorimeter.v2.js',
+    file: 'widgets/colorimeter.v3.js',
     options: [
       { name: 'table', label: 'Data table to record into', kind: 'table', help: 'Let students add rows to that table, so every reading gets its own row.' },
-      { name: 'columns', label: 'Columns for the corrected R, G, B', kind: 'columns', parts: ['Red', 'Green', 'Blue'], default: 'c1;c2;c3', help: 'Corrected = sample × reference colour ÷ what the camera sees on the reference, channel by channel. Exposure and white-balance drift move both squares together, so it mostly cancels.' },
+      { name: 'columns', label: 'Columns for the corrected R, G, B', kind: 'columns', parts: ['Red', 'Green', 'Blue'], default: 'c1;c2;c3', help: 'Corrected = sample × (reference reading when the student tapped Set reference) ÷ (reference reading now), channel by channel. Lighting, exposure and white-balance drift move both squares together, so it mostly cancels.' },
       { name: 'rawcolumns', label: 'Columns for the camera\'s uncorrected R, G, B (optional)', kind: 'columns', parts: ['Red', 'Green', 'Blue'], optional: true, help: 'Useful when students should see what the correction did.' },
       { name: 'sample', label: 'Column for the sample name', kind: 'column', none: 'No sample name', help: 'Students type a short name (blank, tube 3, …) before each reading.' },
-      { name: 'reference', label: 'Colour of the reference card', kind: 'color', fallback: '255;255;255', help: 'What the reference square should read in perfect light. A white card is 255;255;255. Students drag the Reference square onto that card.' },
       { name: 'help', label: 'Offer Get help when it fails', kind: 'help' },
     ],
-    instruction: 'Drag the Reference square onto the white card and the Sample square onto what you are measuring, with both in the same light. Hold the phone steady, then tap Record.',
+    instruction: 'Put a plain, matte object (grey card or paper) beside the sample and keep both in the same light. Drag the Reference square onto it and tap Set reference once; drag the Sample square onto what you are measuring, hold the phone steady, then tap Record.',
     print() { return ''; },
   },
 };
@@ -5072,7 +5077,7 @@ const BM_TYPES = {
   callout:   { tag: null,        label: 'Callout',         list: 'procedure', known: ['label'] },
   graph:     { tag: 'graph',     label: 'Graph',           list: 'both', kind: 'graph', idBase: 'graph',    known: ['id', 'table', 'x', 'y', 'series', 'type', 'fit', 'title', 'xlabel', 'ylabel', 'xmin', 'xmax', 'ymin', 'ymax'], nameOf: b => b.opts.title },
   pagebreak: { tag: 'pagebreak', label: 'Page break',      list: 'procedure', known: [] },
-  widget:    { tag: 'widget',    label: 'Widget',          list: 'procedure', kind: 'widget', idBase: 'widget', known: ['id', 'type', 'label', 'table', 'columns', 'rawcolumns', 'sample', 'reference', 'help'], nameOf: b => b.opts.label || b.opts.type },
+  widget:    { tag: 'widget',    label: 'Widget',          list: 'procedure', kind: 'widget', idBase: 'widget', known: ['id', 'type', 'label', 'table', 'columns', 'rawcolumns', 'sample', 'help'], nameOf: b => b.opts.label || b.opts.type },
   usetable:  { tag: 'usetable',  label: 'Include a table', list: 'report' },
   usegraph:  { tag: 'usegraph',  label: 'Include a graph', list: 'report' },
   useanswer: { tag: 'useanswer', label: 'Include an answer', list: 'report' },
@@ -6681,8 +6686,6 @@ function buTableSelect(b, noneLabel) {
 }
 // Widget card: the instruction, the target table, then the widget type's own settings as the WIDGETS catalog lists them.
 function buWidgetTable(b) { const id = buOptStr(b, 'table'); return id ? buTables().find(t => t.id && t.id === id) || null : null; }
-function buRgbToHex(s) { const p = String(s || '').split(/[;|,\s]+/).filter(Boolean).map(Number); return p.length === 3 && p.every(v => !isNaN(v)) ? '#' + p.map(v => ('0' + Math.max(0, Math.min(255, Math.round(v))).toString(16)).slice(-2)).join('') : '#ffffff'; }
-function buHexToRgb(h) { const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(h || '')); return m ? [1, 2, 3].map(i => parseInt(m[i], 16)).join(';') : ''; }
 function buFormWidget(b) {
   const type = buOptStr(b, 'type'), W = buWidgetInfo(b);
   if (!W) return `<div class="bu-err">${type ? `No widget of type "${buEsc(type)}" exists on this site.` : 'This widget has no type.'} Remove this block and add a widget with the Widget… button.</div>${buIdRow(b)}`;
@@ -6705,11 +6708,6 @@ function buFormWidget(b) {
       case 'columns': {
         const cur = String(buOptStr(b, o.name) || o.default || '').split(/[;|,]/).map(s => s.trim());
         h += `<div class="form-row"><label>${buEsc(o.label)}</label>${tbl ? `<div class="form-grid-3">${(o.parts || []).map((p, i) => `<div class="form-row" style="margin-bottom:0.3rem"><label style="font-size:11px">${buEsc(p)}</label>${colSel(`data-bind="opts.${o.name}" data-kind="wcols" data-part="${i}"`, cur[i] || '', o.optional ? 'Not recorded' : null)}</div>`).join('')}</div>` : needTable}${o.help ? `<div class="hint">${buEsc(o.help)}</div>` : ''}</div>`;
-        break;
-      }
-      case 'color': {
-        const cur = buOptStr(b, o.name) || o.fallback || '255;255;255';
-        h += buRow(o.label, `<div style="display:flex; gap:0.6rem; align-items:center"><input type="color" data-bind="opts.${o.name}" data-kind="wcolor" data-fallback="${buEsc(o.fallback || '')}" value="${buRgbToHex(cur)}" style="width:52px; height:32px; padding:2px"/><span class="bu-note" style="margin:0">${buEsc(cur)} (R;G;B)</span></div>`, o.help);
         break;
       }
       case 'column': h += buRow(o.label, tbl ? colSel(`data-bind="opts.${o.name}" data-kind="wcol"`, buOptStr(b, o.name), o.none || 'None') : needTable, o.help); break;
@@ -6920,7 +6918,6 @@ function buWrite(found, bind, kind, el, card) {
     case 'table-ref': buSetOpt(b, 'table', v); return true;
     case 'wcols': { const vals = Array.from(card.querySelectorAll(`select[data-bind="${bind}"][data-kind="wcols"]`)).map(s => s.value || ''); buSetOpt(b, key, vals.some(Boolean) ? vals.join(';') : undefined); return false; }   // widget: several column selects → "c2;c3;c4"
     case 'wcol': buSetOpt(b, key, v); return false;
-    case 'wcolor': { const rgb = buHexToRgb(v); buSetOpt(b, key, rgb && rgb !== (el.dataset.fallback || '') ? rgb : undefined); const note = el.nextElementSibling; if (note) note.textContent = `${rgb || el.dataset.fallback || ''} (R;G;B)`; return false; }   // widget: colour picker → "r;g;b", the default left implicit
     case 'whelp': buSetOpt(b, key, v ? undefined : 'off'); return false;   // on is the default and stays implicit in the file
     case 'picture': if (v) { b.path = v; return true; } return false;
     case 'body': case 'opt': case 'str': default:

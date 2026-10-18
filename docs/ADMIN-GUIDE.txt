@@ -92,22 +92,24 @@ and tip boxes.
 
 Widget… adds a tool that uses the student's device. The first one is a
 colorimeter: it opens the phone camera and shows two small squares the
-student drags into place, one onto a white card (the reference) and one onto
-the sample. It shows the sample's red, green and blue values live, corrected
-against the card, so the phone's automatic exposure and white balance mostly
-cancel out. When the student taps Record, those three numbers go into one of
-your data tables as a new row, so they save, sync, print and review exactly
-like typed numbers. On the widget's card you choose the table, which columns
-take R, G and B, optionally columns for the uncorrected camera values and for
-a sample name the student types first, and the colour of the reference card
-(white unless you use a coloured one). Put the widget right after the table
-it fills, and let that table add rows.
+student drags into place, one onto a plain matte object that will stay in the
+same light all lab (the reference: a grey card or a sheet of paper is better
+than anything white) and one onto the sample. The student taps Set reference
+once; from then on the sample's red, green and blue values are shown live,
+corrected for any change in the light or in the phone's automatic exposure
+and white balance since that moment. When the student taps Record, those
+three numbers go into one of your data tables as a new row, so they save,
+sync, print and review exactly like typed numbers. On the widget's card you
+choose the table, which columns take R, G and B, and optionally columns for
+the uncorrected camera values and for a sample name the student types first.
+Put the widget right after the table it fills, and let that table add rows.
 Nothing happens until a student taps Start, so nobody reading on a laptop
 gets a camera prompt; a laptop without a camera just shows a note to open
 the lab on a phone. If the camera cannot start, the student sees a short
 note, the table to type into, and a Get help button if the lab has Get help
-on. Keep the card and the sample in the same light and the lamp still; the
-tool warns when the card is too bright for the camera or too dark.
+on. Keep the reference object and the sample in the same light and the lamp
+still; the tool warns when the reference is too bright for the camera, too
+dark, or has changed a lot since Set reference was tapped.
 The Widgets button in the admin bar shows every available tool with a demo.
 
 Below the Procedure list is a second list called Report. Anything you put

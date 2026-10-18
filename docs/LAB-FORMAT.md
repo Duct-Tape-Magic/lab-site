@@ -91,12 +91,11 @@ Options common to every widget:
 
 ### Colorimeter
 
-Shows the camera picture with two small squares the student drags into place: a **Reference** square on a card of known colour (normally a white card) and a **Sample** square on what is being measured. It records the sample's **R, G, B** (0–255) *corrected against the reference*, channel by channel: corrected = sample × reference colour ÷ what the camera reads on the reference. Phone cameras keep adjusting exposure and white balance, but both squares are in the same picture, so the drift moves both readings together and mostly cancels. The lab should still keep the card and the sample in the same light and tell students to hold the phone steady; very bright squares clip at 255 (the tool warns when the reference is clipped or dark). Camera values are gamma-encoded, so ratios are only roughly proportional to light intensity; for comparing tubes and plotting trends that is fine.
+Shows the camera picture with two small squares the student drags into place: a **Reference** square on any plain, matte object that stays under the same light for the whole lab (a grey card, a sheet of paper, the bench; a mid-tone is better than white, which the camera clips) and a **Sample** square on what is being measured. The student taps **Set reference** once; from then on the tool records the sample's **R, G, B** (0–255) *corrected* channel by channel: corrected = sample × (reference reading when it was set) ÷ (reference reading now). Phone cameras keep adjusting exposure and white balance, but both squares are in the same picture, so the drift moves both readings together and mostly cancels. The reference needs no known colour, only constancy; the baseline is kept in the student's browser for the lab, and a forgotten Set reference is taken at the first Record. The tool warns when the reference is clipped, dark, or has drifted far from the baseline. Camera values are gamma-encoded, so ratios are only roughly proportional to light intensity; for comparing tubes and plotting trends that is fine.
 
 - `columns=c2;c3;c4` the table columns (1-based, `c1`, `c2`, …) that take the corrected R, G and B, in that order. Default `c1;c2;c3`.
 - `rawcolumns=c5;c6;c7` optional columns for the camera's uncorrected R, G, B, when students should see what the correction did.
 - `sample=c1` an optional column for a sample name typed on the tool before recording.
-- `reference=255;255;255` the colour the reference card should read (default white). Use a measured value for a coloured reference.
 
 ```
 \datatable[id=color-data, title="Colour readings", addrows]{
@@ -105,7 +104,7 @@ Shows the camera picture with two small squares the student drags into place: a 
 | blank | ___ | ___ | ___ |
 }
 
-\widget[type=colorimeter, id=color-reader, table=color-data, columns=c2;c3;c4, sample=c1]{Put the white card beside the cuvette. Drag the Reference square onto the card and the Sample square onto the liquid, keep the lamp still, then tap Record.}
+\widget[type=colorimeter, id=color-reader, table=color-data, columns=c2;c3;c4, sample=c1]{Put a grey card beside the cuvette. Drag the Reference square onto the card and tap Set reference once, drag the Sample square onto the liquid, keep the lamp still, then tap Record for each tube.}
 ```
 
 ## Report tab (write-up skeleton)
