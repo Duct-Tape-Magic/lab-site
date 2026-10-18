@@ -8,12 +8,12 @@
        corrected = sample × baseline / reference_now      (channel by channel)
    so changes in lighting, exposure and white balance, which move both squares together, mostly cancel. The reference needs no
    known colour: a mid-tone object is better than a white one, which the camera clips. If Record is tapped before a reference is
-   set, the current reference reading becomes the baseline. Nothing is stored or sent anywhere by this file; the pixels stay in
-   the browser. The square positions and the baseline are remembered per lab and widget in this browser so the baseline holds
-   across a reload (a convenience, not student data).
+   set, the current reference reading becomes the baseline. The widget keeps no memory: the baseline lives only while it runs
+   and is dropped on Stop or on leaving the lab, and the squares start at their default places every time. The data table holds
+   the data. Nothing is stored or sent anywhere by this file; the pixels stay in the browser.
    ctx: { opts, labId, demo, text(key), fmt(key, vars), canRecord() → {ok, reason}, record(values) → {ok, row | reason}, fail(why) }
    values: corrected R, G, B as strings, plus values.also = { rawcolumns: [R, G, B] } and values.sample.
-   New version → new filename (colorimeter.v4.js) and update WIDGETS.colorimeter.file in index.html. */
+   New version → new filename (colorimeter.v5.js) and update WIDGETS.colorimeter.file in index.html. */
 (function () {
   'use strict';
   var W = window.LabWidgets = window.LabWidgets || {};
@@ -22,7 +22,6 @@
   var SAMPLE_PX = 16;       // each square is scaled down to this many pixels across before averaging
   var REGION = 16;          // side of each square in picture pixels (old files may still carry region=)
   var DRIFT = 0.4;          // warn when the reference has moved this far (fraction) from the baseline
-  var STORE_KEY = 'labsite.widget.colorimeter.';
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function rgbText(c) { return c.map(function (v) { return Math.round(v); }).join(', '); }
 
@@ -30,10 +29,7 @@
     mount: function (stage, ctx) {
       var opts = ctx.opts || {};
       var t = function (k) { return ctx.text(k); };
-      var storeKey = STORE_KEY + (ctx.labId || '') + '.' + (opts.id || '');
-      var mem = { ref: { x: 0.22, y: 0.5 }, meas: { x: 0.62, y: 0.5 }, base: null };   // square centres as fractions of the picture; baseline reading
-      try { var saved = JSON.parse(localStorage.getItem(storeKey) || 'null'); if (saved && saved.ref && saved.meas) { mem.ref = saved.ref; mem.meas = saved.meas; if (Array.isArray(saved.base) && saved.base.length === 3) mem.base = saved.base; } } catch (e) { /* ignore */ }
-      function remember() { try { localStorage.setItem(storeKey, JSON.stringify(mem)); } catch (e) { /* ignore */ } }
+      var mem = { ref: { x: 0.22, y: 0.5 }, meas: { x: 0.62, y: 0.5 }, base: null };   // square centres as fractions of the picture; the baseline reading. Lives only for this run.
 
       stage.innerHTML = '<div class="cm">' +
         '<div class="cm-view">' + (ctx.demo ? '<canvas class="cm-src" width="320" height="240"></canvas>' : '<video playsinline muted autoplay></video>') +
@@ -80,7 +76,7 @@
         setRefBtn.textContent = t(mem.base ? 'widgetResetRef' : 'widgetSetRef');
         refNote.textContent = mem.base ? ctx.fmt('widgetRefSetTo', { rgb: rgbText(mem.base) }) : t('widgetRefNotSet');
       }
-      function setBase(from) { mem.base = (from || cur.ref).map(function (v) { return Math.round(v * 10) / 10; }); remember(); showRefState(); if (cur) show(cur); }
+      function setBase(from) { mem.base = (from || cur.ref).map(function (v) { return Math.round(v * 10) / 10; }); showRefState(); if (cur) show(cur); }
       setRefBtn.addEventListener('click', function () { if (!cur) return; setBase(); say(ctx.fmt('widgetRefSetTo', { rgb: rgbText(mem.base) })); });
       function source() {
         if (demoSrc) return { el: demoSrc, w: demoSrc.width, h: demoSrc.height };
@@ -116,7 +112,7 @@
           mem[k] = clampPos(s, { x: (e.clientX - r.left - g.ox) / (s.w * g.scale), y: (e.clientY - r.top - g.oy) / (s.h * g.scale) });
           place(s);
         });
-        var end = function () { if (!drag || drag.k !== k) return; drag = null; b.classList.remove('dragging'); hist = { ref: [], meas: [] }; remember(); };
+        var end = function () { if (!drag || drag.k !== k) return; drag = null; b.classList.remove('dragging'); hist = { ref: [], meas: [] }; };
         b.addEventListener('pointerup', end); b.addEventListener('pointercancel', end);
       });
       function drawDemo() {   // a bench, a grey card, a blue tube, and lighting that keeps changing: the corrected numbers stay put once the reference is set
@@ -210,7 +206,7 @@
           });
       }
       start();
-      return { stop: function () { stopped = true; release(); } };
+      return { stop: function () { stopped = true; release(); mem.base = null; } };   // the reference dies with the run
     }
   };
 })();
