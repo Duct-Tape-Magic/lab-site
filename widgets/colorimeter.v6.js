@@ -9,11 +9,12 @@
    so changes in lighting, exposure and white balance, which move both squares together, mostly cancel. If Record is tapped
    before a reference is set, the current reference reading becomes the baseline. The widget keeps no memory: the baseline lives
    only while it runs and is dropped on Stop or on leaving the lab, and the squares start at their default places every time.
-   The interface is deliberately bare: the picture, the two squares, the R G B readout, Set reference and Record.
+   The interface is deliberately bare: the picture, the two squares, the R G B readout, Set reference and Record, each with a
+   green check (steady once a reference is set; brief after a row is recorded).
    Nothing is stored or sent anywhere by this file; the pixels stay in the browser.
    ctx: { opts, labId, demo, text(key), fmt(key, vars), canRecord() → {ok, reason}, record(values) → {ok, row | reason}, fail(why) }
-   values: corrected R, G, B as strings, plus values.also = { rawcolumns: [R, G, B] } and values.sample.
-   New version → new filename (colorimeter.v6.js) and update WIDGETS.colorimeter.file in index.html. */
+   values: corrected R, G, B as strings, plus values.also = { rawcolumns: [R, G, B] }.
+   New version → new filename (colorimeter.v7.js) and update WIDGETS.colorimeter.file in index.html. */
 (function () {
   'use strict';
   var W = window.LabWidgets = window.LabWidgets || {};
@@ -37,26 +38,26 @@
         '<div class="cm-side">' +
           '<div class="cm-swatch"></div>' +
           '<div class="cm-nums"><div class="cm-num"><b data-ch="0">–</b><span>R</span></div><div class="cm-num"><b data-ch="1">–</b><span>G</span></div><div class="cm-num"><b data-ch="2">–</b><span>B</span></div></div>' +
-          (opts.sample ? '<div class="cm-sample"><input type="text" maxlength="60" autocomplete="off" placeholder="' + esc(t('widgetSampleLabel')) + '"/></div>' : '') +
-          '<div class="cm-actions"><button type="button" class="btn-small cm-setref">' + esc(t('widgetSetRef')) + '</button><button type="button" class="btn-small btn-primary-small cm-record" disabled>' + esc(t('widgetRecord')) + '</button></div>' +
+          '<div class="cm-actions"><span class="cm-act"><button type="button" class="btn-small cm-setref">' + esc(t('widgetSetRef')) + '</button><span class="cm-tick" data-tick="ref" hidden>✓</span></span>' +
+          '<span class="cm-act"><button type="button" class="btn-small btn-primary-small cm-record" disabled>' + esc(t('widgetRecord')) + '</button><span class="cm-tick" data-tick="rec" hidden>✓</span></span></div>' +
           '<div class="cm-status">&nbsp;</div>' +
         '</div></div>';
 
       var q = function (s) { return stage.querySelector(s); };
       var view = q('.cm-view'), video = q('video'), demoSrc = q('canvas.cm-src');
       var boxes = { ref: q('.cm-box.ref'), meas: q('.cm-box.meas') };
-      var swatch = q('.cm-swatch'), nums = [q('[data-ch="0"]'), q('[data-ch="1"]'), q('[data-ch="2"]')], sampleInput = q('.cm-sample input');
-      var setRefBtn = q('.cm-setref'), recBtn = q('.cm-record'), status = q('.cm-status');
+      var swatch = q('.cm-swatch'), nums = [q('[data-ch="0"]'), q('[data-ch="1"]'), q('[data-ch="2"]')];
+      var setRefBtn = q('.cm-setref'), recBtn = q('.cm-record'), status = q('.cm-status'), refTick = q('[data-tick="ref"]'), recTick = q('[data-tick="rec"]');
       var work = document.createElement('canvas'); work.width = work.height = SAMPLE_PX;
       var wctx = work.getContext('2d', { willReadFrequently: true });
-      var stream = null, timer = null, hist = { ref: [], meas: [] }, cur = null, stopped = false, flashTimer = null, demoT = 0, drag = null;
+      var stream = null, timer = null, hist = { ref: [], meas: [] }, cur = null, stopped = false, tickTimer = null, demoT = 0, drag = null;
 
       function refreshRecord() {   // Record is disabled, with the reason shown, only when the table cannot take another reading
         var can = ctx.canRecord ? ctx.canRecord() : { ok: false };
         recBtn.disabled = !can.ok || !cur;
         status.textContent = !can.ok && can.reason ? can.reason : ' ';
       }
-      function setBase() { mem.base = cur.ref.slice(); setRefBtn.classList.add('active'); if (cur) show(cur); }
+      function setBase() { mem.base = cur.ref.slice(); refTick.hidden = false; if (cur) show(cur); }   // the check stays while a reference is set
       setRefBtn.addEventListener('click', function () { if (cur) setBase(); });
       function source() {
         if (demoSrc) return { el: demoSrc, w: demoSrc.width, h: demoSrc.height };
@@ -131,13 +132,11 @@
         if (!can.ok) { refreshRecord(); return; }
         if (!mem.base) setBase();   // a forgotten Set reference: the first reading defines the baseline
         var round = function (c) { return c.map(function (v) { return String(Math.round(v)); }); };
-        var vals = round(correct(cur.raw, cur.ref, mem.base)); vals.also = { rawcolumns: round(cur.raw) }; vals.sample = sampleInput ? sampleInput.value.trim() : '';
+        var vals = round(correct(cur.raw, cur.ref, mem.base)); vals.also = { rawcolumns: round(cur.raw) };
         var r = null;
         try { r = ctx.record(vals); } catch (e) { r = { ok: false, reason: e && e.message }; }
-        if (r && r.ok) {
-          if (sampleInput) sampleInput.value = '';
-          recBtn.classList.add('flash'); clearTimeout(flashTimer); flashTimer = setTimeout(function () { recBtn.classList.remove('flash'); }, 700);   // a brief visual tick, no message
-        } else status.textContent = (r && r.reason) || t('widgetFailed');
+        if (r && r.ok) { recTick.hidden = false; clearTimeout(tickTimer); tickTimer = setTimeout(function () { recTick.hidden = true; }, 1500); }   // a brief green check, no message
+        else status.textContent = (r && r.reason) || t('widgetFailed');
         refreshRecord();
       });
       function release() {
