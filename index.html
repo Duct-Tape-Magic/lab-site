@@ -6667,7 +6667,7 @@ function buFormWidget(b) {
   const type = buOptStr(b, 'type'), W = buWidgetInfo(b);
   if (!W) return `<div class="bu-err">${type ? `No widget of type "${buEsc(type)}" exists on this site.` : 'This widget has no type.'} Remove this block and add a widget with the Widget… button.</div>${buIdRow(b)}`;
   let h = `<div class="bu-note">${buEsc(W.description)} ${buEsc(W.device)}</div>`;
-  h += `<div class="form-row"><label>Instruction shown above the tool (optional)</label>${buTextarea('prompt', b.prompt, 'str', 'rows="2" data-brace="1"')}${buBraceLine(b.prompt)}<div class="hint">The tool itself shows no text, only the picture, the two squares, the R G B readout and its buttons. Put any instructions here or in the lab text.</div></div>`;
+  h += `<div class="form-row"><label>Description</label>${buTextarea('prompt', b.prompt, 'str', 'rows="3" data-brace="1" placeholder="e.g. Put the grey card beside the cuvette, drag Reference onto the card and Sample onto the liquid, tap Set reference, then Record each tube."')}${buBraceLine(b.prompt)}<div class="hint">Shown under the Colorimeter title in this lab only. The tool itself has no other text: just the picture, the two squares, the R G B readout and its buttons. Leave empty for no description.</div></div>`;
   h += buRow('Title (optional)', buInput('opts.label', buOptStr(b, 'label'), 'opt', 'placeholder="e.g. Colour reader"'), 'Shown in the tool\'s header.');
   const tbl = buWidgetTable(b), headers = tbl ? (tbl.block.headers || []) : [];
   const ncols = tbl ? Math.max(headers.length, ...(tbl.block.rows || []).map(r => r.length), 1) : 0;
