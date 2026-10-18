@@ -9,12 +9,12 @@
    so changes in lighting, exposure and white balance, which move both squares together, mostly cancel. If Record is tapped
    before a reference is set, the current reference reading becomes the baseline. The widget keeps no memory: the baseline lives
    only while it runs and is dropped on Stop or on leaving the lab, and the squares start at their default places every time.
-   The interface is deliberately bare: the picture, the two squares, the R G B readout, Set reference and Record; a green wave
-   sweeps across a button when its action succeeds.
+   The interface is deliberately bare: the picture, the two squares, the R G B readout, Set reference and Record; a green
+   circled check pops onto a button when its action succeeds, then fades.
    Nothing is stored or sent anywhere by this file; the pixels stay in the browser.
    ctx: { opts, labId, demo, text(key), fmt(key, vars), canRecord() → {ok, reason}, record(values) → {ok, row | reason}, fail(why) }
    values: corrected R, G, B as strings, plus values.also = { rawcolumns: [R, G, B] }.
-   New version → new filename (colorimeter.v8.js) and update WIDGETS.colorimeter.file in index.html. */
+   New version → new filename (colorimeter.v9.js) and update WIDGETS.colorimeter.file in index.html. */
 (function () {
   'use strict';
   var W = window.LabWidgets = window.LabWidgets || {};
@@ -50,15 +50,15 @@
       var work = document.createElement('canvas'); work.width = work.height = SAMPLE_PX;
       var wctx = work.getContext('2d', { willReadFrequently: true });
       var stream = null, timer = null, hist = { ref: [], meas: [] }, cur = null, stopped = false, demoT = 0, drag = null;
-      function wave(btn) { btn.classList.remove('cm-wave'); void btn.offsetWidth; btn.classList.add('cm-wave'); }   // a green sweep across the button (CSS animation in index.html)
-      [setRefBtn, recBtn].forEach(function (b) { b.addEventListener('animationend', function () { b.classList.remove('cm-wave'); }); });
+      function done(btn) { btn.classList.remove('cm-done'); void btn.offsetWidth; btn.classList.add('cm-done'); }   // a green circled check on the button (CSS animation in index.html)
+      [setRefBtn, recBtn].forEach(function (b) { b.addEventListener('animationend', function () { b.classList.remove('cm-done'); }); });
 
       function refreshRecord() {   // Record is disabled, with the reason shown, only when the table cannot take another reading
         var can = ctx.canRecord ? ctx.canRecord() : { ok: false };
         recBtn.disabled = !can.ok || !cur;
         status.textContent = !can.ok && can.reason ? can.reason : ' ';
       }
-      function setBase() { mem.base = cur.ref.slice(); wave(setRefBtn); if (cur) show(cur); }
+      function setBase() { mem.base = cur.ref.slice(); done(setRefBtn); if (cur) show(cur); }
       setRefBtn.addEventListener('click', function () { if (cur) setBase(); });
       function source() {
         if (demoSrc) return { el: demoSrc, w: demoSrc.width, h: demoSrc.height };
@@ -136,7 +136,7 @@
         var vals = round(correct(cur.raw, cur.ref, mem.base)); vals.also = { rawcolumns: round(cur.raw) };
         var r = null;
         try { r = ctx.record(vals); } catch (e) { r = { ok: false, reason: e && e.message }; }
-        if (r && r.ok) wave(recBtn);
+        if (r && r.ok) done(recBtn);
         else status.textContent = (r && r.reason) || t('widgetFailed');
         refreshRecord();
       });

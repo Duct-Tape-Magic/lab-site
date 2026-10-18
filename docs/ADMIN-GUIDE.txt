@@ -102,8 +102,8 @@ three numbers go into one of your data tables as a new row, so they save,
 sync, print and review exactly like typed numbers. On the widget's card you
 choose the table, which columns take R, G and B, and optionally columns for
 the uncorrected camera values; students type sample names or concentrations
-into the table's other columns themselves. A green wave sweeps across
-Set reference or Record when the action succeeds. Put the widget right
+into the table's other columns themselves. A green circled check pops onto
+Set reference or Record when the action succeeds, then fades. Put the widget right
 after the table it fills, and let that table add rows.
 Nothing happens until a student taps Start, so nobody reading on a laptop
 gets a camera prompt; a laptop without a camera just shows a note to open
