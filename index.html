@@ -2101,6 +2101,8 @@ async function submitAccessCode(e, inputId, btnId, errId, returnHash) {
   btn.disabled = false;
   if (error || !data?.session) { err.textContent = getText(/banned/i.test(error?.message || '') ? 'accessArchived' : 'accessWrong'); return false; }
   closeModal('login-modal');
+  state.session = data.session; state.role = roleFromSession(data.session);
+  await reloadCatalogue();   // labs and folders open to this class appear now, not after a page reload
   if (returnHash) navigate(returnHash);
   return false;
 }
@@ -2109,7 +2111,7 @@ function renderPrivacy(view) {
   view.innerHTML = `<section class="page"><h1 class="page-title">${escapeHTML(getText('privacyTitle'))}</h1>
     <div class="home-intro rich-content editable" data-edit="privacyBody" data-rich="true" onclick="handleEditableClick(event, 'privacyBody', true)">${getText('privacyBody')}</div></section>`;
 }
-async function signOutStudent() { await sb.auth.signOut(); state.session = null; state.role = null; renderChrome(); navigate('#/'); }
+async function signOutStudent() { await sb.auth.signOut(); state.session = null; state.role = null; navigate('#/'); await reloadCatalogue(); }   // class-only labs leave the list
 
 /* ============================================================
    GET HELP — one private thread per student per lab, live both ways.
@@ -2847,10 +2849,15 @@ async function logoutAdmin() {
 }
 $('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
 
+// Re-downloads folders, labs and site text (what the current session is allowed to see) and re-renders. Concurrent calls share one download.
 async function reloadCatalogue() {
-  state.content = {};
-  await loadCatalogue();
-  renderChrome(); render();
+  if (reloadCatalogue._p) return reloadCatalogue._p;
+  reloadCatalogue._p = (async () => {
+    state.content = {};
+    try { await loadCatalogue(); } finally { reloadCatalogue._p = null; }
+    renderChrome(); render();
+  })();
+  return reloadCatalogue._p;
 }
 
 /* ============================================================
@@ -7576,6 +7583,7 @@ function buEquivalenceCheck(text) {
       if (prevUser === nextUser) return;
       if (!nextUser) { state.adminPreview = false; try { sessionStorage.removeItem('labsite.adminPreview'); } catch (e) { /* ignore */ } }
       loadMySeat().then(() => { renderChrome(); if (state.route.view === 'signin') render(); });
+      if (!isRealAdmin()) reloadCatalogue();   // a student signed in (Google, or a code in another tab) or out: what they may see has changed. Admin login/logout reload on their own.
       if (nextUser) loadUserTheme();
       document.body.classList.toggle('admin-mode', isAdmin());
       document.body.classList.toggle('admin-preview', isRealAdmin() && !!state.adminPreview);
