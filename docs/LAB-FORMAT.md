@@ -115,7 +115,7 @@ Inside `\report{…}` use ordinary Markdown plus:
 | Command | What it does |
 |---|---|
 | `\answer[id=…, title=…, required, words=min-max, hint="…", lines=6]{Question or instructions}` | The same `\answer` as in the procedure, with options that suit a write-up: `title` adds a heading above the question; `required` marks it and shows a note while it is empty; `words=40-120` shows a gentle word-count target (`words=40` for a minimum only, `words=-120` for a maximum only); `hint` adds an expandable hint. All optional. (`\section` is accepted as an old alias.) |
-| `\usetable{id}` | Shows a read-only copy of the `\datatable` with that id, filled with the student's own data, captioned "Table n". |
+| `\usetable{id}` | Shows the `\datatable` with that id in the report as well, captioned "Table n". It is the same table: students can type into it from either tab, and rows added in one place appear in the other. |
 | `\usegraph{id}` | Shows the `\graph` with that id (give the graph an `id=` option), drawn from the student's data, captioned "Figure n". |
 | `\useanswer{id}` | Shows a procedure `\answer` or `\notes` box (by its id): the prompt plus what the student wrote there. Read-only; the student edits it on the Procedure tab. |
 | `\usephoto{id}` | Shows the photo the student added in the procedure `\photo` slot with that id, with its prompt. |

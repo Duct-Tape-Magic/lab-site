@@ -660,7 +660,6 @@
   .help-row:hover { background: var(--card-bg); }
   .help-row.unread strong { color: var(--accent); }
   .help-last { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .rp-table td.rp-cell { background: transparent; cursor: default; }
   .rp-copy { background: transparent; white-space: pre-wrap; min-height: 2em; }
   .rp-copy-photo { border-style: solid; }
   .rp-caption { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-top: 0.4rem; }
@@ -2492,13 +2491,25 @@ function rpPrepare(area) {
 }
 function rpRefreshMirrors(area) {
   if (!area) return;
+  // Tables are live in both tabs: the report copy keeps the same data-field cells, and rpBind writes every edit through to the
+  // procedure table (the one ltBind saves). A copy whose shape still matches is updated cell by cell, never rebuilt under the cursor.
   area.querySelectorAll('.rp-mirror[data-mirror-table]').forEach(box => {
     const src = area.querySelector(`#lab-pane-procedure .lt-table-wrap[data-table="${box.dataset.mirrorTable}"]`);
     if (!src) { box.innerHTML = `<div class="lt-error">${escapeHTML(getText('reportMissingRef'))} \\usetable{${escapeHTML(box.dataset.mirrorTable)}}</div>`; return; }
+    const have = box.querySelector('.rp-table');
+    if (have && have.querySelectorAll('tbody tr').length === src.querySelectorAll('tbody tr').length) {
+      src.querySelectorAll('[data-field]').forEach(cell => {
+        const twin = have.querySelector(`[data-field="${cell.dataset.field}"]`);
+        if (twin && twin !== document.activeElement && ltFieldText(twin) !== ltFieldText(cell)) twin.textContent = ltFieldText(cell);
+      });
+      return;
+    }
+    if (have && have.contains(document.activeElement)) return;   // a row is being added while the student types here: catch up on the next refresh
     const clone = src.cloneNode(true);
     clone.classList.add('rp-table'); clone.removeAttribute('data-table');
-    clone.querySelectorAll('[contenteditable]').forEach(td => { td.removeAttribute('contenteditable'); td.removeAttribute('data-field'); td.removeAttribute('data-bound'); td.classList.add('rp-cell'); if (!td.textContent) td.textContent = '\u00a0'; });   // an empty editable cell keeps one line of height; a plain empty cell would collapse the row
-    clone.querySelectorAll('.lt-table-add').forEach(b => b.remove());
+    clone.querySelectorAll('[data-field]').forEach(td => td.removeAttribute('data-bound'));   // not bound by ltBind: rpBind's write-through does the saving
+    const add = clone.querySelector('.lt-table-add'), srcAdd = src.querySelector('.lt-table-add');
+    if (add) { if (!srcAdd || srcAdd.hidden) add.remove(); else add.addEventListener('click', () => srcAdd.click()); }   // one add-row path (ltBind's), so the row is counted and saved once
     const cap = box.querySelector('.rp-caption'); box.innerHTML = ''; box.appendChild(clone); if (cap) box.appendChild(cap);
   });
   area.querySelectorAll('.rp-mirror[data-mirror-answer]').forEach(box => {
@@ -2542,6 +2553,17 @@ function rpBind(area, lab) {
   let t = null;
   area.addEventListener('input', e => {
     if (e.target.closest('#lab-pane-procedure')) { clearTimeout(t); t = setTimeout(() => rpRefreshMirrors(area), 200); }
+  });
+  // Typing in a report-tab table copy edits the procedure table itself: same field, one saved value, graphs and widgets follow as after typing there.
+  area.addEventListener('input', e => {
+    const cell = e.target.closest('.rp-table [data-field]'); if (!cell) return;
+    const live = area.querySelector(`#lab-pane-procedure [data-field="${cell.dataset.field}"]`); if (!live) return;
+    const text = ltFieldText(cell);
+    if (ltFieldText(live) !== text) { live.textContent = text; live.dispatchEvent(new Event('input', { bubbles: true })); }
+  });
+  area.addEventListener('paste', e => {
+    const cell = e.target.closest('.rp-table [data-field]'); if (!cell || cell.getAttribute('contenteditable') === 'false') return;
+    e.preventDefault(); ltInsertPlainText(cell, (e.clipboardData || window.clipboardData).getData('text'));
   });
   area.addEventListener('change', e => { if (e.target.closest('#lab-pane-procedure')) setTimeout(() => rpRefreshMirrors(area), 400); });
   area.addEventListener('click', e => { if (e.target.closest('#lab-pane-procedure .lt-table-add, #lab-pane-procedure .lt-photo-remove')) setTimeout(() => rpRefreshMirrors(area), 150); });
@@ -6078,7 +6100,7 @@ const BU_PALETTE = {
   widget:    'A tool that uses the device (the camera colorimeter, for example) and records what it reads into one of your data tables.',
   pagebreak: 'Starts a new page when the lab is printed.',
   comment:   'Text only you can see in the file; students never see it.',
-  usetable:  'Shows one of the lab\'s data tables, filled with the student\'s own numbers.',
+  usetable:  'Shows one of the lab\'s data tables in the report too. Students can fill it in from either tab; it is one table.',
   usegraph:  'Shows one of the lab\'s graphs, drawn from the student\'s own data.',
   useanswer: 'Shows what the student wrote for one of the procedure\'s questions.',
   usephoto:  'Shows the photo the student added in one of the procedure\'s photo slots.',
@@ -7504,6 +7526,15 @@ Value: \\input[id=f]{}
     for (const k of Object.keys(fixture)) if (!k.startsWith('_') && !(k in saved)) throw new Error(`key ${k} was dropped on save`);
     if (saved.q !== 'changed') throw new Error('edit was not saved');
     const mirror = host.querySelector('[data-mirror-table="tbl"] .rp-table'); if (!mirror || !mirror.textContent.includes('1.5')) throw new Error('report mirror missing data');
+    // the report copy is live: an edit there lands in the procedure cell and in the saved entries, and a procedure edit shows up in the copy
+    const mc = mirror.querySelector('[data-field="tbl.r1c1"]'); if (!mc || mc.getAttribute('contenteditable') !== 'plaintext-only') throw new Error('report table copy is not editable');
+    mc.textContent = '7.25'; mc.dispatchEvent(new Event('input', { bubbles: true }));
+    if (host.querySelector('#lab-pane-procedure [data-field="tbl.r1c1"]').textContent !== '7.25') throw new Error('report table edit did not reach the procedure table');
+    await new Promise(res => setTimeout(res, 500));
+    if (JSON.parse(localStorage.getItem(ltKey(labId)) || '{}')['tbl.r1c1'] !== '7.25') throw new Error('report table edit was not saved');
+    const pc = host.querySelector('#lab-pane-procedure [data-field="tbl.r1c2"]'); pc.textContent = '8.5'; pc.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise(res => setTimeout(res, 400));
+    if (mirror.querySelector('[data-field="tbl.r1c2"]').textContent !== '8.5') throw new Error('procedure edit did not show in the report copy');
     // widgets: render, stay idle, and record through the table's own add-row path
     const wd = host.querySelector('.lt-widget[data-widget="cr"]'); if (!wd || !(wd.querySelector('.lt-widget-start') || wd.textContent.includes(getText('widgetNoCamera')))) throw new Error('widget did not render idle');   // Start, or the calm no-camera note on a device without one
     const full = host._ltWidgetHost.canRecord('tbl', { columns: 'c1;c2' }); if (!full.ok) throw new Error('widget cannot record: ' + full.reason);
