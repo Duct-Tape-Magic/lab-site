@@ -35,7 +35,7 @@ An interactive tool inside a lab that uses the device (camera, timer, sensors, a
 
 ## Lab format (documented in LAB-FORMAT.md, "Widgets")
 
-`\widget[type=colorimeter, id=color-reader, table=color-data, columns=c2;c3;c4, sample=c1, label=…, help=off]{Instruction shown above the widget}` — `type`, `id`, `table`, `label` and `help` are common; the rest are per type and listed in the catalog. Stands on its own line, in the procedure. The instruction defaults to the catalog's when the braces are empty.
+`\widget[type=colorimeter, id=color-reader, table=color-data, columns=c2;c3;c4, rawcolumns=c5;c6;c7, label=…, help=off]{Instruction shown above the widget}` — `type`, `id`, `table`, `label` and `help` are common; the rest are per type and listed in the catalog. Stands on its own line, in the procedure. The instruction defaults to the catalog's when the braces are empty.
 
 ## Widget 1: Colorimeter
 
