@@ -12,6 +12,7 @@ A website where students open lab procedures (rich text, photos, YouTube video, 
 |---|---|
 | `index.html` | The whole app: CSS, markup, JS. No build step. `CONFIG` at the top of the script holds the Supabase URL and publishable key. |
 | `vendor/` | Pinned copies of supabase-js, Quill 2, KaTeX (+ mhchem, auto-render, woff2 fonts), qrcode-generator. No CDN at runtime except Google Fonts (non-blocking, falls back to system fonts). See `vendor/VERSIONS.txt`. |
+| `supabase/grants.sql` | Data API grants for every public table (needed for tables created after 2026-10-30 and for rebuilding on a fresh project). |
 | `supabase/schema.sql` | Tables, helper functions, row-level security, storage buckets and policies, admin-guarded stats functions. Idempotent; run in the SQL editor. |
 | `supabase/functions/` | Edge Functions (Phase 3: `gate`, `admin-users`, `move-files`). Not written yet. |
 | `scripts/snapshot.mjs` + `.github/workflows/snapshot.yml` | Hourly GitHub Action copies all public content to `data/snapshot.json` (the outage fallback) and keeps a weekly heartbeat commit. Needs repo secrets `SUPABASE_URL`, `SUPABASE_ANON_KEY`. |
@@ -124,6 +125,8 @@ Decided 2026-09-18: grading stays in Canvas (students print / save PDF from the 
 Not built yet: Phase 3 access control (Edge Functions, private bucket flow, password prompt wiring, student sign-in, Accounts panel), Phase 4 (Organize drag-and-drop, Save-as-copy, revision restore UI, QR codes, announcement editor UI, full-text search RPC), Phase 5 (Activity dashboard), Phase 6 polish, Phase 7 (export/import, orphan finder, load test, encrypted snapshot option, owner guide completion), Quill table module decision.
 
 ## Guardrails
+
+- **Every new table needs an explicit Data API grant** (Supabase stopped granting them automatically on 2026-10-30): after `create table public.x`, add `grant select, insert, update, delete on public.x to anon, authenticated;` (and `grant usage, select on sequence …` for identity columns), then enable RLS and write the policies as usual. `supabase/grants.sql` re-grants every public table and is run after `schema.sql` on a fresh project.
 
 - Keep the `<meta name="robots" content="noindex">` tag: the owner decided (2026-10-10) the site should not appear in search results; students reach it by link.
 
