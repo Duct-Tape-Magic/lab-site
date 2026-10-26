@@ -524,6 +524,12 @@
   .lt-photo img { max-width: 100%; max-height: 440px; object-fit: contain; display: block; }
   .lt-photo-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
   .lt-photo-actions input[type="file"] { display: none; }
+  .lt-photo-add[hidden] { display: none; }
+  .lt-photo-item { position: relative; }
+  .lt-photo-item .lt-photo-actions { position: absolute; top: 6px; right: 6px; }
+  .lt-photo-multi .lt-photo-preview { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  .lt-photo-multi .lt-photo-item { flex: 1 1 calc(50% - 0.3rem); max-width: calc(50% - 0.3rem); }
+  .lt-photo-multi .lt-photo-item img { width: 100%; max-height: 320px; }
   .lt-figure { margin: 1.5rem 0; }
   .lt-figure img { max-width: 100%; display: block; }
   .lt-figure.size-small { max-width: 33%; }
@@ -694,6 +700,7 @@
   .pdf-doc .lt-callout { background: #f6f6f6; border-left-color: #444; }
   .pdf-doc .lt-notes summary { color: #444; }
   .pdf-doc .lt-photo { border: none; padding: 0; }
+  .pdf-doc .lt-photo-item { break-inside: avoid; page-break-inside: avoid; }
   .pdf-doc .pdf-video { font-size: 12px; color: #444; margin: 8px 0; }
   .pdf-doc .rp-caption { color: #333; text-transform: none; letter-spacing: 0; font-style: italic; font-size: 11.5px; }
   .pdf-doc .lt-figure-pending { display: none; }
@@ -2526,8 +2533,8 @@ function rpRefreshMirrors(area) {
     const id = box.dataset.mirrorPhoto;
     const src = area.querySelector(`#lab-pane-procedure .lt-photo[data-photo="${id}"]`);
     if (!src) { box.innerHTML = `<div class="lt-error">${escapeHTML(getText('reportMissingRef'))} \\usephoto{${escapeHTML(id)}}</div>`; return; }
-    const img = src.querySelector('.lt-photo-preview img'), prompt = src.querySelector('.lt-prompt');
-    box.innerHTML = `<div class="lt-photo rp-copy-photo ${img ? 'has-photo' : ''}">${prompt ? `<div class="lt-prompt">${prompt.innerHTML}</div>` : ''}<div class="lt-photo-preview">${img ? `<img src="${img.getAttribute('src')}" alt=""/>` : `<span class="hint" style="margin:0;">${escapeHTML(getText('reportNoPhotoYet'))}</span>`}</div></div>`;
+    const imgs = Array.from(src.querySelectorAll('.lt-photo-preview img')), prompt = src.querySelector('.lt-prompt');
+    box.innerHTML = `<div class="lt-photo rp-copy-photo ${imgs.length ? 'has-photo' : ''}${imgs.length > 1 ? ' lt-photo-multi' : ''}">${prompt ? `<div class="lt-prompt">${prompt.innerHTML}</div>` : ''}<div class="lt-photo-preview">${imgs.length ? imgs.map(i => `<div class="lt-photo-item"><img src="${i.getAttribute('src')}" alt=""/></div>`).join('') : `<span class="hint" style="margin:0;">${escapeHTML(getText('reportNoPhotoYet'))}</span>`}</div></div>`;
   });
   // captions: Table n / Figure n in document order
   let t = 0, f = 0;
@@ -2568,7 +2575,7 @@ function rpBind(area, lab) {
     e.preventDefault(); ltInsertPlainText(cell, (e.clipboardData || window.clipboardData).getData('text'));
   });
   area.addEventListener('change', e => { if (e.target.closest('#lab-pane-procedure')) setTimeout(() => rpRefreshMirrors(area), 400); });
-  area.addEventListener('click', e => { if (e.target.closest('#lab-pane-procedure .lt-table-add, #lab-pane-procedure .lt-photo-remove')) setTimeout(() => rpRefreshMirrors(area), 150); });
+  area.addEventListener('click', e => { if (e.target.closest('#lab-pane-procedure .lt-table-add, #lab-pane-procedure .lt-photo-remove, #lab-pane-procedure .lt-photo-item-remove')) setTimeout(() => rpRefreshMirrors(area), 150); });
   setTimeout(() => rpRefreshMirrors(area), 900);   // photos arrive from the browser's store a moment after binding
   const meta = area.querySelector('.rp-doc-meta');
   if (meta) meta.textContent = [isStudent() ? studentName() : '', new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })].filter(Boolean).join(' · ');
@@ -2672,7 +2679,7 @@ async function downloadLabPdf(which) {
       image: { type: 'jpeg', quality: 0.93 },
       html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false, windowWidth: 710 },
       jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
-      pagebreak: { mode: ['css', 'legacy'], avoid: ['.pdf-keep', '.rp-mirror', '.lt-table-wrap', '.lt-graph', '.lt-figure', '.lt-figure-row', 'tr', '.lt-answer', '.lt-photo', 'h2', 'h3', '.lt-callout', 'li'] }
+      pagebreak: { mode: ['css', 'legacy'], avoid: ['.pdf-keep', '.rp-mirror', '.lt-table-wrap', '.lt-graph', '.lt-figure', '.lt-figure-row', 'tr', '.lt-answer', '.lt-photo-item', 'h2', 'h3', '.lt-callout', 'li'] }
     }).from(doc).save();
     logEvent('print', { lab_id: lab.id, path: location.hash });
     toast(getText('pdfReady'));
@@ -4300,7 +4307,10 @@ function ltWidget(name, o, body, ctx, widgets) {
       </div>`;
     }
     case 'notes': return `<details class="lt-notes"><summary>${body ? ltInline(body.trim(), ctx) : escapeHTML(getText('notesLabel'))}</summary><div class="lt-field" contenteditable="plaintext-only" data-field="${id}" data-placeholder="${escapeHTML(getText('notesPlaceholder'))}"></div></details>`;
-    case 'photo': return `<div class="lt-photo" data-photo="${id}">${body ? `<div class="lt-prompt">${ltInline(body.trim(), ctx)}</div>` : ''}<div class="lt-photo-preview"></div><div class="lt-photo-actions"><label class="btn-small lt-photo-add">${escapeHTML(getText('photoAdd'))}<input type="file" accept="image/*" capture="environment"/></label><button type="button" class="btn-small lt-photo-remove" hidden>${escapeHTML(getText('photoRemove'))}</button></div></div>`;
+    case 'photo': {   // max=N lets a student add up to N photos (default 1); the first photo keeps the slot's own name, extras are <id>.2, <id>.3 …
+      const max = Math.min(6, Math.max(1, parseInt(o.max, 10) || 1));
+      return `<div class="lt-photo${max > 1 ? ' lt-photo-multi' : ''}" data-photo="${id}" data-max="${max}">${body ? `<div class="lt-prompt">${ltInline(body.trim(), ctx)}</div>` : ''}<div class="lt-photo-preview"></div><div class="lt-photo-actions"><label class="btn-small lt-photo-add">${escapeHTML(getText('photoAdd'))}<input type="file" accept="image/*" capture="environment"/></label>${max === 1 ? `<button type="button" class="btn-small lt-photo-remove" hidden>${escapeHTML(getText('photoRemove'))}</button>` : ''}</div></div>`;
+    }
     case 'input': return `<span class="lt-inline">${o.label ? `<span class="lt-label">${escapeHTML(o.label)}</span>` : ''}<span class="lt-field lt-inline-field" contenteditable="plaintext-only" data-field="${id}" data-placeholder="${escapeHTML(o.placeholder || '')}"></span>${o.unit ? `<span class="lt-unit">${escapeHTML(o.unit)}</span>` : ''}</span>`;
     case 'procedure': {
       const inner = ltInner(body || '', ctx);
@@ -4578,28 +4588,42 @@ function ltBind(area, labId, cloud = null, readOnly = false) {
   const photoUid = readOnly ? (state.reviewing && state.reviewing.user_id) || null : (isStudent() && sb && state.source === 'live' ? state.session.user.id : null);
   const remoteSlots = photoUid ? ltPhotoRemoteList(photoUid, labId) : Promise.resolve(null);   // one list request per lab
   area.querySelectorAll('.lt-photo').forEach(async box => {
-    const photoId = box.dataset.photo, key = ltScope() + `${labId}|${photoId}`, prev = box.querySelector('.lt-photo-preview');
+    const photoId = box.dataset.photo, max = Math.min(6, Math.max(1, parseInt(box.dataset.max, 10) || 1)), prev = box.querySelector('.lt-photo-preview');
     const input = box.querySelector('input[type="file"]'), addLbl = box.querySelector('.lt-photo-add'), rm = box.querySelector('.lt-photo-remove');
-    const show = url => { prev.innerHTML = url ? `<img src="${url}" alt=""/>` : ''; box.classList.toggle('has-photo', !!url); if (rm) rm.hidden = !url; if (addLbl && addLbl.firstChild) addLbl.firstChild.textContent = getText(url ? 'photoChange' : 'photoAdd'); };
-    const local = readOnly ? null : await ltPhotoGet(key);
-    show(local);
+    const slotId = n => n === 1 ? photoId : `${photoId}.${n}`;   // slot 1 keeps the original name: photos saved before max= existed stay exactly where they are
+    const keyOf = n => ltScope() + `${labId}|${slotId(n)}`;
+    const urls = new Array(max + 1).fill(null);   // 1-based; the device/account copy of each slot
+    const show = () => {
+      const filled = []; for (let n = 1; n <= max; n++) if (urls[n]) filled.push(n);
+      prev.innerHTML = filled.map(n => `<div class="lt-photo-item" data-slot="${n}"><img src="${urls[n]}" alt=""/>${max > 1 && !readOnly ? `<span class="lt-photo-actions"><button type="button" class="btn-small lt-photo-item-remove" data-slot="${n}">${escapeHTML(getText('photoRemove'))}</button></span>` : ''}</div>`).join('');
+      box.classList.toggle('has-photo', filled.length > 0);
+      if (rm) rm.hidden = !filled.length;
+      if (addLbl) { addLbl.hidden = max > 1 && filled.length >= max; if (addLbl.firstChild) addLbl.firstChild.textContent = getText(max === 1 && filled.length ? 'photoChange' : 'photoAdd'); }
+    };
+    if (!readOnly) for (let n = 1; n <= max; n++) urls[n] = await ltPhotoGet(keyOf(n));
+    show();
     if (photoUid) {
       const remote = await remoteSlots;
       if (remote) {
-        if (!local && remote.has(photoId)) { const url = await ltPhotoDownload(photoUid, labId, photoId); if (url) { if (!readOnly) await ltPhotoSet(key, url); show(url); } }   // new device or cleared browser: the account copy comes back
-        else if (local && !readOnly && !remote.has(photoId)) ltPhotoUpload(photoUid, labId, photoId, local).catch(e => console.warn('photo upload failed:', e.message));   // taken before sync existed: push it now
+        for (let n = 1; n <= max; n++) {
+          if (!urls[n] && remote.has(slotId(n))) { const url = await ltPhotoDownload(photoUid, labId, slotId(n)); if (url) { if (!readOnly) await ltPhotoSet(keyOf(n), url); urls[n] = url; show(); } }   // new device or cleared browser: the account copy comes back
+          else if (urls[n] && !readOnly && !remote.has(slotId(n))) ltPhotoUpload(photoUid, labId, slotId(n), urls[n]).catch(e => console.warn('photo upload failed:', e.message));   // taken before sync existed: push it now
+        }
       }
     }
     if (readOnly || !input) return;
+    const removeSlot = async n => { await ltPhotoDel(keyOf(n)); urls[n] = null; show(); if (photoUid) ltPhotoRemoteRemove(photoUid, labId, slotId(n)).catch(() => {}); };
     input.addEventListener('change', async () => {
       const f = input.files[0]; if (!f) return;
+      let n = 1; if (max > 1) { n = 0; for (let k = 1; k <= max; k++) if (!urls[k]) { n = k; break; } if (!n) { input.value = ''; return; } }   // first free slot; a single slot is replaced
       try {
-        const url = await fileToDataUrl(f); await ltPhotoSet(key, url); show(url); flash();
-        if (photoUid) ltPhotoUpload(photoUid, labId, photoId, url).catch(e => { console.warn('photo upload failed:', e.message); toast(getText('photoSyncFailed'), true); });
+        const url = await fileToDataUrl(f); await ltPhotoSet(keyOf(n), url); urls[n] = url; show(); flash();
+        if (photoUid) ltPhotoUpload(photoUid, labId, slotId(n), url).catch(e => { console.warn('photo upload failed:', e.message); toast(getText('photoSyncFailed'), true); });
       } catch (e) { toast(e.message, true); }
       input.value = '';
     });
-    rm.addEventListener('click', async () => { await ltPhotoDel(key); show(null); if (photoUid) ltPhotoRemoteRemove(photoUid, labId, photoId).catch(() => {}); });
+    if (rm) rm.addEventListener('click', () => removeSlot(1));
+    prev.addEventListener('click', e => { const b = e.target.closest('.lt-photo-item-remove'); if (b) removeSlot(parseInt(b.dataset.slot, 10)); });
   });
   ltBindGraphs(area);
   area._ltWidgetHost = ltWidgetHost({ labId, readOnly, tableApi, entries, save }); ltBindWidgets(area, area._ltWidgetHost);   // the host is exposed for entriesSelfTest
@@ -5074,7 +5098,7 @@ const BM_TYPES = {
   table:     { tag: 'datatable', label: 'Data table',      list: 'both', kind: 'table', idBase: 'table',    known: ['id', 'title', 'addrows'], nameOf: b => b.opts.title },
   answer:    { tag: 'answer',    label: 'Question',        list: 'both', kind: 'q',     idBase: 'question', known: ['id', 'lines', 'title', 'required', 'words', 'hint'] },
   notes:     { tag: 'notes',     label: 'Notes box',       list: 'both', kind: 'notes', idBase: 'notes',    known: ['id'], nameOf: b => b.label },
-  photo:     { tag: 'photo',     label: 'Photo slot',      list: 'both', kind: 'photo', idBase: 'photo',    known: ['id'] },
+  photo:     { tag: 'photo',     label: 'Photo slot',      list: 'both', kind: 'photo', idBase: 'photo',    known: ['id', 'max'] },
   video:     { tag: 'video',     label: 'Video',           list: 'both', known: [] },
   figure:    { tag: 'figure',    label: 'Picture',         list: 'both', known: ['caption', 'size'] },
   callout:   { tag: null,        label: 'Callout',         list: 'procedure', known: ['label'] },
@@ -6450,7 +6474,7 @@ function buSummary(b) {
     }
     case 'answer': { const w = buOptStr(b, 'words'); return `${buOptStr(b, 'title') || buFirstLine(buPlainInputs(b.prompt), 80) || '(no question text)'}${b.opts && b.opts.required ? ' · required' : ''}${w ? ` · ${w} words` : ''} · ${buOptStr(b, 'lines') || '3'} lines`; }
     case 'notes': return b.label || 'My notes';
-    case 'photo': return buFirstLine(buPlainInputs(b.prompt), 80) || '(no instruction)';
+    case 'photo': { const m = parseInt(buOptStr(b, 'max'), 10); return (buFirstLine(buPlainInputs(b.prompt), 80) || '(no instruction)') + (m > 1 ? ` · up to ${m} photos` : ''); }
     case 'video': return buHost.youtubeId(b.url) || b.url || '(no link yet)';
     case 'figure': { const p = String(b.path || '').replace(/^img:/, ''); if (!p) return 'Waiting for a picture'; if (/^(IMAGE|FIGURE)[_-]?\w*$/i.test(p)) return `Waiting for picture ${p}`; return p.split('/').pop(); }
     case 'callout': return `${buOptStr(b, 'label') || BU_CALLOUT_LABELS[b.kind] || b.kind} · ${buFirstLine(buPlainInputs(b.body), 60)}`;
@@ -6552,7 +6576,8 @@ function buForm(b, list) {
       h = `<div class="form-row"><label>Label (optional)</label>${buInput('label', b.label, 'body', 'placeholder="My notes" data-brace="1"')}${buBraceLine(b.label)}<div class="hint">Students see a collapsible box with this label where they can keep their own notes.</div></div>${buIdRow(b)}`;
       break;
     case 'photo':
-      h = `<div class="form-row"><label>What should the photo show?</label>${buTextarea('prompt', b.prompt, 'str', 'data-brace="1"')}${buBraceLine(b.prompt)}<div class="hint">Students add a photo from their phone or computer. It is kept in their own browser.</div></div>${buIdRow(b)}`;
+      h = `<div class="form-row"><label>What should the photo show?</label>${buTextarea('prompt', b.prompt, 'str', 'data-brace="1"')}${buBraceLine(b.prompt)}<div class="hint">Students add a photo from their phone or computer. A logged-in student's photos follow their account.</div></div>
+        <div class="form-row bu-narrow"><label>How many photos may a student add?</label>${buNum('opts.max', buOptStr(b, 'max'), 'min="1" max="6" step="1" placeholder="1"')}<div class="hint">Leave empty for one. Up to 6; with more than one, each photo gets its own Remove button and they sit two to a row.</div></div>${buIdRow(b)}`;
       break;
     case 'video': {
       const id = buHost.youtubeId(b.url);
@@ -7506,6 +7531,7 @@ async function entriesSelfTest() {
 | ___ | ___ |
 }
 \\answer[id=q]{Q?}
+\\photo[id=pic, max=3]{Pictures}
 \\notes[id=n]{Notes}
 \\answer{Auto question}
 Value: \\input[id=f]{}
@@ -7542,6 +7568,8 @@ Value: \\input[id=f]{}
     const pc = host.querySelector('#lab-pane-procedure [data-field="tbl.r1c2"]'); pc.textContent = '8.5'; pc.dispatchEvent(new Event('input', { bubbles: true }));
     await new Promise(res => setTimeout(res, 400));
     if (mirror.querySelector('[data-field="tbl.r1c2"]').textContent !== '8.5') throw new Error('procedure edit did not show in the report copy');
+    const ph = host.querySelector('.lt-photo[data-photo="pic"]'); if (!ph || ph.dataset.max !== '3' || !ph.classList.contains('lt-photo-multi') || !ph.querySelector('.lt-photo-add') || ph.querySelector('.lt-photo-remove')) throw new Error('multi-photo slot did not render as expected');
+    const ph1 = host.querySelector('.lt-photo[data-photo="pic"]').outerHTML; if (/data-max="1"/.test(ph1)) throw new Error('max option lost');
     // widgets: render, stay idle, and record through the table's own add-row path
     const wd = host.querySelector('.lt-widget[data-widget="cr"]'); if (!wd || !(wd.querySelector('.lt-widget-start') || wd.textContent.includes(getText('widgetNoCamera')))) throw new Error('widget did not render idle');   // Start, or the calm no-camera note on a device without one
     const full = host._ltWidgetHost.canRecord('tbl', { columns: 'c1;c2' }); if (!full.ok) throw new Error('widget cannot record: ' + full.reason);
