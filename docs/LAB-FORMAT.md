@@ -29,6 +29,7 @@ Headings (`#`, `##`, `###`), paragraphs, **bold**, *italic*, numbered lists (`1.
 | `\datatable[id=…, title=…, addrows]{ table }` | A table students fill in. Write a normal Markdown table inside; every cell containing `___` becomes an editable cell, other cells are fixed text. `addrows` lets students add rows. |
 | `\input[id=…, label=…, unit=…]` | A small inline box for one value, e.g. `Mass of sample: \input[id=mass, unit=g]`. |
 | `\answer[id=…, lines=4]{Optional prompt}` | A multi-line answer box, `lines` tall. Usually placed right after a question. |
+| `\choice[id=…, multi, required, title=…]{ question, then one `- choice` per line }` | A multiple-choice question. Write the question first, then each choice on its own line starting with `- `. Students tick one; `multi` lets them tick several. `required` and `title` work as on `\answer`. The saved value is the text of the chosen choice(s). |
 | `\notes[id=…]{Optional label}` | A collapsible "My notes" box. |
 | `\procedure{ numbered list }` | Wraps a numbered list of steps; every step gets its own collapsible notes box automatically. |
 | `\photo[id=…, max=…]{Instruction}` | A place for the student to add a photo from their phone or computer, e.g. `\photo[id=setup]{Photograph your titration setup before starting.}`. `max=3` lets them add up to three photos (default one, up to six); the first keeps the slot's name, extras are stored as `setup.2`, `setup.3`. |
@@ -43,7 +44,7 @@ Notes on syntax:
 - Options go in square brackets, comma-separated: `[id=ka-calc, lines=3]`. Ids should be descriptive words (`ka-acetic`, `mass-data`), never the automatic pattern of a letter plus a number such as `q1` or `table2`, which the site uses for blocks without an id. Values with commas or spaces can be quoted: `[title="Trial 1, run A"]`.
 - Content goes in curly braces and may span many lines. Braces must balance (LaTeX inside is fine).
 - Links: ordinary Markdown `[words to show](https://address)`; students see only the words and it opens in a new tab. Never paste a bare long address into the text.
-- Commands that stand alone (`\datatable`, `\answer`, `\photo`, `\video`, `\figure`, callouts, `\procedure`) go on their own line. `\input` sits inside a sentence.
+- Commands that stand alone (`\datatable`, `\answer`, `\choice`, `\photo`, `\video`, `\figure`, callouts, `\procedure`) go on their own line. `\input` sits inside a sentence.
 - Anything inside `$…$`, `$$…$$`, `\ce{…}` or backticks is left alone, so LaTeX like `\frac{}` never conflicts with commands.
 
 ## Graphs
@@ -117,7 +118,7 @@ Inside `\report{…}` use ordinary Markdown plus:
 | `\answer[id=…, title=…, required, words=min-max, hint="…", lines=6]{Question or instructions}` | The same `\answer` as in the procedure, with options that suit a write-up: `title` adds a heading above the question; `required` marks it and shows a note while it is empty; `words=40-120` shows a gentle word-count target (`words=40` for a minimum only, `words=-120` for a maximum only); `hint` adds an expandable hint. All optional. (`\section` is accepted as an old alias.) |
 | `\usetable{id}` | Shows the `\datatable` with that id in the report as well, captioned "Table n". It is the same table: students can type into it from either tab, and rows added in one place appear in the other. |
 | `\usegraph{id}` | Shows the `\graph` with that id (give the graph an `id=` option), drawn from the student's data, captioned "Figure n". |
-| `\useanswer{id}` | Shows a procedure `\answer` or `\notes` box (by its id): the prompt plus what the student wrote there. Read-only; the student edits it on the Procedure tab. |
+| `\useanswer{id}` | Shows a procedure `\answer`, `\choice` or `\notes` box (by its id): the prompt plus what the student wrote or ticked there. Read-only; the student edits it on the Procedure tab. |
 | `\usephoto{id}` | Shows the photo the student added in the procedure `\photo` slot with that id, with its prompt. |
 | `\answer`, `\datatable`, `\photo`, `\notes`, `\graph`, `\figure`, `\video` | Work inside the report exactly as in the procedure (a `\figure` in the report is the teacher's own picture, e.g. a table of literature values to compare against): use them when the report should *ask* for something new (a fresh data table to fill in, a question answered only in the write-up, a photo of the final result) instead of copying it from the procedure. |
 
