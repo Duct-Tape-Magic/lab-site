@@ -964,7 +964,6 @@
         <select id="lab-access">
           <option value="inherit">Same as its folder</option>
           <option value="public">Everyone (public)</option>
-          <option value="password">Anyone with the password</option>
           <option value="accounts">Selected student accounts</option>
           <option value="admin">Admins only</option>
         </select>
@@ -1061,7 +1060,6 @@
         <select id="folder-access" onchange="onAccessSelectChange('folder')">
           <option value="inherit">Same as the folder above</option>
           <option value="public">Everyone (public)</option>
-          <option value="password">Anyone with the password</option>
           <option value="accounts">Selected student accounts</option>
           <option value="admin">Admins only</option>
         </select>
@@ -1445,7 +1443,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Folder pages', keys: ['folderEmpty'] },
   { label: 'Cards', keys: ['cardMinutes', 'cardReportMinutes', 'cardUpdated', 'lockedBadge', 'signInRequiredBadge', 'draftBadge', 'scheduledBadge', 'hiddenBadge'] },
   { label: 'Lab page', keys: ['labMinutes', 'labReportMinutes', 'labUpdated', 'labFilesLabel', 'labDownloadFile', 'labViewInline', 'labPrint', 'labDownloadPdf', 'pdfPreparing', 'pdfReady', 'pdfFailed', 'labCopyLink', 'labLinkCopied', 'labNoContent'] },
-  { label: 'Locked labs', keys: ['lockPasswordTitle', 'lockPasswordPrompt', 'lockPasswordPlaceholder', 'lockPasswordButton', 'lockPasswordWrong', 'lockTooMany', 'lockAccountsTitle', 'lockAccountsPrompt', 'lockNotAllowed', 'lockAdminOnly', 'lockUnavailable'] },
+  { label: 'Locked labs', keys: ['lockPasswordTitle', 'lockAccountsTitle', 'lockAccountsPrompt', 'lockNotAllowed', 'lockAdminOnly'] },
   { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'accessTitle', 'accessHint', 'accessButton', 'accessWrong', 'accessArchived', 'seatName', 'seatShort', 'seatUnknown', 'seatManaged', 'privacyLink', 'privacyTitle'] },
   { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'entriesClearFailed', 'entriesSaveFailed', 'photoSyncFailed', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
   { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef', 'reportNoPhotoYet'] },
@@ -2599,28 +2597,11 @@ function toggleInlinePdf(btn, url) {
 }
 
 function lockPanelHTML(lab, access) {
-  if (access.level === 'password') {
-    return `<div class="lock-panel">
-      <h3>${escapeHTML(getText('lockPasswordTitle'))}</h3>
-      <p>${escapeHTML(getText('lockPasswordPrompt'))}</p>
-      <form onsubmit="return submitUnlock(event, '${lab.id}')">
-        <div class="form-row"><input type="password" id="unlock-password" placeholder="${escapeHTML(getText('lockPasswordPlaceholder'))}" autocomplete="off"/></div>
-        <button class="btn btn-accent" type="submit" id="unlock-btn">${escapeHTML(getText('lockPasswordButton'))}</button>
-        <div class="lock-error" id="unlock-error"></div>
-      </form></div>`;
-  }
   if (access.level === 'accounts') {
     return `<div class="lock-panel"><h3>${escapeHTML(getText('lockAccountsTitle'))}</h3><p>${escapeHTML(getText('lockAccountsPrompt'))}</p>
       <a class="btn btn-accent" href="#/signin">${escapeHTML(getText('signInButton'))}</a></div>`;
   }
   return `<div class="lock-panel"><h3>${escapeHTML(getText('lockPasswordTitle'))}</h3><p>${escapeHTML(getText('lockAdminOnly'))}</p></div>`;
-}
-
-async function submitUnlock(e, labId) {
-  e.preventDefault();
-  // The gate function arrives in the access-control phase; until it is deployed this reports the unavailable message.
-  $('unlock-error').textContent = getText('lockUnavailable');
-  return false;
 }
 
 function activeLabTab() { const r = document.getElementById('lab-pane-report'); return r && !r.hidden ? 'report' : 'procedure'; }
@@ -3183,7 +3164,6 @@ function updateAccessHint() {
   $('lab-access-hint').textContent = {
     inherit: 'Follows whatever the folder allows.',
     public: 'Anyone with the link can open it.',
-    password: 'Students enter a password once per visit. Password unlocking is enabled in a later update.',
     accounts: 'Only the classes and accounts you tick below. Everyone else never sees it.',
     admin: 'Hidden from everyone except admins.'
   }[v] || '';
