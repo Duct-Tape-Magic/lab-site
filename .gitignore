@@ -3,3 +3,7 @@ node_modules/
 supabase/.temp/
 supabase/.env
 .env
+
+# never commit keys or backups
+service-role.key
+*.key
