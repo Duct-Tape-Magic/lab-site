@@ -1434,12 +1434,10 @@ const DEFAULTS = {
   widgetGetHelp: 'Get help',
   widgetRecord: 'Record',
   widgetRecorded: 'Data recorded',
-  widgetRefSet: 'Reference set',
   widgetTableFull: 'The table has no empty row left for this reading.',
   widgetNoTable: 'This tool has no table to record into. Type your values into your data table.',
   widgetRefLabel: 'Reference',
-  widgetMeasLabel: 'Sample',
-  widgetSetRef: 'Set reference'
+  widgetMeasLabel: 'Sample'
 };
 
 const SITE_TEXT_GROUPS = [
@@ -1454,7 +1452,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'entriesClearFailed', 'entriesSaveFailed', 'photoSyncFailed', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
   { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef', 'reportNoPhotoYet'] },
   { label: 'Get help', keys: ['helpButton', 'helpIntro', 'helpLoginNudge', 'helpMessagePlaceholder', 'helpSend', 'helpSent', 'helpError', 'helpAutoReply', 'helpAutoLabel', 'helpYou', 'helpTeacher', 'helpResolvedNote', 'helpEmailFrom', 'helpEmailSubject'] },
-  { label: 'Widgets (in-lab tools)', keys: ['widgetStart', 'widgetStop', 'widgetLoading', 'widgetNoCamera', 'widgetFailed', 'widgetDenied', 'widgetUnavailable', 'widgetGetHelp', 'widgetRecord', 'widgetRecorded', 'widgetRefSet', 'widgetTableFull', 'widgetNoTable', 'widgetRefLabel', 'widgetMeasLabel', 'widgetSetRef'] },
+  { label: 'Widgets (in-lab tools)', keys: ['widgetStart', 'widgetStop', 'widgetLoading', 'widgetNoCamera', 'widgetFailed', 'widgetDenied', 'widgetUnavailable', 'widgetGetHelp', 'widgetRecord', 'widgetRecorded', 'widgetTableFull', 'widgetNoTable', 'widgetRefLabel', 'widgetMeasLabel'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
 ];
 
@@ -1481,8 +1479,8 @@ const TEXT_LABELS = {
   procedureTab: 'Procedure tab label', reportTab: 'Report tab label', reportPreview: 'Preview report button', reportStyleTitle: 'Style guide heading', reportRequired: 'Required badge', reportHint: 'Hint toggle', reportWords: 'Word count', reportWordsAim: 'Word range hint', reportEmptyRequired: 'Empty required question note', reportTableLabel: 'Table caption word', reportFigureLabel: 'Figure caption word', reportMissingRef: 'Missing table/graph message', reportNoPhotoYet: 'No photo yet message',
   helpButton: 'Get help button', helpIntro: 'Help panel intro', helpLoginNudge: 'Help: log-in nudge', helpMessagePlaceholder: 'Help: question placeholder', helpSend: 'Help: send button', helpSent: 'Help: sent confirmation', helpError: 'Help: send failed', helpAutoReply: 'Help: automatic first reply (site default)', helpAutoLabel: 'Help: label on the automatic reply', helpYou: 'Help: your name in the thread', helpTeacher: 'Help: teacher name in the thread', helpResolvedNote: 'Help: resolved note', helpEmailFrom: 'Help: email sender', helpEmailSubject: 'Help: email subject ({lab} = lab title)',
   widgetStart: 'Widget: Start button', widgetStop: 'Widget: Stop button', widgetLoading: 'Widget: starting message', widgetNoCamera: 'Widget: no-camera note', widgetFailed: 'Widget: could-not-start message', widgetDenied: 'Widget: camera-not-allowed message', widgetUnavailable: 'Widget: not-available message', widgetGetHelp: 'Widget: Get help button',
-  widgetRecord: 'Colorimeter: Record button', widgetRecorded: 'Colorimeter: data recorded text', widgetRefSet: 'Colorimeter: reference set text', widgetTableFull: 'Colorimeter: table full message', widgetNoTable: 'Colorimeter: no table message',
-  widgetRefLabel: 'Colorimeter: reference square label', widgetMeasLabel: 'Colorimeter: sample square label', widgetSetRef: 'Colorimeter: Set reference button'
+  widgetRecord: 'Colorimeter: Record button', widgetRecorded: 'Colorimeter: data recorded text', widgetTableFull: 'Colorimeter: table full message', widgetNoTable: 'Colorimeter: no table message',
+  widgetRefLabel: 'Colorimeter: reference square label', widgetMeasLabel: 'Colorimeter: sample square label'
 };
 
 /* ============================================================
@@ -4796,13 +4794,13 @@ function ltBindGraphs(area) {
 const WIDGETS = {
   colorimeter: {
     label: 'Colorimeter',
-    description: 'Reads two small squares in the camera picture that students drag into place: a Reference on any matte object that stays under the same light, and a Sample. Records the sample\'s red, green and blue (0–255) corrected for changes in lighting, exposure and white balance since the reference was set, one table row per reading.',
+    description: 'Reads two small squares in the camera picture that students drag into place: a Reference on a sheet of white printer paper and a Sample. The paper is taken as white, so the sample\'s red, green and blue (0–255) are read relative to it and changes in lighting, exposure and white balance cancel. One table row per reading.',
     device: 'Needs a camera; a phone works best. On a laptop without a camera the tool shows a calm note and students type the values in.',
     records: 'One row per reading into a data table: corrected R, G and B in the columns you choose; optionally the camera\'s uncorrected R, G, B.',
-    file: 'widgets/colorimeter.v10.js',
+    file: 'widgets/colorimeter.v11.js',
     options: [
       { name: 'table', label: 'Data table to record into', kind: 'table', help: 'Let students add rows to that table, so every reading gets its own row.' },
-      { name: 'columns', label: 'Columns for the corrected R, G, B', kind: 'columns', parts: ['Red', 'Green', 'Blue'], default: 'c1;c2;c3', help: 'Corrected = sample × (reference reading when the student tapped Set reference) ÷ (reference reading now), channel by channel. Lighting, exposure and white-balance drift move both squares together, so it mostly cancels. The reference lasts until the tool is stopped or the lab is left.' },
+      { name: 'columns', label: 'Columns for the corrected R, G, B', kind: 'columns', parts: ['Red', 'Green', 'Blue'], default: 'c1;c2;c3', help: 'Corrected = sample × 255 ÷ (what the camera reads on the white paper), channel by channel, every frame. Lighting, exposure and white-balance drift move both squares together, so it cancels. Keep the paper the brightest matte thing in the picture; a sample brighter than the paper reads 255.' },
       { name: 'rawcolumns', label: 'Columns for the camera\'s uncorrected R, G, B (optional)', kind: 'columns', parts: ['Red', 'Green', 'Blue'], optional: true, help: 'Useful when students should see what the correction did.' },
       { name: 'help', label: 'Offer Get help when it fails', kind: 'help' },
     ],
