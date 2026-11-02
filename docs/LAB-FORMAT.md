@@ -40,6 +40,8 @@ Headings (`#`, `##`, `###`), paragraphs, **bold**, *italic*, numbered lists (`1.
 | `\widget[type=colorimeter, id=…, table=…, columns=c2;c3;c4]{Description}` | An in-lab tool that uses the student's device and records what it reads into a `\datatable`. See "Widgets" below. |
 | `\pagebreak` | Starts a new page when printed. |
 
+Extra tabs: by default a lab has a Procedure tab (the body of the file) and, if the file has `\report{…}`, a Report tab. `\tab[name="Data analysis"]{ … }` adds a tab of its own between them, holding any of the procedure commands above; tabs appear in file order, the Report tab always last, six tabs at most. A report `\usetable`, `\usegraph`, `\useanswer` or `\usephoto` may point at a block on any tab. Students' entries are keyed by block id, so moving a block to another tab never changes what they saved.
+
 Notes on syntax:
 - Options go in square brackets, comma-separated: `[id=ka-calc, lines=3]`. Ids should be descriptive words (`ka-acetic`, `mass-data`), never the automatic pattern of a letter plus a number such as `q1` or `table2`, which the site uses for blocks without an id. Values with commas or spaces can be quoted: `[title="Trial 1, run A"]`.
 - Content goes in curly braces and may span many lines. Braces must balance (LaTeX inside is fine).
