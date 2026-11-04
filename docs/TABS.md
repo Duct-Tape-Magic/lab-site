@@ -1,6 +1,6 @@
 # Custom tabs — plan (2026-11-02) · built 2026-11-02 in the reduced form below
 
-**What shipped:** `\tab[name=…]{…}` tabs between Procedure and Report, six tabs at most; Builder has "+ Add a tab", a name box and "Remove tab" (blocks move to the tab above). Not built, by the owner's choice: `kind=report` on custom tabs, "Move to tab" on cards, templates, a separate tab strip. Original plan follows.
+**What shipped:** `\tab[name=…]{…}` tabs between Procedure and Report, no limit on their number (2026-11-04); Builder has "+ Add a tab", a name box and "Remove tab" on every tab including Procedure and Report (blocks move to the neighbouring tab; a removed Procedure or Report tab can be added back). An empty body means no Procedure tab. Not built, by the owner's choice: `kind=report` on custom tabs, "Move to tab" on cards, templates, a separate tab strip. Original plan follows.
 
 Today a lab has at most two panes: the body of the file is the **Procedure** tab and `\report{…}` is the **Report** tab. Their names come from Site text (`procedureTab`, `reportTab`). This plan lets a lab have any number of named tabs, with nothing changing for existing labs or saved student work.
 

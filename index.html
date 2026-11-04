@@ -622,7 +622,7 @@
   .btn-small.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
   .review-banner { background: var(--card-bg); border: 0.5px solid var(--rule-strong); padding: 0.7rem 1rem; margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; font-size: 13px; max-width: var(--measure); }
   /* ---------- Report tab ---------- */
-  .lab-tabs { display: flex; gap: 1.5rem; border-bottom: 0.5px solid var(--rule); margin: 0.5rem 0 var(--lab-header-gap); max-width: var(--measure); }
+  .lab-tabs { display: flex; flex-wrap: wrap; gap: 0 1.5rem; border-bottom: 0.5px solid var(--rule); margin: 0.5rem 0 var(--lab-header-gap); max-width: var(--measure); }
   .lab-tab { background: none; border: none; border-bottom: 1.5px solid transparent; margin-bottom: -0.5px; padding: 0.6rem 0; font-family: var(--font-body); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); cursor: pointer; }
   .lab-tab.active { color: var(--ink); border-bottom-color: var(--ink); }
   .lab-tab:hover { color: var(--ink); }
@@ -2470,7 +2470,11 @@ function renderLabContent(area, lab, entry, cloud = null, readOnly = false) {
 function buildLabTagsHTML(r, lab) {
   const noContent = `<p style="color:var(--muted)">${escapeHTML(getText('labNoContent'))}</p>`;
   const tabs = r.tabs && r.tabs.length ? r.tabs : [{ id: 'procedure', name: getText('procedureTab'), kind: 'plain', html: r.html || '' }];
-  if (tabs.length < 2) return `<div class="lab-body rich-content" id="lab-body">${tabs[0].html || noContent}</div>`;
+  if (tabs.length < 2) {
+    const t = tabs[0];
+    if (t.kind === 'report') return `<div class="lab-pane" id="lab-pane-report"><div class="rp-doc-header"><div class="rp-doc-title">${escapeHTML(lab ? lab.title : '')}</div><div class="rp-doc-meta"></div></div><div class="rp-toolbar"></div><div class="lab-body rich-content rp-body" id="lab-body">${t.html}</div></div>`;
+    return `<div class="lab-body rich-content" id="lab-body">${t.html || noContent}</div>`;
+  }
   const saved = (() => { try { return sessionStorage.getItem('labsite.tab.' + (lab ? lab.id : 'preview')); } catch (e) { return null; } })();
   const active = tabs.some(t => t.id === saved) ? saved : tabs[0].id;
   return `
@@ -4437,6 +4441,7 @@ function ltRender(source) {
     }
     let reportHtml = '';
     if (ctx.meta.report && ctx.meta.report.trim()) { const r = renderPane(ctx.meta.report, counters); counters = r.counters; reportHtml = r.html; tabs.push({ id: 'report', name: getText('reportTab'), kind: 'report', html: reportHtml }); }
+    if (tabs.length > 1 && !tabs[0].html.trim()) tabs.shift();   // nothing before the first \tab or \report: no Procedure tab
     let styleHtml = '';
     if (ctx.meta.style && ctx.meta.style.trim()) { const sctx = ltNewContext(); sctx.math = ctx.math; styleHtml = ltRestore(marked.parse(ltProtect(ctx.meta.style, sctx)), sctx); }
     return { html: tpl.innerHTML, meta: ctx.meta, errors: ctx.errors, report: reportHtml, style: styleHtml, tabs };
@@ -6201,7 +6206,6 @@ const BU_PALETTE = {
 const BU_PROCEDURE_PALETTE = ['heading', 'text', 'steps', 'table', 'answer', 'choice', 'notes', 'photo', 'video', 'figure', 'callout', 'graph', 'widget', 'pagebreak'];
 const BU_REPORT_PALETTE = ['answer', 'choice', 'table', 'photo', 'notes', 'graph', 'usetable', 'usegraph', 'useanswer', 'usephoto', 'heading', 'text', 'figure', 'video'];
 const BU_ID_TYPES = ['steps', 'table', 'answer', 'choice', 'notes', 'photo', 'graph', 'widget'];
-const BU_MAX_EXTRA_TABS = 4;   // Procedure + 4 + Report = six tabs, the most that fit on a phone
 const BU_CALLOUT_LABELS = { safety: 'Safety', warning: 'Warning', info: 'Information', tip: 'Tip', hint: 'Hint' };
 const BU_LEVELS = [[1, 'Big heading'], [2, 'Heading'], [3, 'Small heading'], [4, 'Level 4'], [5, 'Level 5'], [6, 'Level 6']];
 const BU_BRACE_MSG = 'A curly bracket here has no partner. It is shown as a plain character, which is usually what you want.';
@@ -6306,6 +6310,8 @@ function buEnsureKeys() {
   if (!buModel) return;
   if (!Array.isArray(buModel.tabs)) buModel.tabs = [];
   buModel.tabs.forEach(t => { if (!Array.isArray(t.blocks)) t.blocks = []; if (t._k == null) t._k = bmKey(); });
+  if (buModel._noProcedure === undefined) buModel._noProcedure = !(buModel.procedure || []).some(b => b.type !== 'comment') && (buModel.tabs.length > 0 || !!buModel.reportPresent || (buModel.report || []).length > 0);   // the renderer shows no Procedure tab for an empty body
+  if (buModel._noReport === undefined) buModel._noReport = !buModel.reportPresent && !(buModel.report || []).length && buModel.tabs.length > 0;
   ['procedure', 'report'].forEach(list => { if (!Array.isArray(buModel[list])) buModel[list] = []; });
   bmListNames(buModel).forEach(list => bmList(buModel, list).forEach(b => { if (b._k == null) b._k = bmKey(); }));
   if (!buModel.header) buModel.header = { title: '', summary: '', tags: '', minutes: '' };
@@ -6384,17 +6390,17 @@ function buRenderAll() {
     <div class="bu-warnings" id="bu-warnings"></div>
     <div class="bu-header" id="bu-header" hidden></div>
     <div class="bu-templates" id="bu-templates" hidden></div>
-    <div class="bu-section-title">Procedure</div>
+    ${buModel._noProcedure ? `<div class="bu-tabs-add"><button type="button" class="btn-small" data-act="tab-restore" data-tab="procedure">+ Add the Procedure tab</button><span class="bu-help-inline">Students see no Procedure tab; the lab starts on the first tab below.</span></div>` : `<div class="bu-section-title bu-tab-title"><span>Procedure tab</span><button type="button" class="btn-small" data-act="tab-remove" data-tab="procedure">Remove tab</button></div>
     <div class="bu-list" id="bu-procedure" data-list="procedure"></div>
-    <div class="bu-palette" id="bu-palette-procedure" data-list="procedure"></div>
-    ${(buModel.tabs || []).map((t, i) => `<div class="bu-section-title bu-tab-title"><span>Tab</span><input type="text" class="bu-tab-name" data-tab="${i}" value="${buEsc(t.name || '')}" placeholder="Tab name" maxlength="40" aria-label="Tab name"/><button type="button" class="btn-small" data-act="tab-remove" data-tab="${i}">Remove tab</button></div>
+    <div class="bu-palette" id="bu-palette-procedure" data-list="procedure"></div>`}
+    ${(buModel.tabs || []).map((t, i) => `<div class="bu-section-title bu-tab-title"><span>Tab</span><input type="text" class="bu-tab-name" data-tabi="${i}" value="${buEsc(t.name || '')}" placeholder="Tab name" maxlength="40" aria-label="Tab name"/><button type="button" class="btn-small" data-act="tab-remove" data-tab="tab${i}">Remove tab</button></div>
     <div class="bu-list" id="bu-tab${i}" data-list="tab${i}"></div>
     <div class="bu-palette" id="bu-palette-tab${i}" data-list="tab${i}"></div>`).join('')}
-    <div class="bu-tabs-add"><button type="button" class="btn-small" data-act="tab-add" ${(buModel.tabs || []).length >= BU_MAX_EXTRA_TABS ? 'disabled' : ''} title="${(buModel.tabs || []).length >= BU_MAX_EXTRA_TABS ? 'Six tabs is the most that fit on a phone' : ''}">+ Add a tab</button><span class="bu-help-inline">Students get an extra tab between Procedure and Report, with its own blocks.</span></div>
-    <div class="bu-section-title">Report tab <span class="bu-help-inline">Optional. If you add anything here, students get a second tab with a guided write-up they can print.</span></div>
+    <div class="bu-tabs-add"><button type="button" class="btn-small" data-act="tab-add">+ Add a tab</button><span class="bu-help-inline">Students get another tab here, with its own blocks. Tabs appear in this order; the Report tab, when present, is last.</span></div>
+    ${buModel._noReport ? `<div class="bu-tabs-add"><button type="button" class="btn-small" data-act="tab-restore" data-tab="report">+ Add the Report tab</button><span class="bu-help-inline">A guided write-up students can print.</span></div>` : `<div class="bu-section-title bu-tab-title"><span>Report tab</span><button type="button" class="btn-small" data-act="tab-remove" data-tab="report">Remove tab</button><span class="bu-help-inline">Optional. If you add anything here, students get a last tab with a guided write-up they can print.</span></div>
     <div class="bu-style" id="bu-style"></div>
     <div class="bu-list" id="bu-report" data-list="report"></div>
-    <div class="bu-palette" id="bu-palette-report" data-list="report"></div>
+    <div class="bu-palette" id="bu-palette-report" data-list="report"></div>`}
   </div>`;
   buDropLine = null;
   buRenderTemplates();
@@ -6421,7 +6427,7 @@ function buRenderList(list) {
   const el = buQ('#bu-' + list); if (!el) return;
   const blocks = bmList(buModel, list) || [];
   let html = blocks.map((b, i) => buCardHTML(b, list, i)).join('');
-  if (list === 'procedure' && !blocks.length && buModel.report.length) html += `<div class="bu-note">The Procedure tab will be empty. Add a Text block if students should see instructions.</div>`;
+  if (list === 'procedure' && !blocks.length && (buModel.report.length || (buModel.tabs || []).length)) html += `<div class="bu-note">While this is empty, students see no Procedure tab and the lab opens on the next tab.</div>`;
   if (list === 'report' && !blocks.length && buModel.reportPresent) html += `<div class="bu-note">Add a Question to give students a Report tab.</div>`;
   el.innerHTML = html;
 }
@@ -7078,7 +7084,7 @@ function buRerenderReferrers(id) {
 }
 function buOnInput(e) {
   const el = e.target; if (!el || !el.dataset) return;
-  if (el.classList.contains('bu-tab-name')) { const t = buModel.tabs && buModel.tabs[+el.dataset.tab]; if (t) { t.name = el.value; buChanged(null, false, true); } return; }
+  if (el.classList.contains('bu-tab-name')) { const t = buModel.tabs && buModel.tabs[+el.dataset.tabi]; if (t) { t.name = el.value; buChanged(null, false, true); } return; }
   if (!el.dataset.bind) return;
   if (el.type === 'checkbox' || el.tagName === 'SELECT' || el.type === 'file') return;   // those arrive on change
   if (el.dataset.kind === 'style') { buModel.style = el.value; buGrow(el); const s = buQ('.bu-card-style .bu-summary'); if (s) s.textContent = buFirstLine(buModel.style, 80) || 'Your writing rules'; buChanged(null, false, true); return; }
@@ -7161,7 +7167,8 @@ function buOnClick(e) {
     case 'widget-cancel': { const p = btn.closest('.bu-widget-picker'); if (p) p.remove(); break; }
     case 'template': buApplyTemplate(btn.dataset.template); break;
     case 'tab-add': buTabAdd(); break;
-    case 'tab-remove': buTabRemove(+btn.dataset.tab); break;
+    case 'tab-remove': buTabRemove(btn.dataset.tab); break;
+    case 'tab-restore': buTabRestore(btn.dataset.tab); break;
     case 'add-style': buModel.style = ''; buRenderStyle(); buRenderPalette('report'); buRenderTemplates(); buChanged(null, true); { const ta = buQ('[data-kind="style"]'); if (ta) ta.focus(); } break;
     case 'remove-style':
       if (buModel.style && !buHost.confirm('Remove the style guide?')) break;
@@ -7301,20 +7308,26 @@ function buAddBlock(type, list, afterK, extra) {
 }
 function buTabAdd() {
   buModel.tabs = buModel.tabs || [];
-  if (buModel.tabs.length >= BU_MAX_EXTRA_TABS) return;
   buModel.tabs.push({ name: `Tab ${buModel.tabs.length + 2}`, blocks: [], _k: bmKey() });
   buRenderAll(); buChanged(null, true);
-  const inp = buQ(`.bu-tab-name[data-tab="${buModel.tabs.length - 1}"]`); if (inp) { inp.focus({ preventScroll: true }); inp.select(); }
+  const inp = buQ(`.bu-tab-name[data-tabi="${buModel.tabs.length - 1}"]`); if (inp) { inp.focus({ preventScroll: true }); inp.select(); }
 }
-function buTabRemove(i) {   // never deletes blocks: they move to the tab above
-  const t = buModel.tabs && buModel.tabs[i]; if (!t) return;
-  const dest = i > 0 ? buModel.tabs[i - 1] : null, destName = dest ? (dest.name || 'the tab above') : 'Procedure';
-  const k = (t.blocks || []).length;
-  if (!buHost.confirm(k ? `Remove the tab "${t.name || 'Tab'}"? Its ${k} block${k === 1 ? '' : 's'} will move to ${destName}. Nothing students saved is affected.` : `Remove the empty tab "${t.name || 'Tab'}"?`)) return;
-  (dest ? dest.blocks : buModel.procedure).push(...(t.blocks || []));
-  buModel.tabs.splice(i, 1);
+function buTabVisible(list) { return list === 'procedure' ? !buModel._noProcedure : list === 'report' ? !buModel._noReport : true; }
+function buTabLabel(list) { if (list === 'procedure') return 'Procedure'; if (list === 'report') return 'Report'; const t = buModel.tabs[+list.slice(3)]; return (t && t.name) || 'Tab'; }
+function buTabRemove(list) {   // never deletes blocks: they move to the neighbouring tab
+  const names = bmListNames(buModel).filter(buTabVisible), i = names.indexOf(list); if (i === -1) return;
+  const dest = names[i - 1] ?? names[i + 1]; if (!dest) { buHost.toast('A lab needs at least one tab.', true); return; }
+  const src = bmList(buModel, list) || [], k = src.length;
+  if (!buHost.confirm(k ? `Remove the ${buTabLabel(list)} tab? Its ${k} block${k === 1 ? '' : 's'} will move to ${buTabLabel(dest)}. Nothing students saved is affected.` : `Remove the empty ${buTabLabel(list)} tab?`)) return;
+  const moved = src.splice(0), arr = bmList(buModel, dest);
+  if (i > 0) arr.push(...moved); else arr.unshift(...moved);   // into the tab above at the end, or ahead of the tab below
+  if (dest === 'report' && k) buModel.reportPresent = true;
+  if (list === 'procedure') buModel._noProcedure = true;
+  else if (list === 'report') { buModel._noReport = true; buModel.reportPresent = false; }
+  else buModel.tabs.splice(+list.slice(3), 1);
   buRenderAll(); buChanged(null, true);
 }
+function buTabRestore(list) { if (list === 'procedure') buModel._noProcedure = false; else if (list === 'report') buModel._noReport = false; buRenderAll(); buChanged(null, true); }
 function buApplyTemplate(name) {
   let m = null; try { m = bmApplyTemplate(name); } catch (e) { buHost.toast('The template could not be loaded: ' + (e.message || e), true); return; }
   if (!m) return;

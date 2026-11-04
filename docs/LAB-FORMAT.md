@@ -2,7 +2,7 @@
 
 This document tells you how to write a **lab file** for the OHS lab website. Give it to Claude together with a PDF of a lab and the instruction: *"Convert this lab to a lab file following LAB-FORMAT.md. Keep the original structure and wording."*
 
-A lab file is plain text: **Markdown for the writing**, plus a small set of **LaTeX-style commands** (`\command[options]{content}`) that mark the places where the website should embed something interactive — a data table students fill in, a place to add a photo, a video, a question with an answer box, and so on. The website reads the file and renders a clean, interactive report. Students' entries save automatically in their own browser and print with the lab.
+A lab file is plain text: **Markdown for the writing**, plus a small set of **LaTeX-style commands** (`\command[options]{content}`) that mark the places where the website should embed something interactive — a data table students fill in, a place to add a photo, a video, a question with an answer box, and so on. The website reads the file and renders a clean, interactive lab, organized into **tabs** (see "Tabs" below): by default a Procedure tab holding the body of the file and, when the file ends with `\report{…}`, a Report tab for the write-up; `\tab{…}` adds as many tabs of your own as you like. Students' entries save automatically in their own browser (and to their account when signed in) and print with the lab.
 
 **You do not have to write this format by hand.** The site's lab editor opens in **Builder** mode by default: a block-based, form-driven editor (headings, text, numbered steps, data tables, questions, graphs, callouts, pictures, report sections…) that produces exactly this format. Builder and the **Lab file** view are two views of the same text and you can switch between them at any time; anything the Builder has no form for is kept as a "Raw" block and round-trips untouched. Importing a `.md` file written by hand or converted by Claude opens it as blocks. This document remains the reference for the stored format and for converting PDFs.
 
@@ -15,7 +15,8 @@ A lab file is plain text: **Markdown for the writing**, plus a small set of **La
 5. **Figures in the PDF cannot be copied by you.** Put `\figure[caption=...]{IMAGE_1}`, `{IMAGE_2}`, … where they belong and, at the very end of the file, list them under a `<!-- Figures needed -->` comment with a one-line description of each so the teacher can upload them.
 6. **Start with the header commands** (`\title`, `\summary`, `\tags`, `\minutes`). Write the summary yourself (one or two sentences) if the PDF has none.
 7. Give every field an `id` when there is any chance the lab will be edited later (ids keep students' saved entries attached to the right field). Use short lowercase ids: `trial1`, `q3`, `setup-photo`.
-8. Output only the lab file, nothing else.
+8. **Tabs**: put everything in the body of the file (the Procedure tab) unless the teacher asks for tabs or the PDF is plainly split into separate parts that students work through one at a time (a problem set with numbered problems, a multi-day lab with one part per day). Then give each part its own `\tab[name=…]{…}`, named exactly as the PDF names the part (`1`, `2`, `3` or `Day 1`, `Day 2`), and leave the body empty if the PDF has no introduction. See "Tabs".
+9. Output only the lab file, nothing else.
 
 ## Markdown you can use
 
@@ -39,8 +40,8 @@ Headings (`#`, `##`, `###`), paragraphs, **bold**, *italic*, numbered lists (`1.
 | `\graph[table=…, x=…, y=…, type=…, fit=linear, title=…, xlabel=…, ylabel=…]{Optional caption}` | A live graph drawn from a `\datatable`. It redraws as the student types. See "Graphs" below. |
 | `\widget[type=colorimeter, id=…, table=…, columns=c2;c3;c4]{Description}` | An in-lab tool that uses the student's device and records what it reads into a `\datatable`. See "Widgets" below. |
 | `\pagebreak` | Starts a new page when printed. |
-
-Extra tabs: by default a lab has a Procedure tab (the body of the file) and, if the file has `\report{…}`, a Report tab. `\tab[name="Data analysis"]{ … }` adds a tab of its own between them, holding any of the procedure commands above; tabs appear in file order, the Report tab always last, six tabs at most. A report `\usetable`, `\usegraph`, `\useanswer` or `\usephoto` may point at a block on any tab. Students' entries are keyed by block id, so moving a block to another tab never changes what they saved.
+| `\tab[name=…, id=…]{ … }` | A tab of your own. See "Tabs". |
+| `\report{ … }` | The write-up tab, always shown last. See "Report tab". |
 
 Notes on syntax:
 - Options go in square brackets, comma-separated: `[id=ka-calc, lines=3]`. Ids should be descriptive words (`ka-acetic`, `mass-data`), never the automatic pattern of a letter plus a number such as `q1` or `table2`, which the site uses for blocks without an id. Values with commas or spaces can be quoted: `[title="Trial 1, run A"]`.
@@ -48,6 +49,37 @@ Notes on syntax:
 - Links: ordinary Markdown `[words to show](https://address)`; students see only the words and it opens in a new tab. Never paste a bare long address into the text.
 - Commands that stand alone (`\datatable`, `\answer`, `\choice`, `\photo`, `\video`, `\figure`, callouts, `\procedure`) go on their own line. `\input` sits inside a sentence.
 - Anything inside `$…$`, `$$…$$`, `\ce{…}` or backticks is left alone, so LaTeX like `\frac{}` never conflicts with commands.
+
+## Tabs
+
+The lab page shows one tab per part of the file:
+
+- **The body of the file** (everything that is not inside a `\tab` or `\report`) is the first tab. The site names it from its Site text, "Procedure" by default. If the body is empty, there is no Procedure tab and the lab opens on the first tab you wrote.
+- **`\tab[name="Data analysis"]{ … }`** adds a tab with that name, holding anything the body may hold: text, steps, tables, questions, photos, graphs, widgets. Tabs appear in file order. There is no limit on how many; short names (`1`, `2`, `3`) let a whole problem set fit on a phone. `id=` is optional and only fixes the name the site uses to remember which tab a student had open (the default is the tab name in lowercase). `\tab` is recognized only at the top level of the file, never inside another command.
+- **`\report{ … }`** is the write-up tab and is always last, whatever its position in the file. It is optional.
+- With a single tab in all (only a body, or only one `\tab`, or only a `\report`), the page shows no tab bar.
+
+Students' entries are keyed by block id, never by tab, so moving a block between tabs keeps every saved answer. A report `\usetable`, `\usegraph`, `\useanswer` or `\usephoto` may point at a block on any tab.
+
+In **Builder**, the Procedure and Report tabs are there by default and each has a "Remove tab" button; "+ Add a tab" adds one with a name box. Removing a tab never deletes anything: its blocks move to the neighbouring tab, and a removed Procedure or Report tab can be added back with one click.
+
+```
+\title{Equilibrium problem set}
+
+\tab[name=1]{
+A 2.0 L flask holds 0.40 mol of $\ce{N2O4}$ at equilibrium with $\ce{NO2}$ …
+\answer[id=p1, lines=4]{Show your work.}
+}
+
+\tab[name=2]{
+…
+\choice[id=p2]{Which way does the equilibrium shift when the flask is warmed?
+- Toward $\ce{NO2}$
+- Toward $\ce{N2O4}$
+- It does not shift
+}
+}
+```
 
 ## Graphs
 
@@ -111,7 +143,7 @@ Shows the camera picture with two small squares the student drags into place: a 
 
 ## Report tab (write-up skeleton)
 
-A lab may end with a `\report{…}` block. When present, the lab page shows two tabs, **Procedure** and **Report**; when absent there is no Report tab. The Report tab guides the student through writing up the lab and, with "Preview report", turns their writing into a clean printable document (title, date, numbered tables and figures) that they save as a PDF and submit.
+A lab may include a `\report{…}` block. When present, the lab page's last tab is **Report**; when absent there is no Report tab. The Report tab guides the student through writing up the lab and, with "Preview report", turns their writing into a clean printable document (title, date, numbered tables and figures) that they save as a PDF and submit.
 
 Inside `\report{…}` use ordinary Markdown plus:
 
@@ -120,11 +152,11 @@ Inside `\report{…}` use ordinary Markdown plus:
 | `\answer[id=…, title=…, required, words=min-max, hint="…", lines=6]{Question or instructions}` | The same `\answer` as in the procedure, with options that suit a write-up: `title` adds a heading above the question; `required` marks it and shows a note while it is empty; `words=40-120` shows a gentle word-count target (`words=40` for a minimum only, `words=-120` for a maximum only); `hint` adds an expandable hint. All optional. (`\section` is accepted as an old alias.) |
 | `\usetable{id}` | Shows the `\datatable` with that id in the report as well, captioned "Table n". It is the same table: students can type into it from either tab, and rows added in one place appear in the other. |
 | `\usegraph{id}` | Shows the `\graph` with that id (give the graph an `id=` option), drawn from the student's data, captioned "Figure n". |
-| `\useanswer{id}` | Shows a procedure `\answer`, `\choice` or `\notes` box (by its id): the prompt plus what the student wrote or ticked there. Read-only; the student edits it on the Procedure tab. |
-| `\usephoto{id}` | Shows the photo the student added in the procedure `\photo` slot with that id, with its prompt. |
+| `\useanswer{id}` | Shows an `\answer`, `\choice` or `\notes` box from another tab (by its id): the prompt plus what the student wrote or ticked there. Read-only; the student edits it on its own tab. |
+| `\usephoto{id}` | Shows the photo the student added in the `\photo` slot with that id on another tab, with its prompt. |
 | `\answer`, `\datatable`, `\photo`, `\notes`, `\graph`, `\figure`, `\video` | Work inside the report exactly as in the procedure (a `\figure` in the report is the teacher's own picture, e.g. a table of literature values to compare against): use them when the report should *ask* for something new (a fresh data table to fill in, a question answered only in the write-up, a photo of the final result) instead of copying it from the procedure. |
 
-The `\use…` commands only refer to blocks in the procedure, so every referenced block needs an explicit `id=`.
+The `\use…` commands refer to blocks on the other tabs (the body or any `\tab`), so every referenced block needs an explicit `id=`.
 
 Rules for converting a PDF: if the PDF includes report instructions, a rubric, or "write-up" requirements, turn them into `\answer`s in the same order, using the PDF's own wording for prompts. Put every data table the report must include in `\usetable{…}` and every required plot in `\usegraph{…}`; if the write-up asks for a table the procedure never collected, put a `\datatable` in the report instead. Keep report questions short and specific; do not invent requirements the PDF does not state.
 
