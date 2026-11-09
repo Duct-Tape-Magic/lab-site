@@ -265,6 +265,7 @@ async function loadSettings() {
     carry_summary: kv.carry_summary === "on",   // off unless the owner turns it on: a new session starts clean
     warn_text: kv.warn_text === undefined ? DEFAULTS.warn_text : kv.warn_text,
     defaults: { system_prompt: !kv.system_prompt?.trim(), reminder: !kv.reminder?.trim() },
+    default_prompt: DEFAULTS.system_prompt, default_reminder: DEFAULTS.reminder,   // so the admin page can tell "unchanged default" from "the owner's own text" even on a stale page
   };
 }
 async function loadBank(id: string): Promise<Bank & { id: string }> {
