@@ -7,9 +7,11 @@ The prototype's bank, prompt and reminder are kept in `docs/socratic/` as format
 The Widgets tab shows them in text boxes; saving the page stores whatever is in the boxes in `oral_settings`, and a stored
 text overrides the default from then on, so a later change to the default in code is not seen until the stored copy is
 cleared (empty the box and save) or edited to match. `settings` reports `defaults.system_prompt` / `defaults.reminder`
-true when the code default is in force. Prompt rules as of 2026-11-09: explain the concept fully when asked, then a
-follow-up or "does that make sense"; rigorous but let go once understood (qualitative); quantitative problems run to a
-numerically correct answer; grade kindly and honestly; credit quickly what the student already knows and move on.
+true when the code default is in force. Prompt rules as of 2026-11-09 (evening): qualitative problems are credited when a reasonable teacher would accept the
+answer (the rubric is not a checklist; missing points are added by the tutor in a sentence); quantitative problems credit a
+correct number, and a wrong one is explained once, marked revealed, and followed by an easier or similar problem with more
+guidance rather than pushed; at most one follow-up on a right answer; a one-word right answer gets one "why"; explain the
+concept fully when asked; credit quickly what the student already knows and move on.
 
 ## What it is
 
