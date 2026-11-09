@@ -4244,11 +4244,13 @@ async function renderSocraticAdmin() {
   const st = socAdmin.settings, banks = socAdmin.banks || [], ed = socAdmin.editing;
   let h = `<h4 style="margin:0 0 0.6rem">Problem banks</h4>`;
   h += banks.length ? banks.map(b => `<div class="wd-bank"><b>${escapeHTML(b.title)}</b><span class="hint">${b.problem_count} problem${b.problem_count === 1 ? '' : 's'}${b.hidden ? ' · hidden from the Builder' : ''}</span><button type="button" class="btn-small" onclick="socEditBank('${escapeHTML(b.id)}')">Edit</button><button type="button" class="btn-small" onclick="socToggleBank('${escapeHTML(b.id)}', ${b.hidden ? 'false' : 'true'})">${b.hidden ? 'Show' : 'Hide'}</button></div>`).join('') : `<div class="hint">No banks yet.</div>`;
-  h += `<div class="lt-toolbar" style="margin:0.6rem 0 0"><button type="button" class="btn-small" onclick="socEditBank(null)">+ Add a bank</button><span class="hint" style="margin:0">A bank is a text file: one \\problem per question with its difficulty, solution, rubric, scaffolds and misconceptions. The format is in docs/socratic/sample-bank.txt.</span></div>`;
+  h += `<div class="lt-toolbar" style="margin:0.6rem 0 0"><button type="button" class="btn-small" onclick="socEditBank(null)">+ Add a bank</button><span class="hint" style="margin:0">A bank is a .txt file: one \\problem per question with its difficulty, solution, rubric, scaffolds and misconceptions (docs/socratic/BANK-FORMAT.md). Drop the file anywhere on this page to add it.</span></div>`;
   if (ed) {
     h += `<div class="wd-settings" style="margin-top:1rem">
       <div class="form-row"><label>Bank title</label><input type="text" id="soc-bank-title" value="${escapeHTML(ed.title || '')}" placeholder="e.g. Intermolecular forces"/></div>
-      <div class="form-row"><label>Bank file</label><textarea id="soc-bank-source" rows="18" spellcheck="false" oninput="socCheckBank()">${escapeHTML(ed.source || '')}</textarea><div class="wd-check" id="soc-bank-check"></div></div>
+      <div class="form-row"><label>Bank file</label>
+        <label class="bu-dropzone" id="soc-bank-drop" style="margin-bottom:0.6rem">Drop the .txt bank file here, or click to choose it<input type="file" accept=".txt,.md,.tex,text/plain" hidden onchange="if (this.files[0]) socBankFile(this.files[0]); this.value = ''"/></label>
+        <textarea id="soc-bank-source" rows="18" spellcheck="false" oninput="socCheckBank()" placeholder="…or paste the file's text here">${escapeHTML(ed.source || '')}</textarea><div class="wd-check" id="soc-bank-check"></div></div>
       <div class="lt-toolbar"><button type="button" class="btn btn-accent btn-small" onclick="socSaveBank()">Save bank</button><button type="button" class="btn-small" onclick="socAdmin.editing = null; renderSocraticAdmin()">Cancel</button>${ed.id ? `<button type="button" class="btn-small" style="margin-left:auto;color:var(--danger);border-color:var(--danger)" onclick="socDeleteBank('${escapeHTML(ed.id)}')">Delete bank</button>` : ''}</div>
     </div>`;
   }
@@ -4271,6 +4273,48 @@ async function renderSocraticAdmin() {
   }
   box.innerHTML = h;
   if (ed) socCheckBank();
+  socWireBankDrops(box);
+}
+/* A bank file can be dropped on the drop zone, on the text box, or anywhere on the Socratic page. With no editor open it starts a new bank. */
+function socWireBankDrops(box) {
+  const zones = [box, $('soc-bank-drop'), $('soc-bank-source')].filter(Boolean);
+  zones.forEach(z => {
+    ['dragenter', 'dragover'].forEach(ev => z.addEventListener(ev, e => { if (!e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files')) return; e.preventDefault(); e.stopPropagation(); if (z.id === 'soc-bank-drop') z.classList.add('dragover'); else z.style.outline = '2px dashed var(--accent)'; }));
+    ['dragleave', 'drop'].forEach(ev => z.addEventListener(ev, e => { if (ev === 'dragleave' && z.contains(e.relatedTarget)) return; z.classList.remove('dragover'); z.style.outline = ''; }));
+    z.addEventListener('drop', e => {
+      const f = e.dataTransfer && Array.from(e.dataTransfer.files || []).find(isLabFile);
+      if (!f) return;
+      e.preventDefault(); e.stopPropagation();
+      socBankFile(f);
+    });
+  });
+}
+function socBankFile(f) {
+  if (!isLabFile(f)) { toast('That is not a text file. Banks are .txt files.', true); return; }
+  if (f.size > 2 * 1024 * 1024) { toast('That file is over 2 MB; a bank file is far smaller.', true); return; }
+  const r = new FileReader();
+  r.onerror = () => toast('The file could not be read.', true);
+  r.onload = () => {
+    const text = String(r.result || '');
+    if (!socAdmin.editing) socAdmin.editing = { id: null, title: '', source: '' };   // dropped on the page with no editor open: start a new bank
+    const ed = socAdmin.editing;
+    const src = $('soc-bank-source');
+    const current = src ? src.value : ed.source || '';
+    if (current.trim() && current !== text && !confirm(`Replace the bank text with ${f.name}?`)) return;
+    ed.source = text;
+    const titleBox = $('soc-bank-title');
+    if (titleBox) ed.title = titleBox.value.trim();
+    if (!ed.title) {   // no title yet: take \bank[title=…], else the file name
+      let t = ''; try { t = oralParseBank(text).title || ''; } catch (e) { /* the check line will say what is wrong */ }
+      if (!t || t === 'Untitled bank') t = f.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim();
+      ed.title = t;
+    }
+    renderSocraticAdmin().then(() => {
+      const b = socCheckBank();
+      toast(b && b.problems.length ? `${f.name} loaded: ${b.problems.length} problem${b.problems.length === 1 ? '' : 's'}. Check the title, then Save bank.` : `${f.name} loaded, but the check found a problem; see the note under the text.`, !(b && b.problems.length));
+    });
+  };
+  r.readAsText(f);
 }
 function socEditBank(id) {
   const b = id ? (socAdmin.banks || []).find(x => x.id === id) : null;

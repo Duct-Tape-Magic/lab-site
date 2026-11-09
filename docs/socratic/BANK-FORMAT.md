@@ -7,9 +7,12 @@ A worked 15-problem example is `sample-bank.txt` in this folder.
 ## Where a bank goes
 
 1. Site admin → **Widgets** tab → **Socratic 1** → **Banks** → New bank (or an existing one).
-2. Give it a **title** (shown in the Builder picker and to you; students never see it) and paste the file
-   into the source box. The check line under the box updates as you type: problem count, opener count,
-   concept count, and any problem missing a `\prompt`, `\solution` or `\rubric`.
+2. Drop the `.txt` file anywhere on the Socratic 1 page (or on the drop zone in the editor, or click the
+   zone to choose it). Dropping with no editor open starts a new bank; dropping into an open editor replaces
+   its text after a confirmation. Pasting into the text box still works. The **title** (shown in the Builder
+   picker and to you; students never see it) is filled from `\bank[title=…]`, else from the file name; change
+   it if you like. The check line under the box updates as you type: problem count, opener count, concept
+   count, and any problem missing a `\prompt`, `\solution` or `\rubric`.
 3. Save. The bank gets an id `b-<timestamp>`. In a lab, Builder's Widget block with type `socratic`
    lets you pick the bank; in markup it is `\widget[type=socratic, id=…, bank=b-…, label=…]{framing}`.
 4. A bank with saved student sessions cannot be deleted, only hidden. Hidden banks leave the Builder

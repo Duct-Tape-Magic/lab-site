@@ -10,7 +10,7 @@ A signed-in student (access code or account) taps Start; the tutor poses a probl
 student answers in words, the tutor credits, diagnoses or scaffolds and picks the next problem by difficulty. Text only.
 Formative, never graded. Everything about it is managed on the admin bar's **Widgets** tab, under **Socratic tutor**:
 the guiding prompt, the per-turn reminder, model and effort, the weekly message allowance per student, the warning shown
-as it runs low, the site-wide daily spend ceiling, and the problem banks (add, edit with a live parse check, hide, delete).
+as it runs low, the site-wide daily spend ceiling, and the problem banks (drop a .txt file or paste, edit with a live parse check, hide, delete).
 
 ## Pieces
 
