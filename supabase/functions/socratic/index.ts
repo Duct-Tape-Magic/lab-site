@@ -38,7 +38,7 @@ A tutor in a one-on-one conversation. Warm, specific, plain. Short turns: usuall
 
 ## How a session runs
 
-1. **Open** with one problem marked \`opener\`. Pose it as written in its \`prompt\`. Do not explain what the session is or list rules; just greet the student in one sentence and ask the problem.
+1. **Open** with one problem marked \`opener\`. Pose it as written in its \`prompt\`. Do not explain what the session is or list rules; just greet the student in one plain sentence and ask the problem. Never say "welcome back" or refer to earlier sessions unless the student brings one up.
 2. **The student answers in words.** If they give only a label or a bare conclusion ("hydrogen bonding", "because it's polar"), ask them to walk you through how they got there before you judge anything.
 3. **Judge against the rubric** for the current problem.
    - **Credit.** They hit the rubric items, or clearly understand them even if phrased differently. Say what specifically was right, in one or two sentences. You may ask one \`extension\` if the answer was strong. Then move to the next problem.
@@ -228,6 +228,7 @@ async function loadSettings() {
     model: MODELS[kv.model] ? kv.model : DEFAULTS.model,
     effort: ["low", "medium", "high"].includes(kv.effort) ? kv.effort : DEFAULTS.effort,
     caps,
+    carry_summary: kv.carry_summary === "on",   // off unless the owner turns it on: a new session starts clean
     warn_text: kv.warn_text === undefined ? DEFAULTS.warn_text : kv.warn_text,
     defaults: { system_prompt: !kv.system_prompt?.trim(), reminder: !kv.reminder?.trim() },
   };
@@ -388,7 +389,7 @@ Deno.serve(async (req) => {
         if (s0.previous_summary) t0 += `\n\n[Summary from this student's previous session on this topic:]\n${s0.previous_summary}`;
         return sseResponse(async (send) => { const rec = await runTurn(s0, bank, settings, [{ type: "text", text: t0 }], true, send); const left = Math.max(0, settings.caps.turnsPerWeek - await weeklyTurns(user.id)); send({ type: "done", message: rec, session: await clientSession(s0, bank), remaining: left, warn: warnFor(settings, left) }); });
       }
-      const { data: prev } = body.fresh ? { data: null } : await admin.from("oral_sessions").select("summary").eq("user_id", user.id).eq("bank_id", bank.id).not("summary", "is", null).order("ended_at", { ascending: false }).limit(1).maybeSingle();
+      const { data: prev } = (body.fresh || !settings.carry_summary) ? { data: null } : await admin.from("oral_sessions").select("summary").eq("user_id", user.id).eq("bank_id", bank.id).not("summary", "is", null).order("ended_at", { ascending: false }).limit(1).maybeSingle();
       const openers = bank.problems.filter((p) => p.opener);
       const s: Session = { id: `s-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, user_id: user.id, bank_id: bank.id, lab_id: body.lab_id ? String(body.lab_id) : null, model: settings.model, effort: settings.effort, started_at: new Date().toISOString(), ended_at: null, target_difficulty: openers.length ? Math.min(...openers.map((p) => p.difficulty)) : 2, served: {}, current_pid: null, bank_total: bank.problems.length, previous_summary: prev?.summary || null, summary: null, turns: 0, cost: 0 };
       const { error } = await admin.from("oral_sessions").insert(s); if (error) throw error;

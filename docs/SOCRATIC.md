@@ -23,6 +23,12 @@ as it runs low, the site-wide daily spend ceiling, and the problem banks (add, e
 | Report | `\usesocratic{widget-id}` shows one line, "Socratic problems completed: N of M · K credited", once a session has ended; `\usesocratic[transcript]{…}` shows the whole conversation and the tutor's closing summary too. Builder: "Include the tutor session". |
 | Banks | Format in `docs/socratic/sample-bank.txt`; parsed by `parseBank` (function) and `oralParseBank` (admin check) — identical grammars, keep them in step. |
 
+## Session carry-over
+
+`oral_settings.carry_summary` (`on`/`off`, default off; the checkbox on the Socratic 1 page). Off: every session starts
+clean. On: the closing summary of the student's last ended session on the same bank is handed to the tutor at the start
+of the next one. The default prompt tells the tutor never to greet a student as returning.
+
 ## Limits and warning
 
 `oral_settings.caps` = `{ turnsPerWeek, warnAt, siteDailyUsd }`. A student's messages are counted per calendar week (Monday

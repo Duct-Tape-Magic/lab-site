@@ -4261,6 +4261,7 @@ async function renderSocraticAdmin() {
         <div class="form-row"><label>Messages per student per week</label><input type="number" id="soc-week" min="1" step="1" value="${escapeHTML(String(st.caps.turnsPerWeek))}"/><div class="hint">Monday to Sunday. Every message a student sends counts as one.</div></div>
         <div class="form-row"><label>Warn when this many are left</label><input type="number" id="soc-warn-at" min="0" step="1" value="${escapeHTML(String(st.caps.warnAt))}"/></div>
       </div>
+      <div class="form-row"><label class="bu-check" style="display:flex;gap:0.5rem;align-items:center;text-transform:none;letter-spacing:0;font-size:13px"><input type="checkbox" id="soc-carry" ${st.carry_summary ? 'checked' : ''} style="width:auto"/> Carry each student's last session summary into their next session on the same bank</label><div class="hint">Off: every session starts clean. On: the tutor sees the closing summary of the student's previous session and leans toward what they needed to revisit.</div></div>
       <div class="form-row"><label>Warning shown under the tutor while messages are running low</label><input type="text" id="soc-warn-text" value="${escapeHTML(st.warn_text)}"/><div class="hint">{n} becomes the number left this week. Leave empty for no warning.</div></div>
       <div class="lt-toolbar"><button type="button" class="btn btn-accent btn-small" onclick="socSaveSettings()">Save tutor settings</button><span class="hint" style="margin:0">Also set a monthly spend limit in the Anthropic Console.</span></div>`;
   }
@@ -4313,6 +4314,7 @@ async function socSaveSettings() {
     { key: 'reminder', value: reminder.trim() === st.reminder.trim() && st.defaults.reminder ? '' : reminder },
     { key: 'model', value: $('soc-model').value }, { key: 'effort', value: $('soc-effort').value },
     { key: 'warn_text', value: $('soc-warn-text').value },
+    { key: 'carry_summary', value: $('soc-carry').checked ? 'on' : 'off' },
     { key: 'caps', value: JSON.stringify({ turnsPerWeek: Math.max(1, parseInt($('soc-week').value, 10) || 150), warnAt: Math.max(0, parseInt($('soc-warn-at').value, 10) || 0), siteDailyUsd: Math.max(0, parseFloat($('soc-usd').value) || 0) }) },
   ];
   const { error } = await sb.from('oral_settings').upsert(rows);
