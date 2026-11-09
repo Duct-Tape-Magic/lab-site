@@ -4360,8 +4360,13 @@ function socCheckBank() {
     const b = oralParseBank(src.value);
     const missing = b.problems.filter(p => !p.prompt || !p.solution || !p.rubric).map(p => p.pid);
     const openers = b.problems.filter(p => p.opener).length;
+    // Advice (not errors): a revealed topic comes back with an easier problem, so each topic wants one at difficulty 1 or 2;
+    // a problem that asks several questions but carries one \answer should say which quantity it is (of="…").
+    const noEasy = b.concepts.filter(c => !b.problems.some(p => p.concepts.includes(c) && p.difficulty <= 2));
+    const vague = b.problems.filter(p => p.answer && !p.answer.of && (p.prompt.match(/\?/g) || []).length > 1).map(p => p.pid);
+    const advice = [noEasy.length ? `no easy (difficulty 1–2) problem for: ${noEasy.join(', ')}` : '', vague.length ? `several questions but one answer field without of=: ${vague.join(', ')}` : ''].filter(Boolean);
     el.className = 'wd-check ' + (b.problems.length && !missing.length && openers ? 'ok' : 'bad');
-    el.textContent = b.problems.length ? `${b.problems.length} problems, ${openers} opener${openers === 1 ? '' : 's'}, ${b.concepts.length} concepts${missing.length ? ` · missing prompt, solution or rubric: ${missing.join(', ')}` : ''}${openers ? '' : ' · mark at least one problem as an opener'}` : 'No \\problem blocks found yet.';
+    el.textContent = b.problems.length ? `${b.problems.length} problems, ${openers} opener${openers === 1 ? '' : 's'}, ${b.concepts.length} concepts${missing.length ? ` · missing prompt, solution or rubric: ${missing.join(', ')}` : ''}${openers ? '' : ' · mark at least one problem as an opener'}${advice.length ? ' · advice: ' + advice.join('; ') : ''}` : 'No \\problem blocks found yet.';
     return b;
   } catch (e) { el.className = 'wd-check bad'; el.textContent = e.message; return null; }
 }
@@ -5372,7 +5377,8 @@ async function socraticReviewInto(body, opts, uid) {
     try { const r = await sb.from('oral_reports').select('session_id, pid, note, created_at').in('session_id', sessions.map(x => x.id)).order('created_at'); reports = r.data || []; } catch (e) { /* leave empty */ }
     body.innerHTML = sessions.map(x => { const p = socraticProgress(x), when = new Date(x.started_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
       const reps = reports.filter(r => r.session_id === x.id).map(r => `<div class="soc-report-note"><b>Reported${r.pid ? ' ' + escapeHTML(r.pid) : ''}:</b> ${escapeHTML(r.note || '')}</div>`).join('');
-      return `<details class="soc-review" ${x === sessions[sessions.length - 1] ? 'open' : ''}><summary>${escapeHTML(when)} · ${x.turns || 0} turns · ${p.topicsTotal ? `${p.topics} of ${p.topicsTotal} topics · ` : ''}${p.posed} posed · ${p.credited} credited · ${p.revealed} revealed${p.skipped ? ` · ${p.skipped} skipped` : ''}${reps ? ' · reported a problem' : ''}${x.ended_at ? '' : ' · still open'}</summary>${reps}${socraticTranscriptHTML(x)}</details>`; }).join('');
+      const needs = x.concepts && Array.isArray(x.concepts.needs_work) && x.concepts.needs_work.length ? ` · needs work: ${x.concepts.needs_work.map(k => k + (x.concepts.reveals && x.concepts.reveals[k] > 1 ? ` (revealed ×${x.concepts.reveals[k]})` : '')).join(', ')}` : '';
+      return `<details class="soc-review" ${x === sessions[sessions.length - 1] ? 'open' : ''}><summary>${escapeHTML(when)} · ${x.turns || 0} turns · ${p.topicsTotal ? `${p.topics} of ${p.topicsTotal} topics · ` : ''}${p.posed} posed${escapeHTML(needs)} · ${p.credited} credited · ${p.revealed} revealed${p.skipped ? ` · ${p.skipped} skipped` : ''}${reps ? ' · reported a problem' : ''}${x.ended_at ? '' : ' · still open'}</summary>${reps}${socraticTranscriptHTML(x)}</details>`; }).join('');
     try { renderMathIn([body]); } catch (e) { /* ignore */ }
   } catch (e) { body.innerHTML = `<div class="soc-note">${escapeHTML(e.message || 'Could not load the sessions.')}</div>`; }
 }

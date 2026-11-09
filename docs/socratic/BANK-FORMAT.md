@@ -87,7 +87,7 @@ or `rubric`, and the tutor cannot run a problem well without them):
 |---|---|---|
 | `\catalog{…}` | One or two sentences on **what this problem discriminates**: which misunderstanding it catches, not what topic it is about. | Read when choosing the next problem. Write it for the tutor, not the student. |
 | `\prompt{…}` | The problem exactly as the student should hear it. Formulas as `\ce{...}` or `$…$`. | Posed verbatim at the start of the problem. |
-| `\answer[…]` | Options only, no body: `value=`, `unit=`, `tol=` (free-form, e.g. `tol=3%`). Any option names are accepted and passed through. | Shown to the model as a JSON line. Only useful for numeric problems; omit otherwise. |
+| `\answer[…]` | Options only, no body: `value=`, `unit=`, `tol=` (free-form, e.g. `tol=3%`), and `of="…"` naming which quantity the value is when the prompt asks for several (`of="gasoline to liquid hydrogen, energy per liter"`). Any option names are accepted and passed through. | Shown to the model as a JSON line. The tutor checks the student's number for the named quantity against it and judges the problem's other numbers against the solution. Only useful for numeric problems; omit otherwise. The check line flags a problem with several questions and an answer field without `of=`. |
 | `\solution{…}` | Full worked reasoning, the standard the student's explanation is judged against. | Private to the model. Never shown to students. |
 | `\rubric{…}` | Checkable items, one per line, as `- item`. | The tutor credits when the student's own words cover these. Fewer, sharper items credit more cleanly ("ties go to the student"). |
 | `\scaffolds{…}` | Numbered questions to ask when the student stalls, from gentlest to most pointed. | Asked one at a time, in order, before any reveal. The prompt reveals after about three. |
@@ -136,7 +136,9 @@ A problem missing `\prompt`, `\solution` or `\rubric` is listed by pid as a warn
 - The bank can be large (a week's homework, 50 problems is fine); the student will see only a handful.
   What matters is that every concept has several problems to choose from.
 - Two or three openers at difficulty 2, spread across concepts.
-- Cover every concept in `\concepts` with at least three problems at different difficulties so the tutor
-  can go at a shaky concept "from another angle" after a reveal.
+- Cover every concept in `\concepts` with at least three problems at different difficulties, including one at
+  difficulty 1 or 2: after a reveal the tutor must come back to that concept with an easier problem before
+  anything new, and after two reveals it explains the idea with a worked example instead of posing a third.
+  The check line lists concepts that have no easy problem.
 - Keep `\catalog` about the discrimination, keep `\rubric` to the three or four things that actually
   distinguish understanding, and keep pids stable after students have used the bank.
