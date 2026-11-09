@@ -290,7 +290,9 @@ async function addUsage(userId: string, usage: any, cost: number) {
 }
 
 // ---------- one model turn, streamed ----------
-const anthropic = new Anthropic({ apiKey: Deno.env.get("ANTHROPIC_API_KEY") || "" });
+// The key as the owner set it; a doubled "sk-ant-" (pasted after a template's prefix) and stray whitespace are forgiven.
+const apiKey = () => (Deno.env.get("ANTHROPIC_API_KEY") || "").trim().replace(/^sk-ant-(?=sk-ant-)/, "");
+const anthropic = new Anthropic({ apiKey: apiKey() });
 async function runTurn(s: Session, bank: Bank, settings: Awaited<ReturnType<typeof loadSettings>>, userBlocks: any[], hidden: boolean, send: (o: unknown) => void) {
   const { data: userRow, error: uerr } = await admin.from("oral_messages").insert({ session_id: s.id, role: "user", blocks: userBlocks, hidden }).select("id").single();
   if (uerr) throw uerr;
@@ -357,7 +359,8 @@ Deno.serve(async (req) => {
     const settings = await loadSettings();
     if (action === "settings") {   // admin: effective settings, including the built-in defaults the owner may edit
       if (!isAdmin) return json(403, { error: "admins only" });
-      return json(200, { ...settings, models: Object.keys(MODELS), hasKey: !!Deno.env.get("ANTHROPIC_API_KEY") });
+      const k = apiKey();
+      return json(200, { ...settings, models: Object.keys(MODELS), hasKey: !!k, keyShape: { length: k.length, prefix: k.slice(0, 11), hasWhitespace: /\s/.test(k) } });   // shape only, never the key
     }
     if (action === "check-bank") {   // admin: parse a bank source without saving
       if (!isAdmin) return json(403, { error: "admins only" });
@@ -374,7 +377,7 @@ Deno.serve(async (req) => {
     if (action === "start") {
       const bank = await loadBank(String(body.bank_id || ""));
       const cap = await checkCaps(user.id, settings.caps); if (cap.limit) return json(200, { limit: cap.limit });
-      if (!Deno.env.get("ANTHROPIC_API_KEY")) return json(500, { error: "no api key" });
+      if (!apiKey()) return json(500, { error: "no api key" });
       const { data: open } = await admin.from("oral_sessions").select("*").eq("user_id", user.id).eq("bank_id", bank.id).is("ended_at", null).order("started_at", { ascending: false }).limit(1).maybeSingle();
       if (open) {
         const { count } = await admin.from("oral_messages").select("id", { count: "exact", head: true }).eq("session_id", open.id).eq("role", "assistant");
