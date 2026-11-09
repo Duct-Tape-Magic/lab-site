@@ -5294,7 +5294,9 @@ async function socraticLoad(uid, bank) {
   if (have && have.sessions) return have.sessions;
   if (have && have.loading) return have.loading;
   const p = (async () => {
-    const { data: sessions, error } = await sb.from('oral_sessions').select('id, lab_id, started_at, ended_at, summary, served, turns, bank_total, concepts').eq('user_id', uid).eq('bank_id', bank).order('started_at');
+    const cols = 'id, lab_id, started_at, ended_at, summary, served, turns, bank_total';
+    let { data: sessions, error } = await sb.from('oral_sessions').select(cols + ', concepts').eq('user_id', uid).eq('bank_id', bank).order('started_at');
+    if (error && /concepts/.test(error.message)) ({ data: sessions, error } = await sb.from('oral_sessions').select(cols).eq('user_id', uid).eq('bank_id', bank).order('started_at'));   // until the concepts column has been added
     if (error) throw error;
     const ids = (sessions || []).map(x => x.id); let msgs = [];
     if (ids.length) { const r = await sb.from('oral_messages').select('id, session_id, role, text, blocks, hidden').in('session_id', ids).order('id'); if (r.error) throw r.error; msgs = r.data || []; }
