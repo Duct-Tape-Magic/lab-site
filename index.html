@@ -1470,7 +1470,7 @@ const DEFAULTS = {
   socSiteLimit: 'The tutor is resting for today. Come back tomorrow.',
   socError: 'The tutor could not answer just now. Try again in a moment.',
   socEnded: 'Session ended.',
-  socDoneLine: 'Socratic problems completed: {posed} of {total} · {credited} credited',
+  socDoneLine: 'Socratic problems completed: {done} of {total} · {credited} credited',
   socNotDone: 'The tutor session has not been completed yet.',
   socNoSession: 'No tutor session yet.',
   socTranscriptTitle: 'Tutor conversation',
@@ -5187,7 +5187,7 @@ async function socraticLoad(uid, bank) {
   socraticCache.set(key, { loading: p }); p.catch(() => socraticCache.delete(key));
   return p;
 }
-function socraticProgress(sess) { const served = Object.values(sess.served || {}); return { posed: served.length, credited: served.filter(r => r.status === 'credited').length, revealed: served.filter(r => r.status === 'revealed').length }; }
+function socraticProgress(sess) { const served = Object.values(sess.served || {}), credited = served.filter(r => r.status === 'credited').length, revealed = served.filter(r => r.status === 'revealed').length; return { posed: served.length, credited, revealed, done: credited + revealed }; }   // done = finished problems, not merely posed
 function socraticTranscriptHTML(sess) {
   return `<div class="soc-log">${sess.messages.map(m => `<div class="soc-msg ${m.role === 'assistant' ? 'tutor' : 'me'}">${escapeHTML(m.text)}</div>`).join('')}</div>${sess.summary ? `<div class="soc-summary">${escapeHTML(sess.summary)}</div>` : ''}`;
 }
@@ -5197,11 +5197,11 @@ function socraticMirrorHTML(sessions, mode, total) {
   if (mode === 'transcript') {
     const list = ended.length ? ended : open;
     if (!list.length) return `<div class="soc-note">${escapeHTML(getText('socNoSession'))}</div>`;
-    return list.map(x => { const p = socraticProgress(x); return `<div class="soc-done">${escapeHTML(fmt('socDoneLine', { posed: p.posed, total: total || '?', credited: p.credited }))}${x.ended_at ? '' : ` · ${escapeHTML(getText('socNotDone'))}`}</div>${socraticTranscriptHTML(x)}`; }).join('');
+    return list.map(x => { const p = socraticProgress(x); return `<div class="soc-done">${escapeHTML(fmt('socDoneLine', { done: p.done, posed: p.posed, total: total || '?', credited: p.credited }))}${x.ended_at ? '' : ` · ${escapeHTML(getText('socNotDone'))}`}</div>${socraticTranscriptHTML(x)}`; }).join('');
   }
   if (!ended.length) return `<div class="soc-note">${escapeHTML(getText(open.length ? 'socNotDone' : 'socNoSession'))}</div>`;
   const last = ended[ended.length - 1], p = socraticProgress(last);
-  return `<div class="soc-done">${escapeHTML(fmt('socDoneLine', { posed: p.posed, total: total || '?', credited: p.credited }))}</div>`;
+  return `<div class="soc-done">${escapeHTML(fmt('socDoneLine', { done: p.done, posed: p.posed, total: total || '?', credited: p.credited }))}</div>`;
 }
 // Admin review of a student's lab: every session of theirs on this bank, with the transcript folded under a summary line.
 async function socraticReviewInto(body, opts, uid) {
