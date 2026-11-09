@@ -1,62 +1,47 @@
-# Socratic 1 — oral tutor widget (plan, 2026-11-08)
+# Socratic 1 — oral tutor widget
 
-Built from the owner's standalone prototype "Socratic 1 Proto" (Oral Tutor Prototype folder; its HANDOFF.md
-describes what was learned). The sample bank and prompt from the prototype are kept here only as format
-references (`docs/socratic/`); they are not the content that ships.
+Built 2026-11-08 from the owner's standalone prototype ("Socratic 1 Proto", Oral Tutor Prototype folder, HANDOFF.md).
+The prototype's bank, prompt and reminder are kept in `docs/socratic/` as format references only.
 
 ## What it is
 
-A widget block, `\widget[type=socratic, bank=<bank id>]{optional framing}`. A signed-in student taps Start,
-the tutor (a Claude model) poses a problem from a bank the owner wrote, the student answers in words, the
-tutor credits, diagnoses or corrects, and chooses the next problem by difficulty. Formative only; never graded;
-no camera. The owner adds problems and edits the tutor's prompt from the admin bar on the live site.
+A widget block, `\widget[type=socratic, bank=<bank id>, label=…]{optional framing}`, picked in the Builder's Widget menu.
+A signed-in student (access code or account) taps Start; the tutor poses a problem from a bank the owner wrote, the
+student answers in words, the tutor credits, diagnoses or scaffolds and picks the next problem by difficulty. Text only.
+Formative, never graded. Everything about it is managed on the admin bar's **Widgets** tab, under **Socratic tutor**:
+the guiding prompt, the per-turn reminder, model and effort, the weekly message allowance per student, the warning shown
+as it runs low, the site-wide daily spend ceiling, and the problem banks (add, edit with a live parse check, hide, delete).
 
 ## Pieces
 
-1. **Database** (`supabase/socratic.sql`, run by the owner in the SQL editor; then the Data API grant line):
-   - `oral_banks` (id, title, source text, problem_count, updated_at). Admin only. Solutions never reach a
-     browser: students have no read policy at all; the server function reads with the service role.
-   - `oral_settings` (key, value): `system_prompt`, `reminder`, `model`, `effort`, `caps` (JSON). Admin only.
-   - `oral_sessions` (id, user_id, bank_id, lab_id, model, started_at, ended_at, target_difficulty, served
-     jsonb, summary, cost). `oral_messages` (id, session_id, role, blocks jsonb, raw, text, state jsonb, usage
-     jsonb, created_at). `oral_reports` (session_id, message_id, pid, note). `oral_usage` (user_id, day,
-     turns, input_tokens, output_tokens, cost). Students read their own sessions and messages; all writes go
-     through the function. Admin reads everything (for a later TA view). Nothing student-authored is deleted.
-2. **Edge Function `socratic`** (`supabase/functions/socratic/index.ts`, Deno, deployed with the Supabase CLI
-   or pasted into the dashboard). Actions `start`, `turn`, `end`, `report`, `resume`. Verifies the caller's
-   session token, refuses anonymous callers, checks the per-student and site-wide daily caps, assembles the
-   call exactly as the prototype does (system prompt + rendered bank as the cached prefix, append-only
-   transcript, reminder with live status as the last message), streams the reply, strips and stores the hidden
-   state line, moves the difficulty target in code. Secrets: `ANTHROPIC_API_KEY` set by the owner only.
-3. **Widget** (`WIDGETS.socratic` + `widgets/socratic.v1.js`): passive until Start; bare interface: the
-   conversation, a text box, Send, I'm stuck, End session, and a one-line progress note; plain green text
-   confirmations; formulas rendered with the vendored KaTeX. Not signed in → one calm line, no Start. Records
-   nothing into lab tables (its data is the session). Resumes an open session on reopening the lab.
-4. **Admin: Socratic tab** in the admin bar: the prompt (two text boxes: guiding prompt, reminder), model and
-   effort, daily caps, and the bank list: add, edit (a text box in the bank format with a live parse check:
-   problem count, missing fields, duplicate ids), delete (refused while sessions reference it; hide instead).
-5. **Builder**: the Widget picker gains Socratic; its card has a bank dropdown and the framing text.
-6. **Docs**: LAB-FORMAT.md "Widgets" gains the socratic entry; WIDGETS.md gets the build log; this file.
+| Piece | Where |
+|---|---|
+| Tables, grants, RLS | `supabase/socratic.sql` — `oral_banks`, `oral_settings` (admin only); `oral_sessions`, `oral_messages`, `oral_reports`, `oral_usage` (written only by the function; a student reads their own sessions and messages, an admin reads all). |
+| Server function | `supabase/functions/socratic/index.ts` — actions `settings`, `check-bank` (admin), `resume`, `start`, `turn`, `end`, `report`. Verifies the login, applies the caps, assembles the call (prompt + rendered bank cached 1 h, append-only transcript, reminder as a mid-conversation system message), streams SSE, strips and stores the hidden state line, moves the difficulty target in code. Model `claude-sonnet-5-5`, effort medium by default; `fallbacks: "default"` so a safety-classifier decline is retried server-side. |
+| Widget | `widgets/socratic.v1.js` + `WIDGETS.socratic` — conversation, text box, Send, I'm stuck, End session, one progress line, warning line. Sign-in gate before Start. `ctx.call` = `ltFnStream('socratic', …)`. |
+| Admin review | A reviewed student's lab shows every session of theirs on the block's bank, transcript folded under a one-line summary (`socraticReviewInto`). |
+| Report | `\usesocratic{widget-id}` shows one line, "Socratic problems completed: N of M · K credited", once a session has ended; `\usesocratic[transcript]{…}` shows the whole conversation and the tutor's closing summary too. Builder: "Include the tutor session". |
+| Banks | Format in `docs/socratic/sample-bank.txt`; parsed by `parseBank` (function) and `oralParseBank` (admin check) — identical grammars, keep them in step. |
 
-## Rules carried over
+## Limits and warning
 
-No emails, no student logins beyond codes/seats; seat numbers only ever leave the browser. Every student-facing
-string is a text key. Widgets passive until tapped, no memory in the browser, bare interface, calm failures,
-Get help never automatic. Backup before the push that adds the block type. Keys pasted by the owner only.
-
-## Decisions (owner)
-
-1. Who may use it: signed-in students only (recommended; anonymous visitors see "sign in to practise").
-2. Photos of hand-drawn work: not in v1 (recommended; text only, add later).
-3. Caps: per student 60 turns a day; site-wide a daily spend ceiling in the function plus a monthly limit set
-   in the Anthropic Console. Numbers to confirm.
-4. Model: Sonnet 5.5, effort medium, changeable in the Socratic tab.
-5. Transcripts are stored (the model needs them); no TA screen in v1.
+`oral_settings.caps` = `{ turnsPerWeek, warnAt, siteDailyUsd }`. A student's messages are counted per calendar week (Monday
+to Sunday, UTC) across all banks; when the allowance is used the tutor shows the `socLimit` text and takes no more turns
+(ending a session is always allowed). When `remaining ≤ warnAt`, the owner's `warn_text` (with `{n}`) shows under the
+conversation. `siteDailyUsd` stops every tutor for the rest of the day once the site's model spend passes it (0 = off).
+A monthly spend limit in the Anthropic Console is the backstop.
 
 ## Owner setup (once)
 
-1. Run `supabase/socratic.sql` in the project's SQL editor.
-2. Install the Supabase CLI through npm (`npx supabase login`, `npx supabase link --project-ref nioebkjtrweyxvboajyv`),
-   or paste the function into the dashboard's Edge Functions editor.
-3. Set the secret: `npx supabase secrets set ANTHROPIC_API_KEY=…` in your own terminal (or Project Settings →
-   Edge Functions → Secrets). Set a monthly spend limit in the Anthropic Console.
+1. **Tables.** Supabase dashboard → SQL editor → paste all of `supabase/socratic.sql` → Run.
+2. **Command line.** In a terminal, in the Lab Site folder: `npx supabase login` (opens the browser), then
+   `npx supabase link --project-ref nioebkjtrweyxvboajyv`. After that the assistant can run
+   `npx supabase functions deploy socratic` for every change.
+3. **Key.** `npx supabase secrets set ANTHROPIC_API_KEY=sk-ant-…` in your own terminal (never pasted into chat), or
+   dashboard → Edge Functions → Secrets. Set a monthly spend limit in the Anthropic Console.
+
+## Rules carried over
+
+No emails, no student logins beyond codes/seats. Every student-facing string is a text key (`soc*`, `widgetSignIn`).
+Widgets passive until tapped, nothing kept in the browser, bare interface, calm failures, Get help never automatic.
+Nothing student-authored is deleted by the site; a bank with sessions cannot be deleted, only hidden.

@@ -609,6 +609,33 @@
   .wd-switch { display: flex; align-items: center; gap: 0.5rem; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); cursor: pointer; }
   .wd-switch input { width: auto; accent-color: var(--accent); }
   .wd-demo .lt-widget { margin: 0.6rem 0 0; }
+  .wd-settings { border-top: 0.5px solid var(--rule); margin-top: 1rem; padding-top: 1rem; }
+  .wd-settings textarea { width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; line-height: 1.45; }
+  .wd-settings .form-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.6rem; }
+  .wd-bank { display: flex; align-items: center; gap: 0.75rem; padding: 0.45rem 0; border-bottom: 0.5px solid var(--rule); font-size: 14px; }
+  .wd-bank .hint { margin: 0; flex: 1; }
+  .wd-check { font-size: 13px; margin-top: 0.4rem; }
+  .wd-check.ok { color: #2e7d32; } .wd-check.bad { color: var(--danger); }
+  /* Socratic tutor: conversation, input, one progress line */
+  .soc { display: flex; flex-direction: column; gap: 0.6rem; }
+  .soc-log { display: flex; flex-direction: column; gap: 0.55rem; max-height: 60vh; overflow-y: auto; padding-right: 0.2rem; }
+  .soc-msg { max-width: 92%; padding: 0.55rem 0.8rem; font-size: 0.95em; line-height: 1.5; white-space: pre-wrap; border: 0.5px solid var(--rule-strong); }
+  .soc-msg.tutor { align-self: flex-start; background: var(--bg); }
+  .soc-msg.me { align-self: flex-end; background: rgba(47,93,138,0.07); }
+  .soc-msg.pending { opacity: 0.75; }
+  .soc-input { display: flex; gap: 0.5rem; align-items: flex-end; }
+  .soc-input textarea { flex: 1; min-height: 2.6em; max-height: 10em; resize: vertical; font: inherit; font-size: 0.95em; padding: 0.45rem 0.6rem; border: 0.5px solid var(--rule-strong); background: var(--bg); color: var(--ink); }
+  .soc-foot { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+  .soc-progress { font-size: 12px; color: var(--muted); margin-left: auto; }
+  .soc-note { font-size: 13px; color: var(--muted); }
+  .soc-warn { font-size: 13px; color: var(--danger); }
+  .soc-ok { font-size: 13px; color: #2e7d32; }
+  .soc-summary { border-left: 3px solid var(--accent); padding: 0.6rem 0.9rem; background: var(--card-bg); font-size: 0.95em; line-height: 1.5; white-space: pre-wrap; }
+  .soc-review { margin: 0.6rem 0; }
+  .soc-review summary { cursor: pointer; font-size: 13px; }
+  .soc-done { font-size: 0.95em; margin: 0.6rem 0; }
+  .rp-mirror .soc-log { max-height: none; overflow: visible; }
+
   .stat-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; }
   .stat-tile { border: 0.5px solid var(--rule-strong); padding: 0.9rem 1rem; }
   .stat-num { font-family: var(--font-heading); font-size: 2rem; line-height: 1; }
@@ -1434,6 +1461,19 @@ const DEFAULTS = {
   widgetFailed: 'The tool could not start. Type your values into the table instead.',
   widgetDenied: 'The camera was not allowed. Allow it in your browser settings and tap Start again, or type your values into the table.',
   widgetUnavailable: 'This tool is not available here. Type your values into the table instead.',
+  widgetSignIn: 'Sign in with your access code to use this tool.',
+  socSend: 'Send', socStuck: 'I\'m stuck', socEnd: 'End session', socAgain: 'Start a new session',
+  socPlaceholder: 'Answer in words, not just a number…',
+  socProgress: '{posed} of {total} problems · {credited} credited',
+  socThinking: 'The tutor is thinking…',
+  socLimit: 'You have used all of this week\'s messages with the tutor. It opens again next week.',
+  socSiteLimit: 'The tutor is resting for today. Come back tomorrow.',
+  socError: 'The tutor could not answer just now. Try again in a moment.',
+  socEnded: 'Session ended.',
+  socDoneLine: 'Socratic problems completed: {posed} of {total} · {credited} credited',
+  socNotDone: 'The tutor session has not been completed yet.',
+  socNoSession: 'No tutor session yet.',
+  socTranscriptTitle: 'Tutor conversation',
   widgetGetHelp: 'Get help',
   widgetRecord: 'Record',
   widgetRecorded: 'Data recorded',
@@ -1455,7 +1495,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'entriesClearFailed', 'entriesSaveFailed', 'photoSyncFailed', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
   { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef', 'reportNoPhotoYet'] },
   { label: 'Get help', keys: ['helpButton', 'helpIntro', 'helpLoginNudge', 'helpMessagePlaceholder', 'helpSend', 'helpSent', 'helpError', 'helpAutoReply', 'helpAutoLabel', 'helpYou', 'helpTeacher', 'helpResolvedNote', 'helpEmailFrom', 'helpEmailSubject'] },
-  { label: 'Widgets (in-lab tools)', keys: ['widgetStart', 'widgetStop', 'widgetLoading', 'widgetNoCamera', 'widgetFailed', 'widgetDenied', 'widgetUnavailable', 'widgetGetHelp', 'widgetRecord', 'widgetRecorded', 'widgetTableFull', 'widgetNoTable', 'widgetRefLabel', 'widgetMeasLabel'] },
+  { label: 'Widgets (in-lab tools)', keys: ['widgetStart', 'widgetStop', 'widgetLoading', 'widgetNoCamera', 'widgetFailed', 'widgetDenied', 'widgetUnavailable', 'widgetGetHelp', 'widgetRecord', 'widgetRecorded', 'widgetTableFull', 'widgetNoTable', 'widgetRefLabel', 'widgetMeasLabel', 'widgetSignIn', 'socSend', 'socStuck', 'socEnd', 'socAgain', 'socPlaceholder', 'socProgress', 'socThinking', 'socLimit', 'socSiteLimit', 'socError', 'socEnded', 'socDoneLine', 'socNotDone', 'socNoSession', 'socTranscriptTitle'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
 ];
 
@@ -1481,7 +1521,8 @@ const TEXT_LABELS = {
   calloutSafety: 'Safety box label', calloutWarning: 'Caution box label', calloutInfo: 'Note box label', calloutTip: 'Tip box label', calloutHint: 'Hint box label', figurePending: 'Missing figure text', graphEmpty: 'Empty graph message',
   procedureTab: 'Procedure tab label', reportTab: 'Report tab label', reportPreview: 'Preview report button', reportStyleTitle: 'Style guide heading', reportRequired: 'Required badge', reportHint: 'Hint toggle', reportWords: 'Word count', reportWordsAim: 'Word range hint', reportEmptyRequired: 'Empty required question note', reportTableLabel: 'Table caption word', reportFigureLabel: 'Figure caption word', reportMissingRef: 'Missing table/graph message', reportNoPhotoYet: 'No photo yet message',
   helpButton: 'Get help button', helpIntro: 'Help panel intro', helpLoginNudge: 'Help: log-in nudge', helpMessagePlaceholder: 'Help: question placeholder', helpSend: 'Help: send button', helpSent: 'Help: sent confirmation', helpError: 'Help: send failed', helpAutoReply: 'Help: automatic first reply (site default)', helpAutoLabel: 'Help: label on the automatic reply', helpYou: 'Help: your name in the thread', helpTeacher: 'Help: teacher name in the thread', helpResolvedNote: 'Help: resolved note', helpEmailFrom: 'Help: email sender', helpEmailSubject: 'Help: email subject ({lab} = lab title)',
-  widgetStart: 'Widget: Start button', widgetStop: 'Widget: Stop button', widgetLoading: 'Widget: starting message', widgetNoCamera: 'Widget: no-camera note', widgetFailed: 'Widget: could-not-start message', widgetDenied: 'Widget: camera-not-allowed message', widgetUnavailable: 'Widget: not-available message', widgetGetHelp: 'Widget: Get help button',
+  widgetStart: 'Widget: Start button', widgetStop: 'Widget: Stop button', widgetLoading: 'Widget: starting message', widgetNoCamera: 'Widget: no-camera note', widgetFailed: 'Widget: could-not-start message', widgetDenied: 'Widget: camera-not-allowed message', widgetUnavailable: 'Widget: not-available message', widgetGetHelp: 'Widget: Get help button', widgetSignIn: 'Widget: sign-in note',
+  socSend: 'Tutor: Send button', socStuck: 'Tutor: I\'m stuck button', socEnd: 'Tutor: End session button', socAgain: 'Tutor: new session button', socPlaceholder: 'Tutor: answer box placeholder', socProgress: 'Tutor: progress line', socThinking: 'Tutor: thinking note', socLimit: 'Tutor: weekly limit note', socSiteLimit: 'Tutor: site limit note', socError: 'Tutor: error note', socEnded: 'Tutor: session ended note', socDoneLine: 'Tutor: report completion line', socNotDone: 'Tutor: report not-finished note', socNoSession: 'Tutor: report no-session note', socTranscriptTitle: 'Tutor: transcript heading',
   widgetRecord: 'Colorimeter: Record button', widgetRecorded: 'Colorimeter: data recorded text', widgetTableFull: 'Colorimeter: table full message', widgetNoTable: 'Colorimeter: no table message',
   widgetRefLabel: 'Colorimeter: reference square label', widgetMeasLabel: 'Colorimeter: sample square label'
 };
@@ -2543,6 +2584,18 @@ function rpRefreshMirrors(area) {
     const wrap = field.closest('.lt-answer, .lt-notes, .lt-step-notes');
     const prompt = wrap ? wrap.querySelector('.lt-prompt, summary') : null;
     box.innerHTML = `<div class="rp-copy-answer">${prompt ? `<div class="lt-prompt">${prompt.innerHTML}</div>` : ''}<div class="lt-field rp-copy" data-copy-of="${escapeHTML(id)}">${escapeHTML(ltFieldText(field))}</div></div>`;
+  });
+  area.querySelectorAll('.rp-mirror[data-mirror-socratic]').forEach(box => {
+    const id = box.dataset.mirrorSocratic, src = rpSource(area, `.lt-widget[data-widget="${id}"]`);
+    if (!src) { box.innerHTML = `<div class="lt-error">${escapeHTML(getText('reportMissingRef'))} \\usesocratic{${escapeHTML(id)}}</div>`; return; }
+    let opts = {}; try { opts = JSON.parse(src.dataset.opts || '{}'); } catch (e) { /* ignore */ }
+    const uid = state.reviewing ? state.reviewing.user_id : (state.session && state.session.user ? state.session.user.id : null);
+    if (!uid || !opts.bank || !sb) { box.innerHTML = `<div class="soc-note">${escapeHTML(getText('socNoSession'))}</div>`; return; }
+    const have = socraticCache.get(uid + '|' + opts.bank);
+    if (!have || !have.sessions) { if (!have) socraticLoad(uid, opts.bank).then(() => rpRefreshMirrors(area)).catch(() => {}); if (!box.innerHTML) box.innerHTML = `<div class="soc-note">…</div>`; return; }
+    const total = parseInt(src.dataset.socTotal, 10) || (have.sessions.length ? have.sessions[have.sessions.length - 1].bank_total : 0) || 0;
+    box.innerHTML = socraticMirrorHTML(have.sessions, box.dataset.mode, total);
+    try { renderMathIn([box]); } catch (e) { /* ignore */ }
   });
   area.querySelectorAll('.rp-mirror[data-mirror-photo]').forEach(box => {
     const id = box.dataset.mirrorPhoto;
@@ -4108,12 +4161,134 @@ function renderWidgetsList() {
         <p><b>Records:</b> ${escapeHTML(W.records)}</p>
         <p><b>Settings on its Builder card:</b></p><ul>${W.options.map(o => `<li>${escapeHTML(o.label)}${o.help ? ` <span>— ${escapeHTML(o.help)}</span>` : ''}</li>`).join('')}</ul>
         <p><b>In a lab file:</b> <code>${escapeHTML(tag)}</code></p>
-        <p><b>Try it:</b> this demo reads a moving sample picture instead of the camera. Record only shows what would be written. Students see exactly this, minus the demo picture and with no text around it.</p>
+        ${W.noDemo ? '' : `<p><b>Try it:</b> this demo reads a moving sample picture instead of the camera. Record only shows what would be written. Students see exactly this, minus the demo picture and with no text around it.</p>`}
       </div>
-      <div class="wd-demo">${ltWidgetBlock('demo-' + type, { type, demo: true, columns: 'c2;c3;c4' }, '')}</div>
+      ${W.noDemo ? '' : `<div class="wd-demo">${ltWidgetBlock('demo-' + type, { type, demo: true, columns: 'c2;c3;c4' }, '')}</div>`}
+      ${W.settings ? `<div class="wd-settings" id="wd-settings-${type}"><div class="hint">Loading…</div></div>` : ''}
     </div>`;
   }).join('');
   ltBindWidgets(box, { labId: 'demo', readOnly: false, demo: true, canRecord: () => ({ ok: true }), record: (t, o, v) => { toast(`Demo: would record ${v.join(', ')}`); return { ok: true, row: 0 }; } });
+  if (WIDGETS.socratic && WIDGETS.socratic.settings) renderSocraticAdmin();
+}
+
+/* ---------- Socratic tutor: the owner's prompt, model, limits, warning and problem banks (admin, on the Widgets tab) ---------- */
+let socAdmin = { settings: null, banks: null, editing: null, fnError: null };
+async function loadOralBanks() {
+  if (!sb) return [];
+  const { data, error } = await sb.from('oral_banks').select('id, title, problem_count, hidden, updated_at').order('title');
+  if (error) throw error;
+  state.oralBanks = data || []; socAdmin.banks = state.oralBanks; return state.oralBanks;
+}
+async function renderSocraticAdmin() {
+  const box = $('wd-settings-socratic'); if (!box) return;
+  try { await loadOralBanks(); } catch (e) { box.innerHTML = `<div class="hint">Banks could not be loaded: ${escapeHTML(e.message)}. Has supabase/socratic.sql been run?</div>`; return; }
+  if (!socAdmin.settings) {
+    try { socAdmin.settings = await ltFnStream('socratic', { action: 'settings' }); socAdmin.fnError = null; }
+    catch (e) { socAdmin.fnError = e.message || String(e); socAdmin.settings = null; }
+  }
+  const st = socAdmin.settings, banks = socAdmin.banks || [], ed = socAdmin.editing;
+  let h = `<h4 style="margin:0 0 0.6rem">Problem banks</h4>`;
+  h += banks.length ? banks.map(b => `<div class="wd-bank"><b>${escapeHTML(b.title)}</b><span class="hint">${b.problem_count} problem${b.problem_count === 1 ? '' : 's'}${b.hidden ? ' · hidden from the Builder' : ''}</span><button type="button" class="btn-small" onclick="socEditBank('${escapeHTML(b.id)}')">Edit</button><button type="button" class="btn-small" onclick="socToggleBank('${escapeHTML(b.id)}', ${b.hidden ? 'false' : 'true'})">${b.hidden ? 'Show' : 'Hide'}</button></div>`).join('') : `<div class="hint">No banks yet.</div>`;
+  h += `<div class="lt-toolbar" style="margin:0.6rem 0 0"><button type="button" class="btn-small" onclick="socEditBank(null)">+ Add a bank</button><span class="hint" style="margin:0">A bank is a text file: one \\problem per question with its difficulty, solution, rubric, scaffolds and misconceptions. The format is in docs/socratic/sample-bank.txt.</span></div>`;
+  if (ed) {
+    h += `<div class="wd-settings" style="margin-top:1rem">
+      <div class="form-row"><label>Bank title</label><input type="text" id="soc-bank-title" value="${escapeHTML(ed.title || '')}" placeholder="e.g. Intermolecular forces"/></div>
+      <div class="form-row"><label>Bank file</label><textarea id="soc-bank-source" rows="18" spellcheck="false" oninput="socCheckBank()">${escapeHTML(ed.source || '')}</textarea><div class="wd-check" id="soc-bank-check"></div></div>
+      <div class="lt-toolbar"><button type="button" class="btn btn-accent btn-small" onclick="socSaveBank()">Save bank</button><button type="button" class="btn-small" onclick="socAdmin.editing = null; renderSocraticAdmin()">Cancel</button>${ed.id ? `<button type="button" class="btn-small" style="margin-left:auto;color:var(--danger);border-color:var(--danger)" onclick="socDeleteBank('${escapeHTML(ed.id)}')">Delete bank</button>` : ''}</div>
+    </div>`;
+  }
+  h += `<h4 style="margin:1.4rem 0 0.6rem">The tutor</h4>`;
+  if (!st) h += `<div class="hint">The tutor's server function is not reachable yet (${escapeHTML(socAdmin.fnError || 'not deployed')}). Deploy it as described in docs/SOCRATIC.md; banks can be written meanwhile.</div>`;
+  else {
+    h += `${st.hasKey ? '' : `<div class="hint" style="color:var(--danger)">No ANTHROPIC_API_KEY is set on the function yet; the tutor cannot answer until it is.</div>`}
+      <div class="form-row"><label>Guiding prompt${st.defaults.system_prompt ? ' (the built-in default; edit to replace it)' : ''}</label><textarea id="soc-prompt" rows="16" spellcheck="false">${escapeHTML(st.system_prompt)}</textarea></div>
+      <div class="form-row"><label>Reminder sent with every turn${st.defaults.reminder ? ' (default)' : ''}</label><textarea id="soc-reminder" rows="4" spellcheck="false">${escapeHTML(st.reminder)}</textarea></div>
+      <div class="form-grid-3">
+        <div class="form-row"><label>Model</label><select id="soc-model">${(st.models || []).map(m => `<option value="${m}" ${m === st.model ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
+        <div class="form-row"><label>Effort</label><select id="soc-effort">${['low', 'medium', 'high'].map(e => `<option value="${e}" ${e === st.effort ? 'selected' : ''}>${e}</option>`).join('')}</select></div>
+        <div class="form-row"><label>Site spend ceiling per day (USD)</label><input type="number" id="soc-usd" min="0" step="1" value="${escapeHTML(String(st.caps.siteDailyUsd))}"/></div>
+        <div class="form-row"><label>Messages per student per week</label><input type="number" id="soc-week" min="1" step="1" value="${escapeHTML(String(st.caps.turnsPerWeek))}"/><div class="hint">Monday to Sunday. Every message a student sends counts as one.</div></div>
+        <div class="form-row"><label>Warn when this many are left</label><input type="number" id="soc-warn-at" min="0" step="1" value="${escapeHTML(String(st.caps.warnAt))}"/></div>
+      </div>
+      <div class="form-row"><label>Warning shown under the tutor while messages are running low</label><input type="text" id="soc-warn-text" value="${escapeHTML(st.warn_text)}"/><div class="hint">{n} becomes the number left this week. Leave empty for no warning.</div></div>
+      <div class="lt-toolbar"><button type="button" class="btn btn-accent btn-small" onclick="socSaveSettings()">Save tutor settings</button><span class="hint" style="margin:0">Also set a monthly spend limit in the Anthropic Console.</span></div>`;
+  }
+  box.innerHTML = h;
+  if (ed) socCheckBank();
+}
+function socEditBank(id) {
+  const b = id ? (socAdmin.banks || []).find(x => x.id === id) : null;
+  socAdmin.editing = { id: id || null, title: b ? b.title : '', source: '' };
+  if (!id) { renderSocraticAdmin(); return; }
+  sb.from('oral_banks').select('source').eq('id', id).maybeSingle().then(({ data }) => { socAdmin.editing.source = (data && data.source) || ''; renderSocraticAdmin(); });
+}
+function socCheckBank() {
+  const el = $('soc-bank-check'), src = $('soc-bank-source'); if (!el || !src) return null;
+  try {
+    const b = oralParseBank(src.value);
+    const missing = b.problems.filter(p => !p.prompt || !p.solution || !p.rubric).map(p => p.pid);
+    const openers = b.problems.filter(p => p.opener).length;
+    el.className = 'wd-check ' + (b.problems.length && !missing.length && openers ? 'ok' : 'bad');
+    el.textContent = b.problems.length ? `${b.problems.length} problems, ${openers} opener${openers === 1 ? '' : 's'}, ${b.concepts.length} concepts${missing.length ? ` · missing prompt, solution or rubric: ${missing.join(', ')}` : ''}${openers ? '' : ' · mark at least one problem as an opener'}` : 'No \\problem blocks found yet.';
+    return b;
+  } catch (e) { el.className = 'wd-check bad'; el.textContent = e.message; return null; }
+}
+async function socSaveBank() {
+  const ed = socAdmin.editing; if (!ed) return;
+  const title = $('soc-bank-title').value.trim(), source = $('soc-bank-source').value;
+  const b = socCheckBank(); if (!b || !b.problems.length) { toast('Fix the bank file first.', true); return; }
+  if (!title) { toast('Give the bank a title.', true); return; }
+  const row = { id: ed.id || ('b-' + Date.now()), title, source, problem_count: b.problems.length, updated_at: new Date().toISOString() };
+  const { error } = await sb.from('oral_banks').upsert(row);
+  if (error) { toast('Could not save: ' + error.message, true); return; }
+  socAdmin.editing = null; state.oralBanks = null; toast('Bank saved'); renderSocraticAdmin();
+}
+async function socToggleBank(id, hidden) {
+  const { error } = await sb.from('oral_banks').update({ hidden }).eq('id', id);
+  if (error) { toast('Could not save: ' + error.message, true); return; }
+  state.oralBanks = null; renderSocraticAdmin();
+}
+async function socDeleteBank(id) {
+  if (!confirm('Delete this bank? Labs that use it will show the tutor as unavailable. If students have practised on it, deletion is refused and you can hide it instead.')) return;
+  const { error } = await sb.from('oral_banks').delete().eq('id', id);
+  if (error) { toast(/foreign key|violates/i.test(error.message) ? 'Students have sessions on this bank, so it cannot be deleted. Hide it instead.' : 'Could not delete: ' + error.message, true); return; }
+  socAdmin.editing = null; state.oralBanks = null; toast('Bank deleted'); renderSocraticAdmin();
+}
+async function socSaveSettings() {
+  const st = socAdmin.settings; if (!st) return;
+  const prompt = $('soc-prompt').value, reminder = $('soc-reminder').value;
+  const rows = [
+    { key: 'system_prompt', value: prompt.trim() === st.system_prompt.trim() && st.defaults.system_prompt ? '' : prompt },   // an untouched default stays a default
+    { key: 'reminder', value: reminder.trim() === st.reminder.trim() && st.defaults.reminder ? '' : reminder },
+    { key: 'model', value: $('soc-model').value }, { key: 'effort', value: $('soc-effort').value },
+    { key: 'warn_text', value: $('soc-warn-text').value },
+    { key: 'caps', value: JSON.stringify({ turnsPerWeek: Math.max(1, parseInt($('soc-week').value, 10) || 150), warnAt: Math.max(0, parseInt($('soc-warn-at').value, 10) || 0), siteDailyUsd: Math.max(0, parseFloat($('soc-usd').value) || 0) }) },
+  ];
+  const { error } = await sb.from('oral_settings').upsert(rows);
+  if (error) { toast('Could not save: ' + error.message, true); return; }
+  socAdmin.settings = null; toast('Tutor settings saved'); renderSocraticAdmin();
+}
+// Bank-file parser: the same grammar as parseBank in supabase/functions/socratic/index.ts (keep the two in step).
+function oralParseBank(text) {
+  const src = String(text || '').split('\n').filter(l => !/^\s*%/.test(l)).join('\n');
+  const parseOpts = str => { const out = {}; const re = /\s*([A-Za-z_][\w-]*)\s*(?:=\s*("([^"]*)"|'([^']*)'|([^,\]]*)))?\s*(?:,|$)/g; let m;
+    while ((m = re.exec(str)) !== null) { if (m.index === re.lastIndex) re.lastIndex++; if (!m[1]) continue; out[m[1]] = m[2] === undefined ? true : (m[3] ?? m[4] ?? m[5] ?? '').trim(); if (re.lastIndex >= str.length) break; } return out; };
+  const readBraces = (str, i) => { let depth = 0; for (let j = i; j < str.length; j++) { const c = str[j]; if (c === '\\') { j++; continue; } if (c === '{') depth++; else if (c === '}') { depth--; if (depth === 0) return [str.slice(i + 1, j), j + 1]; } } throw new Error('A curly bracket is not closed.'); };
+  const commands = function* (str) { const re = /\\([A-Za-z]+)/g; let m; while ((m = re.exec(str)) !== null) { const name = m[1]; let i = re.lastIndex, options = {}; if (str[i] === '[') { const close = str.indexOf(']', i); options = parseOpts(str.slice(i + 1, close)); i = close + 1; } let body = null, k = i; while (k < str.length && /\s/.test(str[k])) k++; if (str[k] === '{') [body, i] = readBraces(str, k); re.lastIndex = i; yield { name, options, body }; } };
+  const splitList = v => String(v || '').split(',').map(x => x.trim()).filter(Boolean);
+  const bank = { slug: null, title: 'Untitled bank', topic: '', concepts: [], problems: [] };
+  for (const cmd of commands(src)) {
+    if (cmd.name === 'bank') { bank.slug = cmd.options.slug || null; bank.title = cmd.options.title || bank.slug || bank.title; bank.topic = cmd.options.topic || ''; }
+    else if (cmd.name === 'concepts') bank.concepts = splitList(cmd.body);
+    else if (cmd.name === 'problem') {
+      const p = { pid: String(cmd.options.pid || ''), difficulty: Number(cmd.options.difficulty || 3), opener: cmd.options.opener === true, concepts: splitList(cmd.options.concepts), catalog: '', prompt: '', solution: '', rubric: '', scaffolds: '', extensions: '', misconceptions: '', answer: null };
+      if (!p.pid) throw new Error('A \\problem has no pid= option.');
+      for (const sub2 of commands(cmd.body || '')) { if (sub2.name === 'answer') p.answer = sub2.options; else if (sub2.name in p && typeof p[sub2.name] === 'string') p[sub2.name] = (sub2.body || '').trim(); }
+      bank.problems.push(p);
+    }
+  }
+  const seen = new Set(); for (const p of bank.problems) { if (seen.has(p.pid)) throw new Error('Two problems share the pid ' + p.pid); seen.add(p.pid); }
+  return bank;
 }
 async function setWidgetEnabled(type, on, input) {
   if (!sb || state.source !== 'live') { toast('Not connected to the database; try again later.', true); if (input) input.checked = !on; return; }
@@ -4164,9 +4339,9 @@ async function loadUserTheme() {   // the account's choice wins over this browse
    LAB TAGS — markdown + LaTeX-style commands for interactive lab reports.
    Spec for authors (and for Claude converting PDFs): docs/LAB-FORMAT.md
    ============================================================ */
-const LT_TAGS = new Set(['title', 'summary', 'tags', 'minutes', 'tab', 'video', 'datatable', 'answer', 'choice', 'notes', 'photo', 'input', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'report', 'style', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto', 'widget']);
+const LT_TAGS = new Set(['title', 'summary', 'tags', 'minutes', 'tab', 'video', 'datatable', 'answer', 'choice', 'notes', 'photo', 'input', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'report', 'style', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto', 'usesocratic', 'usesocratic', 'widget']);
 const LT_META = new Set(['title', 'summary', 'tags', 'minutes', 'report', 'style', 'tab']);   // stored on ctx, not rendered in place
-const LT_BLOCK = new Set(['video', 'datatable', 'answer', 'choice', 'notes', 'photo', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto', 'widget']);
+const LT_BLOCK = new Set(['video', 'datatable', 'answer', 'choice', 'notes', 'photo', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto', 'usesocratic', 'usesocratic', 'widget']);
 
 if (window.marked) marked.use({ gfm: true, breaks: false, mangle: false, headerIds: false });
 
@@ -4362,6 +4537,7 @@ function ltWidget(name, o, body, ctx, widgets) {
     case 'usetable': return `<div class="rp-mirror" data-mirror-table="${ltSafeId((body || '').trim())}"></div>`;
     case 'usegraph': return `<div class="rp-mirror" data-mirror-graph="${ltSafeId((body || '').trim())}"></div>`;
     case 'useanswer': return `<div class="rp-mirror" data-mirror-answer="${ltSafeId((body || '').trim())}"></div>`;
+    case 'usesocratic': return `<div class="rp-mirror" data-mirror-socratic="${ltSafeId((body || '').trim())}" data-mode="${o.transcript ? 'transcript' : 'done'}"></div>`;
     case 'usephoto': return `<div class="rp-mirror" data-mirror-photo="${ltSafeId((body || '').trim())}"></div>`;
     case 'widget': {   // an in-lab tool from the WIDGETS catalog; it records into the table named by table=, never into fields of its own
       const raw = s => String(s).replace(/LTMATH(\d+)X/g, (m, i) => ctx.math[+i] ?? m);
@@ -4827,6 +5003,19 @@ const WIDGETS = {
     ],
     print() { return ''; },
   },
+  socratic: {
+    label: 'Socratic tutor',
+    description: 'A conversation with a tutor that poses problems from a bank you write, listens to the student reason in words, and credits, corrects or scaffolds. Formative only: nothing is graded.',
+    device: 'Needs a signed-in student (access code or account) and an internet connection. No camera.',
+    records: 'Nothing into lab tables. Each conversation is kept as its own session; the student sees their own, admins see every student\'s in the lab review. The report can show a completion line or the whole conversation.',
+    file: 'widgets/socratic.v1.js',
+    noTable: true, needsLogin: true, noDemo: true, transcript: true, settings: true,
+    options: [
+      { name: 'bank', label: 'Problem bank', kind: 'bank', help: 'Written and edited on the Widgets tab, under Socratic tutor.' },
+      { name: 'help', label: 'Offer Get help when it fails', kind: 'help' },
+    ],
+    print() { return ''; },
+  },
 };
 function widgetDefaults(type) { const out = {}; for (const o of (WIDGETS[type] && WIDGETS[type].options) || []) if (o.default != null) out[o.name] = o.default; return out; }
 function widgetSettings() { try { return JSON.parse(state.text._widgets || '{}') || {}; } catch (e) { return {}; } }
@@ -4886,10 +5075,13 @@ function ltWidgetHost({ labId, readOnly, tableApi, entries, save }) {
 // Three states per widget: idle (instruction + Start; nothing is asked of the device), running, failed (only after a tap broke something).
 function ltBindWidgets(area, host) {
   area.querySelectorAll('.lt-widget[data-widget-type]').forEach(el => {
-    if (host.readOnly) { el.hidden = true; return; }   // admin review of a student's entries: the data is in the table, the tool is not mounted
     const type = el.dataset.widgetType, W = WIDGETS[type], body = el.querySelector('.lt-widget-body');
     if (!W || !body) return;
     let opts = {}; try { opts = { ...widgetDefaults(type), ...JSON.parse(el.dataset.opts || '{}') }; } catch (e) { opts = widgetDefaults(type); }
+    if (host.readOnly) {   // admin review of a student's entries: the data is in the table, the tool is not mounted; a tutor's transcripts are shown instead
+      if (W.transcript && state.reviewing && opts.bank) socraticReviewInto(body, opts, state.reviewing.user_id); else el.hidden = true;
+      return;
+    }
     const tableId = opts.table ? ltSafeId(opts.table) : '';
     const target = () => (tableId ? area.querySelector(`.lt-table-wrap[data-table="${tableId}"]`) : null);
     const needsCamera = /camera/i.test(W.device || '');
@@ -4908,6 +5100,7 @@ function ltBindWidgets(area, host) {
       const h = body.querySelector('.lt-widget-help'); if (h) h.addEventListener('click', () => { if (typeof help !== 'undefined' && !help.open) helpToggle(); const hh = $('help-host'); if (hh) hh.scrollIntoView({ behavior: 'smooth', block: 'center' }); });
     };
     const showIdle = note => {
+      if (W.needsLogin && !state.session && !host.demo) { body.innerHTML = `<div class="lt-widget-note">${escapeHTML(getText('widgetSignIn'))}</div>`; return; }   // calm, no Start: the tool needs an account to keep the session
       body.innerHTML = `${note ? `<div class="lt-widget-note">${escapeHTML(note)}</div>` : ''}<div class="lt-widget-foot">${btn('lt-widget-start', 'widgetStart', true)}</div>`;
       wire();
       if (needsCamera && !host.demo && !opts.demo) noCameraCheck();   // a demo= widget reads a drawn picture, so no camera is needed
@@ -4938,6 +5131,9 @@ function ltBindWidgets(area, host) {
           opts, labId: host.labId, demo: !!(demo || opts.demo || host.demo), text: getText, fmt,
           canRecord: () => host.canRecord(tableId, opts),
           record: values => host.record(tableId, opts, values),
+          call: (payload, onDelta) => ltFnStream('socratic', { ...payload, lab_id: host.labId }, onDelta),   // the site's server function, with the student's login
+          renderMath: node => { try { renderMathIn([node]); } catch (e) { /* ignore */ } },
+          updated: () => { socraticForget(state.session && state.session.user ? state.session.user.id : null, opts.bank); const area = el.closest('#lab-content-area, #lab-markup-preview'); if (area && area.querySelector('.rp-mirror[data-mirror-socratic]')) rpRefreshMirrors(area); },
           fail: why => { if (g !== gen) return; if (why === 'nocamera') { stop('idle'); noCamera(); } else showFailed(getText(why === 'denied' ? 'widgetDenied' : 'widgetFailed')); },
         };
         running = mod.mount(body.querySelector('.lt-widget-stage'), ctx) || { stop() {} };
@@ -4947,6 +5143,76 @@ function ltBindWidgets(area, host) {
     };
     showIdle('');
   });
+}
+
+/* ---------- Server functions: POST with the signed-in user's token; replies stream as server-sent events ---------- */
+async function ltFnStream(name, payload, onDelta) {
+  if (!sb) throw new Error('offline');
+  const { data: { session } } = await sb.auth.getSession(); if (!session) throw new Error('sign in first');
+  const res = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/${name}`, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: CONFIG.SUPABASE_KEY, Authorization: 'Bearer ' + session.access_token }, body: JSON.stringify(payload) });
+  const ctype = res.headers.get('content-type') || '';
+  if (!ctype.includes('text/event-stream')) { let body = null; try { body = await res.json(); } catch (e) { /* ignore */ } if (!res.ok) throw new Error((body && body.error) || ('HTTP ' + res.status)); return body; }
+  const reader = res.body.getReader(), dec = new TextDecoder(); let buf = '', done = null;
+  for (;;) {
+    const { value, done: end } = await reader.read(); if (end) break;
+    buf += dec.decode(value, { stream: true });
+    let i; while ((i = buf.indexOf('\n\n')) !== -1) {
+      const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
+      const line = chunk.split('\n').find(l => l.startsWith('data: ')); if (!line) continue;
+      let ev; try { ev = JSON.parse(line.slice(6)); } catch (e) { continue; }
+      if (ev.type === 'delta') { if (onDelta) onDelta(ev.text); }
+      else if (ev.type === 'done') done = ev;
+      else if (ev.type === 'error') throw new Error(ev.message || 'error');
+    }
+  }
+  if (!done) throw new Error('no reply');
+  return done;
+}
+
+/* ---------- Socratic tutor: sessions a student (or a reviewing admin) may read directly under RLS ---------- */
+const socraticCache = new Map();   // "<uid>|<bank>" -> { sessions } or { loading: Promise }
+function socraticForget(uid, bank) { if (uid && bank) socraticCache.delete(uid + '|' + bank); }
+async function socraticLoad(uid, bank) {
+  const key = uid + '|' + bank, have = socraticCache.get(key);
+  if (have && have.sessions) return have.sessions;
+  if (have && have.loading) return have.loading;
+  const p = (async () => {
+    const { data: sessions, error } = await sb.from('oral_sessions').select('id, lab_id, started_at, ended_at, summary, served, turns, bank_total').eq('user_id', uid).eq('bank_id', bank).order('started_at');
+    if (error) throw error;
+    const ids = (sessions || []).map(x => x.id); let msgs = [];
+    if (ids.length) { const r = await sb.from('oral_messages').select('id, session_id, role, text, blocks, hidden').in('session_id', ids).order('id'); if (r.error) throw r.error; msgs = r.data || []; }
+    const out = (sessions || []).map(x => ({ ...x, messages: msgs.filter(m => m.session_id === x.id && !m.hidden).map(m => ({ role: m.role, text: m.role === 'assistant' ? (m.text || '') : (m.blocks || []).filter(b => b.type === 'text').map(b => b.text).join('\n') })) }));
+    socraticCache.set(key, { sessions: out }); return out;
+  })();
+  socraticCache.set(key, { loading: p }); p.catch(() => socraticCache.delete(key));
+  return p;
+}
+function socraticProgress(sess) { const served = Object.values(sess.served || {}); return { posed: served.length, credited: served.filter(r => r.status === 'credited').length, revealed: served.filter(r => r.status === 'revealed').length }; }
+function socraticTranscriptHTML(sess) {
+  return `<div class="soc-log">${sess.messages.map(m => `<div class="soc-msg ${m.role === 'assistant' ? 'tutor' : 'me'}">${escapeHTML(m.text)}</div>`).join('')}</div>${sess.summary ? `<div class="soc-summary">${escapeHTML(sess.summary)}</div>` : ''}`;
+}
+// Report copy: one line once a session has ended, or the whole conversation (mode "transcript").
+function socraticMirrorHTML(sessions, mode, total) {
+  const ended = sessions.filter(x => x.ended_at), open = sessions.filter(x => !x.ended_at);
+  if (mode === 'transcript') {
+    const list = ended.length ? ended : open;
+    if (!list.length) return `<div class="soc-note">${escapeHTML(getText('socNoSession'))}</div>`;
+    return list.map(x => { const p = socraticProgress(x); return `<div class="soc-done">${escapeHTML(fmt('socDoneLine', { posed: p.posed, total: total || '?', credited: p.credited }))}${x.ended_at ? '' : ` · ${escapeHTML(getText('socNotDone'))}`}</div>${socraticTranscriptHTML(x)}`; }).join('');
+  }
+  if (!ended.length) return `<div class="soc-note">${escapeHTML(getText(open.length ? 'socNotDone' : 'socNoSession'))}</div>`;
+  const last = ended[ended.length - 1], p = socraticProgress(last);
+  return `<div class="soc-done">${escapeHTML(fmt('socDoneLine', { posed: p.posed, total: total || '?', credited: p.credited }))}</div>`;
+}
+// Admin review of a student's lab: every session of theirs on this bank, with the transcript folded under a summary line.
+async function socraticReviewInto(body, opts, uid) {
+  body.innerHTML = `<div class="soc-note">…</div>`;
+  try {
+    const sessions = await socraticLoad(uid, opts.bank);
+    if (!sessions.length) { body.innerHTML = `<div class="soc-note">${escapeHTML(getText('socNoSession'))}</div>`; return; }
+    body.innerHTML = sessions.map(x => { const p = socraticProgress(x), when = new Date(x.started_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+      return `<details class="soc-review" ${x === sessions[sessions.length - 1] ? 'open' : ''}><summary>${escapeHTML(when)} · ${x.turns || 0} turns · ${p.posed} posed · ${p.credited} credited · ${p.revealed} revealed${x.ended_at ? '' : ' · still open'}</summary>${socraticTranscriptHTML(x)}</details>`; }).join('');
+    try { renderMathIn([body]); } catch (e) { /* ignore */ }
+  } catch (e) { body.innerHTML = `<div class="soc-note">${escapeHTML(e.message || 'Could not load the sessions.')}</div>`; }
 }
 
 /* ---------- Editor integration ---------- */
@@ -5131,9 +5397,9 @@ function previewLabMarkup(now) {
    Public globals: builderParse, builderSerialize, builderNewBlock, builderTemplates (+ bm* helpers, BM_* constants).
    ============================================================ */
 
-const BM_TAGS = new Set(['title', 'summary', 'tags', 'minutes', 'tab', 'video', 'datatable', 'answer', 'choice', 'notes', 'photo', 'input', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'report', 'style', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto', 'widget']);
+const BM_TAGS = new Set(['title', 'summary', 'tags', 'minutes', 'tab', 'video', 'datatable', 'answer', 'choice', 'notes', 'photo', 'input', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'report', 'style', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto', 'usesocratic', 'usesocratic', 'widget']);
 const BM_META = new Set(['title', 'summary', 'tags', 'minutes', 'report', 'style', 'tab']);
-const BM_BLOCK = new Set(['video', 'datatable', 'answer', 'choice', 'notes', 'photo', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto', 'widget']);
+const BM_BLOCK = new Set(['video', 'datatable', 'answer', 'choice', 'notes', 'photo', 'procedure', 'safety', 'warning', 'info', 'tip', 'hint', 'figure', 'pagebreak', 'graph', 'section', 'usetable', 'usegraph', 'useanswer', 'usephoto', 'usesocratic', 'usesocratic', 'widget']);
 const BM_CALLOUT_KINDS = ['safety', 'warning', 'info', 'tip', 'hint'];
 const BM_HEADER_KEYS = ['title', 'summary', 'tags', 'minutes'];
 
@@ -5153,15 +5419,16 @@ const BM_TYPES = {
   callout:   { tag: null,        label: 'Callout',         list: 'procedure', known: ['label'] },
   graph:     { tag: 'graph',     label: 'Graph',           list: 'both', kind: 'graph', idBase: 'graph',    known: ['id', 'table', 'x', 'y', 'series', 'type', 'fit', 'title', 'xlabel', 'ylabel', 'xmin', 'xmax', 'ymin', 'ymax'], nameOf: b => b.opts.title },
   pagebreak: { tag: 'pagebreak', label: 'Page break',      list: 'procedure', known: [] },
-  widget:    { tag: 'widget',    label: 'Widget',          list: 'procedure', kind: 'widget', idBase: 'widget', known: ['id', 'type', 'label', 'table', 'columns', 'rawcolumns', 'help'], nameOf: b => b.opts.label || b.opts.type },
+  widget:    { tag: 'widget',    label: 'Widget',          list: 'procedure', kind: 'widget', idBase: 'widget', known: ['id', 'type', 'label', 'table', 'bank', 'columns', 'rawcolumns', 'help'], nameOf: b => b.opts.label || b.opts.type },
   usetable:  { tag: 'usetable',  label: 'Include a table', list: 'report' },
   usegraph:  { tag: 'usegraph',  label: 'Include a graph', list: 'report' },
   useanswer: { tag: 'useanswer', label: 'Include an answer', list: 'report' },
   usephoto:  { tag: 'usephoto',  label: 'Include a photo',  list: 'report' },
+  usesocratic: { tag: 'usesocratic', label: 'Include the tutor session', list: 'report', known: ['transcript'] },
 };
-const BM_TAG_TYPE = { procedure: 'steps', datatable: 'table', answer: 'answer', choice: 'choice', notes: 'notes', photo: 'photo', video: 'video', figure: 'figure', graph: 'graph', pagebreak: 'pagebreak', widget: 'widget', section: 'answer', usetable: 'usetable', usegraph: 'usegraph', useanswer: 'useanswer', usephoto: 'usephoto', safety: 'callout', warning: 'callout', info: 'callout', tip: 'callout', hint: 'callout' };
+const BM_TAG_TYPE = { procedure: 'steps', datatable: 'table', answer: 'answer', choice: 'choice', notes: 'notes', photo: 'photo', video: 'video', figure: 'figure', graph: 'graph', pagebreak: 'pagebreak', widget: 'widget', section: 'answer', usetable: 'usetable', usegraph: 'usegraph', useanswer: 'useanswer', usephoto: 'usephoto', usesocratic: 'usesocratic', safety: 'callout', warning: 'callout', info: 'callout', tip: 'callout', hint: 'callout' };
 const BM_KIND = { datatable: 'table', answer: 'q', notes: 'notes', photo: 'photo', input: 'field', procedure: 'proc' };
-const BM_RESERVED_ID = /^(table|q|choice|notes|photo|field|proc|graph|widget|section|figure|video|pagebreak|safety|warning|info|tip|hint|usetable|usegraph|useanswer|usephoto)\d*$/;
+const BM_RESERVED_ID = /^(table|q|choice|notes|photo|field|proc|graph|widget|section|figure|video|pagebreak|safety|warning|info|tip|hint|usetable|usegraph|useanswer|usephoto|usesocratic)\d*$/;
 const BM_ID_TYPES = new Set(['steps', 'table', 'answer', 'choice', 'notes', 'photo', 'graph', 'widget']);
 const BM_INPUT_KNOWN = ['id', 'label', 'unit', 'placeholder'];
 const BM_FILL = /^_{3,}$/;
@@ -5339,7 +5606,7 @@ function builderParse(text) {
     const warnings = top.warnings.slice();
     model.tabs = (top.tabs || []).map(t => { const r = bmParseFlow(t.body, ctx, { inReport: true }); warnings.push(...r.warnings); return { name: t.name, id: t.id, blocks: r.blocks, _k: bmKey() }; });
     if (top.reportBody != null) { const r = bmParseFlow(top.reportBody, ctx, { inReport: true }); model.report = r.blocks; warnings.push(...r.warnings); }
-    for (const b of model.procedure) if (['usetable', 'usegraph', 'useanswer', 'usephoto'].includes(b.type)) { warnings.push(BM_W.sectionOutside); break; }
+    for (const b of model.procedure) if (['usetable', 'usegraph', 'useanswer', 'usephoto', 'usesocratic'].includes(b.type)) { warnings.push(BM_W.sectionOutside); break; }
     for (const b of model.report) if (b.type === 'steps') { warnings.push(BM_W.procedureInReport); break; }
     warnings.push(...bmParseWarnings(model));
     model.warnings = [...new Set(warnings)];
@@ -5535,6 +5802,7 @@ function bmBlockFromOcc(occ, ctx) {
     case 'graph': return { type: 'graph', opts: o, caption: B.trim() };
     case 'pagebreak': return (Bp == null || B.trim() === '') ? { type: 'pagebreak', opts: o } : raw(BM_W.pagebreak);
     case 'usetable': case 'usegraph': case 'useanswer': case 'usephoto': return { type, ref: B.trim() };
+    case 'usesocratic': return { type, opts: o, ref: B.trim() };
     default: return { type: 'callout', kind: occ.name, opts: o, body: bmTrimBlankLines(B) };
   }
 }
@@ -5609,6 +5877,7 @@ function bmSerializeBlock(b) {
     case 'graph': return `\\graph${bmOpts(b)}` + (b.caption ? `{${bmBody(b.caption)}}` : '');
     case 'video': return `\\video${bmOpts(b)}{${bmBody(b.url ?? '')}}`;
     case 'usetable': case 'usegraph': case 'useanswer': case 'usephoto': return `\\${tag}{${bmBody(b.ref ?? '')}}`;
+    case 'usesocratic': return `\\usesocratic${bmOpts(b)}{${bmBody(b.ref ?? '')}}`;
     case 'figure': return `\\figure${bmOpts(b)}{${bmBody(b.path ?? '')}}`;
     case 'callout': return `\\${BM_CALLOUT_KINDS.includes(b.kind) ? b.kind : 'info'}${bmOpts(b)}{\n${bmBody(b.body ?? '')}\n}`;
     case 'pagebreak': return `\\pagebreak${bmOpts(b)}`;
@@ -5754,14 +6023,14 @@ function bmRenameId(model, oldId, newId) {
   if (!oldId || oldId === newId) return;
   for (const b of bmAllBlocks(model)) {
     if ((b.type === 'graph' || b.type === 'widget') && b.opts && b.opts.table === oldId) b.opts.table = newId;
-    if (['usetable', 'usegraph', 'useanswer', 'usephoto'].includes(b.type) && b.ref === oldId) b.ref = newId;
+    if (['usetable', 'usegraph', 'useanswer', 'usephoto', 'usesocratic'].includes(b.type) && b.ref === oldId) b.ref = newId;
   }
 }
 function bmReferencesTo(model, id) {
   const out = [];
   for (const b of bmAllBlocks(model)) {
     if ((b.type === 'graph' || b.type === 'widget') && b.opts && b.opts.table === id) out.push({ block: b, field: 'table' });
-    if (['usetable', 'usegraph', 'useanswer', 'usephoto'].includes(b.type) && b.ref === id) out.push({ block: b, field: 'ref' });
+    if (['usetable', 'usegraph', 'useanswer', 'usephoto', 'usesocratic'].includes(b.type) && b.ref === id) out.push({ block: b, field: 'ref' });
   }
   return out;
 }
@@ -5843,8 +6112,8 @@ function bmEffectiveIds(model, auto) {
 }
 function bmReferenceProblems(model, auto) {   // shared by builderParse (strings) and bmValidate (with keys)
   const out = [], eff = bmEffectiveIds(model, auto);
-  const tables = new Set(), graphs = new Set(), answers = new Set(), photos = new Set();
-  for (const [b, id] of eff) { if (b.type === 'table') tables.add(id); if (b.type === 'graph') graphs.add(id); if (b.type === 'answer' || b.type === 'choice' || b.type === 'notes') answers.add(id); if (b.type === 'photo') photos.add(id); }
+  const tables = new Set(), graphs = new Set(), answers = new Set(), photos = new Set(), tutors = new Set();
+  for (const [b, id] of eff) { if (b.type === 'table') tables.add(id); if (b.type === 'graph') graphs.add(id); if (b.type === 'answer' || b.type === 'choice' || b.type === 'notes') answers.add(id); if (b.type === 'photo') photos.add(id); if (b.type === 'widget' && b.opts && b.opts.type === 'socratic') tutors.add(id); }
   for (const id of auto.dups) out.push({ k: null, msg: `Two blocks are both named '${id}'; students' answers would collide.` });
   for (const b of bmAllBlocks(model)) {
     if (b.type === 'graph') {
@@ -5853,10 +6122,11 @@ function bmReferenceProblems(model, auto) {   // shared by builderParse (strings
       else if (!tables.has(String(t))) out.push({ k: b._k ?? null, msg: `This graph reads a table named '${t}', but no table has that name.` });
     }
     if (b.type === 'widget') {
-      const ty = b.opts && b.opts.type, t = b.opts && b.opts.table;
+      const ty = b.opts && b.opts.type, t = b.opts && b.opts.table, WD = typeof WIDGETS !== 'undefined' ? WIDGETS[ty] : null;
       if (!ty) out.push({ k: b._k ?? null, msg: 'This widget has no type. Remove it and add a widget from the picker.' });
-      else if (typeof WIDGETS !== 'undefined' && !WIDGETS[ty]) out.push({ k: b._k ?? null, msg: `No widget of type '${ty}' exists on this site.` });
-      if (t == null || t === '') out.push({ k: b._k ?? null, msg: 'Choose the data table this widget records into.' });
+      else if (typeof WIDGETS !== 'undefined' && !WD) out.push({ k: b._k ?? null, msg: `No widget of type '${ty}' exists on this site.` });
+      if (WD && WD.noTable) { if (!(b.opts && b.opts.bank)) out.push({ k: b._k ?? null, msg: 'Choose the problem bank this tutor uses.' }); }
+      else if (t == null || t === '') out.push({ k: b._k ?? null, msg: 'Choose the data table this widget records into.' });
       else if (!tables.has(String(t))) out.push({ k: b._k ?? null, msg: `This widget records into a table named '${t}', but no table has that name.` });
       else { for (const [tb, id] of eff) if (tb.type === 'table' && id === String(t) && !(tb.opts && tb.opts.addrows)) out.push({ k: b._k ?? null, msg: 'The table this widget records into does not let students add rows, so only its blank rows can take readings. Tick "Students may add rows" on that table.' }); }
     }
@@ -5876,6 +6146,10 @@ function bmReferenceProblems(model, auto) {   // shared by builderParse (strings
       if (!String(b.ref || '').trim()) out.push({ k: b._k ?? null, msg: 'Choose which photo slot this block should show.' });
       else if (!photos.has(bmSafeId(b.ref))) out.push({ k: b._k ?? null, msg: `The report includes the photo from '${b.ref}', but no photo slot has that name.` });
     }
+    if (b.type === 'usesocratic') {
+      if (!String(b.ref || '').trim()) out.push({ k: b._k ?? null, msg: 'Choose which tutor block this should report on.' });
+      else if (!tutors.has(bmSafeId(b.ref))) out.push({ k: b._k ?? null, msg: `The report refers to a tutor named '${b.ref}', but no Socratic tutor block has that name.` });
+    }
   }
   return out;
 }
@@ -5894,7 +6168,7 @@ function bmValidate(model, auto = bmAutoIds(model)) {
   const out = [];
   const push = (b, msg) => out.push({ k: b ? (b._k ?? null) : null, msg });
   out.push(...bmReferenceProblems(model, auto));
-  for (const b of model.procedure || []) if (['usetable', 'usegraph', 'useanswer', 'usephoto'].includes(b.type)) push(b, BM_W.sectionOutside);
+  for (const b of model.procedure || []) if (['usetable', 'usegraph', 'useanswer', 'usephoto', 'usesocratic'].includes(b.type)) push(b, BM_W.sectionOutside);
   const braceMsg = 'A curly bracket here has no partner. It is shown as a plain character, which is usually what you want.';
   for (const b of bmAllBlocks(model)) {
     if (b.type === 'table' && !(b.rows || []).some(r => r.some(c => BM_FILL.test(c)))) push(b, 'This table has no blank cells for students to fill in.');
@@ -5910,7 +6184,7 @@ function bmValidate(model, auto = bmAutoIds(model)) {
     if (b.type === 'callout') bodies.push(b.body);
     if (b.type === 'video') bodies.push(b.url);
     if (b.type === 'figure') bodies.push(b.path);
-    if (['usetable', 'usegraph', 'useanswer', 'usephoto'].includes(b.type)) bodies.push(b.ref);
+    if (['usetable', 'usegraph', 'useanswer', 'usephoto', 'usesocratic'].includes(b.type)) bodies.push(b.ref);
     if (bodies.some(s => s && bmBodyInfo(s).escaped)) push(b, braceMsg);
     for (const m of bmOptProblems(b)) push(b, m);
   }
@@ -5985,7 +6259,7 @@ function builderNewBlock(type) {
     answer: { opts: { lines: '4' }, prompt: '' }, choice: { opts: {}, prompt: '', choices: ['', ''] }, notes: { opts: {}, label: '' }, photo: { opts: {}, prompt: '' },
     video: { opts: {}, url: '' }, figure: { opts: {}, path: '' }, callout: { kind: 'safety', opts: {}, body: '' },
     graph: { opts: { fit: 'linear' }, caption: '' }, pagebreak: { opts: {} }, widget: { opts: {}, prompt: '' },
-    usetable: { ref: '' }, usegraph: { ref: '' }, useanswer: { ref: '' }, usephoto: { ref: '' },
+    usetable: { ref: '' }, usegraph: { ref: '' }, useanswer: { ref: '' }, usephoto: { ref: '' }, usesocratic: { opts: {}, ref: '' },
   }[type];
   if (!d) throw new Error('Unknown block type ' + type);
   return Object.assign({ type }, JSON.parse(JSON.stringify(d)), { _fresh: true, _open: true, _k: bmKey() });
@@ -6201,10 +6475,11 @@ const BU_PALETTE = {
   usegraph:  'Shows one of the lab\'s graphs, drawn from the student\'s own data.',
   useanswer: 'Shows what the student wrote for one of the procedure\'s questions.',
   usephoto:  'Shows the photo the student added in one of the procedure\'s photo slots.',
+  usesocratic: 'Reports on a Socratic tutor block: one line saying how many problems were completed, or the whole conversation.',
   style:     'Your writing rules, shown at the top of the Report tab.',
 };
 const BU_PROCEDURE_PALETTE = ['heading', 'text', 'steps', 'table', 'answer', 'choice', 'notes', 'photo', 'video', 'figure', 'callout', 'graph', 'widget', 'pagebreak'];
-const BU_REPORT_PALETTE = ['answer', 'choice', 'table', 'photo', 'notes', 'graph', 'usetable', 'usegraph', 'useanswer', 'usephoto', 'heading', 'text', 'figure', 'video'];
+const BU_REPORT_PALETTE = ['answer', 'choice', 'table', 'photo', 'notes', 'graph', 'usetable', 'usegraph', 'useanswer', 'usephoto', 'usesocratic', 'heading', 'text', 'figure', 'video'];
 const BU_ID_TYPES = ['steps', 'table', 'answer', 'choice', 'notes', 'photo', 'graph', 'widget'];
 const BU_CALLOUT_LABELS = { safety: 'Safety', warning: 'Warning', info: 'Information', tip: 'Tip', hint: 'Hint' };
 const BU_LEVELS = [[1, 'Big heading'], [2, 'Heading'], [3, 'Small heading'], [4, 'Level 4'], [5, 'Level 5'], [6, 'Level 6']];
@@ -6213,7 +6488,7 @@ const BU_EXPR_MSG_FORMULA = 'The site cannot read this formula. Write it with th
 const BU_EXPR_MSG_TRANSFORM = 'The site cannot read this. Use v for the column value, numbers, + - * / ^, ln, log, exp, sqrt, abs.';
 function buExprMsg(view) { return view && view.mode === 'formula' ? BU_EXPR_MSG_FORMULA : BU_EXPR_MSG_TRANSFORM; }
 const BU_RAW_MSG = 'The builder does not have a form for this part, so here is the text itself. It works as written; you can edit it as plain text.';
-const BU_BLOCK_CMD = /\\(procedure|datatable|answer|choice|notes|photo|video|figure|graph|widget|pagebreak|section|usetable|usegraph|useanswer|usephoto|safety|warning|info|tip|hint)\b/;
+const BU_BLOCK_CMD = /\\(procedure|datatable|answer|choice|notes|photo|video|figure|graph|widget|pagebreak|section|usetable|usegraph|useanswer|usephoto|usesocratic|safety|warning|info|tip|hint)\b/;
 function buWidgetTypes() { return typeof WIDGETS !== 'undefined' ? Object.keys(WIDGETS).filter(t => (typeof widgetEnabled === 'function' ? widgetEnabled(t) : true)) : []; }   // the catalog, minus widgets the owner switched off
 function buWidgetInfo(b) { const t = buOptStr(b, 'type'); return (typeof WIDGETS !== 'undefined' && WIDGETS[t]) || null; }
 
@@ -6352,6 +6627,7 @@ function buAllBlocks() { return bmAllBlocks(buModel); }
 function buSourceBlocks() { return [...buModel.procedure, ...(buModel.tabs || []).flatMap(t => t.blocks || [])]; }   // everything a report "Include" block may point at
 function buTables() { return buAllBlocks().filter(b => b.type === 'table').map(b => ({ block: b, id: (b.opts && b.opts.id) || '', title: buOptStr(b, 'title') })); }
 function buAnswers() { return buSourceBlocks().filter(b => b.type === 'answer' || b.type === 'choice' || b.type === 'notes').map(b => ({ block: b, id: (b.opts && b.opts.id) || '', title: buOptStr(b, 'title') || buFirstLine(buPlainInputs(b.type === 'notes' ? (b.label || '') : (b.prompt || '')), 70) || (b.type === 'notes' ? 'Notes box' : b.type === 'choice' ? 'Multiple choice' : 'Question') })); }
+function buTutors() { return buSourceBlocks().filter(b => b.type === 'widget' && b.opts && b.opts.type === 'socratic').map(b => ({ block: b, id: (b.opts && b.opts.id) || '', title: buOptStr(b, 'label') || 'Socratic tutor' })); }
 function buPhotos() { return buSourceBlocks().filter(b => b.type === 'photo').map(b => ({ block: b, id: (b.opts && b.opts.id) || '', title: buFirstLine(buPlainInputs(b.prompt || ''), 70) || 'Photo slot' })); }
 function buGraphs() { return buAllBlocks().filter(b => b.type === 'graph').map(b => ({ block: b, id: (b.opts && b.opts.id) || '', title: buOptStr(b, 'title') || buGraphAxesName(b) })); }
 function buGraphAxesName(b) {
@@ -6445,9 +6721,10 @@ function buPaletteButtons(list, afterK) {
     if (t === 'usegraph' && !hasGraph) { dis = 'disabled'; title = 'Add a graph first'; }
     if (t === 'useanswer' && !buAnswers().length) { dis = 'disabled'; title = 'Add a question to the procedure first'; }
     if (t === 'usephoto' && !buPhotos().length) { dis = 'disabled'; title = 'Add a photo slot to the procedure first'; }
+    if (t === 'usesocratic' && !buTutors().length) { dis = 'disabled'; title = 'Add a Socratic tutor widget first'; }
     if (t === 'widget') {
       if (!buWidgetTypes().length) { dis = 'disabled'; title = 'No widgets are switched on for this site (admin bar → Widgets)'; }
-      else if (!hasTable) { dis = 'disabled'; title = 'Add a data table first: a widget records into one'; }
+      else if (!hasTable && !buWidgetTypes().some(w => WIDGETS[w].noTable)) { dis = 'disabled'; title = 'Add a data table first: a widget records into one'; }
       return `<button type="button" class="btn-small" data-act="palette-widget" data-list="${list}"${afterK != null ? ` data-after="${afterK}"` : ''} ${dis} title="${buEsc(title)}">Widget…</button>`;
     }
     return `<button type="button" class="btn-small" data-act="palette-add" data-type="${t}" data-list="${list}"${afterK != null ? ` data-after="${afterK}"` : ''} ${dis} title="${buEsc(title)}">${buEsc(buTypeInfo(t).label)}</button>`;
@@ -6564,6 +6841,7 @@ function buSummary(b) {
     case 'usetable': { const t = buTables().find(x => x.id && x.id === b.ref); return t ? (t.title || 'Untitled table') : `Missing: ${b.ref || '(nothing chosen)'}`; }
     case 'usegraph': { const g = buGraphs().find(x => x.id && x.id === b.ref); return g ? g.title : `Missing: ${b.ref || '(nothing chosen)'}`; }
     case 'useanswer': { const a = buAnswers().find(x => x.id && x.id === b.ref); return a ? a.title : `Missing: ${b.ref || '(nothing chosen)'}`; }
+    case 'usesocratic': { const a = buTutors().find(x => x.id && x.id === b.ref); return (a ? a.title : `Missing: ${b.ref || '(nothing chosen)'}`) + (b.opts && b.opts.transcript ? ' · whole conversation' : ' · completion line'); }
     case 'usephoto': { const a = buPhotos().find(x => x.id && x.id === b.ref); return a ? a.title : `Missing: ${b.ref || '(nothing chosen)'}`; }
     default: return '';
   }
@@ -6683,6 +6961,10 @@ function buForm(b, list) {
       break;
     case 'usephoto':
       h = buRow('Photo slot', buRefSelect('ref', 'ref', buPhotos(), b.ref || ''), 'Shows the photo the student added in this slot on the Procedure tab.');
+      break;
+    case 'usesocratic':
+      h = buRow('Tutor block', buRefSelect('ref', 'ref', buTutors(), b.ref || ''), 'Once the student ends a tutor session, the report shows one line: how many problems were completed and credited.')
+        + `<div class="form-row">${buCheck('opts.transcript', !!(b.opts && b.opts.transcript), 'Show the whole conversation in the report as well')}<div class="hint">Off: just the completion line. On: the line, then every message and the tutor\'s closing summary.</div></div>`;
       break;
     default: h = `<div class="bu-note">This block has no form.</div>`;
   }
@@ -6808,6 +7090,15 @@ function buAxisControls(axis, si, view, headers) {
   return `<div class="form-grid-2"><div class="form-row"><label>Column</label>${sel}</div><div class="form-row"><label>Change it first (optional)</label><input type="text" data-bind="${bind}" data-kind="${kind}"${sattr} data-part="transform" value="${buEsc(view.transform || '')}" placeholder="v" spellcheck="false"/>${errLine}<div class="hint">Use v for the value in that column, for example 1/(v+273.15) or ln(v).</div></div></div>`;
 }
 // The "which table" select shared by Graph and Widget cards. noneLabel null → an empty choice is "Choose…".
+function buBankSelect(b) {
+  const cur = buOptStr(b, 'bank'), banks = state.oralBanks;
+  if (!banks) { if (typeof loadOralBanks === 'function') loadOralBanks().then(() => buRenderCard(b._k)).catch(() => {}); return `<div class="bu-note">Loading the banks…</div>`; }
+  let sel = `<select data-bind="opts.bank" data-kind="opt"><option value="" ${!cur ? 'selected' : ''}>Choose…</option>`; let found = !cur;
+  for (const bk of banks) { if (bk.hidden && bk.id !== cur) continue; if (bk.id === cur) found = true; sel += `<option value="${buEsc(bk.id)}" ${bk.id === cur ? 'selected' : ''}>${buEsc(bk.title)} (${bk.problem_count} problems)</option>`; }
+  if (!found) sel += `<option value="${buEsc(cur)}" class="bu-missing" selected>Missing: ${buEsc(cur)}</option>`;
+  sel += '</select>';
+  return sel + (banks.length ? '' : `<div class="bu-note">No banks yet. Write one on the Widgets tab, under Socratic tutor.</div>`);
+}
 function buTableSelect(b, noneLabel) {
   const tables = buTables(), cur = buOptStr(b, 'table');
   let sel = `<select data-bind="opts.table" data-kind="table-ref"><option value="" ${!cur ? 'selected' : ''}>${buEsc(noneLabel == null ? 'Choose…' : noneLabel)}</option>`;
@@ -6841,6 +7132,7 @@ function buFormWidget(b) {
   for (const o of W.options || []) {
     switch (o.kind) {
       case 'table': h += buRow(o.label, buTableSelect(b, null), o.help); break;
+      case 'bank': h += buRow(o.label, buBankSelect(b), o.help); break;
       case 'columns': {
         const cur = String(buOptStr(b, o.name) || o.default || '').split(/[;|,]/).map(s => s.trim());
         h += `<div class="form-row"><label>${buEsc(o.label)}</label>${tbl ? `<div class="form-grid-3">${(o.parts || []).map((p, i) => `<div class="form-row" style="margin-bottom:0.3rem"><label style="font-size:11px">${buEsc(p)}</label>${colSel(`data-bind="opts.${o.name}" data-kind="wcols" data-part="${i}"`, cur[i] || '', o.optional ? 'Not recorded' : null)}</div>`).join('')}</div>` : needTable}${o.help ? `<div class="hint">${buEsc(o.help)}</div>` : ''}</div>`;
@@ -7231,7 +7523,7 @@ function buIsBlank(b) {
     case 'callout': return !String(b.body || '').trim();
     case 'graph': return !buOptStr(b, 'title') && !buOptStr(b, 'x') && !buOptStr(b, 'y') && !String(b.caption || '').trim();
     case 'widget': return !buOptStr(b, 'type');
-    case 'usetable': case 'usegraph': case 'useanswer': case 'usephoto': return !String(b.ref || '').trim();
+    case 'usetable': case 'usegraph': case 'useanswer': case 'usephoto': case 'usesocratic': return !String(b.ref || '').trim();
     case 'pagebreak': return true;
     default: return false;
   }
@@ -7280,7 +7572,7 @@ function buOpenWidgetPicker(btn) {
   buContainer.querySelectorAll('.bu-widget-picker').forEach(p => p.remove());
   const types = buWidgetTypes(), list = btn.dataset.list, after = btn.dataset.after;
   const box = document.createElement('div'); box.className = 'bu-widget-picker';
-  box.innerHTML = `<div class="bu-note" style="margin:0 0 0.4rem">Choose a tool. It records into one of your data tables; students without the device type the values in by hand.</div>` +
+  box.innerHTML = `<div class="bu-note" style="margin:0 0 0.4rem">Choose a tool. Most record into one of your data tables; the Socratic tutor keeps its own conversation instead.</div>` +
     types.map(t => { const W = WIDGETS[t]; return `<div class="bu-widget-pick"><div><b>${buEsc(W.label)}</b><p>${buEsc(W.description)} ${buEsc(W.device)}</p></div><button type="button" class="btn-small" data-act="widget-add" data-type="${buEsc(t)}" data-list="${buEsc(list)}"${after != null ? ` data-after="${buEsc(after)}"` : ''}>Add</button></div>`; }).join('') +
     `<div class="bu-tools" style="margin-top:0.5rem"><button type="button" class="btn-small" data-act="widget-cancel">Cancel</button></div>`;
   pal.appendChild(box);
@@ -7296,7 +7588,7 @@ function buAddBlock(type, list, afterK, extra) {
     buSetOpt(b, 'type', wt);
     const d = typeof widgetDefaults === 'function' ? widgetDefaults(wt) : {}; for (const k of Object.keys(d)) buSetOpt(b, k, d[k]);
   }
-  if (type === 'graph' || type === 'widget') {
+  if (type === 'graph' || (type === 'widget' && !(extra && WIDGETS[extra.type] && WIDGETS[extra.type].noTable))) {
     // Default to the nearest preceding table that already has a permanent name (never touches that table).
     const before = arr.slice(0, index).filter(x => x.type === 'table' && x.opts && x.opts.id).pop() || buTables().filter(t => t.id).pop();
     if (before) buSetOpt(b, 'table', before.opts ? before.opts.id : before.id);
@@ -7363,6 +7655,7 @@ function buShowBlock(b) {
     case 'usegraph': t = { attr: 'data-mirror-graph', value: b.ref }; break;
     case 'useanswer': t = { attr: 'data-mirror-answer', value: b.ref }; break;
     case 'usephoto': t = { attr: 'data-mirror-photo', value: b.ref }; break;
+    case 'usesocratic': t = { attr: 'data-mirror-socratic', value: b.ref }; break;
     case 'heading': t = { selector: 'h1, h2, h3, h4, h5, h6', nth: buAllBlocks().filter(x => x.type === 'heading').indexOf(b) }; break;
     case 'callout': t = { selector: '.lt-callout', nth: buAllBlocks().filter(x => x.type === 'callout').indexOf(b) }; break;
     case 'figure': t = { selector: '.lt-figure, .lt-figure-pending', nth: buAllBlocks().filter(x => x.type === 'figure').indexOf(b) }; break;
@@ -7702,7 +7995,9 @@ Value: \\input[id=f]{}
 }
 \\answer{Tab question}
 }
+\\widget[type=socratic, id=tutor, bank=b-none]{Talk it through}
 \\report{
+\\usesocratic[transcript]{tutor}
 \\usetable{t2}
 \\answer[id=rq, required, words=5-10]{Report Q}
 \\usetable{tbl}
@@ -7730,6 +8025,7 @@ Value: \\input[id=f]{}
     // an extra tab: three tab buttons, its fields bind like any other, and a report copy of its table finds it
     if (host.querySelectorAll('.lab-tab').length !== 3 || !host.querySelector('#lab-pane-data [data-field="t2.r1c1"]')) throw new Error('extra tab did not render');
     const m2 = host.querySelector('[data-mirror-table="t2"] .rp-table'); if (!m2 || !m2.textContent.includes('9')) throw new Error('report copy of a table on an extra tab is missing');
+    const tut = host.querySelector('.lt-widget[data-widget="tutor"]'); if (!tut || !host.querySelector('[data-mirror-socratic="tutor"][data-mode="transcript"]')) throw new Error('tutor block or its report line did not render');
     // the report copy is live: an edit there lands in the procedure cell and in the saved entries, and a procedure edit shows up in the copy
     const mc = mirror.querySelector('[data-field="tbl.r1c1"]'); if (!mc || mc.getAttribute('contenteditable') !== 'plaintext-only') throw new Error('report table copy is not editable');
     mc.textContent = '7.25'; mc.dispatchEvent(new Event('input', { bubbles: true }));
