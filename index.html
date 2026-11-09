@@ -5181,7 +5181,7 @@ function ltLoadWidgetFile(src) {
 function ltStopWidgets(root) {   // navigation, modal close, preview re-render: release every running widget (inside root, or all)
   for (const w of [...ltLiveWidgets]) if (!root || root.contains(w.el)) w.stop('idle');
 }
-document.addEventListener('visibilitychange', () => { if (document.hidden) for (const w of [...ltLiveWidgets]) w.stop('paused'); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) for (const w of [...ltLiveWidgets]) if (w.pausable) w.stop('paused'); });   // release cameras; widgets without one (the tutor) keep running
 // The record path a lab gives its widgets: a reading fills the first row whose target cells are all empty, else a new row (addrows).
 function ltWidgetHost({ labId, readOnly, tableApi, entries, save }) {
   const colIndex = (spec, cols) => { const m = /^c?(\d+)$/i.exec(String(spec || '').trim()); const n = m ? parseInt(m[1], 10) : 0; return n >= 1 && n <= cols ? n : 0; };
@@ -5223,7 +5223,7 @@ function ltBindWidgets(area, host) {
     const tableId = opts.table ? ltSafeId(opts.table) : '';
     const target = () => (tableId ? area.querySelector(`.lt-table-wrap[data-table="${tableId}"]`) : null);
     const needsCamera = /camera/i.test(W.device || '');
-    const live = { el, stop: null }; let running = null, gen = 0;
+    const live = { el, stop: null, pausable: needsCamera }; let running = null, gen = 0;   // only camera tools are paused when the page is hidden; a tutor conversation stays up
     const btn = (cls, key, primary) => `<button type="button" class="btn-small${primary ? ' btn-primary-small' : ''} ${cls}">${escapeHTML(getText(key))}</button>`;
     const stop = next => {   // next: 'idle' | 'paused' | 'failed'
       gen++;
