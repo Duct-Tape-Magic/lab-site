@@ -1471,7 +1471,7 @@ const DEFAULTS = {
   widgetDenied: 'The camera was not allowed. Allow it in your browser settings and tap Start again, or type your values into the table.',
   widgetUnavailable: 'This tool is not available here. Type your values into the table instead.',
   widgetSignIn: 'Sign in with your access code to use this tool.',
-  socSend: 'Send', socStuck: 'I\'m stuck', socEnd: 'End session', socAgain: 'Start a new session',
+  socSend: 'Send', socEnd: 'End session', socAgain: 'Start a new session',
   socPlaceholder: 'Answer in words, not just a number…',
   socProgress: '{posed} of {total} problems · {credited} credited',
   socThinking: 'The tutor is thinking…',
@@ -1531,7 +1531,7 @@ const TEXT_LABELS = {
   procedureTab: 'Procedure tab label', reportTab: 'Report tab label', reportPreview: 'Preview report button', reportStyleTitle: 'Style guide heading', reportRequired: 'Required badge', reportHint: 'Hint toggle', reportWords: 'Word count', reportWordsAim: 'Word range hint', reportEmptyRequired: 'Empty required question note', reportTableLabel: 'Table caption word', reportFigureLabel: 'Figure caption word', reportMissingRef: 'Missing table/graph message', reportNoPhotoYet: 'No photo yet message',
   helpButton: 'Get help button', helpIntro: 'Help panel intro', helpLoginNudge: 'Help: log-in nudge', helpMessagePlaceholder: 'Help: question placeholder', helpSend: 'Help: send button', helpSent: 'Help: sent confirmation', helpError: 'Help: send failed', helpAutoReply: 'Help: automatic first reply (site default)', helpAutoLabel: 'Help: label on the automatic reply', helpYou: 'Help: your name in the thread', helpTeacher: 'Help: teacher name in the thread', helpResolvedNote: 'Help: resolved note', helpEmailFrom: 'Help: email sender', helpEmailSubject: 'Help: email subject ({lab} = lab title)',
   widgetStart: 'Widget: Start button', widgetStop: 'Widget: Stop button', widgetLoading: 'Widget: starting message', widgetNoCamera: 'Widget: no-camera note', widgetFailed: 'Widget: could-not-start message', widgetDenied: 'Widget: camera-not-allowed message', widgetUnavailable: 'Widget: not-available message', widgetGetHelp: 'Widget: Get help button', widgetSignIn: 'Widget: sign-in note',
-  socSend: 'Tutor: Send button', socStuck: 'Tutor: I\'m stuck button', socEnd: 'Tutor: End session button', socAgain: 'Tutor: new session button', socPlaceholder: 'Tutor: answer box placeholder', socProgress: 'Tutor: progress line', socThinking: 'Tutor: thinking note', socLimit: 'Tutor: weekly limit note', socSiteLimit: 'Tutor: site limit note', socError: 'Tutor: error note', socEnded: 'Tutor: session ended note', socDoneLine: 'Tutor: report completion line', socNotDone: 'Tutor: report not-finished note', socNoSession: 'Tutor: report no-session note', socTranscriptTitle: 'Tutor: transcript heading',
+  socSend: 'Tutor: Send button', socEnd: 'Tutor: End session button', socAgain: 'Tutor: new session button', socPlaceholder: 'Tutor: answer box placeholder', socProgress: 'Tutor: progress line', socThinking: 'Tutor: thinking note', socLimit: 'Tutor: weekly limit note', socSiteLimit: 'Tutor: site limit note', socError: 'Tutor: error note', socEnded: 'Tutor: session ended note', socDoneLine: 'Tutor: report completion line', socNotDone: 'Tutor: report not-finished note', socNoSession: 'Tutor: report no-session note', socTranscriptTitle: 'Tutor: transcript heading',
   widgetRecord: 'Colorimeter: Record button', widgetRecorded: 'Colorimeter: data recorded text', widgetTableFull: 'Colorimeter: table full message', widgetNoTable: 'Colorimeter: no table message',
   widgetRefLabel: 'Colorimeter: reference square label', widgetMeasLabel: 'Colorimeter: sample square label'
 };
@@ -5057,11 +5057,11 @@ const WIDGETS = {
   },
   socratic: {
     label: 'Socratic 1',
-    texts: ['socSend', 'socStuck', 'socEnd', 'socAgain', 'socPlaceholder', 'socProgress', 'socThinking', 'socLimit', 'socSiteLimit', 'socError', 'socEnded', 'socDoneLine', 'socNotDone', 'socNoSession'],
+    texts: ['socSend', 'socEnd', 'socAgain', 'socPlaceholder', 'socProgress', 'socThinking', 'socLimit', 'socSiteLimit', 'socError', 'socEnded', 'socDoneLine', 'socNotDone', 'socNoSession'],
     description: 'A conversation with a tutor that poses problems from a bank you write, listens to the student reason in words, and credits, corrects or scaffolds. Formative only: nothing is graded.',
     device: 'Needs a signed-in student (access code or account) and an internet connection. No camera.',
     records: 'Nothing into lab tables. Each conversation is kept as its own session; the student sees their own, admins see every student\'s in the lab review. The report can show a completion line or the whole conversation.',
-    file: 'widgets/socratic.v1.js',
+    file: 'widgets/socratic.v2.js',
     noTable: true, needsLogin: true, noDemo: true, transcript: true, settings: true,
     options: [
       { name: 'bank', label: 'Problem bank', kind: 'bank', help: 'Written and edited on the Widgets tab, under Socratic tutor.' },
