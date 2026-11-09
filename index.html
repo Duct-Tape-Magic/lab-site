@@ -577,6 +577,10 @@
   .lt-graph-caption { font-size: 12px; color: var(--muted); margin-top: 0.3rem; }
   /* ---------- Widgets: in-lab tools (docs/WIDGETS.md). The frame is the host's; .cm-* is the colorimeter's. ---------- */
   .lt-widget { border: 0.5px solid var(--rule-strong); background: var(--card-bg); padding: 1rem 1.1rem; margin: 1.4rem 0; max-width: 680px; }
+  /* In a lab, a widget spans the whole lab column (the same width as the toolbar row under the lab), not the 760px text measure,
+     so its margins match the page's. cqw reads #lab-content-area's width past the .lab-body cap; demos elsewhere keep 680px. */
+  #lab-content-area, #lab-markup-preview { container-type: inline-size; }
+  #lab-content-area .lt-widget, #lab-markup-preview .lt-widget { width: 100cqw; max-width: none; box-sizing: border-box; }
   .lt-widget-head { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
   .lt-widget-kind { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
   .lt-widget-title { font-family: var(--font-heading); font-size: 1.15rem; }
