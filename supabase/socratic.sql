@@ -33,8 +33,11 @@ create table if not exists public.oral_sessions (
   previous_summary  text,
   summary           text,
   turns             int  not null default 0,
-  cost              numeric not null default 0
+  cost              numeric not null default 0,
+  concepts          jsonb                          -- { total, credited[], needs_work[], untouched[], all_done } written by the function after every turn
 );
+alter table public.oral_sessions add column if not exists concepts jsonb;   -- added 2026-11-09 (credit by topic)
+
 create table if not exists public.oral_messages (
   id          bigserial primary key,
   session_id  text not null references public.oral_sessions(id) on delete cascade,

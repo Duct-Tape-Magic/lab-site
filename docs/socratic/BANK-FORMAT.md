@@ -56,10 +56,18 @@ The bank's **site** title (the one in the Widgets tab) is the separate title box
 
 ## `\concepts{…}` (once)
 
-Comma-separated list. Each problem's `concepts=` should use names from this list. The function uses it to
-tell the tutor which concepts the student has not yet met (`Concepts not yet touched`), so the tutor can
-steer toward them before the bank runs out. Hyphenated single tokens are easiest to read back
-(`hydrogen-bonding`, `vapor-pressure`).
+Comma-separated list. **This list is what the student is credited for.** The bank is a pool: the tutor
+uses only as many problems as it takes for the student to demonstrate every concept here, then suggests
+ending. A student who knows the material may be done in four problems; one who is struggling may need
+twelve. Each problem's `concepts=` must use names from this list. Hyphenated single tokens are easiest
+to read back (`hydrogen-bonding`, `vapor-pressure`).
+
+How credit works: when the tutor credits a problem, every concept that problem is tagged with counts as
+credited. When it reveals the solution, those concepts are marked as needing work and the tutor comes back
+to them with a different problem. A skipped problem changes nothing. So **tag a problem only with the
+concepts a credit on it genuinely demonstrates**; a problem tagged with five concepts credits all five at
+once. Keep the list to the handful of ideas the set is meant to teach (roughly 5 to 12), and give each one
+several problems at different difficulties so the tutor has choices.
 
 ## `\problem[…]{…}` (one per problem)
 
@@ -125,9 +133,10 @@ A problem missing `\prompt`, `\solution` or `\rubric` is listed by pid as a warn
 
 ## Writing guidance (not enforced)
 
-- 10–20 problems per bank; students pose roughly one problem per 3–6 messages.
+- The bank can be large (a week's homework, 50 problems is fine); the student will see only a handful.
+  What matters is that every concept has several problems to choose from.
 - Two or three openers at difficulty 2, spread across concepts.
-- Cover every concept in `\concepts` with at least two problems at different difficulties so the tutor
-  can go at a shaky concept "from another angle".
+- Cover every concept in `\concepts` with at least three problems at different difficulties so the tutor
+  can go at a shaky concept "from another angle" after a reveal.
 - Keep `\catalog` about the discrimination, keep `\rubric` to the three or four things that actually
   distinguish understanding, and keep pids stable after students have used the bank.

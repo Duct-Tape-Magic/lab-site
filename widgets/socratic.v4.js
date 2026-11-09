@@ -6,9 +6,9 @@
    the prompt and the API key; this file keeps nothing of its own (no localStorage) and sends nothing anywhere else.
    Bare on purpose: the conversation, a text box, Send, End session, Skip this problem, Report a problem (a small box that sends a
    note to the teacher), one progress line, and a warning line when the owner's weekly allowance is running low. Text only.
-   (v2: the I'm stuck button is gone; students say so in their own words. v3: Skip and Report a problem.)
+   (v2: the I'm stuck button is gone; students say so in their own words. v3: Skip and Report a problem. v4: progress is counted in topics credited, not problems.)
    ctx: { opts, labId, text(key), fmt(key, vars), call(payload, onDelta) → Promise, renderMath(node), updated(), fail(why) }
-   New version → new filename (socratic.v4.js) and update WIDGETS.socratic.file in index.html. */
+   New version → new filename (socratic.v5.js) and update WIDGETS.socratic.file in index.html. */
 (function () {
   'use strict';
   var W = window.LabWidgets = window.LabWidgets || {};
@@ -36,10 +36,11 @@
       function setNote(text, cls) { if (!text) { note.hidden = true; return; } note.className = cls || 'soc-note'; note.textContent = text; note.hidden = false; }
       function setWarn(text) { if (!text) { warn.hidden = true; return; } warn.textContent = text; warn.hidden = false; }
       function setBusy(b) { busy = b; input.disabled = b || limited || !session || !!(session && session.ended); q('send').disabled = input.disabled; q('end').disabled = b || !session || !!(session && session.ended); q('skip').disabled = input.disabled; q('report').disabled = !session; }
-      function progress() {
+      function progress() {   // topics credited out of the bank's topics; the problem count is detail. The bank is a pool, never a set to finish.
         var p = session && session.progress; if (!p) { q('progress').textContent = ''; return; }
-        total = p.total || total; if (box && total) box.dataset.socTotal = String(total);
-        q('progress').textContent = ctx.fmt('socProgress', { posed: p.posed, total: total, credited: p.credited });
+        total = p.topics_total || total; if (box && total) box.dataset.socTotal = String(total);
+        q('progress').textContent = ctx.fmt('socProgress', { topics: p.topics || 0, total: total, posed: p.posed, credited: p.credited });
+        if (p.all_done && !(session && session.ended)) setNote(t('socAllDone'), 'soc-ok');
       }
       function bubble(role, text, pending) {
         var b = el('<div class="soc-msg ' + (role === 'assistant' ? 'tutor' : 'me') + (pending ? ' pending' : '') + '"></div>');
@@ -84,7 +85,7 @@
         setBusy(true); setNote(t('socThinking'));
         ctx.call({ action: 'resume', bank_id: bank }).then(function (res) {
           if (stopped) return;
-          total = res.total || 0; if (box && total) box.dataset.socTotal = String(total);
+          total = res.topics_total || 0; if (box && total) box.dataset.socTotal = String(total);
           if (applyMeta(res)) return;
           setNote('');
           if (res.session) { renderSession(res.session); return; }
