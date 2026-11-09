@@ -5127,6 +5127,7 @@ const WIDGETS = {
     texts: ['widgetRecord', 'widgetRecorded', 'widgetTableFull', 'widgetRefLabel', 'widgetMeasLabel'],
     description: 'Reads two small squares in the camera picture that students drag into place: a Reference on a sheet of white printer paper and a Sample. The paper is taken as white, so the sample\'s red, green and blue (0–255) are read relative to it and changes in lighting, exposure and white balance cancel. One table row per reading.',
     device: 'Needs a camera; a phone works best. On a laptop without a camera the tool shows a calm note and students type the values in.',
+    camera: true,   // the host checks for a camera, pauses the tool when the page is hidden, and releases it on navigation
     records: 'One row per reading into a data table: corrected R, G and B in the columns you choose; optionally the camera\'s uncorrected R, G, B.',
     file: 'widgets/colorimeter.v11.js',
     options: [
@@ -5222,7 +5223,7 @@ function ltBindWidgets(area, host) {
     }
     const tableId = opts.table ? ltSafeId(opts.table) : '';
     const target = () => (tableId ? area.querySelector(`.lt-table-wrap[data-table="${tableId}"]`) : null);
-    const needsCamera = /camera/i.test(W.device || '');
+    const needsCamera = !!W.camera;   // explicit catalog flag (the tutor's description says "No camera", so a word search was wrong)
     const live = { el, stop: null, pausable: needsCamera }; let running = null, gen = 0;   // only camera tools are paused when the page is hidden; a tutor conversation stays up
     const btn = (cls, key, primary) => `<button type="button" class="btn-small${primary ? ' btn-primary-small' : ''} ${cls}">${escapeHTML(getText(key))}</button>`;
     const stop = next => {   // next: 'idle' | 'paused' | 'failed'
