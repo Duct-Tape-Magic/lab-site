@@ -56,3 +56,5 @@ Reads two small squares the student drags into place, a Reference (card of known
 2. Done 2026-10-16. Record-to-table through the existing add-row/save path (`ltWidgetHost`): a reading fills the first row whose target cells are all empty, else adds a row when the table has `addrows`, else Record is disabled with a note. Still to confirm on the live site: a recorded row syncing to the cloud and showing in admin review and the PDF (same path as typing, so expected to hold).
 3. Built 2026-10-16 as `widgets/colorimeter.v1.js`; the owner verified it on Mac, iPad and Android. Replaced 2026-10-17 by `colorimeter.v2.js` (two squares, reference correction), verified in the desktop preview with the demo source and by the owner on a phone on 2026-10-17 (touch-dragging the squares and recording).
 4. iframe bridge only when a simulation-sized widget is actually wanted.
+
+2026-11-09: Socratic v3 adds Skip this problem and Report a problem (see docs/SOCRATIC.md, "Skip and Report"). Text keys `socSkip`, `socReport*` live on the widget's page in the Widgets tab.
