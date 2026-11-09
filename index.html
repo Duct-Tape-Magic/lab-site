@@ -604,6 +604,15 @@
   .cm-status.ok { color: #2e7d32; }
   @media (max-width: 600px) { .cm { grid-template-columns: 1fr; } }
   .wd-card { border: 0.5px solid var(--rule-strong); padding: 1.2rem 1.4rem; margin-bottom: 1.2rem; }
+  .wd-row { display: flex; align-items: center; gap: 1rem; padding: 0.9rem 0.2rem; border-bottom: 0.5px solid var(--rule); cursor: pointer; }
+  .wd-row:hover { background: var(--card-bg); }
+  .wd-row h3 { margin: 0; font-size: 1.15rem; flex: 0 0 auto; }
+  .wd-row .wd-desc { flex: 1; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+  .wd-row .wd-state { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .wd-row .wd-state.on { color: #2e7d32; }
+  .wd-back { background: none; border: none; padding: 0; color: var(--accent); cursor: pointer; font: inherit; font-size: 13px; margin-bottom: 0.8rem; }
+  .wd-page h3 { margin: 0; font-size: 1.5rem; }
+  .wd-texts .form-row { margin-bottom: 0.6rem; } .wd-texts label { font-size: 11px; }
   .wd-head { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; } .wd-head h3 { margin: 0; flex: 1; font-size: 1.3rem; }
   .wd-meta { font-size: 12.5px; color: var(--muted); line-height: 1.6; } .wd-meta p { margin: 0 0 0.4rem; } .wd-meta b { color: var(--ink); font-weight: 500; } .wd-meta ul { margin: 0 0 0.6rem 1.2rem; } .wd-meta code { font-size: 11.5px; }
   .wd-switch { display: flex; align-items: center; gap: 0.5rem; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); cursor: pointer; }
@@ -1158,7 +1167,7 @@
   <div class="modal" style="max-width:760px;">
     <button class="modal-close" onclick="closeModal('widgets-modal')">×</button>
     <h2>Widgets</h2>
-    <p style="font-size:13px; color:var(--muted); margin-bottom:1.5rem; line-height:1.6;">Tools a lab can include. A widget shows live readings and records them into one of the lab's ordinary data tables, so autosave, review, the report and the PDF work as usual; a student without the device types the values in by hand. In the Builder, use the <strong>Widget…</strong> button in the block row. Switching a widget off here keeps it out of the Builder; labs already using it keep working.</p>
+    <p id="widgets-intro" style="font-size:13px; color:var(--muted); margin-bottom:1.5rem; line-height:1.6;">Tools a lab can include. A widget shows live readings and records them into one of the lab's ordinary data tables, so autosave, review, the report and the PDF work as usual; a student without the device types the values in by hand. In the Builder, use the <strong>Widget…</strong> button in the block row. Switching a widget off here keeps it out of the Builder; labs already using it keep working.</p>
     <div id="widgets-list"></div>
   </div>
 </div>
@@ -1495,7 +1504,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'entriesClearFailed', 'entriesSaveFailed', 'photoSyncFailed', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
   { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef', 'reportNoPhotoYet'] },
   { label: 'Get help', keys: ['helpButton', 'helpIntro', 'helpLoginNudge', 'helpMessagePlaceholder', 'helpSend', 'helpSent', 'helpError', 'helpAutoReply', 'helpAutoLabel', 'helpYou', 'helpTeacher', 'helpResolvedNote', 'helpEmailFrom', 'helpEmailSubject'] },
-  { label: 'Widgets (in-lab tools)', keys: ['widgetStart', 'widgetStop', 'widgetLoading', 'widgetNoCamera', 'widgetFailed', 'widgetDenied', 'widgetUnavailable', 'widgetGetHelp', 'widgetRecord', 'widgetRecorded', 'widgetTableFull', 'widgetNoTable', 'widgetRefLabel', 'widgetMeasLabel', 'widgetSignIn', 'socSend', 'socStuck', 'socEnd', 'socAgain', 'socPlaceholder', 'socProgress', 'socThinking', 'socLimit', 'socSiteLimit', 'socError', 'socEnded', 'socDoneLine', 'socNotDone', 'socNoSession', 'socTranscriptTitle'] },
+  { label: 'Widgets (shared by every tool; each widget\'s own words are on its page in the Widgets tab)', keys: ['widgetStart', 'widgetStop', 'widgetLoading', 'widgetNoCamera', 'widgetFailed', 'widgetDenied', 'widgetUnavailable', 'widgetGetHelp', 'widgetNoTable', 'widgetSignIn'] },
   { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
 ];
 
@@ -4147,28 +4156,70 @@ function loadDesignFromSiteContent() {
 
 /* ---------- Widgets admin tab: a showroom read from the WIDGETS catalog; per-site on/off in site_content key _widgets (JSON) ---------- */
 function openWidgetsModal() { renderWidgetsList(); openModal('widgets-modal'); }
-function renderWidgetsList() {
+function renderWidgetsList() {   // the Widgets tab opens on a list; each widget has its own page (openWidgetPage)
   const box = $('widgets-list'); ltStopWidgets(box);
-  const s = widgetSettings();
+  $('widgets-intro').hidden = false;
   box.innerHTML = Object.keys(WIDGETS).map(type => {
-    const W = WIDGETS[type], on = s[type] !== false;
-    const tag = `\\widget[type=${type}, id=…, ${W.options.filter(o => o.kind !== 'help').map(o => `${o.name}=…`).join(', ')}]{Instruction}`;
-    return `<div class="wd-card" data-type="${type}">
-      <div class="wd-head"><h3>${escapeHTML(W.label)}</h3><label class="wd-switch"><input type="checkbox" ${on ? 'checked' : ''} onchange="setWidgetEnabled('${type}', this.checked, this)"/> <span>${on ? 'On' : 'Off'}</span></label></div>
-      <div class="wd-meta">
-        <p>${escapeHTML(W.description)}</p>
-        <p><b>Needs:</b> ${escapeHTML(W.device)}</p>
-        <p><b>Records:</b> ${escapeHTML(W.records)}</p>
-        <p><b>Settings on its Builder card:</b></p><ul>${W.options.map(o => `<li>${escapeHTML(o.label)}${o.help ? ` <span>— ${escapeHTML(o.help)}</span>` : ''}</li>`).join('')}</ul>
-        <p><b>In a lab file:</b> <code>${escapeHTML(tag)}</code></p>
-        ${W.noDemo ? '' : `<p><b>Try it:</b> this demo reads a moving sample picture instead of the camera. Record only shows what would be written. Students see exactly this, minus the demo picture and with no text around it.</p>`}
-      </div>
-      ${W.noDemo ? '' : `<div class="wd-demo">${ltWidgetBlock('demo-' + type, { type, demo: true, columns: 'c2;c3;c4' }, '')}</div>`}
-      ${W.settings ? `<div class="wd-settings" id="wd-settings-${type}"><div class="hint">Loading…</div></div>` : ''}
-    </div>`;
+    const W = WIDGETS[type], c = widgetConf(type);
+    return `<div class="wd-row" onclick="openWidgetPage('${type}')" role="button" tabindex="0" onkeydown="if (event.key === 'Enter') openWidgetPage('${type}')">
+      <h3>${escapeHTML(widgetLabel(type))}</h3><div class="wd-desc">${escapeHTML(W.description)}</div><span class="wd-state ${c.on ? 'on' : ''}">${c.on ? 'On' : 'Off'}</span><span class="hint" style="margin:0">Open ›</span></div>`;
   }).join('');
-  ltBindWidgets(box, { labId: 'demo', readOnly: false, demo: true, canRecord: () => ({ ok: true }), record: (t, o, v) => { toast(`Demo: would record ${v.join(', ')}`); return { ok: true, row: 0 }; } });
-  if (WIDGETS.socratic && WIDGETS.socratic.settings) renderSocraticAdmin();
+}
+function openWidgetPage(type) {
+  const W = WIDGETS[type]; if (!W) return;
+  const box = $('widgets-list'); ltStopWidgets(box);
+  $('widgets-intro').hidden = true;
+  const c = widgetConf(type);
+  const tag = `\\widget[type=${type}, id=…, ${W.options.filter(o => o.kind !== 'help').map(o => `${o.name}=…`).join(', ')}]{Instruction}`;
+  const texts = (W.texts || []).map(key => { const value = getText(key), isLong = (DEFAULTS[key] || '').length > 60;
+    return `<div class="form-row"><label>${escapeHTML(TEXT_LABELS[key] || key)}</label>${isLong ? `<textarea data-wkey="${key}" style="min-height:48px;">${escapeHTML(value)}</textarea>` : `<input type="text" data-wkey="${key}" value="${escapeHTML(value)}"/>`}</div>`; }).join('');
+  box.innerHTML = `<div class="wd-page" data-type="${type}">
+    <button type="button" class="wd-back" onclick="renderWidgetsList()">‹ All widgets</button>
+    <div class="wd-head"><h3 id="wd-page-title">${escapeHTML(widgetLabel(type))}</h3><label class="wd-switch"><input type="checkbox" ${c.on ? 'checked' : ''} onchange="setWidgetEnabled('${type}', this.checked, this)"/> <span>${c.on ? 'On' : 'Off'}</span></label></div>
+    <div class="wd-meta">
+      <p>${escapeHTML(W.description)}</p>
+      <p><b>Needs:</b> ${escapeHTML(W.device)}</p>
+      <p><b>Records:</b> ${escapeHTML(W.records)}</p>
+      <p><b>Settings on its Builder card:</b></p><ul>${W.options.map(o => `<li>${escapeHTML(o.label)}${o.help ? ` <span>— ${escapeHTML(o.help)}</span>` : ''}</li>`).join('')}</ul>
+      <p><b>In a lab file:</b> <code>${escapeHTML(tag)}</code></p>
+    </div>
+    <div class="wd-settings">
+      <h4 style="margin:0 0 0.6rem">Name</h4>
+      <div class="form-row"><label>What this widget is called (students see it above the tool; the Builder uses it too)</label><div class="lt-toolbar" style="margin:0"><input type="text" id="wd-name" value="${escapeHTML(c.label)}" placeholder="${escapeHTML(W.label)}" style="flex:1"/><button type="button" class="btn-small" onclick="saveWidgetName('${type}')">Save name</button></div><div class="hint">Leave empty to use the built-in name, ${escapeHTML(W.label)}.</div></div>
+    </div>
+    ${texts ? `<div class="wd-settings wd-texts"><h4 style="margin:0 0 0.6rem">Words students see</h4>${texts}<div class="lt-toolbar" style="margin:0.4rem 0 0"><button type="button" class="btn btn-accent btn-small" onclick="saveWidgetTexts('${type}')">Save words</button><span class="hint" style="margin:0">Curly-bracket names such as {n} are filled in by the site.</span></div></div>` : ''}
+    ${W.noDemo ? '' : `<div class="wd-settings"><h4 style="margin:0 0 0.6rem">Try it</h4><p class="hint">This demo reads a moving sample picture instead of the camera. Record only shows what would be written. Students see exactly this, minus the demo picture and with no text around it.</p><div class="wd-demo">${ltWidgetBlock('demo-' + type, { type, demo: true, columns: 'c2;c3;c4' }, '')}</div></div>`}
+    ${W.settings ? `<div class="wd-settings" id="wd-settings-${type}"><div class="hint">Loading…</div></div>` : ''}
+  </div>`;
+  if (!W.noDemo) ltBindWidgets(box, { labId: 'demo', readOnly: false, demo: true, canRecord: () => ({ ok: true }), record: (t, o, v) => { toast(`Demo: would record ${v.join(', ')}`); return { ok: true, row: 0 }; } });
+  if (type === 'socratic' && W.settings) renderSocraticAdmin();
+}
+async function saveWidgetConf(type, patch) {
+  if (!sb || state.source !== 'live') { toast('Not connected to the database; try again later.', true); return false; }
+  const s = widgetSettings(), cur = widgetConf(type); s[type] = { on: cur.on, label: cur.label, ...patch }; const value = JSON.stringify(s);
+  const { error } = await sb.from('site_content').upsert({ key: '_widgets', value });
+  if (error) { toast('Could not save: ' + error.message, true); return false; }
+  state.text._widgets = value; return true;
+}
+async function setWidgetEnabled(type, on, input) {
+  const ok = await saveWidgetConf(type, { on: !!on });
+  if (!ok) { if (input) input.checked = !on; return; }
+  const span = input && input.parentElement ? input.parentElement.querySelector('span') : null; if (span) span.textContent = on ? 'On' : 'Off';
+  toast(`${widgetLabel(type)} switched ${on ? 'on' : 'off'}`);
+}
+async function saveWidgetName(type) {
+  const name = ($('wd-name').value || '').trim();
+  if (!(await saveWidgetConf(type, { label: name }))) return;
+  const h = $('wd-page-title'); if (h) h.textContent = widgetLabel(type);
+  toast('Name saved'); render();   // any open lab shows the new name above the tool
+}
+async function saveWidgetTexts(type) {
+  const updates = Array.from(document.querySelectorAll('#widgets-list [data-wkey]')).map(el => ({ key: el.dataset.wkey, value: el.value }));
+  if (!updates.length) return;
+  const { error } = await sb.from('site_content').upsert(updates);
+  if (error) { toast('Could not save: ' + error.message, true); return; }
+  updates.forEach(u => { state.text[u.key] = u.value; });
+  toast('Words saved'); render();
 }
 
 /* ---------- Socratic tutor: the owner's prompt, model, limits, warning and problem banks (admin, on the Widgets tab) ---------- */
@@ -4991,6 +5042,7 @@ function ltBindGraphs(area) {
 const WIDGETS = {
   colorimeter: {
     label: 'Colorimeter',
+    texts: ['widgetRecord', 'widgetRecorded', 'widgetTableFull', 'widgetRefLabel', 'widgetMeasLabel'],
     description: 'Reads two small squares in the camera picture that students drag into place: a Reference on a sheet of white printer paper and a Sample. The paper is taken as white, so the sample\'s red, green and blue (0–255) are read relative to it and changes in lighting, exposure and white balance cancel. One table row per reading.',
     device: 'Needs a camera; a phone works best. On a laptop without a camera the tool shows a calm note and students type the values in.',
     records: 'One row per reading into a data table: corrected R, G and B in the columns you choose; optionally the camera\'s uncorrected R, G, B.',
@@ -5004,7 +5056,8 @@ const WIDGETS = {
     print() { return ''; },
   },
   socratic: {
-    label: 'Socratic tutor',
+    label: 'Socratic 1',
+    texts: ['socSend', 'socStuck', 'socEnd', 'socAgain', 'socPlaceholder', 'socProgress', 'socThinking', 'socLimit', 'socSiteLimit', 'socError', 'socEnded', 'socDoneLine', 'socNotDone', 'socNoSession'],
     description: 'A conversation with a tutor that poses problems from a bank you write, listens to the student reason in words, and credits, corrects or scaffolds. Formative only: nothing is graded.',
     device: 'Needs a signed-in student (access code or account) and an internet connection. No camera.',
     records: 'Nothing into lab tables. Each conversation is kept as its own session; the student sees their own, admins see every student\'s in the lab review. The report can show a completion line or the whole conversation.',
@@ -5018,15 +5071,17 @@ const WIDGETS = {
   },
 };
 function widgetDefaults(type) { const out = {}; for (const o of (WIDGETS[type] && WIDGETS[type].options) || []) if (o.default != null) out[o.name] = o.default; return out; }
-function widgetSettings() { try { return JSON.parse(state.text._widgets || '{}') || {}; } catch (e) { return {}; } }
-function widgetEnabled(type) { return !!WIDGETS[type] && widgetSettings()[type] !== false; }   // on unless the owner switched it off (Widgets tab)
+function widgetSettings() { try { return JSON.parse(state.text._widgets || '{}') || {}; } catch (e) { return {}; } }   // site_content._widgets: { type: false | { on, label } }
+function widgetConf(type) { const v = widgetSettings()[type]; if (v === false) return { on: false, label: '' }; if (v && typeof v === 'object') return { on: v.on !== false, label: String(v.label || '') }; return { on: true, label: '' }; }
+function widgetEnabled(type) { return !!WIDGETS[type] && widgetConf(type).on; }   // on unless the owner switched it off (Widgets tab)
+function widgetLabel(type) { const W = WIDGETS[type]; if (!W) return String(type || 'widget'); return widgetConf(type).label.trim() || W.label; }   // the owner's name for the widget, everywhere students and the Builder see it
 
 // Static HTML for a widget block: the frame, the instruction and an empty body that ltBindWidgets fills with the Start button.
 function ltWidgetBlock(id, opts, promptHtml) {
   const type = String(opts.type || '').trim(), W = WIDGETS[type];
   if (!W) return `<div class="lt-widget" data-widget="${id}"><div class="lt-widget-head"><span class="lt-widget-kind">${escapeHTML(type || 'widget')}</span></div>${promptHtml ? `<div class="lt-prompt">${promptHtml}</div>` : ''}<div class="lt-widget-note">${escapeHTML(getText('widgetUnavailable'))}</div></div>`;
   return `<div class="lt-widget" data-widget="${id}" data-widget-type="${escapeHTML(type)}" data-opts="${escapeHTML(JSON.stringify(opts))}">
-    <div class="lt-widget-head"><span class="lt-widget-kind">${escapeHTML(W.label)}</span>${opts.label ? `<span class="lt-widget-title">${escapeHTML(String(opts.label))}</span>` : ''}</div>
+    <div class="lt-widget-head"><span class="lt-widget-kind">${escapeHTML(widgetLabel(type))}</span>${opts.label ? `<span class="lt-widget-title">${escapeHTML(String(opts.label))}</span>` : ''}</div>
     ${promptHtml ? `<div class="lt-prompt">${promptHtml}</div>` : ''}
     <div class="lt-widget-body"></div>
   </div>`;
@@ -6627,7 +6682,7 @@ function buAllBlocks() { return bmAllBlocks(buModel); }
 function buSourceBlocks() { return [...buModel.procedure, ...(buModel.tabs || []).flatMap(t => t.blocks || [])]; }   // everything a report "Include" block may point at
 function buTables() { return buAllBlocks().filter(b => b.type === 'table').map(b => ({ block: b, id: (b.opts && b.opts.id) || '', title: buOptStr(b, 'title') })); }
 function buAnswers() { return buSourceBlocks().filter(b => b.type === 'answer' || b.type === 'choice' || b.type === 'notes').map(b => ({ block: b, id: (b.opts && b.opts.id) || '', title: buOptStr(b, 'title') || buFirstLine(buPlainInputs(b.type === 'notes' ? (b.label || '') : (b.prompt || '')), 70) || (b.type === 'notes' ? 'Notes box' : b.type === 'choice' ? 'Multiple choice' : 'Question') })); }
-function buTutors() { return buSourceBlocks().filter(b => b.type === 'widget' && b.opts && b.opts.type === 'socratic').map(b => ({ block: b, id: (b.opts && b.opts.id) || '', title: buOptStr(b, 'label') || 'Socratic tutor' })); }
+function buTutors() { return buSourceBlocks().filter(b => b.type === 'widget' && b.opts && b.opts.type === 'socratic').map(b => ({ block: b, id: (b.opts && b.opts.id) || '', title: buOptStr(b, 'label') || widgetLabel('socratic') })); }
 function buPhotos() { return buSourceBlocks().filter(b => b.type === 'photo').map(b => ({ block: b, id: (b.opts && b.opts.id) || '', title: buFirstLine(buPlainInputs(b.prompt || ''), 70) || 'Photo slot' })); }
 function buGraphs() { return buAllBlocks().filter(b => b.type === 'graph').map(b => ({ block: b, id: (b.opts && b.opts.id) || '', title: buOptStr(b, 'title') || buGraphAxesName(b) })); }
 function buGraphAxesName(b) {
@@ -6757,7 +6812,7 @@ function buRenderHeader() {
 }
 
 /* ---------- cards ---------- */
-function buKindLabel(b) { if (b.type === 'callout') return 'Callout'; if (b.type === 'widget') { const W = buWidgetInfo(b); return W ? W.label + ' widget' : 'Widget'; } return buTypeInfo(b.type).label; }
+function buKindLabel(b) { if (b.type === 'callout') return 'Callout'; if (b.type === 'widget') { const W = buWidgetInfo(b); return W ? widgetLabel(buOptStr(b, 'type')) + ' widget' : 'Widget'; } return buTypeInfo(b.type).label; }
 function buCardHTML(b, list, i) {
   const open = !!b._open, n = (bmList(buModel, list) || []).length;
   return `<div class="bu-card" data-k="${b._k}" data-type="${buEsc(b.type)}" data-list="${list}" tabindex="0" ${b.type === 'comment' ? 'hidden' : ''}>
@@ -7573,7 +7628,7 @@ function buOpenWidgetPicker(btn) {
   const types = buWidgetTypes(), list = btn.dataset.list, after = btn.dataset.after;
   const box = document.createElement('div'); box.className = 'bu-widget-picker';
   box.innerHTML = `<div class="bu-note" style="margin:0 0 0.4rem">Choose a tool. Most record into one of your data tables; the Socratic tutor keeps its own conversation instead.</div>` +
-    types.map(t => { const W = WIDGETS[t]; return `<div class="bu-widget-pick"><div><b>${buEsc(W.label)}</b><p>${buEsc(W.description)} ${buEsc(W.device)}</p></div><button type="button" class="btn-small" data-act="widget-add" data-type="${buEsc(t)}" data-list="${buEsc(list)}"${after != null ? ` data-after="${buEsc(after)}"` : ''}>Add</button></div>`; }).join('') +
+    types.map(t => { const W = WIDGETS[t]; return `<div class="bu-widget-pick"><div><b>${buEsc(widgetLabel(t))}</b><p>${buEsc(W.description)} ${buEsc(W.device)}</p></div><button type="button" class="btn-small" data-act="widget-add" data-type="${buEsc(t)}" data-list="${buEsc(list)}"${after != null ? ` data-after="${buEsc(after)}"` : ''}>Add</button></div>`; }).join('') +
     `<div class="bu-tools" style="margin-top:0.5rem"><button type="button" class="btn-small" data-act="widget-cancel">Cancel</button></div>`;
   pal.appendChild(box);
   const first = box.querySelector('button[data-act="widget-add"]'); if (first) first.focus({ preventScroll: true });
