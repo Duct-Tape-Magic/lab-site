@@ -21,7 +21,7 @@ as it runs low, the site-wide daily spend ceiling, and the problem banks (add, e
 | Widget | `widgets/socratic.v2.js` + `WIDGETS.socratic` — conversation, text box, Send, End session, one progress line, warning line. Sign-in gate before Start. `ctx.call` = `ltFnStream('socratic', …)`. |
 | Admin review | A reviewed student's lab shows every session of theirs on the block's bank, transcript folded under a one-line summary (`socraticReviewInto`). |
 | Report | `\usesocratic{widget-id}` shows one line, "Socratic problems completed: N of M · K credited", once a session has ended; `\usesocratic[transcript]{…}` shows the whole conversation and the tutor's closing summary too. Builder: "Include the tutor session". |
-| Banks | Format in `docs/socratic/sample-bank.txt`; parsed by `parseBank` (function) and `oralParseBank` (admin check) — identical grammars, keep them in step. |
+| Banks | Exact grammar and every option in `docs/socratic/BANK-FORMAT.md`; worked example `docs/socratic/sample-bank.txt`; parsed by `parseBank` (function) and `oralParseBank` (admin check) — identical grammars, keep them in step. |
 
 ## Session carry-over
 
