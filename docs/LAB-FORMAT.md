@@ -118,6 +118,7 @@ The widget is passive until the student taps Start (no camera prompt on page loa
 Options common to every widget:
 
 - `type=` which tool (required). Available: `colorimeter`, `socratic` (an oral tutor over a problem bank the teacher writes on the Widgets tab; `bank=` names the bank, no table; students must be signed in; see docs/SOCRATIC.md).
+- `fullpage` (socratic only, beta): the tutor is the whole page, laid out like a chat, for a Socratic-only review with no lab around it. Builder: the "Full page interface" checkbox on the widget block.
 - `id=` a permanent name, like any block.
 - `table=` the `id` of the `\datatable` it records into (required). Give the table `addrows` so every reading gets a row; otherwise only the table's blank rows can take readings.
 - `label=` an optional title shown in the tool's header.

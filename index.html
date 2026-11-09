@@ -652,6 +652,22 @@
   .soc-report-actions { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
   .soc-report-note { font-size: 13px; border-left: 3px solid var(--danger); padding: 0.3rem 0.6rem; margin: 0.4rem 0; }
   .rp-mirror .soc-log { max-height: none; overflow: visible; }
+  /* SOC-FULLPAGE-BEGIN  Beta 2026-11-09: a Socratic widget with the fullpage flag is the whole lab page, laid out like a chat (docs/SOCRATIC.md "Full page"). Revert: delete this block and the SOC-FULLPAGE lines in the JS. */
+  body.soc-fullpage .lab-toolbar, body.soc-fullpage .lab-footer-nav { display: none; }
+  body.soc-fullpage .lt-widget[data-fullpage] { border: 0; background: transparent; padding: 0; margin: 0.5rem 0 0; }
+  body.soc-fullpage .lt-widget[data-fullpage] .lt-widget-head, body.soc-fullpage .lt-widget[data-fullpage] .lt-widget-stop, body.soc-fullpage .lt-widget[data-fullpage] .lt-widget-foot:has(.lt-widget-stop) { display: none; }
+  body.soc-fullpage .lt-widget[data-fullpage] .lt-prompt { color: var(--muted); font-size: 0.95em; margin-bottom: 1rem; }
+  body.soc-fullpage .lt-widget[data-fullpage] .soc { display: flex; flex-direction: column; min-height: calc(100dvh - 19rem); }
+  body.soc-fullpage .lt-widget[data-fullpage] .soc-log { flex: 1; max-height: none; overflow: visible; gap: 1.1rem; padding: 0.4rem 0 1.2rem; }
+  body.soc-fullpage .lt-widget[data-fullpage] .soc-msg { font-size: 1.05em; line-height: 1.65; }
+  body.soc-fullpage .lt-widget[data-fullpage] .soc-msg.tutor { max-width: 100%; border: 0; padding: 0 0.2rem; background: transparent; }
+  body.soc-fullpage .lt-widget[data-fullpage] .soc-msg.me { max-width: 78%; border: 0.5px solid var(--rule); border-radius: 14px; padding: 0.7rem 1rem; }
+  body.soc-fullpage .lt-widget[data-fullpage] .soc-dock { position: sticky; bottom: 0; background: var(--bg); padding: 0.7rem 0 0.8rem; border-top: 0.5px solid var(--rule); z-index: 5; }
+  body.soc-fullpage .lt-widget[data-fullpage] .soc-input textarea { min-height: 3.4em; border-radius: 14px; padding: 0.75rem 1rem; }
+  body.soc-fullpage .lt-widget[data-fullpage] .soc-input .btn-small { border-radius: 14px; }
+  body.soc-fullpage .lt-widget[data-fullpage] .soc-foot .btn-small { border-color: transparent; color: var(--muted); }
+  body.soc-fullpage .lt-widget[data-fullpage] .soc-foot .btn-small:hover { color: var(--ink); }
+  /* SOC-FULLPAGE-END */
 
   .stat-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; }
   .stat-tile { border: 0.5px solid var(--rule-strong); padding: 0.9rem 1rem; }
@@ -1935,6 +1951,7 @@ function renderMathIn(elements) {
    ============================================================ */
 function render() {
   state.route = parseRoute();
+  document.body.classList.remove('soc-fullpage');   // SOC-FULLPAGE: the lab render turns it back on when its page has one
   helpUnmount();
   ltStopWidgets($('view'));   // the page's camera widgets release the camera when the view is replaced
   const view = $('view');
@@ -2528,6 +2545,7 @@ function renderLabContent(area, lab, entry, cloud = null, readOnly = false) {
   if (isTags) ltBind(area, lab.id, cloud, readOnly);
   if (hasReport) rpBind(area, lab);
   renderMathIn(Array.from(area.querySelectorAll('.lab-body')));
+  socFullpageSync();   // SOC-FULLPAGE
   // Make YouTube embeds inside rich text privacy-friendly and lazy
   area.querySelectorAll('.embed-youtube iframe').forEach(f => { f.setAttribute('loading', 'lazy'); f.setAttribute('allowfullscreen', 'true'); });
 }
@@ -2562,6 +2580,7 @@ function switchLabTab(name, from) {
   const lab = state.route.view === 'lab' && area.id === 'lab-content-area' ? labBySlug(state.route.slug) : null;
   try { sessionStorage.setItem('labsite.tab.' + (lab ? lab.id : 'preview'), name); } catch (e) { /* ignore */ }
   if (area.querySelector('.rp-mirror')) rpRefreshMirrors(area);
+  socFullpageSync();   // SOC-FULLPAGE
 }
 // Before ltBind: create mirror graph boxes (real .lt-graph elements so the live-graph code redraws them) and empty table clones.
 function rpSource(area, sel) { return Array.from(area.querySelectorAll(sel)).find(el => !el.closest('.rp-mirror')) || null; }   // the original block, on whichever tab it sits
@@ -5123,10 +5142,11 @@ const WIDGETS = {
     description: 'A conversation with a tutor that poses problems from a bank you write, listens to the student reason in words, and credits, corrects or scaffolds. Formative only: nothing is graded.',
     device: 'Needs a signed-in student (access code or account) and an internet connection. No camera.',
     records: 'Nothing into lab tables. Each conversation is kept as its own session; the student sees their own, admins see every student\'s in the lab review. The report can show a completion line or the whole conversation.',
-    file: 'widgets/socratic.v4.js',
+    file: 'widgets/socratic.v5.js',
     noTable: true, needsLogin: true, noDemo: true, transcript: true, settings: true,
     options: [
       { name: 'bank', label: 'Problem bank', kind: 'bank', help: 'Written and edited on the Widgets tab, under Socratic tutor.' },
+      { name: 'fullpage', label: 'Full page interface: the tutor is the whole page (beta)', kind: 'flag', help: 'For a Socratic-only review with no lab around it. The conversation fills the page like a chat, the answer box stays at the bottom, and the tutor starts on its own for a signed-in student. Off: the usual boxed widget inside the lab text.' },   // SOC-FULLPAGE
       { name: 'help', label: 'Offer Get help when it fails', kind: 'help' },
     ],
     print() { return ''; },
@@ -5142,7 +5162,7 @@ function widgetLabel(type) { const W = WIDGETS[type]; if (!W) return String(type
 function ltWidgetBlock(id, opts, promptHtml) {
   const type = String(opts.type || '').trim(), W = WIDGETS[type];
   if (!W) return `<div class="lt-widget" data-widget="${id}"><div class="lt-widget-head"><span class="lt-widget-kind">${escapeHTML(type || 'widget')}</span></div>${promptHtml ? `<div class="lt-prompt">${promptHtml}</div>` : ''}<div class="lt-widget-note">${escapeHTML(getText('widgetUnavailable'))}</div></div>`;
-  return `<div class="lt-widget" data-widget="${id}" data-widget-type="${escapeHTML(type)}" data-opts="${escapeHTML(JSON.stringify(opts))}">
+  return `<div class="lt-widget" data-widget="${id}" data-widget-type="${escapeHTML(type)}" data-opts="${escapeHTML(JSON.stringify(opts))}"${opts.fullpage === true ? ' data-fullpage="1"' : ''}>
     <div class="lt-widget-head"><span class="lt-widget-kind">${escapeHTML(widgetLabel(type))}</span>${opts.label ? `<span class="lt-widget-title">${escapeHTML(String(opts.label))}</span>` : ''}</div>
     ${promptHtml ? `<div class="lt-prompt">${promptHtml}</div>` : ''}
     <div class="lt-widget-body"></div>
@@ -5259,8 +5279,17 @@ function ltBindWidgets(area, host) {
       } catch (e) { console.warn('widget', e); if (g === gen) showFailed(); }
     };
     showIdle('');
+    if (opts.fullpage === true && !host.demo && (!W.needsLogin || state.session)) start(false);   // SOC-FULLPAGE: the page is the tutor, so it starts on its own
   });
 }
+/* SOC-FULLPAGE-BEGIN (beta 2026-11-09, docs/SOCRATIC.md "Full page"). A visible Socratic widget carrying the fullpage flag turns the lab page into a chat page via body.soc-fullpage.
+   Revert: delete this block, the two lines marked SOC-FULLPAGE above and in render()/switchLabTab/the lab render, the fullpage option in WIDGETS.socratic and the CSS block; the flag in lab files is then ignored. */
+function socFullpageSync() {
+  const area = document.getElementById('lab-content-area');
+  const on = !!(area && Array.from(area.querySelectorAll('.lt-widget[data-fullpage]')).some(el => !el.closest('.lab-pane[hidden]')));
+  document.body.classList.toggle('soc-fullpage', on);
+}
+/* SOC-FULLPAGE-END */
 
 /* ---------- Server functions: POST with the signed-in user's token; replies stream as server-sent events ---------- */
 async function ltFnStream(name, payload, onDelta) {
@@ -7266,6 +7295,7 @@ function buFormWidget(b) {
       }
       case 'column': h += buRow(o.label, tbl ? colSel(`data-bind="opts.${o.name}" data-kind="wcol"`, buOptStr(b, o.name), o.none || 'None') : needTable, o.help); break;
       case 'num': h += buRow(o.label, buNum('opts.' + o.name, buOptStr(b, o.name), 'min="1" step="1"'), o.help); break;
+      case 'flag': h += `<div class="form-row">${buCheck('opts.' + o.name, !!(b.opts && b.opts[o.name] === true), o.label)}${o.help ? `<div class="hint">${buEsc(o.help)}</div>` : ''}</div>`; break;
       case 'help': h += `<div class="form-row">${buCheck('opts.' + o.name, buOptStr(b, o.name) !== 'off', o.label, 'whelp')}<div class="hint">If the tool cannot start, students see a short note and the table to type into; with this on, a Get help button too (only when this lab has Get help on and the student is signed in). It opens the usual empty help box; nothing is prefilled.</div></div>`; break;
       default: h += buRow(o.label, buInput('opts.' + o.name, buOptStr(b, o.name), 'opt'), o.help);
     }

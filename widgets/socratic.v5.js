@@ -6,9 +6,9 @@
    the prompt and the API key; this file keeps nothing of its own (no localStorage) and sends nothing anywhere else.
    Bare on purpose: the conversation, a text box, Send, End session, Skip this problem, Report a problem (a small box that sends a
    note to the teacher), one progress line, and a warning line when the owner's weekly allowance is running low. Text only.
-   (v2: the I'm stuck button is gone; students say so in their own words. v3: Skip and Report a problem. v4: progress is counted in topics credited, not problems.)
+   (v2: the I'm stuck button is gone; students say so in their own words. v3: Skip and Report a problem. v4: progress is counted in topics credited, not problems. v5: everything under the conversation sits in one .soc-dock, so the host's full-page layout can pin it to the bottom.)
    ctx: { opts, labId, text(key), fmt(key, vars), call(payload, onDelta) → Promise, renderMath(node), updated(), fail(why) }
-   New version → new filename (socratic.v5.js) and update WIDGETS.socratic.file in index.html. */
+   New version → new filename (socratic.v6.js) and update WIDGETS.socratic.file in index.html. */
 (function () {
   'use strict';
   var W = window.LabWidgets = window.LabWidgets || {};
@@ -24,11 +24,13 @@
 
       stage.innerHTML = '<div class="soc">' +
         '<div class="soc-log" data-role="log"></div>' +
+        '<div class="soc-dock">' +
         '<div class="soc-warn" data-role="warn" hidden></div>' +
         '<div class="soc-note" data-role="note" hidden></div>' +
         '<div class="soc-input"><textarea rows="2" data-role="input" placeholder="' + esc(t('socPlaceholder')) + '"></textarea><button type="button" class="btn-small btn-primary-small" data-role="send">' + esc(t('socSend')) + '</button></div>' +
         '<div class="soc-foot"><button type="button" class="btn-small" data-role="end">' + esc(t('socEnd')) + '</button><button type="button" class="btn-small" data-role="skip">' + esc(t('socSkip')) + '</button><button type="button" class="btn-small" data-role="report">' + esc(t('socReportButton')) + '</button><button type="button" class="btn-small" data-role="again" hidden>' + esc(t('socAgain')) + '</button><span class="soc-progress" data-role="progress"></span></div>' +
         '<div class="soc-report" data-role="reportbox" hidden><div class="soc-note">' + esc(t('socReportIntro')) + '</div><textarea rows="3" maxlength="2000" data-role="reporttext" placeholder="' + esc(t('socReportPlaceholder')) + '"></textarea><div class="soc-report-actions"><button type="button" class="btn-small btn-primary-small" data-role="reportsend">' + esc(t('socReportSend')) + '</button><span class="soc-note" data-role="reportstatus"></span></div></div>' +
+        '</div>' +   /* .soc-dock */
         '</div>';
       var q = function (r) { return stage.querySelector('[data-role="' + r + '"]'); };
       var log = q('log'), input = q('input'), note = q('note'), warn = q('warn');
