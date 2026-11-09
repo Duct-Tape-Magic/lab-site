@@ -6867,7 +6867,7 @@ function buRenderPalette(list) {
   el.innerHTML = buPaletteButtons(list, null);
 }
 function buPaletteButtons(list, afterK) {
-  const types = list === 'procedure' ? BU_PROCEDURE_PALETTE : BU_REPORT_PALETTE;
+  const types = list === 'report' ? BU_REPORT_PALETTE : BU_PROCEDURE_PALETTE;   // extra tabs take every procedure block (widgets, tables, steps…); only the Report tab has the report palette
   const hasTable = buTables().length > 0, hasGraph = buGraphs().length > 0;
   let h = afterK != null ? `<span class="bu-note">Add below:</span>` : '';
   h += types.map(t => {
