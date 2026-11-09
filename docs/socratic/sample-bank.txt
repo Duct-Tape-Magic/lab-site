@@ -1,0 +1,377 @@
+% Oral tutor problem bank — Intermolecular forces (sample, 15 problems)
+% Difficulty: 1 recall · 2 apply one idea · 3 compare two ideas · 4 weigh competing effects · 5 synthesize / evaluate a claim
+% `opener` marks broad problems that touch several concepts; the tutor starts with one of these.
+
+\bank[slug=imf, title="Intermolecular forces", topic="intermolecular forces and liquid properties"]
+\concepts{dispersion, dipole-dipole, hydrogen-bonding, polarity-geometry, boiling-point, viscosity, surface-tension, vapor-pressure, solubility, phase-energy, molecular-shape}
+
+\problem[pid=imf-01, difficulty=2, opener, concepts="hydrogen-bonding, dispersion, boiling-point"]{
+\catalog{Separates students who name "hydrogen bonding" as a label from those who can say what it requires and why it dominates dispersion at this molar mass.}
+\prompt{Propane (\ce{C3H8}, 44 g/mol) boils at −42 °C. Ethanol (\ce{C2H5OH}, 46 g/mol) boils at 78 °C. The two have almost the same molar mass. Explain the 120-degree difference.}
+\solution{Both molecules have comparable dispersion forces because their electron counts and sizes are similar. Propane is nonpolar, so dispersion is all it has. Ethanol has an O–H bond: the hydrogen is bonded to a small, very electronegative oxygen, leaving it nearly bare, and the oxygen carries lone pairs. Ethanol molecules hydrogen-bond to one another. Hydrogen bonds are much stronger than dispersion between molecules of this size, so far more thermal energy is needed to separate ethanol molecules into the gas, hence the much higher boiling point.}
+\rubric{
+- states that dispersion is comparable for the two because size/electron count is similar
+- identifies ethanol's O–H as the source of hydrogen bonding (H bonded to O, with lone pairs on O)
+- says propane has only dispersion because it is nonpolar
+- connects stronger intermolecular attraction to more energy needed to vaporize, so a higher boiling point
+}
+\scaffolds{
+1. What kinds of attraction can exist between two propane molecules? Between two ethanol molecules?
+2. Look at the ethanol molecule. Is there a hydrogen attached directly to an oxygen, nitrogen or fluorine?
+3. What has to happen to the attractions between molecules for a liquid to boil?
+}
+\extensions{
+1. Dimethyl ether, \ce{CH3OCH3}, has the same formula as ethanol and boils at −24 °C. Why so much lower than ethanol?
+2. Would you expect propane or ethanol to have the higher vapor pressure at room temperature? Why?
+}
+\misconceptions{
+- says "ethanol is heavier" → point out the masses are nearly equal; ask what else differs
+- says hydrogen bonding is a covalent bond inside the molecule → ask whether it is between molecules or within one
+- says propane has "no intermolecular forces" → ask how propane can be liquefied in a tank at all
+}
+}
+
+\problem[pid=imf-02, difficulty=1, concepts="dispersion"]{
+\catalog{Checks whether the student knows dispersion forces exist in every substance and scale with electron count, rather than treating nonpolar molecules as having "no forces."}
+\prompt{Chlorine (\ce{Cl2}) is a gas at room temperature. Bromine (\ce{Br2}) is a liquid. Both are nonpolar diatomic molecules. What holds bromine molecules together as a liquid, and why doesn't the same thing keep chlorine a liquid?}
+\solution{Both have only London dispersion forces, which arise from momentary uneven electron distribution that induces dipoles in neighbors. Bromine has far more electrons (70 vs 34) in a larger, more polarizable electron cloud, so its instantaneous dipoles are larger and its dispersion forces stronger. At room temperature those forces are strong enough to hold \ce{Br2} as a liquid; chlorine's weaker dispersion forces are overcome by thermal motion, so it is a gas.}
+\rubric{
+- names dispersion (London) forces as the only force in both
+- explains that dispersion strength grows with the number of electrons / size / polarizability
+- links stronger dispersion in \ce{Br2} to being liquid at the same temperature
+}
+\scaffolds{
+1. Is there any attraction at all between two nonpolar molecules? What would happen to the electron cloud of one if another passed close by?
+2. Which molecule has more electrons, \ce{Cl2} or \ce{Br2}? Which electron cloud is easier to distort?
+}
+\extensions{
+1. Iodine, \ce{I2}, is a solid at room temperature. Does that fit? Predict where fluorine sits.
+2. Why is "heavier molecules have stronger dispersion forces" a shortcut rather than the actual reason?
+}
+\misconceptions{
+- says nonpolar molecules have no intermolecular forces → ask why any nonpolar substance can be a liquid
+- says bromine is "heavier so it falls down and stays liquid" → ask what mass has to do with attraction between molecules
+}
+}
+
+\problem[pid=imf-03, difficulty=2, opener, concepts="polarity-geometry, dipole-dipole, dispersion"]{
+\catalog{Separates students who judge polarity from bond polarity alone from those who use molecular geometry, and tests whether they know a polar molecule adds dipole-dipole on top of dispersion.}
+\prompt{Carbon dioxide (\ce{CO2}, 44 g/mol) turns to gas below −78 °C. Sulfur dioxide (\ce{SO2}, 64 g/mol) boils at −10 °C. Both have polar bonds. Why is \ce{SO2} so much easier to keep as a liquid?}
+\solution{\ce{CO2} is linear, so its two C=O bond dipoles cancel and the molecule is nonpolar; it has only dispersion forces. \ce{SO2} is bent (the sulfur has a lone pair), so its bond dipoles do not cancel and the molecule has a net dipole. \ce{SO2} therefore has dipole-dipole attraction in addition to dispersion, and it also has more electrons, so its dispersion forces are somewhat larger too. Both effects raise the energy needed to separate the molecules, so \ce{SO2} boils much higher.}
+\rubric{
+- states \ce{CO2} is linear and nonpolar because the bond dipoles cancel
+- states \ce{SO2} is bent (lone pair on S) and therefore polar
+- says \ce{SO2} has dipole-dipole forces in addition to dispersion
+- optionally notes \ce{SO2} also has stronger dispersion from more electrons
+}
+\scaffolds{
+1. Draw or describe the shape of each molecule. Where do the electrons around the central atom go?
+2. If two bond dipoles point in exactly opposite directions, what is the net dipole?
+3. What force does a molecule with a permanent dipole have that a nonpolar one lacks?
+}
+\extensions{
+1. Part of the difference is dispersion, since \ce{SO2} has more electrons. Which effect do you think is bigger here, and how could you test that with other molecules?
+2. \ce{CS2} (76 g/mol) boils at 46 °C and is nonpolar. Reconcile that with \ce{SO2}'s −10 °C.
+}
+\misconceptions{
+- says \ce{CO2} is polar because C=O bonds are polar → ask about the direction of the two bond dipoles
+- says \ce{SO2} is heavier, so that's the whole reason → ask whether the shapes differ and whether that matters
+}
+}
+
+\problem[pid=imf-04, difficulty=2, concepts="hydrogen-bonding"]{
+\catalog{Discriminates "contains H and an N, O or F somewhere" from "has H bonded directly to N, O or F" as the condition for hydrogen bonding with itself.}
+\prompt{Which of these can form hydrogen bonds with other molecules of the same substance, and which cannot? Explain each: dimethyl ether (\ce{CH3OCH3}), ethanol (\ce{CH3CH2OH}), fluoromethane (\ce{CH3F}), hydrogen fluoride (\ce{HF}), trimethylamine (\ce{(CH3)3N}).}
+\solution{Hydrogen bonding between like molecules needs a hydrogen covalently bonded to N, O or F (the donor) and a lone pair on an N, O or F of another molecule (the acceptor). Ethanol (O–H) and HF (F–H) have both and hydrogen-bond with themselves. Dimethyl ether has oxygen with lone pairs but all its hydrogens are on carbon, so it cannot donate; no self hydrogen bonding. Fluoromethane likewise has F but only C–H hydrogens; no. Trimethylamine has N with a lone pair but no N–H; no. (Ether, fluoromethane and trimethylamine can accept a hydrogen bond from something like water, but not from each other.)}
+\rubric{
+- states the requirement: H bonded directly to N, O or F, plus a lone pair on N, O or F
+- correctly sorts ethanol and HF as yes
+- correctly sorts dimethyl ether, fluoromethane and trimethylamine as no, each with the reason "no H on the electronegative atom"
+}
+\scaffolds{
+1. For hydrogen bonding, what does the hydrogen have to be attached to?
+2. In dimethyl ether, what are the hydrogens attached to? Is any attached to the oxygen?
+3. Does having an atom that can accept a hydrogen bond matter if nothing in the sample can donate one?
+}
+\extensions{
+1. Dimethyl ether cannot hydrogen-bond with itself, but it dissolves readily in water. Why?
+2. Ammonia, \ce{NH3}, hydrogen-bonds, yet it boils at −33 °C, far below water. Why is ammonia's hydrogen bonding weaker, and how many hydrogen bonds per molecule can each form?
+}
+\misconceptions{
+- says anything containing O, N or F hydrogen-bonds → ask which atom the hydrogens are bonded to
+- says \ce{CH3F} hydrogen-bonds because F is very electronegative → ask whether the C–H hydrogen is bare enough; C is not electronegative enough
+}
+}
+
+\problem[pid=imf-05, difficulty=3, concepts="hydrogen-bonding, boiling-point, dipole-dipole"]{
+\catalog{Tests whether the student can hold molar mass constant (isomers) and attribute a boiling-point gap entirely to the type of intermolecular force.}
+\prompt{Ethanol and dimethyl ether both have the formula \ce{C2H6O}. Ethanol boils at 78 °C; dimethyl ether at −24 °C. Explain the difference, and say what you can rule out because the formulas are identical.}
+\solution{Identical formulas mean identical molar mass and nearly identical electron counts, so dispersion forces are about the same and cannot explain the gap. Both molecules are polar and have dipole-dipole attractions. The difference is that ethanol has an O–H bond and can hydrogen-bond with other ethanol molecules; dimethyl ether's hydrogens are all on carbon, so it cannot donate a hydrogen bond. Hydrogen bonding is much stronger than ordinary dipole-dipole attraction, so ethanol needs far more energy to vaporize.}
+\rubric{
+- rules out mass / dispersion because the formulas are identical
+- identifies ethanol's O–H as enabling hydrogen bonding and the ether's lack of O–H as preventing it
+- states that both are polar, so the difference is hydrogen bonding on top of dipole-dipole, not polarity vs none
+}
+\scaffolds{
+1. If two substances have the same formula, what properties must be the same? What can still differ?
+2. Write out where every hydrogen is in each molecule. Which hydrogens are on oxygen?
+3. Rank dispersion, dipole-dipole and hydrogen bonding by strength for molecules this size.
+}
+\extensions{
+1. 1-Butanol and diethyl ether are both \ce{C4H10O}, boiling at 118 °C and 35 °C. Is the gap larger or smaller than for the \ce{C2} pair, and does that make sense?
+2. Which of the two \ce{C2H6O} isomers would you expect to be more viscous? Why?
+}
+\misconceptions{
+- says dimethyl ether is nonpolar → ask about the bent C–O–C geometry and the O lone pairs
+- says ethanol has "more" intermolecular forces → ask whether it is more forces or a stronger kind
+}
+}
+
+\problem[pid=imf-06, difficulty=3, concepts="viscosity, hydrogen-bonding, molecular-shape"]{
+\catalog{Separates students who connect viscosity to the number of hydrogen-bonding sites per molecule and to molecular entanglement from those who only say "stronger forces."}
+\prompt{Ethanol pours like water. Glycerol (\ce{C3H5(OH)3}) is about a thousand times more viscous. Both are liquids made of small molecules that hydrogen-bond. Explain, at the molecular level, why glycerol resists flow so much more.}
+\solution{Viscosity is resistance to flow, which depends on how strongly and how often molecules must break and reform attractions to slide past one another. Ethanol has one O–H group per molecule, so each molecule hydrogen-bonds at one site. Glycerol has three O–H groups on a three-carbon backbone, so each molecule can hydrogen-bond at several points at once, forming an extensive three-dimensional network. To flow, many hydrogen bonds must be broken simultaneously per molecule, and the molecules are also more entangled. The result is far greater resistance to flow at the same temperature.}
+\rubric{
+- defines viscosity as resistance to flow / molecules sliding past each other
+- counts hydrogen-bonding sites: one O–H in ethanol vs three in glycerol
+- explains that multiple sites per molecule produce a network, so many attractions must break at once for flow
+- optionally mentions larger size / entanglement as a secondary factor
+}
+\scaffolds{
+1. What has to happen between neighboring molecules for a liquid to flow at all?
+2. How many places on an ethanol molecule can form a hydrogen bond? On glycerol?
+3. If each molecule is held at three points instead of one, what does it take to move it?
+}
+\extensions{
+1. Ethylene glycol, \ce{HOCH2CH2OH}, has two O–H groups. Predict where its viscosity falls relative to ethanol and glycerol and why.
+2. Motor oil is nonpolar and has no hydrogen bonding, yet it is more viscous than glycerol at some temperatures. What is doing the work there?
+}
+\misconceptions{
+- says glycerol is "heavier" → ask whether a 92 g/mol molecule vs 46 g/mol explains a factor of a thousand
+- says glycerol has stronger hydrogen bonds → ask whether each individual O–H···O bond is stronger or whether there are more of them per molecule
+}
+}
+
+\problem[pid=imf-07, difficulty=3, concepts="surface-tension, hydrogen-bonding"]{
+\catalog{Tests whether the student distinguishes cohesion (liquid-liquid attraction) from adhesion (liquid-surface attraction) and can use that to predict beading versus spreading.}
+\prompt{A drop of water beads up on a freshly waxed car but spreads into a thin film on clean glass. Explain both behaviors using intermolecular forces.}
+\solution{Water molecules attract one another strongly through hydrogen bonding (cohesion). Molecules at the surface have fewer neighbors to bond with, so the liquid minimizes its surface area, which is surface tension. Wax is a nonpolar hydrocarbon; water molecules can only form weak dispersion attractions to it (weak adhesion), so cohesion wins and the drop pulls into a near-sphere. Clean glass is covered in polar Si–O and O–H groups that hydrogen-bond with water (strong adhesion), comparable to or stronger than water's cohesion, so the water spreads to maximize contact with the glass.}
+\rubric{
+- identifies cohesion as water-water hydrogen bonding and explains surface tension from it
+- identifies wax as nonpolar, so water-wax adhesion is weak dispersion only, so beading
+- identifies glass as polar / able to hydrogen-bond, so adhesion is strong, so spreading
+- frames the outcome as a comparison between cohesion and adhesion
+}
+\scaffolds{
+1. What force holds water molecules to each other? How strong is it compared with other intermolecular forces?
+2. What kind of molecules make up wax? What attraction could a water molecule have to them?
+3. What groups are on the surface of glass? Could water hydrogen-bond to them?
+}
+\extensions{
+1. Why does adding a little detergent make water spread on the waxed car?
+2. Mercury beads up on glass. What does that tell you about mercury's cohesion compared with its adhesion to glass?
+}
+\misconceptions{
+- says wax "repels" water as an active force → ask whether there is a repulsion or just a weaker attraction than water has for itself
+- explains only surface tension and not the two surfaces → ask why the same water behaves differently on the two surfaces
+}
+}
+
+\problem[pid=imf-08, difficulty=2, opener, concepts="vapor-pressure, dipole-dipole, hydrogen-bonding, phase-energy"]{
+\catalog{Checks whether the student connects weaker intermolecular forces to higher vapor pressure and faster evaporation, and whether they can explain evaporative cooling as energy leaving with the fastest molecules.}
+\prompt{Put a drop of acetone (nail polish remover, \ce{(CH3)2CO}) on one hand and a drop of water on the other. The acetone disappears much faster and feels colder. Explain both observations.}
+\solution{Acetone is polar (the C=O gives it a dipole) and has dipole-dipole and dispersion forces, but it has no O–H and cannot hydrogen-bond with itself. Water hydrogen-bonds strongly. Weaker intermolecular forces mean a larger fraction of acetone molecules at skin temperature have enough energy to escape the surface, so acetone's vapor pressure is higher and it evaporates faster. Evaporation removes the most energetic molecules, lowering the average kinetic energy of what remains, which draws heat from the skin. Because acetone evaporates faster, it removes heat faster, so it feels colder even though water actually carries away more energy per gram.}
+\rubric{
+- identifies acetone as polar but unable to hydrogen-bond, water as hydrogen-bonding
+- links weaker forces to higher vapor pressure / faster evaporation
+- explains cooling as the highest-energy molecules leaving, lowering the average energy of the liquid and skin
+- connects faster evaporation to a faster cooling rate
+}
+\scaffolds{
+1. Which molecules in a liquid are the ones that escape into the gas? What do they take with them?
+2. Which liquid holds its molecules more tightly? Which one lets more of them escape at the same temperature?
+3. If the fastest molecules leave, what happens to the average speed, and therefore temperature, of the ones left behind?
+}
+\extensions{
+1. Water's heat of vaporization per gram is larger than acetone's. Why does acetone still feel colder?
+2. On a humid day, sweat evaporates slowly. Explain that with the same ideas.
+}
+\misconceptions{
+- says acetone is "colder" as a stored property → ask whether the two drops started at the same temperature
+- says acetone is nonpolar → ask about the C=O bond and whether the dipoles cancel
+}
+}
+
+\problem[pid=imf-09, difficulty=4, concepts="viscosity, phase-energy"]{
+\catalog{Separates students who think intermolecular forces themselves weaken when heated from those who see that thermal energy rises against a fixed attraction.}
+\prompt{Honey straight from the fridge barely moves; warmed for a few seconds it pours easily. A student explains: "Heating weakens the intermolecular forces in the honey." Is that right? Explain what actually changes at the molecular level.}
+\solution{Not quite. The intermolecular forces (hydrogen bonds between the sugar molecules and water) have the same strength at any temperature; they depend on the molecules' structure, charge distribution and distance, not on temperature. What changes is the kinetic energy of the molecules. At higher temperature a larger fraction of molecules has enough energy to break free of a neighbor and move, so attractions are broken and re-formed far more often and the liquid flows more easily. Thermal motion also pushes molecules slightly farther apart on average, which does reduce the attraction a little, but the main effect is more energy available to overcome an essentially unchanged attraction.}
+\rubric{
+- states that the force between two given molecules at a given distance does not depend on temperature
+- identifies increased kinetic energy as what changes with heating
+- explains that more molecules can overcome the attraction per unit time, so flow is easier
+- optionally notes slight expansion reduces attraction a little as a minor effect
+}
+\scaffolds{
+1. What determines how strongly two molecules attract each other: their structure, or the temperature?
+2. What does temperature actually measure about a collection of molecules?
+3. If the attraction stays the same but the molecules move faster, what happens to how often they get past each other?
+}
+\extensions{
+1. Why does viscosity change so much more with temperature for honey than for water?
+2. Gases get more viscous when heated, not less. What is different about the mechanism of viscosity in a gas?
+}
+\misconceptions{
+- says heat "breaks" the forces permanently → ask whether honey gets viscous again when it cools, and what that implies
+- says heat weakens the forces → ask what the strength of a dipole-dipole or hydrogen bond depends on
+}
+}
+
+\problem[pid=imf-10, difficulty=4, concepts="dispersion, dipole-dipole, boiling-point"]{
+\catalog{Tests whether the student can weigh dispersion against dipole-dipole and recognize that dispersion often wins when electron counts differ substantially.}
+\prompt{\ce{HCl} is more polar than \ce{HBr}: its bond dipole is larger. Yet \ce{HBr} boils at −67 °C and \ce{HCl} at −85 °C. Explain how the more polar molecule ends up with the lower boiling point.}
+\solution{Both molecules have dipole-dipole forces and dispersion forces. \ce{HCl}'s larger dipole gives it somewhat stronger dipole-dipole attraction. But \ce{HBr} has many more electrons (36 vs 18) in a larger, more polarizable cloud, so its dispersion forces are considerably stronger. The increase in dispersion going from Cl to Br outweighs the decrease in dipole-dipole, so \ce{HBr} has the stronger total intermolecular attraction and the higher boiling point. Dispersion is often the largest contribution even for polar molecules once they have more than a few electrons.}
+\rubric{
+- recognizes both molecules have dipole-dipole and dispersion
+- states \ce{HBr}'s dispersion is stronger because of more electrons / greater polarizability
+- states the dispersion gain outweighs the dipole-dipole loss, giving \ce{HBr} the higher boiling point
+- avoids claiming polarity is irrelevant: it is a smaller effect here, not zero
+}
+\scaffolds{
+1. List every type of intermolecular force present in \ce{HCl}. In \ce{HBr}.
+2. Which molecule has more electrons? What does that do to dispersion?
+3. If one force gets a bit weaker and another gets a lot stronger, which way does the total go?
+}
+\extensions{
+1. \ce{HF} boils at 20 °C, far above both. Why does the trend break there?
+2. Predict the boiling point of \ce{HI} relative to \ce{HBr} and explain.
+}
+\misconceptions{
+- says polar molecules always have stronger forces than less polar ones → ask what else differs between Cl and Br
+- says \ce{HBr} is heavier so it "takes more energy to lift into the gas" → ask whether boiling is about lifting mass or breaking attraction
+}
+}
+
+\problem[pid=imf-11, difficulty=3, concepts="solubility, dispersion, hydrogen-bonding"]{
+\catalog{Checks whether the student can justify "like dissolves like" in terms of which attractions are broken and formed, rather than repeating the slogan.}
+\prompt{Iodine (\ce{I2}) dissolves well in hexane (\ce{C6H14}) but barely in water. Table salt does the reverse. Explain both in terms of the attractions that have to be broken and the ones that form.}
+\solution{Dissolving requires separating solute particles from each other and solvent molecules from each other, then forming solute-solvent attractions; it is favorable when the new attractions are comparable to the ones broken. \ce{I2} and hexane are both nonpolar and held together only by dispersion; mixing them trades dispersion for dispersion of similar strength, so iodine dissolves. Putting \ce{I2} into water would require breaking strong water-water hydrogen bonds to make room, and \ce{I2} can offer only weak dispersion in return; the water molecules stay with each other, so iodine barely dissolves. \ce{NaCl} is held by strong ionic attractions; water's dipoles can surround each ion and form strong ion-dipole attractions that compensate, so salt dissolves. Hexane has no dipole and cannot form ion-dipole attractions, so it cannot pay the cost of separating the ions.}
+\rubric{
+- frames dissolving as breaking solute-solute and solvent-solvent attractions and forming solute-solvent ones
+- \ce{I2}/hexane: dispersion traded for dispersion, so it mixes
+- \ce{I2}/water: would break hydrogen bonds for weak dispersion in return, so it does not
+- \ce{NaCl}/water: ion-dipole attractions compensate for breaking the ionic lattice; hexane cannot offer that
+}
+\scaffolds{
+1. For something to dissolve, what attractions have to be broken? What new ones form?
+2. What holds water molecules together? What could an iodine molecule offer a water molecule in exchange?
+3. What part of a water molecule would face a \ce{Na+} ion? A \ce{Cl-} ion?
+}
+\extensions{
+1. Ethanol dissolves in both water and hexane. What about its structure lets it do both?
+2. Why does oxygen gas dissolve so poorly in water, and why does cold water hold more than warm water?
+}
+\misconceptions{
+- says "like dissolves like" with no mechanism → ask what is actually being broken and formed
+- says water repels iodine → ask whether it is repulsion or that water prefers itself
+}
+}
+
+\problem[pid=imf-12, difficulty=4, concepts="phase-energy, hydrogen-bonding"]{
+\catalog{Separates students who know the two heats are different from those who can say what fraction of the intermolecular attraction each phase change actually breaks.}
+\prompt{For water, the heat of fusion is about 6 kJ/mol and the heat of vaporization is about 41 kJ/mol. Both are phase changes of the same substance. Why does vaporizing take almost seven times as much energy as melting?}
+\solution{Melting converts a solid to a liquid, but the molecules stay in contact. In ice each water molecule is hydrogen-bonded in a fixed, open lattice; in liquid water most of those hydrogen bonds still exist, just constantly breaking and re-forming as molecules move. Melting only has to disrupt the rigid arrangement, breaking a small fraction of the hydrogen bonds, so it costs little. Vaporizing separates the molecules completely into a gas where they are essentially non-interacting; essentially every hydrogen bond and dispersion attraction a molecule had must be broken. That is nearly the full intermolecular attraction energy, hence the much larger value.}
+\rubric{
+- states that liquid molecules remain in contact and still hydrogen-bond, so melting breaks only some attractions
+- states that vaporization separates molecules completely, breaking essentially all attractions
+- connects the energy ratio to the fraction of attraction broken in each change
+}
+\scaffolds{
+1. Picture ice and liquid water. How far apart are the molecules in each? Are they still touching after melting?
+2. Now picture steam. How far apart are the molecules? How much attraction is left between them?
+3. Which change has to break more of the hydrogen bonds a molecule has?
+}
+\extensions{
+1. Ice is less dense than liquid water. Using the same picture of hydrogen bonds, explain why.
+2. Would you expect the ratio of heat of vaporization to heat of fusion to be larger or smaller for a nonpolar substance like argon? Why?
+}
+\misconceptions{
+- says melting breaks all the hydrogen bonds → ask whether liquid water still has hydrogen bonds, and how it could have a high boiling point otherwise
+- says vaporization breaks the covalent O–H bonds → ask what the gas is made of; it is still \ce{H2O} molecules
+}
+}
+
+\problem[pid=imf-13, difficulty=3, concepts="hydrogen-bonding, polarity-geometry"]{
+\catalog{Drawing problem. Tests whether the student can place a hydrogen bond between the right atoms, with the right partial charges and roughly linear geometry, and distinguish it from a covalent bond.}
+\prompt{Draw two water molecules forming a hydrogen bond. Label the partial charges that make the attraction happen, show which atoms the hydrogen bond runs between, and indicate its approximate geometry. Send a photo of your drawing and say in a sentence what distinguishes the hydrogen bond from the O–H bonds inside each molecule.}
+\solution{A correct drawing shows two bent \ce{H2O} molecules. One molecule's hydrogen (δ+) points at the oxygen (δ−) of the other, toward one of that oxygen's lone pairs. The hydrogen bond is usually drawn as a dotted or dashed line from H to O, with the O–H···O arrangement close to linear (about 180°). Partial charges: δ− on each oxygen, δ+ on each hydrogen. The O–H bonds within a molecule are covalent (shared electrons, about 0.96 Å, roughly 460 kJ/mol); the hydrogen bond between molecules is an electrostatic attraction between a δ+ hydrogen and a lone pair, longer (about 1.8 Å) and much weaker (about 20 kJ/mol).}
+\rubric{
+- two bent water molecules, hydrogen of one pointing at oxygen of the other
+- δ+ on hydrogen, δ− on oxygen labeled
+- hydrogen bond drawn as a dashed line H···O, roughly linear O–H···O
+- states that the intramolecular O–H bonds are covalent and much stronger, the hydrogen bond is an intermolecular attraction
+}
+\scaffolds{
+1. Which atom in water carries the partial negative charge? Which carries partial positive?
+2. Opposite partial charges attract. Which atom of molecule A should point at which atom of molecule B?
+3. Where are the lone pairs on oxygen? That is where the hydrogen should aim.
+}
+\extensions{
+1. How many hydrogen bonds can one water molecule form at most? Show where each would go.
+2. Add a third water molecule to your drawing in a position that would also hydrogen-bond. Why does this lead to an open, low-density structure in ice?
+}
+\misconceptions{
+- draws the hydrogen bond between two hydrogens or two oxygens → ask what charges attract
+- draws the hydrogen bond as a solid line equal to the O–H bonds → ask whether it is the same kind of bond and the same strength
+- draws water as linear → ask how many electron groups are around oxygen
+}
+}
+
+\problem[pid=imf-14, difficulty=5, concepts="hydrogen-bonding, boiling-point, polarity-geometry"]{
+\catalog{High discrimination. The student must weigh strength per hydrogen bond against number of hydrogen bonds per molecule, and reason about network connectivity rather than a single pairwise interaction.}
+\prompt{\ce{HF} has a more polar bond than water's O–H, and a single \ce{F-H...F} hydrogen bond is stronger than a single \ce{O-H...O} hydrogen bond. Yet \ce{HF} boils at 20 °C and water at 100 °C. Explain.}
+\solution{Boiling point depends on the total attraction a molecule must escape, not the strength of one interaction. Each HF molecule has one hydrogen to donate and, although fluorine has three lone pairs, it effectively participates in about two hydrogen bonds, forming chains or rings. Each water molecule has two hydrogens to donate and two lone pairs to accept, so it can form up to four hydrogen bonds in a three-dimensional network, and in the liquid it averages roughly three to four. So although each individual hydrogen bond in HF is stronger, a water molecule is held by about twice as many, and the total energy to free a water molecule is larger. Water also has a slightly larger dispersion contribution, but the network connectivity is the main point.}
+\rubric{
+- distinguishes strength per hydrogen bond from number of hydrogen bonds per molecule
+- counts donors and acceptors: HF one donor, water two donors and two acceptors
+- concludes water forms a 3D network with more total hydrogen-bond energy per molecule
+- does not deny the premise that an individual F–H···F bond is stronger
+}
+\scaffolds{
+1. How many hydrogens can one HF molecule donate to a hydrogen bond? How many can one water molecule donate?
+2. How many lone pairs does each have to accept with? Which of those actually gets used if partners are limited?
+3. If one molecule is held by two strong attractions and another by four slightly weaker ones, which takes more total energy to pull free?
+}
+\extensions{
+1. Ammonia has three N–H hydrogens but only one lone pair. Predict how many hydrogen bonds per molecule it can really form and where its boiling point should fall.
+2. Why does liquid HF form chains rather than a 3D network?
+}
+\misconceptions{
+- denies the premise and says water's hydrogen bonds are stronger → ask them to accept the data and look for another variable
+- says water is heavier (18 vs 20 g/mol: it is not) → correct the fact and redirect to bonding count
+}
+}
+
+\problem[pid=imf-15, difficulty=4, concepts="dispersion, molecular-shape, boiling-point"]{
+\catalog{Tests whether the student knows dispersion depends on contact area and shape, not only electron count, by holding formula constant and varying branching.}
+\prompt{Pentane (\ce{CH3CH2CH2CH2CH3}) and neopentane (\ce{C(CH3)4}) have the same formula, \ce{C5H12}, and the same number of electrons. Pentane boils at 36 °C; neopentane at 9.5 °C. Explain.}
+\solution{Both are nonpolar and have only dispersion forces, and with identical electron counts the polarizability per molecule is about the same. What differs is shape. Pentane is a long, flexible chain that can lie alongside a neighbor along its whole length, giving a large area of close contact where instantaneous dipoles can induce dipoles. Neopentane is compact and nearly spherical, so two neopentane molecules touch over a small area. Dispersion attraction depends on how much of the electron clouds can get close, so the extended molecule has stronger total dispersion forces and the higher boiling point.}
+\rubric{
+- states both are nonpolar with only dispersion and equal electron counts
+- identifies shape as the variable: chain vs compact sphere
+- explains that more surface contact between neighbors gives stronger total dispersion attraction
+}
+\scaffolds{
+1. What kind of intermolecular force is present in each? Is there any difference in the kind of force?
+2. Sketch the shapes. How much of one pentane molecule can touch another? How much of one neopentane can?
+3. Dispersion acts between nearby parts of electron clouds. Which pair of molecules has more "nearby"?
+}
+\extensions{
+1. Isopentane (one branch) boils at 28 °C. Does that fit your explanation?
+2. Why does branching also lower viscosity for hydrocarbon oils?
+}
+\misconceptions{
+- says neopentane is more compact so "denser forces" → ask whether forces act inside the molecule or between molecules
+- says pentane is heavier or more polar → correct: same formula, both nonpolar; redirect to shape
+}
+}
