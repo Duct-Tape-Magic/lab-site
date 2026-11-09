@@ -6,9 +6,9 @@
    the prompt and the API key; this file keeps nothing of its own (no localStorage) and sends nothing anywhere else.
    Bare on purpose: the conversation, a text box, Send, End session, Skip this problem, Report a problem (a small box that sends a
    note to the teacher), one progress line, and a warning line when the owner's weekly allowance is running low. Text only.
-   (v2: the I'm stuck button is gone; students say so in their own words. v3: Skip and Report a problem. v4: progress is counted in topics credited, not problems. v5: everything under the conversation sits in one .soc-dock, so the host's full-page layout can pin it to the bottom.)
+   (v2: the I'm stuck button is gone; students say so in their own words. v3: Skip and Report a problem. v4: progress is counted in topics credited, not problems. v5: everything under the conversation sits in one .soc-dock, so the host's full-page layout can pin it to the bottom. v6: a block with no bank says so in its own words.)
    ctx: { opts, labId, text(key), fmt(key, vars), call(payload, onDelta) → Promise, renderMath(node), updated(), fail(why) }
-   New version → new filename (socratic.v6.js) and update WIDGETS.socratic.file in index.html. */
+   New version → new filename (socratic.v7.js) and update WIDGETS.socratic.file in index.html. */
 (function () {
   'use strict';
   var W = window.LabWidgets = window.LabWidgets || {};
@@ -83,7 +83,7 @@
       }
 
       function boot() {
-        if (!bank) { setNote(t('widgetUnavailable')); setBusy(true); return; }
+        if (!bank) { setNote(t('socNoBank')); setBusy(true); return; }   // the Builder warns about this; the words here are the tutor's own, not the table-widget note
         setBusy(true); setNote(t('socThinking'));
         ctx.call({ action: 'resume', bank_id: bank }).then(function (res) {
           if (stopped) return;
