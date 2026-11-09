@@ -306,12 +306,18 @@ async function runTurn(s: Session, bank: Bank, settings: Awaited<ReturnType<type
     messages, output_config: { effort: s.effort },
     betas: ["server-side-fallback-2026-07-01"], fallbacks: "default",   // a safety-classifier decline is retried server-side on the recommended model
   };
-  let raw = "";
-  const stream = (anthropic as any).beta.messages.stream(params);
-  for await (const ev of stream) {
-    if (ev.type === "content_block_delta" && ev.delta?.type === "text_delta") { raw += ev.delta.text; send({ type: "delta", text: ev.delta.text }); }
+  let raw = "", final: any;
+  try {
+    const stream = (anthropic as any).beta.messages.stream(params);
+    for await (const ev of stream) {
+      if (ev.type === "content_block_delta" && ev.delta?.type === "text_delta") { raw += ev.delta.text; send({ type: "delta", text: ev.delta.text }); }
+    }
+    final = await stream.finalMessage();
+  } catch (e) {
+    await admin.from("oral_messages").delete().eq("id", userRow.id);   // the model never answered: leave no unanswered turn behind
+    if (!hidden && s.current_pid && s.served[s.current_pid]?.status === "open") s.served[s.current_pid].studentTurns = Math.max(0, (s.served[s.current_pid].studentTurns || 1) - 1);
+    throw e;
   }
-  const final = await stream.finalMessage();
   if (final.stop_reason === "refusal" || !raw.trim()) raw = raw.trim() || "I can't take that one up here. Let's stay with the problem: tell me what you were thinking.";
   const { text, state } = parseStateLine(raw);
   const usage = final.usage || {}, cost = costOf(s.model, usage);
@@ -362,14 +368,23 @@ Deno.serve(async (req) => {
       const bank = await loadBank(String(body.bank_id || ""));
       const { data } = await admin.from("oral_sessions").select("*").eq("user_id", user.id).eq("bank_id", bank.id).is("ended_at", null).order("started_at", { ascending: false }).limit(1).maybeSingle();
       const left = Math.max(0, settings.caps.turnsPerWeek - await weeklyTurns(user.id));
-      return json(200, { session: data ? await clientSession(data as Session, bank) : null, bank_title: bank.title, total: bank.problems.length, remaining: left, warn: warnFor(settings, left), limit: left <= 0 ? "limit" : null });
+      const cs = data ? await clientSession(data as Session, bank) : null;
+      return json(200, { session: cs && cs.messages.some((m: any) => m.role === "assistant") ? cs : null, bank_title: bank.title, total: bank.problems.length, remaining: left, warn: warnFor(settings, left), limit: left <= 0 ? "limit" : null });
     }
     if (action === "start") {
       const bank = await loadBank(String(body.bank_id || ""));
       const cap = await checkCaps(user.id, settings.caps); if (cap.limit) return json(200, { limit: cap.limit });
       if (!Deno.env.get("ANTHROPIC_API_KEY")) return json(500, { error: "no api key" });
       const { data: open } = await admin.from("oral_sessions").select("*").eq("user_id", user.id).eq("bank_id", bank.id).is("ended_at", null).order("started_at", { ascending: false }).limit(1).maybeSingle();
-      if (open) { const left = Math.max(0, settings.caps.turnsPerWeek - await weeklyTurns(user.id)); return json(200, { session: await clientSession(open as Session, bank), remaining: left, warn: warnFor(settings, left) }); }
+      if (open) {
+        const { count } = await admin.from("oral_messages").select("id", { count: "exact", head: true }).eq("session_id", open.id).eq("role", "assistant");
+        if (count && count > 0) { const left = Math.max(0, settings.caps.turnsPerWeek - await weeklyTurns(user.id)); return json(200, { session: await clientSession(open as Session, bank), remaining: left, warn: warnFor(settings, left) }); }
+        await admin.from("oral_messages").delete().eq("session_id", open.id);   // the opening turn never arrived: start this session over
+        const s0 = open as Session; s0.served = {}; s0.current_pid = null; s0.turns = 0;
+        let t0 = "[Session start. Greet the student in one sentence and pose an opener problem.]";
+        if (s0.previous_summary) t0 += `\n\n[Summary from this student's previous session on this topic:]\n${s0.previous_summary}`;
+        return sseResponse(async (send) => { const rec = await runTurn(s0, bank, settings, [{ type: "text", text: t0 }], true, send); const left = Math.max(0, settings.caps.turnsPerWeek - await weeklyTurns(user.id)); send({ type: "done", message: rec, session: await clientSession(s0, bank), remaining: left, warn: warnFor(settings, left) }); });
+      }
       const { data: prev } = body.fresh ? { data: null } : await admin.from("oral_sessions").select("summary").eq("user_id", user.id).eq("bank_id", bank.id).not("summary", "is", null).order("ended_at", { ascending: false }).limit(1).maybeSingle();
       const openers = bank.problems.filter((p) => p.opener);
       const s: Session = { id: `s-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, user_id: user.id, bank_id: bank.id, lab_id: body.lab_id ? String(body.lab_id) : null, model: settings.model, effort: settings.effort, started_at: new Date().toISOString(), ended_at: null, target_difficulty: openers.length ? Math.min(...openers.map((p) => p.difficulty)) : 2, served: {}, current_pid: null, bank_total: bank.problems.length, previous_summary: prev?.summary || null, summary: null, turns: 0, cost: 0 };
