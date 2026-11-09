@@ -3,6 +3,14 @@
 Built 2026-11-08 from the owner's standalone prototype ("Socratic 1 Proto", Oral Tutor Prototype folder, HANDOFF.md).
 The prototype's bank, prompt and reminder are kept in `docs/socratic/` as format references only.
 
+**Prompt precedence.** The tutor's guiding prompt and reminder live as defaults in `supabase/functions/socratic/index.ts`.
+The Widgets tab shows them in text boxes; saving the page stores whatever is in the boxes in `oral_settings`, and a stored
+text overrides the default from then on, so a later change to the default in code is not seen until the stored copy is
+cleared (empty the box and save) or edited to match. `settings` reports `defaults.system_prompt` / `defaults.reminder`
+true when the code default is in force. Prompt rules as of 2026-11-09: explain the concept fully when asked, then a
+follow-up or "does that make sense"; rigorous but let go once understood (qualitative); quantitative problems run to a
+numerically correct answer; grade kindly and honestly; credit quickly what the student already knows and move on.
+
 ## What it is
 
 A widget block, `\widget[type=socratic, bank=<bank id>, label=…]{optional framing}`, picked in the Builder's Widget menu.
