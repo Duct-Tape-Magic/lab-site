@@ -688,6 +688,7 @@
   /* ---------- Report tab ---------- */
   .lab-tabs { display: flex; flex-wrap: wrap; gap: 0 1.5rem; border-bottom: 0.5px solid var(--rule); margin: 0.5rem 0 var(--lab-header-gap); max-width: var(--measure); }
   .lab-tab { background: none; border: none; border-bottom: 1.5px solid transparent; margin-bottom: -0.5px; padding: 0.6rem 0; font-family: var(--font-body); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); cursor: pointer; }
+  .lab-tab { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: manipulation; }   /* phones: no grey flash over the tab name when it is tapped, and no text selection on a double tap */
   .lab-tab.active { color: var(--ink); border-bottom-color: var(--ink); }
   .lab-tab:hover { color: var(--ink); }
   .rp-toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; align-items: flex-start; max-width: var(--measure); margin-bottom: 1.5rem; }
