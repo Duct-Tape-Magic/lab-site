@@ -300,6 +300,11 @@ async function loadSession(id: string, userId: string): Promise<Session> {
   if (data.user_id !== userId) throw new Error("not your session");
   return data as Session;
 }
+async function loadSessionAny(id: string): Promise<Session> {   // admin housekeeping only; every other path checks ownership (loadSession)
+  const { data, error } = await admin.from("oral_sessions").select("*").eq("id", id).maybeSingle();
+  if (error || !data) throw new Error("session not found");
+  return data as Session;
+}
 async function saveSession(s: Session, bank?: Bank) {
   if (bank) s.concepts = conceptState(s, bank);
   const row: any = { ended_at: s.ended_at, target_difficulty: s.target_difficulty, served: s.served, current_pid: s.current_pid, summary: s.summary, turns: s.turns, cost: s.cost, concepts: s.concepts ?? null };
@@ -475,10 +480,11 @@ Deno.serve(async (req) => {
       return done(s, await openSession(s, bank));
     }
     if (action === "turn" || action === "end") {
-      const s = await loadSession(String(body.session_id || ""), user.id);
+      const quiet = action === "end" && body.quiet === true && isAdmin;   // owner housekeeping: an admin may close any session this way (no summary, no model call, transcript kept)
+      const s = quiet ? await loadSessionAny(String(body.session_id || "")) : await loadSession(String(body.session_id || ""), user.id);
       if (s.ended_at) return json(400, { error: "session has ended" });
       const bank = await loadBank(s.bank_id);
-      if (action === "end" && body.quiet === true && isAdmin) {   // owner housekeeping: close a session with no summary and no model call; the transcript stays
+      if (quiet) {
         s.ended_at = new Date().toISOString(); await saveSession(s, bank);
         return json(200, { session: await clientSession(s, bank), quiet: true });
       }
