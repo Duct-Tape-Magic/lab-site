@@ -11,7 +11,8 @@
    v7: the answer box takes the cursor only when no other field has it.
    v8: a session opens with a Start session button and the bank's written opening (the server's start action no longer calls the tutor);
        ctx.begin says the person already pressed the host's Start, so the session opens without a second button.
-   New version → new filename (socratic.v9.js) and update WIDGETS.socratic.file in index.html. */
+   v9: Start a new session empties the page at once and opens the new session directly; the ended session is never shown again under it.
+   New version → new filename (socratic.v10.js) and update WIDGETS.socratic.file in index.html. */
 (function () {
   'use strict';
   var W = window.LabWidgets = window.LabWidgets || {};
@@ -93,6 +94,7 @@
       // Opens the session. The server answers with the bank's written opening and its question about what the student already knows;
       // the tutor itself is first called when the student replies, so pressing Start costs nothing.
       function begin() {
+        session = null; log.innerHTML = ''; q('progress').textContent = ''; setWarn('');   // nothing of an earlier session stays on the page while the new one opens
         mode('chat'); setBusy(true); setNote(t('socThinking'));
         ctx.call({ action: 'start', bank_id: bank }).then(function (res) {
           if (stopped) return;
@@ -141,7 +143,10 @@
           rtext.value = ''; rstatus.textContent = t('socReportSent'); rstatus.className = 'soc-ok'; q('reportsend').disabled = false;
         }, function () { rstatus.textContent = t('socReportError'); rstatus.className = 'soc-warn'; q('reportsend').disabled = false; });
       });
-      q('again').addEventListener('click', function () { if (busy) return; q('again').hidden = true; input.parentElement.hidden = false; q('end').hidden = false; q('skip').hidden = false; setNote(''); session = null; boot(true); });
+      q('again').addEventListener('click', function () {   // the old session leaves the page with this click; the server's start hands back an open session if there is one, so no resume call is needed first
+        if (busy) return; q('again').hidden = true; input.parentElement.hidden = false; q('end').hidden = false; q('skip').hidden = false; rbox.hidden = true; input.value = '';
+        begin(); if (box && box.hasAttribute('data-fullpage')) window.scrollTo(0, 0);   // the full-page tutor scrolls the page itself, so go back to the top of the now-empty page
+      });
 
       setBusy(true); boot(!!ctx.begin);
       return { stop: function () { stopped = true; } };
