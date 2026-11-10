@@ -99,6 +99,8 @@ Added 2026-11-09: `socNoBank` text (widget v6) for a tutor block saved without `
 
 Fixed 2026-11-09: Builder gave extra tabs the Report palette (`buPaletteButtons` tested `list === 'procedure'`), so tabs after the first could not take widgets, tables or steps; now only `report` gets the report palette.
 
+Added 2026-11-10: function action `end` with `quiet: true` (admins only) closes the caller's own session with no summary and no model call; used once to close the owner's 17 test sessions left open by the old start-every-tab behaviour. No UI.
+
 Changed 2026-11-10: **Socratic sessions open with a button and a written opening** (`widgets/socratic.v8.js`). Bank blocks `\intro{…}` and `\levelcheck{…}` (both parsers); function `start` stores intro + level question as the first assistant message with **no model call** (`openSession`); the tutor's first reply reads the student's self-report, writes `level=N` (→ `target_difficulty`) and poses the first problem at that level. Full-page tutors mount only when their tab is shown (`el._ltAutoStart` from `socFullpageSync`), then show Start session (`socStart`) unless a session is open. Site text `socLevelAsk` is the fallback question (read server-side from `site_content`). `opener` is now optional. Hand-off for the bank author: `docs/socratic/BANK-INTRO-TASK.md`.
 
 Fixed 2026-11-10: `socSaveSettings` writes the `system_prompt` / `reminder` rows only when the owner changed that box on the page (compared with what the page loaded). Before, saving a limit from a settings page opened before a prompt deploy stored the older default as an override, which silently froze the prompt (it happened when the owner raised the caps; the stale override was cleared through the settings page).

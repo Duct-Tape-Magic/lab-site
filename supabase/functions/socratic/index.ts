@@ -478,6 +478,10 @@ Deno.serve(async (req) => {
       const s = await loadSession(String(body.session_id || ""), user.id);
       if (s.ended_at) return json(400, { error: "session has ended" });
       const bank = await loadBank(s.bank_id);
+      if (action === "end" && body.quiet === true && isAdmin) {   // owner housekeeping: close a session with no summary and no model call; the transcript stays
+        s.ended_at = new Date().toISOString(); await saveSession(s, bank);
+        return json(200, { session: await clientSession(s, bank), quiet: true });
+      }
       const cap = await checkCaps(user.id, settings.caps); if (cap.limit && action !== "end") return json(200, { limit: cap.limit });   // ending a session is always allowed
       const text = action === "end" ? "[The session is ending now. Write the summary for the student. Do not pose a new problem.]" : String(body.text || "").trim().slice(0, 4000);
       if (!text) return json(400, { error: "empty message" });
