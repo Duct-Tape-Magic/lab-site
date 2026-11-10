@@ -1,9 +1,20 @@
 % Oral tutor problem bank — Intermolecular forces (sample, 15 problems)
 % Difficulty: 1 recall · 2 apply one idea · 3 compare two ideas · 4 weigh competing effects · 5 synthesize / evaluate a claim
-% `opener` marks broad problems that touch several concepts; the tutor starts with one of these.
+% `opener` marks broad problems that touch several concepts; the tutor prefers one of these for the first problem.
+% \intro and \levelcheck are the written opening a student reads on Start session (BANK-FORMAT.md).
 
 \bank[slug=imf, title="Intermolecular forces", topic="intermolecular forces and liquid properties"]
 \concepts{dispersion, dipole-dipole, hydrogen-bonding, polarity-geometry, boiling-point, viscosity, surface-tension, vapor-pressure, solubility, phase-energy, molecular-shape}
+
+\intro{
+This session is about the forces between molecules. We will sort out dispersion, dipole-dipole attraction and hydrogen bonding, see how a molecule's shape and polarity decide which of them it has, and use them to explain boiling point, viscosity, surface tension, vapor pressure and solubility.
+
+By the end you should be able to look at two substances, such as $\ce{C3H8}$ and $\ce{C2H5OH}$, and explain in words which one holds together more strongly and what that does to its properties. Most problems ask for reasoning, not a number.
+}
+
+\levelcheck{
+Before the first problem, tell me where you stand on hydrogen bonding. Have you worked with it before, and how confident are you about when a molecule can do it? It is fine to say it is all new.
+}
 
 \problem[pid=imf-01, difficulty=2, opener, concepts="hydrogen-bonding, dispersion, boiling-point"]{
 \catalog{Separates students who name "hydrogen bonding" as a label from those who can say what it requires and why it dominates dispersion at this molar mass.}
