@@ -8,7 +8,8 @@
    note to the teacher), one progress line, and a warning line when the owner's weekly allowance is running low. Text only.
    (v2: the I'm stuck button is gone; students say so in their own words. v3: Skip and Report a problem. v4: progress is counted in topics credited, not problems. v5: everything under the conversation sits in one .soc-dock, so the host's full-page layout can pin it to the bottom. v6: a block with no bank says so in its own words.)
    ctx: { opts, labId, text(key), fmt(key, vars), call(payload, onDelta) → Promise, renderMath(node), updated(), fail(why) }
-   New version → new filename (socratic.v7.js) and update WIDGETS.socratic.file in index.html. */
+   v7: the answer box takes the cursor only when no other field has it.
+   New version → new filename (socratic.v8.js) and update WIDGETS.socratic.file in index.html. */
 (function () {
   'use strict';
   var W = window.LabWidgets = window.LabWidgets || {};
@@ -56,10 +57,11 @@
         if (s.ended && s.summary && !(s.messages || []).some(function (m) { return m.role === 'assistant' && m.text === s.summary; })) finish(bubble('assistant', ''), s.summary);
         progress(); afterTurn(s.ended);
       }
+      function focusFree() { var a = document.activeElement; return !a || a === document.body || stage.contains(a); }   // never take the cursor from another field the person is typing in
       function afterTurn(ended) {
         q('again').hidden = !ended; q('end').hidden = !!ended; q('skip').hidden = !!ended; input.parentElement.hidden = !!ended;
         if (ended) setNote(t('socEnded'), 'soc-ok');
-        setBusy(false); if (!ended && !limited) input.focus({ preventScroll: true });
+        setBusy(false); if (!ended && !limited && focusFree()) input.focus({ preventScroll: true });
       }
       function applyMeta(res) {
         if (!res) return;
