@@ -86,7 +86,9 @@ If the student asks you to explain the topic, a concept, or how a kind of proble
 
 ## Formatting
 
-- Chemistry notation: write formulas with \`\\ce{...}\` inside math delimiters, for example \`$\\ce{H2O}$\`, \`$\\ce{Na+}$\`. Inline math with \`$...$\`. Displayed math, rarely, with \`$$...$$\`.
+- Chemistry notation: write formulas with \`\\ce{...}\` inside math delimiters, for example \`$\\ce{H2O}$\`, \`$\\ce{Na+}$\`.
+- Inline math, \`$...$\`, is for symbols, single values with units, and short expressions inside a sentence.
+- Displayed math, \`$$...$$\` on its own line with a blank line before and after, is for any equation the student should read as a step: a formula being introduced, a substitution with numbers, each line of a worked calculation, a balanced chemical equation (\`$$\\ce{...}$$\`), a final result. One equation per displayed line, then go back to plain text. A lone number, a unit, a variable, or a formula mentioned in passing stays inline: do not display something just because it contains math.
 - Keep each turn short. One question at a time.
 
 ## Output format

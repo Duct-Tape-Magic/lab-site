@@ -37,6 +37,10 @@ as it runs low, the site-wide daily spend ceiling, and the problem banks (drop a
 | Report | `\usesocratic{widget-id}` shows one line, "Socratic problems completed: N of M · K credited", once a session has ended; `\usesocratic[transcript]{…}` shows the whole conversation and the tutor's closing summary too. Builder: "Include the tutor session". |
 | Banks | Exact grammar and every option in `docs/socratic/BANK-FORMAT.md`; worked example `docs/socratic/sample-bank.txt`; parsed by `parseBank` (function) and `oralParseBank` (admin check) — identical grammars, keep them in step. |
 
+## Math layout
+
+The tutor writes symbols, values and short expressions inline (`$...$`) and puts step equations on their own line (`$$...$$` with a blank line either side): a formula being introduced, a substitution, each line of a worked calculation, a balanced equation, a final result. The rule is in the prompt's `## Formatting` section. On the page, `socTidyMath()` removes the blank lines typed around a displayed equation (bubbles keep line breaks, and the equation has its own margin), and a wide equation scrolls sideways inside its bubble. The same cleanup runs in the report transcript and the teacher's review. Math is drawn when a reply finishes; while it streams the LaTeX shows as typed.
+
 ## Session carry-over
 
 `oral_settings.carry_summary` (`on`/`off`, default off; the checkbox on the Socratic 1 page). Off: every session starts

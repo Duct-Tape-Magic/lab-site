@@ -633,6 +633,7 @@
   .soc { display: flex; flex-direction: column; gap: 0.6rem; }
   .soc-log { display: flex; flex-direction: column; gap: 0.55rem; max-height: 60vh; overflow-y: auto; padding-right: 0.2rem; }
   .soc-msg { max-width: 92%; padding: 0.55rem 0.8rem; font-size: 0.95em; line-height: 1.5; white-space: pre-wrap; border: 0.5px solid var(--rule-strong); }
+  .soc-msg .katex-display, .soc-summary .katex-display { margin: 0.6em 0; padding: 0.15em 0; overflow-x: auto; overflow-y: hidden; }   /* an equation on its own line; a wide one scrolls inside the bubble instead of widening the page */
   .soc-msg.tutor { align-self: flex-start; background: var(--bg); }
   .soc-msg.me { align-self: flex-end; background: rgba(47,93,138,0.07); }
   .soc-msg.pending { opacity: 0.75; }
@@ -2640,7 +2641,7 @@ function rpRefreshMirrors(area) {
     if (!have || !have.sessions) { if (!have) socraticLoad(uid, opts.bank).then(() => rpRefreshMirrors(area)).catch(() => {}); if (!box.innerHTML) box.innerHTML = `<div class="soc-note">…</div>`; return; }
     const total = parseInt(src.dataset.socTotal, 10) || (have.sessions.length ? have.sessions[have.sessions.length - 1].bank_total : 0) || 0;
     box.innerHTML = socraticMirrorHTML(have.sessions, box.dataset.mode, total);
-    try { renderMathIn([box]); } catch (e) { /* ignore */ }
+    try { renderMathIn([box]); socTidyMath(box); } catch (e) { /* ignore */ }
   });
   area.querySelectorAll('.rp-mirror[data-mirror-photo]').forEach(box => {
     const id = box.dataset.mirrorPhoto;
@@ -5281,7 +5282,7 @@ function ltBindWidgets(area, host) {
           canRecord: () => host.canRecord(tableId, opts),
           record: values => host.record(tableId, opts, values),
           call: (payload, onDelta) => ltFnStream('socratic', { ...payload, lab_id: host.labId }, onDelta),   // the site's server function, with the student's login
-          renderMath: node => { try { renderMathIn([node]); } catch (e) { /* ignore */ } },
+          renderMath: node => { try { renderMathIn([node]); socTidyMath(node); } catch (e) { /* ignore */ } },
           updated: () => { socraticForget(state.session && state.session.user ? state.session.user.id : null, opts.bank); const area = el.closest('#lab-content-area, #lab-markup-preview'); if (area && area.querySelector('.rp-mirror[data-mirror-socratic]')) rpRefreshMirrors(area); },
           fail: why => { if (g !== gen) return; if (why === 'nocamera') { stop('idle'); noCamera(); } else showFailed(getText(why === 'denied' ? 'widgetDenied' : 'widgetFailed')); },
         };
@@ -5352,6 +5353,17 @@ function socraticProgress(sess) {   // credit attaches to topics (sess.concepts,
   const c = sess.concepts && typeof sess.concepts === 'object' ? sess.concepts : null;
   return { posed: served.length, credited, revealed, skipped, done: credited + revealed, topics: c ? (c.credited || []).length : null, topicsTotal: c ? c.total : null, allDone: !!(c && c.all_done) };
 }
+// Displayed equations in a tutor reply. The bubble keeps the tutor's line breaks (pre-wrap) and the equation brings its own space, so the blank lines typed around it are dropped.
+function socTidyMath(root) {
+  if (!root || !root.querySelectorAll) return;
+  root.querySelectorAll('.katex-display').forEach(d => {
+    const box = d.closest('.soc-msg, .soc-summary'); if (!box) return;
+    let n = d; while (n.parentNode && n.parentNode !== box && n.parentNode.childNodes.length === 1) n = n.parentNode;   // KaTeX wraps the display block in a bare span
+    const a = n.previousSibling, b = n.nextSibling;
+    if (a && a.nodeType === 3) a.nodeValue = a.nodeValue.replace(/\s+$/, '');
+    if (b && b.nodeType === 3) b.nodeValue = b.nodeValue.replace(/^\s+/, '');
+  });
+}
 function socraticTranscriptHTML(sess) {
   return `<div class="soc-log">${sess.messages.map(m => `<div class="soc-msg ${m.role === 'assistant' ? 'tutor' : 'me'}">${escapeHTML(m.text)}</div>`).join('')}</div>${sess.summary ? `<div class="soc-summary">${escapeHTML(sess.summary)}</div>` : ''}`;
 }
@@ -5379,7 +5391,7 @@ async function socraticReviewInto(body, opts, uid) {
       const reps = reports.filter(r => r.session_id === x.id).map(r => `<div class="soc-report-note"><b>Reported${r.pid ? ' ' + escapeHTML(r.pid) : ''}:</b> ${escapeHTML(r.note || '')}</div>`).join('');
       const needs = x.concepts && Array.isArray(x.concepts.needs_work) && x.concepts.needs_work.length ? ` · needs work: ${x.concepts.needs_work.map(k => k + (x.concepts.reveals && x.concepts.reveals[k] > 1 ? ` (revealed ×${x.concepts.reveals[k]})` : '')).join(', ')}` : '';
       return `<details class="soc-review" ${x === sessions[sessions.length - 1] ? 'open' : ''}><summary>${escapeHTML(when)} · ${x.turns || 0} turns · ${p.topicsTotal ? `${p.topics} of ${p.topicsTotal} topics · ` : ''}${p.posed} posed${escapeHTML(needs)} · ${p.credited} credited · ${p.revealed} revealed${p.skipped ? ` · ${p.skipped} skipped` : ''}${reps ? ' · reported a problem' : ''}${x.ended_at ? '' : ' · still open'}</summary>${reps}${socraticTranscriptHTML(x)}</details>`; }).join('');
-    try { renderMathIn([body]); } catch (e) { /* ignore */ }
+    try { renderMathIn([body]); socTidyMath(body); } catch (e) { /* ignore */ }
   } catch (e) { body.innerHTML = `<div class="soc-note">${escapeHTML(e.message || 'Could not load the sessions.')}</div>`; }
 }
 
