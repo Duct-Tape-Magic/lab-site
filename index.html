@@ -4395,14 +4395,16 @@ async function socDeleteBank(id) {
 async function socSaveSettings() {
   const st = socAdmin.settings; if (!st) return;
   const prompt = $('soc-prompt').value, reminder = $('soc-reminder').value;
-  // A prompt that equals the code default is stored as empty, so the default keeps governing and later improvements to it apply.
-  // The default comes fresh from the server, not from this page's memory: a page left open for hours must not re-save an older default as if the owner had written it.
+  // The prompt and reminder rows are written only when the owner changed the box on this page. An untouched box is left alone, so saving
+  // another setting (a limit, the model) from a page opened before a prompt update can never store that older default as the owner's own text.
+  // A box edited back to a built-in default, or emptied, is stored as empty: the default governs and later improvements to it apply.
   let fresh = null; try { fresh = await ltFnStream('socratic', { action: 'settings' }); } catch (e) { /* fall back to what the page has */ }
-  const defPrompt = (fresh && fresh.default_prompt) || st.default_prompt || (st.defaults.system_prompt ? st.system_prompt : '');
-  const defReminder = (fresh && fresh.default_reminder) || st.default_reminder || (st.defaults.reminder ? st.reminder : '');
+  const same = (v, d) => d != null && String(v).trim() === String(d).trim();
+  const promptDefaults = [fresh && fresh.default_prompt, st.default_prompt, st.defaults.system_prompt ? st.system_prompt : null];
+  const reminderDefaults = [fresh && fresh.default_reminder, st.default_reminder, st.defaults.reminder ? st.reminder : null];
   const rows = [
-    { key: 'system_prompt', value: prompt.trim() === String(defPrompt).trim() ? '' : prompt },
-    { key: 'reminder', value: reminder.trim() === String(defReminder).trim() ? '' : reminder },
+    ...(same(prompt, st.system_prompt) ? [] : [{ key: 'system_prompt', value: promptDefaults.some(d => same(prompt, d)) ? '' : prompt }]),
+    ...(same(reminder, st.reminder) ? [] : [{ key: 'reminder', value: reminderDefaults.some(d => same(reminder, d)) ? '' : reminder }]),
     { key: 'model', value: $('soc-model').value }, { key: 'effort', value: $('soc-effort').value },
     { key: 'warn_text', value: $('soc-warn-text').value },
     { key: 'carry_summary', value: $('soc-carry').checked ? 'on' : 'off' },
