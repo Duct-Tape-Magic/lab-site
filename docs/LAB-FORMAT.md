@@ -117,7 +117,7 @@ The widget is passive until the student taps Start (no camera prompt on page loa
 
 Options common to every widget:
 
-- `type=` which tool (required). Available: `colorimeter`, `socratic` (an oral tutor over a problem bank the teacher writes on the Widgets tab; `bank=` names the bank, no table; students must be signed in; see docs/SOCRATIC.md).
+- `type=` which tool (required). Available: `colorimeter`, `socratic` (an oral tutor over a problem bank the teacher writes on the Widgets tab; `bank=` names the bank, no table; students must be signed in; the student presses Start session and the bank's own overview and level question open it; see docs/SOCRATIC.md).
 - `fullpage` (socratic only, beta): the tutor is the whole page, laid out like a chat, for a Socratic-only review with no lab around it. Builder: the "Full page interface" checkbox on the widget block.
 - `id=` a permanent name, like any block.
 - `table=` the `id` of the `\datatable` it records into (required). Give the table `addrows` so every reading gets a row; otherwise only the table's blank rows can take readings.
@@ -155,7 +155,7 @@ Inside `\report{…}` use ordinary Markdown plus:
 | `\usegraph{id}` | Shows the `\graph` with that id (give the graph an `id=` option), drawn from the student's data, captioned "Figure n". |
 | `\useanswer{id}` | Shows an `\answer`, `\choice` or `\notes` box from another tab (by its id): the prompt plus what the student wrote or ticked there. Read-only; the student edits it on its own tab. |
 | `\usephoto{id}` | Shows the photo the student added in the `\photo` slot with that id on another tab, with its prompt. |
-| `\usesocratic[transcript]{id}` | Reports on a Socratic tutor widget (by its id). Without the option: one line once the student has ended a session, "Socratic problems completed: N of M · K credited". With `transcript`: the whole conversation and the tutor's closing summary as well. Optional either way. |
+| `\usesocratic[transcript]{id}` | Reports on a Socratic tutor widget (by its id). Without the option: one line once the student has ended a session, "Socratic topics credited: N of M · K problems worked". With `transcript`: the whole conversation and the tutor's closing summary as well. Optional either way. |
 | `\answer`, `\datatable`, `\photo`, `\notes`, `\graph`, `\figure`, `\video` | Work inside the report exactly as in the procedure (a `\figure` in the report is the teacher's own picture, e.g. a table of literature values to compare against): use them when the report should *ask* for something new (a fresh data table to fill in, a question answered only in the write-up, a photo of the final result) instead of copying it from the procedure. |
 
 The `\use…` commands refer to blocks on the other tabs (the body or any `\tab`), so every referenced block needs an explicit `id=`.
