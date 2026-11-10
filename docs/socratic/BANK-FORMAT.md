@@ -1,6 +1,6 @@
 # Socratic problem bank: exact format
 
-Written 2026-11-09. This is the grammar the site actually parses (`oralParseBank` in `index.html` for the
+Written 2026-11-09, revised 2026-11-10 (session opening: `\intro`, `\levelcheck`; `opener` optional). This is the grammar the site actually parses (`oralParseBank` in `index.html` for the
 admin-side check, `parseBank` in `supabase/functions/socratic/index.ts` for the tutor; the two are identical).
 A worked 15-problem example is `sample-bank.txt` in this folder.
 
@@ -90,9 +90,41 @@ the first problem at that difficulty on the topic the question asked about. From
 with how the student actually does. So the topic named in `\levelcheck` should have problems at difficulties
 1 through 4.
 
-Both blocks go after `\concepts{…}` and before the first `\problem`. Neither may contain a line starting
-with `%`. The check line shows "opening overview" and "level question" when they are present and gives
-advice when they are not.
+Both blocks go after `\concepts{…}` and before the first `\problem`, `\intro` first. Neither may contain a
+line starting with `%`. The check line shows "opening overview" and "level question" when they are present
+and gives advice when they are not.
+
+Every student sees the same words, so write both as the tutor speaking to one student ("you"; "we" for the
+session). Plain sentences only: no Markdown, headings, bullets or bold. Math as in the problems; `\intro`
+may carry one or two key equations on their own line as `$$…$$` with a blank line before and after.
+
+- **`\intro`**: 60 to 120 words in two short paragraphs. First, what the session is about, grouping the
+  `\concepts` into three to five ideas a student would recognise (never the concept slugs). Second, what the
+  student should be able to do by the end and what kind of thinking the problems ask for. Mention only
+  topics the bank has problems for. Do not end with a question.
+- **`\levelcheck`**: one or two sentences, 20 to 45 words, ending in a question about **one** topic, named
+  in the student's words. Invite a short honest answer and make "it is all new" acceptable. It is not a
+  quiz: do not ask the student to define, calculate or explain anything.
+- **Leave out of both**: names, any specific problem, problem counts, time estimates, grades, how the site
+  works, difficulty numbers, and any answer or hint from the problems.
+
+```
+\intro{
+This session is about heat and temperature. We will separate the two ideas, look at why some materials
+warm faster than others, and use specific heat to follow energy as it moves between objects.
+
+$$q = mc\Delta T$$
+
+By the end you should be able to explain in words where the energy goes when something warms or cools,
+and calculate a temperature change, a mass or a specific heat from the other quantities, including in
+a simple calorimeter. Expect to explain your reasoning, not only give a number.
+}
+
+\levelcheck{
+Before the first problem, tell me where you stand on the difference between heat and temperature. Have
+you worked with it before, and how confident do you feel about it? It is fine to say it is all new.
+}
+```
 
 ## `\problem[…]{…}` (one per problem)
 
