@@ -37,6 +37,12 @@ as it runs low, the site-wide daily spend ceiling, and the problem banks (drop a
 | Report | `\usesocratic{widget-id}` shows one line, "Socratic problems completed: N of M · K credited", once a session has ended; `\usesocratic[transcript]{…}` shows the whole conversation and the tutor's closing summary too. Builder: "Include the tutor session". |
 | Banks | Exact grammar and every option in `docs/socratic/BANK-FORMAT.md`; worked example `docs/socratic/sample-bank.txt`; parsed by `parseBank` (function) and `oralParseBank` (admin check) — identical grammars, keep them in step. |
 
+## How a session opens (2026-11-10)
+
+Nothing is sent to the tutor until the student answers. A full-page tutor mounts only when its tab is shown (`socFullpageSync` calls the widget's `_ltAutoStart`), asks the function `resume` (no model call), and shows either the open session or one **Start session** button (`socStart`). In the boxed widget the host's Start button counts as that press (`ctx.begin`). `start` then creates the session and stores a written opening as the first assistant message: the bank's `\intro{…}`, then its `\levelcheck{…}` or the site text `socLevelAsk`. No model call, no usage row, no cost. A hidden note before it tells the tutor what the student was shown.
+
+The student's first message is a self-report. The prompt (step 1, Opening) tells the tutor not to grade it, to choose a starting difficulty 1 to 4 from it, to write `level=N` in the state line and to pose the first problem at that level on the topic asked about. `applyState` copies `level` into `target_difficulty` while no problem has been posed; `buildReminder` carries the same instruction until the first problem exists. Skip is disabled until a problem has been posed. Banks without the two blocks still work: no overview, general question.
+
 ## Math layout
 
 The tutor writes symbols, values and short expressions inline (`$...$`) and puts step equations on their own line (`$$...$$` with a blank line either side): a formula being introduced, a substitution, each line of a worked calculation, a balanced equation, a final result. The rule is in the prompt's `## Formatting` section. On the page, `socTidyMath()` removes the blank lines typed around a displayed equation (bubbles keep line breaks, and the equation has its own margin), and a wide equation scrolls sideways inside its bubble. The same cleanup runs in the report transcript and the teacher's review. Math is drawn when a reply finishes; while it streams the LaTeX shows as typed.

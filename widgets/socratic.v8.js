@@ -9,7 +9,9 @@
    (v2: the I'm stuck button is gone; students say so in their own words. v3: Skip and Report a problem. v4: progress is counted in topics credited, not problems. v5: everything under the conversation sits in one .soc-dock, so the host's full-page layout can pin it to the bottom. v6: a block with no bank says so in its own words.)
    ctx: { opts, labId, text(key), fmt(key, vars), call(payload, onDelta) → Promise, renderMath(node), updated(), fail(why) }
    v7: the answer box takes the cursor only when no other field has it.
-   New version → new filename (socratic.v8.js) and update WIDGETS.socratic.file in index.html. */
+   v8: a session opens with a Start session button and the bank's written opening (the server's start action no longer calls the tutor);
+       ctx.begin says the person already pressed the host's Start, so the session opens without a second button.
+   New version → new filename (socratic.v9.js) and update WIDGETS.socratic.file in index.html. */
 (function () {
   'use strict';
   var W = window.LabWidgets = window.LabWidgets || {};
@@ -24,8 +26,9 @@
       var box = stage.closest('.lt-widget');
 
       stage.innerHTML = '<div class="soc">' +
+        '<div class="soc-start" data-role="startbox" hidden><button type="button" class="btn-small btn-primary-small" data-role="start">' + esc(t('socStart')) + '</button></div>' +
         '<div class="soc-log" data-role="log"></div>' +
-        '<div class="soc-dock">' +
+        '<div class="soc-dock" data-role="dock">' +
         '<div class="soc-warn" data-role="warn" hidden></div>' +
         '<div class="soc-note" data-role="note" hidden></div>' +
         '<div class="soc-input"><textarea rows="2" data-role="input" placeholder="' + esc(t('socPlaceholder')) + '"></textarea><button type="button" class="btn-small btn-primary-small" data-role="send">' + esc(t('socSend')) + '</button></div>' +
@@ -34,11 +37,13 @@
         '</div>' +   /* .soc-dock */
         '</div>';
       var q = function (r) { return stage.querySelector('[data-role="' + r + '"]'); };
-      var log = q('log'), input = q('input'), note = q('note'), warn = q('warn');
+      var log = q('log'), input = q('input'), note = q('note'), warn = q('warn'), dock = q('dock'), startbox = q('startbox');
+      // Three looks: 'wait' (nothing yet, while the server says whether a session is open), 'start' (only the Start session button), 'chat'.
+      function mode(m) { startbox.hidden = m !== 'start'; log.hidden = m !== 'chat'; dock.hidden = m !== 'chat'; }
 
       function setNote(text, cls) { if (!text) { note.hidden = true; return; } note.className = cls || 'soc-note'; note.textContent = text; note.hidden = false; }
       function setWarn(text) { if (!text) { warn.hidden = true; return; } warn.textContent = text; warn.hidden = false; }
-      function setBusy(b) { busy = b; input.disabled = b || limited || !session || !!(session && session.ended); q('send').disabled = input.disabled; q('end').disabled = b || !session || !!(session && session.ended); q('skip').disabled = input.disabled; q('report').disabled = !session; }
+      function setBusy(b) { busy = b; input.disabled = b || limited || !session || !!(session && session.ended); q('send').disabled = input.disabled; q('end').disabled = b || !session || !!(session && session.ended); q('skip').disabled = input.disabled || !(session && session.progress && session.progress.posed > 0); q('report').disabled = !session; }
       function progress() {   // topics credited out of the bank's topics; the problem count is detail. The bank is a pool, never a set to finish.
         var p = session && session.progress; if (!p) { q('progress').textContent = ''; return; }
         total = p.topics_total || total; if (box && total) box.dataset.socTotal = String(total);
@@ -84,18 +89,32 @@
           }, function (e) { pending.remove(); setNote(t('socError')); setBusy(false); throw e; });
       }
 
-      function boot() {
-        if (!bank) { setNote(t('socNoBank')); setBusy(true); return; }   // the Builder warns about this; the words here are the tutor's own, not the table-widget note
-        setBusy(true); setNote(t('socThinking'));
+      function failed() { mode('chat'); setNote(t('socError')); setBusy(false); ctx.fail && ctx.fail('failed'); }
+      // Opens the session. The server answers with the bank's written opening and its question about what the student already knows;
+      // the tutor itself is first called when the student replies, so pressing Start costs nothing.
+      function begin() {
+        mode('chat'); setBusy(true); setNote(t('socThinking'));
+        ctx.call({ action: 'start', bank_id: bank }).then(function (res) {
+          if (stopped) return;
+          if (applyMeta(res)) return;
+          setNote('');
+          if (!res || !res.session) throw new Error('no session');
+          renderSession(res.session); try { ctx.updated(); } catch (e) { /* ignore */ }
+        }).catch(function () { if (!stopped) failed(); });
+      }
+      function boot(go) {   // go: someone already pressed a start button, so a missing session is opened at once
+        if (!bank) { mode('chat'); setNote(t('socNoBank')); setBusy(true); return; }   // the Builder warns about this; the words here are the tutor's own, not the table-widget note
+        mode('wait'); setBusy(true);
         ctx.call({ action: 'resume', bank_id: bank }).then(function (res) {
           if (stopped) return;
           total = res.topics_total || 0; if (box && total) box.dataset.socTotal = String(total);
-          if (applyMeta(res)) return;
+          if (applyMeta(res)) { mode('chat'); return; }
           setNote('');
-          if (res.session) { renderSession(res.session); return; }
-          return streamed({ action: 'start', bank_id: bank }).then(function (r) { if (r && r.session) afterTurn(false); });
-        }).catch(function (e) { if (!stopped) { setNote(t('socError')); setBusy(false); ctx.fail && ctx.fail('failed'); } });
+          if (res.session) { mode('chat'); renderSession(res.session); return; }
+          if (go) begin(); else mode('start');
+        }).catch(function () { if (!stopped) failed(); });
       }
+      q('start').addEventListener('click', function () { if (!startbox.hidden) begin(); });
       function send(text) {
         text = String(text || '').trim(); if (!text || busy || !session || session.ended || limited) return;
         bubble('user', text); input.value = ''; setBusy(true); setNote('');
@@ -122,9 +141,9 @@
           rtext.value = ''; rstatus.textContent = t('socReportSent'); rstatus.className = 'soc-ok'; q('reportsend').disabled = false;
         }, function () { rstatus.textContent = t('socReportError'); rstatus.className = 'soc-warn'; q('reportsend').disabled = false; });
       });
-      q('again').addEventListener('click', function () { if (busy) return; q('again').hidden = true; input.parentElement.hidden = false; q('end').hidden = false; q('skip').hidden = false; setNote(''); session = null; boot(); });
+      q('again').addEventListener('click', function () { if (busy) return; q('again').hidden = true; input.parentElement.hidden = false; q('end').hidden = false; q('skip').hidden = false; setNote(''); session = null; boot(true); });
 
-      setBusy(true); boot();
+      setBusy(true); boot(!!ctx.begin);
       return { stop: function () { stopped = true; } };
     },
   };

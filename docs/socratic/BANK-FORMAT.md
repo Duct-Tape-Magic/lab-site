@@ -26,6 +26,9 @@ A worked 15-problem example is `sample-bank.txt` in this folder.
 \bank[slug=…, title="…", topic="…"]
 \concepts{concept-a, concept-b, …}
 
+\intro{…}
+\levelcheck{…}
+
 \problem[pid=…, difficulty=N, opener, concepts="…, …"]{
 \catalog{…}
 \prompt{…}
@@ -69,6 +72,28 @@ concepts a credit on it genuinely demonstrates**; a problem tagged with five con
 once. Keep the list to the handful of ideas the set is meant to teach (roughly 5 to 12), and give each one
 several problems at different difficulties so the tutor has choices.
 
+## `\intro{…}` and `\levelcheck{…}` (once each, added 2026-11-10)
+
+How a session opens. When the student presses **Start session** the site shows the `\intro` text and then
+the `\levelcheck` question, exactly as written, as the tutor's first message. **The tutor is not called**: no
+model reply is generated until the student answers, so starting costs nothing.
+
+| Block | Required | What it is |
+|---|---|---|
+| `\intro{…}` | no | A short written overview of what the session covers. Plain sentences, blank line between paragraphs, math as in the problems. Without it the student gets no overview. |
+| `\levelcheck{…}` | no | One question asking how much the student already knows about the first topic of the session. Without it the site asks its general question (site text `socLevelAsk`, editable under the tutor's Words students see). |
+
+The student's reply to the level question is a self-report, not an answer. The tutor does not grade it: it
+picks a starting difficulty from it (all new or unsure 1, seen it but shaky 2, comfortable 3, knows it
+well 4, never 5; 2 if they skip the question), records it with `level=N` in its hidden state line, and poses
+the first problem at that difficulty on the topic the question asked about. From there the difficulty moves
+with how the student actually does. So the topic named in `\levelcheck` should have problems at difficulties
+1 through 4.
+
+Both blocks go after `\concepts{…}` and before the first `\problem`. Neither may contain a line starting
+with `%`. The check line shows "opening overview" and "level question" when they are present and gives
+advice when they are not.
+
 ## `\problem[…]{…}` (one per problem)
 
 Options:
@@ -77,7 +102,7 @@ Options:
 |---|---|---|---|---|
 | `pid` | **yes** | any token without spaces, unique in the bank | none; the file is rejected without it or if two problems share one | The id the tutor writes in its hidden state line and the key under which the site records credited/revealed. Keep pids stable once students have sessions on the bank. |
 | `difficulty` | no | 1–5 (numbers; anything non-numeric becomes NaN, so use a plain integer) | 3 | 1 recall · 2 apply one idea · 3 compare two ideas · 4 weigh competing effects · 5 synthesize or evaluate a claim. The code moves a target up (+1 after a clean credit), holds it (credit after scaffolding) or down (−1 after a reveal), clamped 1–5, and tells the tutor the target each turn. |
-| `opener` | no | bare flag, no value | off | Marks a broad problem suitable to start with. The tutor opens with an opener. The session's starting target difficulty is the lowest opener difficulty (2 if there are no openers). **Mark at least one**; the check line warns if none. |
+| `opener` | no | bare flag, no value | off | Marks a broad problem suitable to start with. The tutor prefers an opener for the first problem when one fits the starting difficulty it chose from the student's self-report. Optional since 2026-11-10; the check line no longer asks for one. |
 | `concepts` | no | quoted, comma-separated | empty | Which concepts this problem tests. Drives the "not yet touched" list and the remaining-problems line in the reminder. |
 
 Body sub-commands (all optional to the parser; the check line flags a problem missing `prompt`, `solution`
@@ -135,7 +160,7 @@ A problem missing `\prompt`, `\solution` or `\rubric` is listed by pid as a warn
 
 - The bank can be large (a week's homework, 50 problems is fine); the student will see only a handful.
   What matters is that every concept has several problems to choose from.
-- Two or three openers at difficulty 2, spread across concepts.
+- Give the topic named in `\levelcheck` problems at difficulties 1 through 4, so the first problem can match the student's self-report. Mark the broad ones `opener`.
 - Cover every concept in `\concepts` with at least three problems at different difficulties, including one at
   difficulty 1 or 2: after a reveal the tutor must come back to that concept with an easier problem before
   anything new, and after two reveals it explains the idea with a worked example instead of posing a third.

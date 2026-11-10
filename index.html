@@ -637,6 +637,7 @@
   .soc-msg.tutor { align-self: flex-start; background: var(--bg); }
   .soc-msg.me { align-self: flex-end; background: rgba(47,93,138,0.07); }
   .soc-msg.pending { opacity: 0.75; }
+  .soc-start { padding: 0.4rem 0 0.2rem; }   /* before a session exists: one button, nothing sent to the tutor until it is pressed */
   .soc-input { display: flex; gap: 0.5rem; align-items: flex-end; }
   .soc-input textarea { flex: 1; min-height: 2.6em; max-height: 10em; resize: vertical; font: inherit; font-size: 0.95em; padding: 0.45rem 0.6rem; border: 0.5px solid var(--rule-strong); background: var(--bg); color: var(--ink); }
   .soc-foot { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
@@ -668,6 +669,8 @@
   body.soc-fullpage .lt-widget[data-fullpage] .soc-input .btn-small { border-radius: 14px; }
   body.soc-fullpage .lt-widget[data-fullpage] .soc-foot .btn-small { border-color: transparent; color: var(--muted); }
   body.soc-fullpage .lt-widget[data-fullpage] .soc-foot .btn-small:hover { color: var(--ink); }
+  body.soc-fullpage .lt-widget[data-fullpage] .soc-start { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 0 12vh; }
+  body.soc-fullpage .lt-widget[data-fullpage] .soc-start .btn-small { font-size: 0.95em; padding: 0.85rem 1.8rem; border-radius: 14px; }
   /* SOC-FULLPAGE-END */
 
   .stat-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; }
@@ -1496,7 +1499,8 @@ const DEFAULTS = {
   widgetDenied: 'The camera was not allowed. Allow it in your browser settings and tap Start again, or type your values into the table.',
   widgetUnavailable: 'This tool is not available here. Type your values into the table instead.',
   widgetSignIn: 'Sign in with your access code to use this tool.',
-  socSend: 'Send', socEnd: 'End session', socAgain: 'Start a new session',
+  socSend: 'Send', socEnd: 'End session', socAgain: 'Start a new session', socStart: 'Start session',
+  socLevelAsk: 'Before the first problem: how much of this do you already know? Tell me in a sentence or two, or just say it is all new.',
   socPlaceholder: 'Answer in words, not just a number…',
   socProgress: '{topics} of {total} topics credited · {posed} problems worked',
   socAllDone: 'You have shown every topic in this set. End the session when you are ready, or keep going.',
@@ -1565,7 +1569,7 @@ const TEXT_LABELS = {
   procedureTab: 'Procedure tab label', reportTab: 'Report tab label', reportPreview: 'Preview report button', reportStyleTitle: 'Style guide heading', reportRequired: 'Required badge', reportHint: 'Hint toggle', reportWords: 'Word count', reportWordsAim: 'Word range hint', reportEmptyRequired: 'Empty required question note', reportTableLabel: 'Table caption word', reportFigureLabel: 'Figure caption word', reportMissingRef: 'Missing table/graph message', reportNoPhotoYet: 'No photo yet message',
   helpButton: 'Get help button', helpIntro: 'Help panel intro', helpLoginNudge: 'Help: log-in nudge', helpMessagePlaceholder: 'Help: question placeholder', helpSend: 'Help: send button', helpSent: 'Help: sent confirmation', helpError: 'Help: send failed', helpAutoReply: 'Help: automatic first reply (site default)', helpAutoLabel: 'Help: label on the automatic reply', helpYou: 'Help: your name in the thread', helpTeacher: 'Help: teacher name in the thread', helpResolvedNote: 'Help: resolved note', helpEmailFrom: 'Help: email sender', helpEmailSubject: 'Help: email subject ({lab} = lab title)',
   widgetStart: 'Widget: Start button', widgetStop: 'Widget: Stop button', widgetLoading: 'Widget: starting message', widgetNoCamera: 'Widget: no-camera note', widgetFailed: 'Widget: could-not-start message', widgetDenied: 'Widget: camera-not-allowed message', widgetUnavailable: 'Widget: not-available message', widgetGetHelp: 'Widget: Get help button', widgetSignIn: 'Widget: sign-in note',
-  socSend: 'Tutor: Send button', socEnd: 'Tutor: End session button', socAgain: 'Tutor: new session button', socPlaceholder: 'Tutor: answer box placeholder', socProgress: 'Tutor: progress line ({topics} {total} {posed} {credited})', socAllDone: 'Tutor: every-topic-credited note', socThinking: 'Tutor: thinking note', socLimit: 'Tutor: weekly limit note', socSiteLimit: 'Tutor: site limit note', socError: 'Tutor: error note', socEnded: 'Tutor: session ended note', socDoneLine: 'Tutor: report completion line ({topics} {total} {posed} {credited} {done})', socNotDone: 'Tutor: report not-finished note', socNoSession: 'Tutor: report no-session note', socTranscriptTitle: 'Tutor: transcript heading', socSkip: 'Tutor: Skip button', socReportButton: 'Tutor: Report a problem button', socReportIntro: 'Tutor: report box intro', socReportPlaceholder: 'Tutor: report box placeholder', socReportSend: 'Tutor: send report button', socReportSent: 'Tutor: report sent confirmation', socReportError: 'Tutor: report failed note', socNoBank: 'Tutor: no-bank-chosen note',
+  socSend: 'Tutor: Send button', socEnd: 'Tutor: End session button', socAgain: 'Tutor: new session button', socStart: 'Tutor: Start session button', socLevelAsk: 'Tutor: opening question when a bank has no \\levelcheck of its own', socPlaceholder: 'Tutor: answer box placeholder', socProgress: 'Tutor: progress line ({topics} {total} {posed} {credited})', socAllDone: 'Tutor: every-topic-credited note', socThinking: 'Tutor: thinking note', socLimit: 'Tutor: weekly limit note', socSiteLimit: 'Tutor: site limit note', socError: 'Tutor: error note', socEnded: 'Tutor: session ended note', socDoneLine: 'Tutor: report completion line ({topics} {total} {posed} {credited} {done})', socNotDone: 'Tutor: report not-finished note', socNoSession: 'Tutor: report no-session note', socTranscriptTitle: 'Tutor: transcript heading', socSkip: 'Tutor: Skip button', socReportButton: 'Tutor: Report a problem button', socReportIntro: 'Tutor: report box intro', socReportPlaceholder: 'Tutor: report box placeholder', socReportSend: 'Tutor: send report button', socReportSent: 'Tutor: report sent confirmation', socReportError: 'Tutor: report failed note', socNoBank: 'Tutor: no-bank-chosen note',
   widgetRecord: 'Colorimeter: Record button', widgetRecorded: 'Colorimeter: data recorded text', widgetTableFull: 'Colorimeter: table full message', widgetNoTable: 'Colorimeter: no table message',
   widgetRefLabel: 'Colorimeter: reference square label', widgetMeasLabel: 'Colorimeter: sample square label'
 };
@@ -4365,9 +4369,9 @@ function socCheckBank() {
     // a problem that asks several questions but carries one \answer should say which quantity it is (of="…").
     const noEasy = b.concepts.filter(c => !b.problems.some(p => p.concepts.includes(c) && p.difficulty <= 2));
     const vague = b.problems.filter(p => p.answer && !p.answer.of && (p.prompt.match(/\?/g) || []).length > 1).map(p => p.pid);
-    const advice = [noEasy.length ? `no easy (difficulty 1–2) problem for: ${noEasy.join(', ')}` : '', vague.length ? `several questions but one answer field without of=: ${vague.join(', ')}` : ''].filter(Boolean);
-    el.className = 'wd-check ' + (b.problems.length && !missing.length && openers ? 'ok' : 'bad');
-    el.textContent = b.problems.length ? `${b.problems.length} problems, ${openers} opener${openers === 1 ? '' : 's'}, ${b.concepts.length} concepts${missing.length ? ` · missing prompt, solution or rubric: ${missing.join(', ')}` : ''}${openers ? '' : ' · mark at least one problem as an opener'}${advice.length ? ' · advice: ' + advice.join('; ') : ''}` : 'No \\problem blocks found yet.';
+    const advice = [b.intro ? '' : 'no \\intro{…}, so students get no written overview', b.levelcheck ? '' : 'no \\levelcheck{…}, so the general question about what they already know is asked', noEasy.length ? `no easy (difficulty 1–2) problem for: ${noEasy.join(', ')}` : '', vague.length ? `several questions but one answer field without of=: ${vague.join(', ')}` : ''].filter(Boolean);
+    el.className = 'wd-check ' + (b.problems.length && !missing.length ? 'ok' : 'bad');
+    el.textContent = b.problems.length ? `${b.problems.length} problems, ${openers} opener${openers === 1 ? '' : 's'}, ${b.concepts.length} concepts${missing.length ? ` · missing prompt, solution or rubric: ${missing.join(', ')}` : ''}${b.intro ? ' · opening overview' : ''}${b.levelcheck ? ' · level question' : ''}${advice.length ? ' · advice: ' + advice.join('; ') : ''}` : 'No \\problem blocks found yet.';
     return b;
   } catch (e) { el.className = 'wd-check bad'; el.textContent = e.message; return null; }
 }
@@ -4422,10 +4426,12 @@ function oralParseBank(text) {
   const readBraces = (str, i) => { let depth = 0; for (let j = i; j < str.length; j++) { const c = str[j]; if (c === '\\') { j++; continue; } if (c === '{') depth++; else if (c === '}') { depth--; if (depth === 0) return [str.slice(i + 1, j), j + 1]; } } throw new Error('A curly bracket is not closed.'); };
   const commands = function* (str) { const re = /\\([A-Za-z]+)/g; let m; while ((m = re.exec(str)) !== null) { const name = m[1]; let i = re.lastIndex, options = {}; if (str[i] === '[') { const close = str.indexOf(']', i); options = parseOpts(str.slice(i + 1, close)); i = close + 1; } let body = null, k = i; while (k < str.length && /\s/.test(str[k])) k++; if (str[k] === '{') [body, i] = readBraces(str, k); re.lastIndex = i; yield { name, options, body }; } };
   const splitList = v => String(v || '').split(',').map(x => x.trim()).filter(Boolean);
-  const bank = { slug: null, title: 'Untitled bank', topic: '', concepts: [], problems: [] };
+  const bank = { slug: null, title: 'Untitled bank', topic: '', concepts: [], problems: [], intro: '', levelcheck: '' };
   for (const cmd of commands(src)) {
     if (cmd.name === 'bank') { bank.slug = cmd.options.slug || null; bank.title = cmd.options.title || bank.slug || bank.title; bank.topic = cmd.options.topic || ''; }
     else if (cmd.name === 'concepts') bank.concepts = splitList(cmd.body);
+    else if (cmd.name === 'intro') bank.intro = (cmd.body || '').trim();             // the written opening the student reads when a session starts
+    else if (cmd.name === 'levelcheck') bank.levelcheck = (cmd.body || '').trim();   // the question, after the opening, about how much they already know
     else if (cmd.name === 'problem') {
       const p = { pid: String(cmd.options.pid || ''), difficulty: Number(cmd.options.difficulty || 3), opener: cmd.options.opener === true, concepts: splitList(cmd.options.concepts), catalog: '', prompt: '', solution: '', rubric: '', scaffolds: '', extensions: '', misconceptions: '', answer: null };
       if (!p.pid) throw new Error('A \\problem has no pid= option.');
@@ -5153,11 +5159,11 @@ const WIDGETS = {
   },
   socratic: {
     label: 'Socratic 1',
-    texts: ['socSend', 'socEnd', 'socAgain', 'socSkip', 'socPlaceholder', 'socProgress', 'socAllDone', 'socThinking', 'socLimit', 'socSiteLimit', 'socError', 'socEnded', 'socReportButton', 'socReportIntro', 'socReportPlaceholder', 'socReportSend', 'socReportSent', 'socReportError', 'socNoBank', 'socDoneLine', 'socNotDone', 'socNoSession'],
+    texts: ['socStart', 'socLevelAsk', 'socSend', 'socEnd', 'socAgain', 'socSkip', 'socPlaceholder', 'socProgress', 'socAllDone', 'socThinking', 'socLimit', 'socSiteLimit', 'socError', 'socEnded', 'socReportButton', 'socReportIntro', 'socReportPlaceholder', 'socReportSend', 'socReportSent', 'socReportError', 'socNoBank', 'socDoneLine', 'socNotDone', 'socNoSession'],
     description: 'A conversation with a tutor that poses problems from a bank you write, listens to the student reason in words, and credits, corrects or scaffolds. Formative only: nothing is graded.',
     device: 'Needs a signed-in student (access code or account) and an internet connection. No camera.',
     records: 'Nothing into lab tables. Each conversation is kept as its own session; the student sees their own, admins see every student\'s in the lab review. The report can show a completion line or the whole conversation.',
-    file: 'widgets/socratic.v7.js',
+    file: 'widgets/socratic.v8.js',
     noTable: true, needsLogin: true, noDemo: true, transcript: true, settings: true,
     options: [
       { name: 'bank', label: 'Problem bank', kind: 'bank', help: 'Written and edited on the Widgets tab, under Socratic tutor.' },
@@ -5269,8 +5275,10 @@ function ltBindWidgets(area, host) {
       body.innerHTML = `<div class="lt-widget-fail"><div>${escapeHTML(msg || getText('widgetFailed'))}</div><div class="lt-widget-foot">${btn('lt-widget-start', 'widgetStart')}${helpOk ? btn('lt-widget-help', 'widgetGetHelp') : ''}</div></div>`;
       wire();
     };
-    const start = async demo => {
-      if (running) return;
+    let starting = false;
+    const start = async (demo, auto) => {   // auto: the page mounted the tool itself (full-page tutor); otherwise someone pressed Start
+      if (running || starting) return;
+      starting = true;
       const g = ++gen;
       body.innerHTML = `<div class="lt-widget-note">${escapeHTML(getText('widgetLoading'))}</div>`;
       try {
@@ -5281,6 +5289,7 @@ function ltBindWidgets(area, host) {
         wire();
         const ctx = {
           opts, labId: host.labId, demo: !!(demo || opts.demo || host.demo), text: getText, fmt,
+          begin: !auto,   // the person already pressed Start, so a tool that has its own opening step may go straight in
           canRecord: () => host.canRecord(tableId, opts),
           record: values => host.record(tableId, opts, values),
           call: (payload, onDelta) => ltFnStream('socratic', { ...payload, lab_id: host.labId }, onDelta),   // the site's server function, with the student's login
@@ -5292,9 +5301,10 @@ function ltBindWidgets(area, host) {
         ltLiveWidgets.add(live);
         if (!document.body.contains(el)) stop('idle');   // the area was replaced meanwhile
       } catch (e) { console.warn('widget', e); if (g === gen) showFailed(); }
+      finally { starting = false; }
     };
     showIdle('');
-    if (opts.fullpage === true && !host.demo && host.labId !== 'preview' && (!W.needsLogin || state.session)) start(false);   // SOC-FULLPAGE: the page is the tutor, so it starts on its own. Never in the Builder preview: it re-renders on every edit, and a tutor starting there took the cursor out of the field being typed in
+    if (opts.fullpage === true && !host.demo && host.labId !== 'preview' && (!W.needsLogin || state.session)) el._ltAutoStart = () => { if (!running && document.body.contains(el)) start(false, true); };   // SOC-FULLPAGE: the page is the tutor, so it mounts on its own, but only when its tab is shown (socFullpageSync) and never in the Builder preview
   });
 }
 /* SOC-FULLPAGE-BEGIN (beta 2026-11-09, docs/SOCRATIC.md "Full page"). A visible Socratic widget carrying the fullpage flag turns the lab page into a chat page via body.soc-fullpage.
@@ -5303,6 +5313,8 @@ function socFullpageSync() {
   const area = document.getElementById('lab-content-area');
   const on = !!(area && Array.from(area.querySelectorAll('.lt-widget[data-fullpage]')).some(el => !el.closest('.lab-pane[hidden]')));
   document.body.classList.toggle('soc-fullpage', on);
+  // A full-page tutor mounts when its tab is first shown, not when the page loads: a lab with a tab per week must not contact the server for every week at once.
+  if (area) area.querySelectorAll('.lt-widget[data-fullpage]').forEach(el => { if (el._ltAutoStart && !el.closest('.lab-pane[hidden]')) el._ltAutoStart(); });
 }
 /* SOC-FULLPAGE-END */
 
