@@ -10,7 +10,9 @@ export const BUCKET = 'lab-files-private';
 export const KEY_FILE = path.join(os.homedir(), '.config', 'ohschemlabs', 'service-role.key');
 // Backups live next to the project in Dropbox (so there is an off-machine copy), never inside the repo.
 export const BACKUP_ROOT = process.env.LAB_BACKUP_DIR || path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'Lab Site Backups');
-export const TABLES = ['lab_entries', 'students', 'seats', 'classes', 'group_members', 'help_threads', 'help_messages', 'user_prefs', 'labs', 'lab_content', 'folders', 'site_content', 'attachments', 'item_groups', 'item_users', 'help_notify', 'lab_revisions'];
+export const TABLES = ['lab_entries', 'students', 'seats', 'classes', 'group_members', 'help_threads', 'help_messages', 'user_prefs', 'labs', 'lab_content', 'folders', 'site_content', 'attachments', 'item_groups', 'item_users', 'help_notify', 'lab_revisions',
+  'oral_banks', 'oral_settings', 'oral_sessions', 'oral_messages', 'oral_reports', 'oral_usage'];   // the Socratic tutor: banks, settings, every student conversation, problem reports, usage (added 2026-11-13)
+const ORDER = { oral_banks: 'id', oral_settings: 'key', oral_sessions: 'id', oral_messages: 'id', oral_reports: 'id', oral_usage: 'user_id,day' };   // an explicit order, so paging through a table of more than 1000 rows cannot skip or repeat one
 
 export function loadKey() {
   const k = (process.env.SUPABASE_SERVICE_ROLE_KEY || (fs.existsSync(KEY_FILE) ? fs.readFileSync(KEY_FILE, 'utf8') : '')).trim();
@@ -24,7 +26,7 @@ export function headers(key, extra = {}) { return key.startsWith('sb_') ? { apik
 export async function fetchAll(key, table, select = '*') {   // every row, 1000 at a time
   const out = []; let from = 0;
   for (;;) {
-    const r = await fetch(`${URL_BASE}/rest/v1/${table}?select=${encodeURIComponent(select)}`, { headers: headers(key, { Range: `${from}-${from + 999}`, Prefer: 'count=exact' }) });   // PostgREST pages in primary-key order
+    const r = await fetch(`${URL_BASE}/rest/v1/${table}?select=${encodeURIComponent(select)}${ORDER[table] ? '&order=' + ORDER[table] : ''}`, { headers: headers(key, { Range: `${from}-${from + 999}`, Prefer: 'count=exact' }) });   // PostgREST pages in primary-key order
     if (r.status === 416) break;
     if (!r.ok) throw new Error(`${table}: HTTP ${r.status} ${await r.text()}`);
     const rows = await r.json(); out.push(...rows);
