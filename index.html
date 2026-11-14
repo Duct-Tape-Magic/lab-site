@@ -3363,8 +3363,9 @@ async function loadLabWork(labId, oldText) {
 // Which ids a lab file produces: every field/check id, and each table's base cells.
 function ltEntrySchema(text) {
   const out = { fields: new Set(), tables: new Map() };
-  if (!text || !String(text).trim() || typeof ltRender !== 'function') return out;
-  let r; try { r = ltRender(text); } catch (e) { return out; }
+  if (!text || !String(text).trim()) return out;
+  if (typeof ltRender !== 'function') { out.failed = true; return out; }
+  let r; try { r = ltRender(text); } catch (e) { out.failed = true; return out; }   // failed: this version's blocks are unknown, so the guard assumes it showed everything
   const tpl = document.createElement('template'); tpl.innerHTML = (r.tabs && r.tabs.length ? r.tabs.map(t => t.html || '') : [r.html || '', r.report || '']).join('');
   tpl.content.querySelectorAll('[data-field], [data-check], [data-choice]').forEach(el => out.fields.add(el.dataset.field || el.dataset.check || el.dataset.choice));
   tpl.content.querySelectorAll('.lt-table-wrap[data-table]').forEach(w => out.tables.set(w.dataset.table, {
@@ -3380,22 +3381,30 @@ function labWorkOn(id, work = labWork) {
   for (const [k, c] of work.keys) if (k === id || k.startsWith(id + '.')) n = Math.max(n, c);
   return n;
 }
-// Problems a new version of the lab file would cause for saved work: [{ id, students, kind: 'missing'|'reshaped' }]
+// Does a version of the lab show the value saved under key k: a field or check id, a table's row count, a base cell, or a cell in a row the student added?
+function ltSchemaShows(schema, k) {
+  if (schema.fields.has(k)) return true;
+  const owner = ltWorkOwner(k), rest = k.slice(owner.length + 1), t = schema.tables.get(owner);
+  if (!t) return false;
+  if (rest === 'rows') return true;
+  const m = /^r(\d+)c(\d+)$/.exec(rest);
+  return !!(m && t.addrows && +m[1] > t.rows && +m[2] <= t.cols);   // a row the student added
+}
+// Problems THIS save would cause for saved work: [{ id, students, kind: 'missing'|'reshaped' }].
+// Only work the version being replaced still shows is counted. Work an earlier save already hid stays in the database and was asked about then;
+// asking again on every later save (the behaviour before 2026-11-14) taught the owner to click through the warning.
 function labWorkProblems(work, newText, isLabFile) {
   const out = [];
   if (!work || !work.keys.size) return out;
   const schema = isLabFile ? ltEntrySchema(newText) : { fields: new Set(), tables: new Map() };
+  const before = work.oldSchema, beforeKnown = !!before && !before.failed;
   const missing = new Map(), reshaped = new Map();
   for (const [k, n] of work.keys) {
-    if (!n || schema.fields.has(k)) continue;
-    const owner = ltWorkOwner(k), rest = k.slice(owner.length + 1), t = schema.tables.get(owner);
-    if (t) {
-      if (rest === 'rows') continue;
-      const m = /^r(\d+)c(\d+)$/.exec(rest);
-      if (m && t.addrows && +m[1] > t.rows && +m[2] <= t.cols) continue;   // a row the student added
-      reshaped.set(owner, Math.max(reshaped.get(owner) || 0, n)); continue;
-    }
-    missing.set(owner, Math.max(missing.get(owner) || 0, n));
+    if (!n || ltSchemaShows(schema, k)) continue;
+    if (beforeKnown && !ltSchemaShows(before, k)) continue;   // already hidden before this save
+    const owner = ltWorkOwner(k);
+    if (schema.tables.has(owner)) reshaped.set(owner, Math.max(reshaped.get(owner) || 0, n));
+    else missing.set(owner, Math.max(missing.get(owner) || 0, n));
   }
   for (const [id, t] of schema.tables) {
     const old = work.oldSchema.tables.get(id);
