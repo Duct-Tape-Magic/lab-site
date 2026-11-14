@@ -5044,14 +5044,40 @@ async function ltPushCloud(labId, entries) {
 }
 
 /* ---------- \graph: live charts from data tables ---------- */
-// Expression: column refs c1, c2 … (1-based), numbers, + - * / ^, parentheses, ln log exp sqrt abs.
-function ltCompileExpr(src) {
+// Expression: column refs c1, c2 … (1-based), numbers, + - * / ^, parentheses, ln log exp sqrt abs, and cell references into any table
+// on the page (2026-11-14):  table(@).c2  the row of that table whose first-column label equals this row's first-column label
+//                            table(Water).c2 or table('Water').c2  a fixed row, by its first-column label
+//                            table(3).c2  a fixed row, by number
+// Square brackets cannot be used for this: a ] ends the option list the formula sits in.
+const LT_REF_RE = /([A-Za-z0-9_.\-]*[A-Za-z0-9_])\(\s*(@|'[^']*'|"[^"]*"|[^()'"]*?)\s*\)\.c(\d+)/g;
+function ltRefCut(head, hasTable) {   // "c3-freezing" → where the table name starts: the longest tail that names a table, else what follows the last minus sign
+  const cuts = [0]; for (let i = 0; i < head.length; i++) if (head[i] === '-') cuts.push(i + 1);
+  if (hasTable) { const hit = cuts.find(c => hasTable(head.slice(c))); if (hit !== undefined) return hit; }
+  return cuts[cuts.length - 1];
+}
+function ltExprRefs(src, hasTable) {   // → { text: the formula with each cell reference replaced by §n§, refs: [{ table, row: {same}|{index}|{label}, col }] }
+  const refs = [];
+  const text = String(src || '').replace(LT_REF_RE, (m, head, row, col) => {
+    const at = ltRefCut(head, hasTable), r = row.trim();
+    const sel = r === '@' ? { same: true } : /^\d+$/.test(r) ? { index: parseInt(r, 10) } : { label: /^(['"])[\s\S]*\1$/.test(r) ? r.slice(1, -1) : r };
+    refs.push({ table: head.slice(at), row: sel, col: parseInt(col, 10) });
+    return head.slice(0, at) + '§' + (refs.length - 1) + '§';
+  });
+  return { text, refs };
+}
+function ltExprRenameTable(src, oldId, newId) {   // a table was renamed: its cell references in a formula follow
+  return String(src == null ? '' : src).replace(LT_REF_RE, (m, head) => { const at = ltRefCut(head, id => id === oldId); return head.slice(at) === oldId ? head.slice(0, at) + newId + m.slice(head.length) : m; });
+}
+// Returns f(row, ctx) → number or NaN. ctx = { label, cell(ref, label) } resolves cell references; without it they read as blank.
+function ltCompileExpr(src, hasTable) {
   let e = String(src || '').trim();
   if (/^\d+$/.test(e)) e = 'c' + e;                       // plain column number
-  if (!/^[\sc\d.+\-*/^()a-z]*$/i.test(e)) return null;
-  const tokens = e.match(/c\d+|\d+(?:\.\d+)?|ln|log10|log|exp|sqrt|abs|pi|[-+*/^()]/gi) || [];
+  const found = ltExprRefs(e, typeof hasTable === 'function' ? hasTable : null); e = found.text;
+  if (!/^[\sc\d.+\-*/^()a-z§]*$/i.test(e)) return null;
+  const tokens = e.match(/§\d+§|c\d+|\d+(?:\.\d+)?|ln|log10|log|exp|sqrt|abs|pi|[-+*/^()]/gi) || [];
   if (tokens.join('') !== e.replace(/\s+/g, '')) return null;
   const js = tokens.map(t => {
+    if (t[0] === '§') return `(q(${parseInt(t.slice(1), 10)}))`;
     if (/^c\d+$/i.test(t)) return `(r[${parseInt(t.slice(1), 10) - 1}])`;
     if (/^\d/.test(t)) return t;
     if (t === '^') return '**';
@@ -5059,14 +5085,19 @@ function ltCompileExpr(src) {
     if (t === 'exp') return 'Math.exp'; if (t === 'sqrt') return 'Math.sqrt'; if (t === 'abs') return 'Math.abs'; if (t === 'pi') return 'Math.PI';
     return t;
   }).join('');
-  try { return new Function('r', `try { const v = ${js}; return Number.isFinite(v) ? v : NaN; } catch (e) { return NaN; }`); } catch (e) { return null; }
+  let inner; try { inner = new Function('r', 'q', `try { const v = ${js}; return Number.isFinite(v) ? v : NaN; } catch (e) { return NaN; }`); } catch (e) { return null; }
+  const f = (r, ctx) => inner(r, i => { const ref = found.refs[i]; return ref && ctx && typeof ctx.cell === 'function' ? ctx.cell(ref, ctx.label) : NaN; });
+  f.refs = found.refs;
+  return f;
 }
 function ltTableRows(area, tableId) {
-  const wrap = area.querySelector(`.lt-table-wrap[data-table="${tableId}"]`); if (!wrap) return { header: [], rows: [] };
+  const wrap = Array.from(area.querySelectorAll('.lt-table-wrap[data-table]')).find(w => w.dataset.table === String(tableId)); if (!wrap) return { header: [], rows: [], labels: [] };
   const header = Array.from(wrap.querySelectorAll('thead th')).map(th => th.textContent.trim());
   const cellText = td => { if (!td.querySelector('.katex')) return td.textContent; const c = td.cloneNode(true); c.querySelectorAll('.katex-mathml').forEach(x => x.remove()); return c.textContent; };   // KaTeX keeps a hidden MathML copy
-  const rows = Array.from(wrap.querySelectorAll('tbody tr')).map(tr => Array.from(tr.children).map(td => parseFloat(String(cellText(td)).replace(/,/g, '').trim())));
-  return { header, rows };
+  const trs = Array.from(wrap.querySelectorAll('tbody tr'));
+  const rows = trs.map(tr => Array.from(tr.children).map(td => parseFloat(String(cellText(td)).replace(/,/g, '').trim())));
+  const labels = trs.map(tr => (tr.children[0] ? String(cellText(tr.children[0])) : '').replace(/\s+/g, ' ').trim());   // first-column text of each row: what table(@) and table(Label) match on
+  return { header, rows, labels };
 }
 function ltNiceTicks(min, max, count = 5) {
   if (!(max > min)) { max = min + 1; }
@@ -5143,6 +5174,15 @@ function ltGraphRowPick(spec) {   // rows="2", "1-3", "1,4": which rows of the t
 function ltGraphSeries(area, o) {
   const series = [], split = v => String(v == null || v === true ? '' : v).split(/[;|]/).map(x => x.trim());
   const nth = (v, k) => { const l = split(v); return l[k] || l[0] || ''; };
+  const ids = new Set(Array.from(area.querySelectorAll('.lt-table-wrap[data-table]')).map(w => w.dataset.table)), hasTable = id => ids.has(id);
+  const cache = new Map(), data = id => { if (!cache.has(id)) cache.set(id, ltTableRows(area, id)); return cache.get(id); };
+  const same = v => String(v == null ? '' : v).replace(/\s+/g, ' ').trim().toLowerCase();
+  const cell = (ref, label) => {   // a formula's cell reference: the row by number, by a fixed label, or by this row's own label
+    const t = data(ref.table); let idx = -1;
+    if (ref.row.index) idx = ref.row.index - 1;
+    else { const want = same(ref.row.same ? label : ref.row.label); if (want) idx = t.labels.findIndex(l => same(l) === want); }
+    const row = t.rows[idx]; return row ? row[ref.col - 1] : NaN;
+  };
   const push = (src, layerNo) => {
     const fit = !!src.fit && String(src.fit).toLowerCase() !== 'none';
     if (layerNo && src.data != null && String(src.data).trim()) {
@@ -5151,15 +5191,15 @@ function ltGraphSeries(area, o) {
     }
     const own = t => (t && t !== true && String(t) !== 'none' ? String(t) : '');
     const table = own(src.table) || own(o.table);
-    const { header, rows } = table ? ltTableRows(area, table) : { header: [], rows: [] };
+    const { header, rows, labels } = table ? data(table) : { header: [], rows: [], labels: [] };
     const pick = ltGraphRowPick(src.rows);
-    const fx = ltCompileExpr(src.x || (layerNo ? o.x : '') || 'c1');
-    const ySpecs = split(src.y || 'c2').filter(Boolean), fys = ySpecs.map(ltCompileExpr);
+    const fx = ltCompileExpr(src.x || (layerNo ? o.x : '') || 'c1', hasTable);
+    const ySpecs = split(src.y || 'c2').filter(Boolean), fys = ySpecs.map(y => ltCompileExpr(y, hasTable));
     if (!fx || !fys.length || fys.some(f => !f)) return false;
     const names = layerNo ? src.name : src.series, named = names != null && names !== true && String(names).trim() !== '';
     fys.forEach((fy, k) => series.push({
       name: named ? split(names)[k] || ySpecs[k] : (/^c?\d+$/i.test(ySpecs[k]) && header[parseInt(ySpecs[k].replace(/^c/i, ''), 10) - 1]) || ySpecs[k],
-      pts: rows.filter((r, ri) => !pick || pick.has(ri)).map(r => [fx(r), fy(r)]).filter(pt => Number.isFinite(pt[0]) && Number.isFinite(pt[1])),
+      pts: rows.map((r, ri) => ({ r, ri })).filter(x => !pick || pick.has(x.ri)).map(({ r, ri }) => { const ctx = { label: labels[ri], cell }; return [fx(r, ctx), fy(r, ctx)]; }).filter(pt => Number.isFinite(pt[0]) && Number.isFinite(pt[1])),
       style: ltGraphStyle(nth(src.type, k)), color: nth(src.color, k), fit
     }));
     return true;
@@ -6329,15 +6369,24 @@ function bmRenameId(model, oldId, newId) {
   if (!oldId || oldId === newId) return;
   for (const b of bmAllBlocks(model)) {
     if ((b.type === 'graph' || b.type === 'widget') && b.opts && b.opts.table === oldId) b.opts.table = newId;
-    if (b.type === 'graph') (b.layers || []).forEach(l => { if (l && l.table === oldId) l.table = newId; });
+    if (b.type === 'graph') {
+      (b.layers || []).forEach(l => { if (l && l.table === oldId) l.table = newId; });
+      [b.opts || {}, ...(b.layers || [])].forEach(o => ['x', 'y'].forEach(k => { if (o && typeof o[k] === 'string' && o[k].includes(oldId + '(')) o[k] = ltExprRenameTable(o[k], oldId, newId); }));   // cell references inside formulas
+    }
     if (['usetable', 'usegraph', 'useanswer', 'usephoto', 'usesocratic'].includes(b.type) && b.ref === oldId) b.ref = newId;
   }
+}
+function bmGraphFormulaTables(b, hasTable) {   // table names read by cell references in a graph's formulas (its own and its layers')
+  const out = new Set();
+  [b.opts || {}, ...(b.layers || [])].forEach(o => ['x', 'y'].forEach(k => { if (!o || typeof o[k] !== 'string' || !o[k].includes(').c')) return; String(o[k]).split(/[;|]/).forEach(e => ltExprRefs(e, hasTable).refs.forEach(r => out.add(r.table))); }));
+  return [...out];
 }
 function bmReferencesTo(model, id) {
   const out = [];
   for (const b of bmAllBlocks(model)) {
     if ((b.type === 'graph' || b.type === 'widget') && b.opts && b.opts.table === id) out.push({ block: b, field: 'table' });
     else if (b.type === 'graph' && (b.layers || []).some(l => l && l.table === id)) out.push({ block: b, field: 'layer' });
+    else if (b.type === 'graph' && bmGraphFormulaTables(b, t => t === id).includes(id)) out.push({ block: b, field: 'formula' });
     if (['usetable', 'usegraph', 'useanswer', 'usephoto', 'usesocratic'].includes(b.type) && b.ref === id) out.push({ block: b, field: 'ref' });
   }
   return out;
@@ -6435,6 +6484,7 @@ function bmReferenceProblems(model, auto) {   // shared by builderParse (strings
         else if (l.table) { if (!tables.has(String(l.table))) out.push({ k: b._k ?? null, msg: `Layer ${i + 1} of this graph reads a table named '${l.table}', but no table has that name.` }); }
         else if (t === 'none') out.push({ k: b._k ?? null, msg: `Layer ${i + 1} of this graph has no table chosen and no values typed in.` });
       });
+      bmGraphFormulaTables(b, id => tables.has(id)).forEach(id => { if (!tables.has(id)) out.push({ k: b._k ?? null, msg: `A formula in this graph reads a table named '${id}', but no table has that name.` }); });
     }
     if (b.type === 'widget') {
       const ty = b.opts && b.opts.type, t = b.opts && b.opts.table, WD = typeof WIDGETS !== 'undefined' ? WIDGETS[ty] : null;
@@ -6799,7 +6849,7 @@ const BU_ID_TYPES = ['steps', 'table', 'answer', 'choice', 'notes', 'photo', 'gr
 const BU_CALLOUT_LABELS = { safety: 'Safety', warning: 'Warning', info: 'Information', tip: 'Tip', hint: 'Hint' };
 const BU_LEVELS = [[1, 'Big heading'], [2, 'Heading'], [3, 'Small heading'], [4, 'Level 4'], [5, 'Level 5'], [6, 'Level 6']];
 const BU_BRACE_MSG = 'A curly bracket here has no partner. It is shown as a plain character, which is usually what you want.';
-const BU_EXPR_MSG_FORMULA = 'The site cannot read this formula. Write it with the column codes listed below (c1, c2, …), numbers, + - * / ^, ln, log, exp, sqrt, abs.';
+const BU_EXPR_MSG_FORMULA = 'The site cannot read this formula. Write it with the column codes listed below (c1, c2, …), numbers, + - * / ^, ln, log, exp, sqrt, abs. A cell of another table is written tablename(@).c2 or tablename(Row label).c2, with round brackets.';
 const BU_EXPR_MSG_TRANSFORM = 'The site cannot read this. Use v for the column value, numbers, + - * / ^, ln, log, exp, sqrt, abs.';
 function buExprMsg(view) { return view && view.mode === 'formula' ? BU_EXPR_MSG_FORMULA : BU_EXPR_MSG_TRANSFORM; }
 const BU_RAW_MSG = 'The builder does not have a form for this part, so here is the text itself. It works as written; you can edit it as plain text.';
@@ -6824,7 +6874,7 @@ function buYoutubeId(input) {
 function buExprOk(src) {
   // Same acceptance rules as the renderer's ltCompileExpr; uses the real one when present. An empty box is fine (no transform).
   let e = String(src || '').trim(); if (!e) return true;
-  if (typeof ltCompileExpr === 'function') return !!ltCompileExpr(e);
+  if (typeof ltCompileExpr === 'function') { let known = null; try { const ts = buTables(); known = id => ts.some(t => t.id === id); } catch (err) { known = null; } return !!ltCompileExpr(e, known); }
   if (/^\d+$/.test(e)) e = 'c' + e;
   if (!/^[\sc\d.+\-*/^()a-z]*$/i.test(e)) return false;
   const tokens = e.match(/c\d+|\d+(?:\.\d+)?|ln|log10|log|exp|sqrt|abs|pi|[-+*/^()]/gi) || [];
@@ -7400,7 +7450,7 @@ function buAxisControls(axis, si, view, headers) {
   const errLine = `<div class="bu-err bu-expr-err" ${buExprOk(expr) ? 'hidden' : ''}>${buExprMsg(view)}</div>`;
   if (view.mode === 'formula') {
     const legend = headers.map((hname, i) => `c${i + 1} = ${hname && String(hname).trim() ? hname : 'Column ' + (i + 1)}`).join(', ');
-    return `<div class="form-grid-2"><div class="form-row"><label>Column</label>${sel}</div><div class="form-row"><label>Formula</label><input type="text" data-bind="${bind}" data-kind="${kind}"${sattr} data-part="formula" value="${buEsc(view.expr)}" spellcheck="false" placeholder="c3-c2"/>${errLine}<div class="hint">${buEsc(legend ? 'Columns: ' + legend + '. ' : '')}Numbers, + - * / ^, ln, log, exp, sqrt, abs.</div></div></div>`;
+    return `<div class="form-grid-2"><div class="form-row"><label>Column</label>${sel}</div><div class="form-row"><label>Formula</label><input type="text" data-bind="${bind}" data-kind="${kind}"${sattr} data-part="formula" value="${buEsc(view.expr)}" spellcheck="false" placeholder="c3-c2"/>${errLine}<div class="hint">${buEsc(legend ? 'Columns: ' + legend + '. ' : '')}Numbers, + - * / ^, ln, log, exp, sqrt, abs. A cell of another table: tablename(@).c2 for the row with the same first-column label, tablename(Water).c2 for a named row.</div></div></div>`;
   }
   return `<div class="form-grid-2"><div class="form-row"><label>Column</label>${sel}</div><div class="form-row"><label>Change it first (optional)</label><input type="text" data-bind="${bind}" data-kind="${kind}"${sattr} data-part="transform" value="${buEsc(view.transform || '')}" placeholder="v" spellcheck="false"/>${errLine}<div class="hint">Use v for the value in that column, for example 1/(v+273.15) or ln(v).</div></div></div>`;
 }
@@ -7482,7 +7532,7 @@ function buFormLayers(b) {
     const legend = headers.map((hname, c) => `c${c + 1} = ${hname && String(hname).trim() ? hname : 'Column ' + (c + 1)}`).join(', ');
     let h = `<div class="bu-layer" data-layer="${i}"><div class="form-grid-2">${buRow('Name in the legend', `<input type="text" ${a} data-part="name" value="${buEsc(buLayerStr(l, 'name'))}" placeholder="e.g. Accepted values"/>`)}${buRow('Where its values come from', src)}</div>`;
     if (typed) h += `<div class="form-row"><label>Values</label><textarea ${a} data-part="data" class="bu-grow" rows="4" spellcheck="false" placeholder="0.1, 1.87&#10;0.5, 1.82&#10;1.0, 1.81">${buEsc(l.data || '')}</textarea><div class="hint">One point per line: the horizontal value, a comma, the vertical value. Pasting two columns from a spreadsheet works.</div></div>`;
-    else h += `<div class="form-grid-2">${buRow('Horizontal value', `<input type="text" ${a} data-part="x" value="${buEsc(buLayerStr(l, 'x'))}" placeholder="${buEsc(own && buOptStr(b, 'x') ? buOptStr(b, 'x') : 'c1')}" spellcheck="false"/>`)}${buRow('Vertical value', `<input type="text" ${a} data-part="y" value="${buEsc(buLayerStr(l, 'y'))}" placeholder="c2" spellcheck="false"/>`)}</div><div class="hint" style="margin-bottom:0.8rem;">${buEsc(legend ? 'Columns: ' + legend + '. ' : '')}Write a column as c1, c2, … or a formula such as c3-c2. Numbers, + - * / ^, ln, log, exp, sqrt, abs.</div>
+    else h += `<div class="form-grid-2">${buRow('Horizontal value', `<input type="text" ${a} data-part="x" value="${buEsc(buLayerStr(l, 'x'))}" placeholder="${buEsc(own && buOptStr(b, 'x') ? buOptStr(b, 'x') : 'c1')}" spellcheck="false"/>`)}${buRow('Vertical value', `<input type="text" ${a} data-part="y" value="${buEsc(buLayerStr(l, 'y'))}" placeholder="c2" spellcheck="false"/>`)}</div><div class="hint" style="margin-bottom:0.8rem;">${buEsc(legend ? 'Columns: ' + legend + '. ' : '')}Write a column as c1, c2, … or a formula such as c3-c2. Numbers, + - * / ^, ln, log, exp, sqrt, abs. A cell of another table: tablename(@).c2 for the row with the same first-column label, tablename(Water).c2 for a named row.</div>
       ${buRow('Rows to plot (optional)', `<input type="text" ${a} data-part="rows" value="${buEsc(buLayerStr(l, 'rows'))}" placeholder="every row"/>`, 'For example 2, or 1-3. Leave empty for every row.')}`;
     h += `<div class="form-grid-2">${buRow('Drawn as', buPick(BU_GRAPH_TYPES, buLayerStr(l, 'type'), `${a} data-part="type"`))}${buRow('Colour', buPick(BU_GRAPH_COLORS, buLayerStr(l, 'color'), `${a} data-part="color"`))}</div>`;
     h += `<div class="form-grid-2"><div class="form-row"><label class="bu-check"><input type="checkbox" ${a} data-part="fit" ${l.fit && String(l.fit).toLowerCase() !== 'none' ? 'checked' : ''}/> Draw its best-fit straight line</label></div><div class="form-row bu-tools"><button type="button" class="btn-small" data-act="del-layer" data-layer="${i}">✕ Remove this layer</button></div></div></div>`;

@@ -131,7 +131,29 @@ Accepted curves (dashed) with your own values as points.
 }
 ```
 
-A graph reads the numbers a student typed; it does not calculate across tables. If a plotted quantity needs values from two tables (for example a van't Hoff factor from masses in one table and freezing points in another), give students a results table to enter the calculated values and plot that.
+### Cell references: a formula may read any table on the page (2026-11-14)
+
+An `x=` or `y=` formula, on a graph or on a layer, is worked out once per row of its own table (`c1`, `c2`, … are that row's cells). It may also read a cell of any other table in the lab, so a plotted quantity can combine tables without the student copying numbers:
+
+| Written | Reads |
+|---|---|
+| `freezing(@).c2` | column 2 of the row of table `freezing` whose **first-column label is the same as this row's** (Sucrose row to Sucrose row; row order does not matter) |
+| `freezing(Water).c2` | column 2 of the row of `freezing` labelled Water (a fixed cell, e.g. a shared blank) |
+| `freezing(1).c2` | column 2 of row 1 of `freezing` (by number) |
+
+- **Round brackets, never square ones.** A `]` ends the option list, so `freezing["Water"].c2` cannot be written.
+- A label may be written bare, `freezing(Table salt).c2`. Quote it only if it contains brackets or is a number, and then use single quotes inside a double-quoted option: `y="freezing('Run (2)').c2"`. Labels match ignoring case and extra spaces.
+- The table name is the table's `id`. A blank, non-numeric or missing cell makes that row skip, exactly as for a blank `c2`.
+- Per-row constants (a molar mass, a hydrate factor) go in as plain numbers: give each row its own `\layer` with `rows=`.
+- Options may run over several lines inside the square brackets.
+
+```
+\layer[name="Your table salt", table=solutions, rows=2, color=accent,
+  x="1000*c3/(58.44*c2)",
+  y="(freezing(Water).c2+freezing(Water).c3-freezing(@).c2-freezing(@).c3)/2*58.44*c2/(1860*c3)"]
+```
+
+Here the layer's own table is `solutions` (masses in `c2`, `c3`); the two freezing points come from the row of `freezing` with the same label, and the water blank from its Water row.
 
 ```
 \datatable[id=visc, addrows]{
