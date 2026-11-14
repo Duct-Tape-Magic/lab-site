@@ -88,12 +88,50 @@ Whenever the lab asks students to plot their data, add a `\graph` right after th
 - `table=` the `id` of the `\datatable` to read (required).
 - `x=` and `y=` which columns to plot, as `c1`, `c2`, … (1-based). Simple formulas are allowed: `x="1/(c1+273.15)"`, `y="ln(c2)"`, `y="c3-c2"`. Functions: `ln`, `log` (base 10), `exp`, `sqrt`, `abs`; operators `+ - * / ^`. Quote any value containing commas or spaces.
 - Several y series: `y="c2;c3"`, with optional names `series="Trial 1;Trial 2"`.
-- `type=scatter` (default), `line` (points joined), or `both`.
+- `type=` how the series is drawn: `scatter` (default, dots), `both` (dots joined by a line), `line` (a line with small dots), `solid`, `dashed` or `dotted` (a bare line), or `dashed+points` / `dotted+points` / `solid+points`. With several y series, a list sets each one: `type="scatter;dashed"`.
+- `color=` a fixed colour: `accent` (the site's blue), `red`, `green`, `orange`, `purple`, `gray`, `black`, or `#rrggbb`. Without it colours are assigned in order. A list works as for `type`.
+- `rows=` plot only some rows of the table: `rows=2`, `rows=1-3`, `rows="1,4"` (1-based, in table order).
 - `fit=linear` adds a least-squares line and prints its equation and R².
 - `title=`, `xlabel=`, `ylabel=` for labels; `xmin/xmax/ymin/ymax` to fix axis ranges (otherwise automatic).
 - Caption in the braces.
 
 Rows with a blank or non-numeric x or y are skipped, so the graph simply grows as the student fills the table.
+
+### Layers: several data sources in one graph (2026-11-14)
+
+A graph can draw more than its own table. Put one `\layer` line per extra data source inside the graph's braces, before the caption. Every layer is drawn in the same axes; lines are always drawn underneath points, so student points sit on top of reference curves.
+
+- **Values typed in** (literature or accepted values): `\layer[name="NaCl, accepted", type=dashed, color=red]{ … }` with one point per line in the braces, `x, y` (a comma, a tab or spaces between the two numbers; `;` may separate points on one line). Digits, signs, decimal points and `e` only.
+- **Another table**: `\layer[name="Trial 2", table=other, x=c1, y=c2]`. Options: `table=` (default: the graph's own table), `x=`, `y=` (same expressions as the graph; `x` defaults to the graph's `x`, `y` to `c2`), `rows=`, `type=`, `color=`, `fit=linear`, `name=` (the legend entry).
+- `table=none` on the graph itself means it has no table of its own and draws only its layers.
+- The legend lists every series when there is more than one and wraps onto extra lines as needed.
+
+```
+\datatable[id=results, title="Your results"]{
+| Solute | Molality (mol/kg) | van't Hoff factor |
+|---|---|---|
+| Table salt | ___ | ___ |
+| Epsom salt | ___ | ___ |
+}
+
+\graph[id=vh, table=none, title="van't Hoff factor against molality", xlabel="Molality (mol/kg)", ylabel="van't Hoff factor"]{
+\layer[name="NaCl, accepted", type=dashed, color=red]{
+0.1, 1.87
+0.5, 1.82
+1.0, 1.81
+}
+\layer[name="MgSO4, accepted", type=dashed, color=green]{
+0.1, 1.32
+0.5, 1.14
+1.0, 1.09
+}
+\layer[name="Your table salt", table=results, x=c2, y=c3, rows=1, color=red]
+\layer[name="Your Epsom salt", table=results, x=c2, y=c3, rows=2, color=green]
+Accepted curves (dashed) with your own values as points.
+}
+```
+
+A graph reads the numbers a student typed; it does not calculate across tables. If a plotted quantity needs values from two tables (for example a van't Hoff factor from masses in one table and freezing points in another), give students a results table to enter the calculated values and plot that.
 
 ```
 \datatable[id=visc, addrows]{

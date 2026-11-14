@@ -877,7 +877,8 @@
   .bu-figure img { width: 140px; max-height: 110px; object-fit: contain; background: var(--card-bg); border: 0.5px solid var(--rule); }
   .bu-axis { border-left: 2px solid var(--rule); padding-left: 0.7rem; margin: 0.6rem 0 0.9rem; }
   .bu-axis-title { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; }
-  .bu-series + .bu-series { border-top: 0.5px dashed var(--rule); padding-top: 0.5rem; }
+  .bu-series + .bu-series, .bu-layer + .bu-layer { border-top: 0.5px dashed var(--rule); padding-top: 0.5rem; }
+  .bu-layer { margin-bottom: 0.6rem; }
   .bu-tip { font-size: 11px; color: var(--warn, #8a6d1f); margin-top: 0.25rem; }
   option.bu-missing { color: var(--danger); }
   .bu-flash { outline: 2px solid var(--accent); outline-offset: 2px; transition: outline-color 1.2s ease-out; }
@@ -4711,7 +4712,9 @@ function ltWidget(name, o, body, ctx, widgets) {
       // ltRestore would later drop unescaped "\eta" into the JSON string and the graph would never draw.
       const raw = s => String(s).replace(/LTMATH(\d+)X/g, (m, i) => ctx.math[+i] ?? m);
       const opts = {}; for (const k of Object.keys(o)) opts[k] = typeof o[k] === 'string' ? raw(o[k]) : o[k];
-      if (body && body.trim()) opts.caption = raw(body.trim()); if (!opts.table) opts.table = 'table1';
+      const g = ltGraphLayers(body || '');   // \layer[…]{…} lines in the body are extra data sources; what is left is the caption
+      if (g.layers.length) opts.layers = g.layers.map(l => { const c = {}; for (const k of Object.keys(l)) c[k] = typeof l[k] === 'string' ? raw(l[k]) : l[k]; return c; });
+      if (g.caption) opts.caption = raw(g.caption); if (!opts.table) opts.table = 'table1';
       return `<div class="lt-graph" data-graph="${id}" data-opts="${escapeHTML(JSON.stringify(opts))}"></div>`;
     }
   }
@@ -5085,19 +5088,103 @@ function ltLinearFit(pts) {
   return { m, b, r2 };
 }
 const LT_SERIES_COLORS = ['var(--accent)', '#b3261e', '#2e7d32', '#b26a00', '#6a1b9a'];
+const LT_COLOR_NAMES = { accent: 'var(--accent)', blue: 'var(--accent)', red: '#b3261e', green: '#2e7d32', orange: '#b26a00', purple: '#6a1b9a', gray: 'var(--muted)', grey: 'var(--muted)', black: 'var(--ink)' };
+/* Graph layers (2026-11-14). A \graph body may hold \layer[…] or \layer[…]{x, y values} lines before its caption. Each layer is one more
+   data source drawn in the same axes: another table (table=, x=, y=, rows=) or values typed into its braces (literature values).
+   table=none on the graph itself means it has no table of its own and draws only its layers. Lines are drawn under points. */
+function ltGraphLayers(body) {
+  const src = String(body || ''), layers = []; let rest = '', i = 0;
+  const re = /\\layer(?![a-zA-Z])/g; let m;
+  while ((m = re.exec(src))) {
+    let pos = m.index + m[0].length, opts = '', data = null;
+    if (src[pos] === '[') { const end = src.indexOf(']', pos); if (end !== -1) { opts = src.slice(pos + 1, end); pos = end + 1; } }
+    if (src[pos] === '{') { const end = ltBalanced(src, pos); if (end === -1) break; data = src.slice(pos + 1, end); pos = end + 1; }
+    rest += src.slice(i, m.index); i = pos; re.lastIndex = pos;
+    const o = ltParseOptions(opts); delete o.data;
+    if (data != null && data.trim()) o.data = data.trim();
+    layers.push(o);
+  }
+  return { layers, caption: (rest + src.slice(i)).trim() };
+}
+// Typed-in values: one "x, y" pair per line (or separated by semicolons); the two numbers by a comma, a tab or spaces.
+function ltGraphDataClean(str) { return String(str == null ? '' : str).replace(/−/g, '-').replace(/[^0-9eE+\-.,;\s]/g, '').split('\n').map(l => l.trim()).filter(Boolean).join('\n'); }
+function ltGraphData(str) {
+  return ltGraphDataClean(str).split(/[;\n]/).map(l => l.split(/[\s,]+/).filter(Boolean).map(Number))
+    .filter(p => p.length >= 2 && Number.isFinite(p[0]) && Number.isFinite(p[1])).map(p => [p[0], p[1]]);
+}
+// type= → how a series is drawn. scatter (default) dots · both dots joined by a line · line a line with small dots (as before layers existed)
+// · solid / dashed / dotted a bare line · any of the last three with "+points" adds full dots.
+function ltGraphStyle(type) {
+  const [base, extra] = String(type == null || type === true ? '' : type).toLowerCase().replace(/\s+/g, '').split('+');
+  const pts = extra === 'points' || extra === 'dots';
+  switch (base) {
+    case 'both': return { line: 'solid', r: 4 };
+    case 'line': return { line: 'solid', r: pts ? 4 : 3 };
+    case 'solid': return { line: 'solid', r: pts ? 4 : 0 };
+    case 'dashed': case 'dash': return { line: 'dashed', r: pts ? 4 : 0 };
+    case 'dotted': case 'dot': return { line: 'dotted', r: pts ? 4 : 0 };
+    default: return { line: null, r: 4 };
+  }
+}
+function ltGraphColor(c, i) {   // color= a name, 1 to 5 (the automatic palette) or #rrggbb; anything else → automatic by position
+  const v = String(c == null || c === true ? '' : c).trim().toLowerCase();
+  if (/^[1-5]$/.test(v)) return LT_SERIES_COLORS[+v - 1];
+  if (Object.prototype.hasOwnProperty.call(LT_COLOR_NAMES, v)) return LT_COLOR_NAMES[v];
+  if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/.test(v)) return v;
+  return LT_SERIES_COLORS[i % LT_SERIES_COLORS.length];
+}
+function ltGraphRowPick(spec) {   // rows="2", "1-3", "1,4": which rows of the table a series reads (1-based); null = every row
+  const v = String(spec == null || spec === true ? '' : spec).trim(); if (!v) return null;
+  const set = new Set();
+  v.split(/[,;\s]+/).filter(Boolean).forEach(part => { const m = /^(\d+)(?:-(\d+))?$/.exec(part); if (!m) return; const a = +m[1], b = m[2] ? +m[2] : a; for (let r = Math.min(a, b); r <= Math.max(a, b) && r <= 2000; r++) set.add(r - 1); });
+  return set.size ? set : null;
+}
+// Every series a graph draws: one per y expression of the graph's own table, then one per layer (or per y expression of a layer). null = an expression could not be read.
+function ltGraphSeries(area, o) {
+  const series = [], split = v => String(v == null || v === true ? '' : v).split(/[;|]/).map(x => x.trim());
+  const nth = (v, k) => { const l = split(v); return l[k] || l[0] || ''; };
+  const push = (src, layerNo) => {
+    const fit = !!src.fit && String(src.fit).toLowerCase() !== 'none';
+    if (layerNo && src.data != null && String(src.data).trim()) {
+      series.push({ name: split(src.name)[0] || `Layer ${layerNo}`, pts: ltGraphData(src.data), style: ltGraphStyle(nth(src.type, 0)), color: nth(src.color, 0), fit });
+      return true;
+    }
+    const own = t => (t && t !== true && String(t) !== 'none' ? String(t) : '');
+    const table = own(src.table) || own(o.table);
+    const { header, rows } = table ? ltTableRows(area, table) : { header: [], rows: [] };
+    const pick = ltGraphRowPick(src.rows);
+    const fx = ltCompileExpr(src.x || (layerNo ? o.x : '') || 'c1');
+    const ySpecs = split(src.y || 'c2').filter(Boolean), fys = ySpecs.map(ltCompileExpr);
+    if (!fx || !fys.length || fys.some(f => !f)) return false;
+    const names = layerNo ? src.name : src.series, named = names != null && names !== true && String(names).trim() !== '';
+    fys.forEach((fy, k) => series.push({
+      name: named ? split(names)[k] || ySpecs[k] : (/^c?\d+$/i.test(ySpecs[k]) && header[parseInt(ySpecs[k].replace(/^c/i, ''), 10) - 1]) || ySpecs[k],
+      pts: rows.filter((r, ri) => !pick || pick.has(ri)).map(r => [fx(r), fy(r)]).filter(pt => Number.isFinite(pt[0]) && Number.isFinite(pt[1])),
+      style: ltGraphStyle(nth(src.type, k)), color: nth(src.color, k), fit
+    }));
+    return true;
+  };
+  let ok = true;
+  if (String(o.table) !== 'none') ok = push(o, 0) && ok;
+  (Array.isArray(o.layers) ? o.layers : []).forEach((l, i) => { if (l && typeof l === 'object') ok = push(l, i + 1) && ok; });
+  if (!ok) return null;
+  series.forEach((sr, i) => { sr.pts.sort((a, b) => a[0] - b[0]); sr.color = ltGraphColor(sr.color, i); });
+  return series;
+}
+let ltGraphSeq = 0;
 function ltRenderGraph(area, box) {
   let o; try { o = JSON.parse(box.dataset.opts || '{}'); } catch (e) { box.innerHTML = `<div class="lt-error">Graph: could not read the graph options.</div>`; return; }
-  const { header, rows } = ltTableRows(area, o.table);
-  const fx = ltCompileExpr(o.x || 'c1');
-  const ySpecs = String(o.y || 'c2').split(/[;|]/).map(s => s.trim()).filter(Boolean);
-  const fys = ySpecs.map(ltCompileExpr);
-  if (!fx || fys.some(f => !f)) { box.innerHTML = `<div class="lt-error">Graph: could not read the x or y expression.</div>`; return; }
-  const series = fys.map((fy, i) => ({
-    name: o.series ? String(o.series).split(/[;|]/)[i] || ySpecs[i] : (/^c?\d+$/i.test(ySpecs[i]) && header[parseInt(ySpecs[i].replace(/^c/i, ''), 10) - 1]) || ySpecs[i],
-    pts: rows.map(r => [fx(r), fy(r)]).filter(p => Number.isFinite(p[0]) && Number.isFinite(p[1])).sort((a, b) => a[0] - b[0])
-  }));
-  const all = series.flatMap(s => s.pts);
-  const W = 640, H = 380, mL = 64, mR = 20, mT = o.title ? 40 : 20, mB = 56;
+  const series = ltGraphSeries(area, o);
+  if (!series) { box.innerHTML = `<div class="lt-error">Graph: could not read the x or y expression.</div>`; return; }
+  const all = series.flatMap(sr => sr.pts);
+  // Legend: one entry per series when there are several, on a 150-unit grid that widens for long names and wraps onto more rows (the plot keeps its size).
+  const W = 640, mL = 64, mR = 20, mB = 56, mT0 = o.title ? 40 : 20;
+  const legend = series.length > 1 && all.length > 0;
+  const colW = legend ? Math.max(150, Math.ceil(Math.max(...series.map(sr => (sr.style.line ? 22 : 10) + String(sr.name).length * 6.4)) + 16)) : 150;
+  const cols = Math.max(1, Math.floor((W - mL - mR) / colW)), legendRows = legend ? Math.ceil(series.length / cols) : 0;
+  const legendY = o.title ? 38 : 10;   // under the title, so a long title and the legend never share a line
+  const extra = legend ? (legendRows - 1) * 16 + (o.title ? 8 : 0) : 0;
+  const mT = mT0 + extra, H = 380 + extra;
   let svg = `<svg viewBox="0 0 ${W} ${H}" class="lt-graph-svg" role="img" aria-label="${escapeHTML(o.title || 'Graph')}">`;
   if (o.title) svg += `<text x="${W / 2}" y="22" text-anchor="middle" class="lt-g-title">${escapeHTML(o.title)}</text>`;
   if (!all.length) {
@@ -5116,23 +5203,30 @@ function ltRenderGraph(area, box) {
   svg += `<rect x="${mL}" y="${mT}" width="${W - mL - mR}" height="${H - mT - mB}" class="lt-g-frame"/>`;
   if (o.xlabel) svg += `<text x="${(mL + W - mR) / 2}" y="${H - 14}" text-anchor="middle" class="lt-g-label">${escapeHTML(o.xlabel)}</text>`;
   if (o.ylabel) svg += `<text transform="translate(16 ${(mT + H - mB) / 2}) rotate(-90)" text-anchor="middle" class="lt-g-label">${escapeHTML(o.ylabel)}</text>`;
-  const type = (o.type || 'scatter').toLowerCase();
+  const DASH = { solid: '', dashed: ' stroke-dasharray="7 5"', dotted: ' stroke-dasharray="0.1 5.5" stroke-linecap="round"' };
+  const clip = 'ltgclip' + (++ltGraphSeq);   // lines stay inside the frame when the axis range is fixed; points are never cut
+  svg += `<clipPath id="${clip}"><rect x="${mL}" y="${mT}" width="${W - mL - mR}" height="${H - mT - mB}"/></clipPath>`;
+  // every line first, then every point, so points from any layer sit on top of lines from any other
+  let lines = '', dots = '', fits = '';
   const fitNotes = [];
-  series.forEach((s, i) => {
-    const color = LT_SERIES_COLORS[i % LT_SERIES_COLORS.length];
-    if ((type === 'line' || type === 'both') && s.pts.length > 1) svg += `<polyline fill="none" stroke="${color}" stroke-width="2" points="${s.pts.map(p => `${X(p[0])},${Y(p[1])}`).join(' ')}"/>`;
-    if (type !== 'line') s.pts.forEach(p => { svg += `<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="4" fill="${color}"/>`; });
-    else s.pts.forEach(p => { svg += `<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="3" fill="${color}"/>`; });
-    if (o.fit && String(o.fit).toLowerCase() !== 'none') {
-      const f = ltLinearFit(s.pts);
+  series.forEach(sr => {
+    if (sr.style.line && sr.pts.length > 1) lines += `<polyline fill="none" stroke="${sr.color}" stroke-width="2"${DASH[sr.style.line]} points="${sr.pts.map(p => `${X(p[0])},${Y(p[1])}`).join(' ')}"/>`;
+    if (sr.style.r) sr.pts.forEach(p => { dots += `<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="${sr.style.r}" fill="${sr.color}"/>`; });
+    if (sr.fit) {
+      const f = ltLinearFit(sr.pts);
       if (f) {
         const x0 = tx.lo, x1 = tx.hi;
-        svg += `<line x1="${X(x0)}" y1="${Y(f.m * x0 + f.b)}" x2="${X(x1)}" y2="${Y(f.m * x1 + f.b)}" stroke="${color}" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.8"/>`;
-        fitNotes.push(`${series.length > 1 ? s.name + ': ' : ''}y = ${ltFmtNum(f.m)}x ${f.b < 0 ? '−' : '+'} ${ltFmtNum(Math.abs(f.b))},  R² = ${ltFmtNum(f.r2)}`);
+        fits += `<line x1="${X(x0)}" y1="${Y(f.m * x0 + f.b)}" x2="${X(x1)}" y2="${Y(f.m * x1 + f.b)}" stroke="${sr.color}" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.8"/>`;
+        fitNotes.push(`${series.length > 1 ? sr.name + ': ' : ''}y = ${ltFmtNum(f.m)}x ${f.b < 0 ? '−' : '+'} ${ltFmtNum(Math.abs(f.b))},  R² = ${ltFmtNum(f.r2)}`);
       }
     }
   });
-  if (series.length > 1) series.forEach((s, i) => { svg += `<circle cx="${mL + 10 + i * 150}" cy="${mT - 10}" r="4" fill="${LT_SERIES_COLORS[i % LT_SERIES_COLORS.length]}"/><text x="${mL + 20 + i * 150}" y="${mT - 6}" class="lt-g-tick">${escapeHTML(s.name)}</text>`; });
+  svg += `<g clip-path="url(#${clip})">${lines}</g>${dots}<g clip-path="url(#${clip})">${fits}</g>`;
+  if (legend) series.forEach((sr, i) => {
+    const x0 = mL + 10 + (i % cols) * colW, y0 = legendY + Math.floor(i / cols) * 16;
+    if (sr.style.line) svg += `<line x1="${x0 - 4}" x2="${x0 + 14}" y1="${y0}" y2="${y0}" stroke="${sr.color}" stroke-width="2"${DASH[sr.style.line]}/>${sr.style.r ? `<circle cx="${x0 + 5}" cy="${y0}" r="3" fill="${sr.color}"/>` : ''}<text x="${x0 + 20}" y="${y0 + 4}" class="lt-g-tick">${escapeHTML(sr.name)}</text>`;
+    else svg += `<circle cx="${x0}" cy="${y0}" r="4" fill="${sr.color}"/><text x="${x0 + 10}" y="${y0 + 4}" class="lt-g-tick">${escapeHTML(sr.name)}</text>`;
+  });
   svg += `</svg>`;
   box.innerHTML = svg + (fitNotes.length ? `<div class="lt-graph-fit">${fitNotes.map(escapeHTML).join('<br>')}</div>` : '') + (o.caption ? `<div class="lt-graph-caption">${escapeHTML(o.caption)}</div>` : '');
 }
@@ -5621,7 +5715,7 @@ const BM_TYPES = {
   video:     { tag: 'video',     label: 'Video',           list: 'both', known: [] },
   figure:    { tag: 'figure',    label: 'Picture',         list: 'both', known: ['caption', 'size'] },
   callout:   { tag: null,        label: 'Callout',         list: 'procedure', known: ['label'] },
-  graph:     { tag: 'graph',     label: 'Graph',           list: 'both', kind: 'graph', idBase: 'graph',    known: ['id', 'table', 'x', 'y', 'series', 'type', 'fit', 'title', 'xlabel', 'ylabel', 'xmin', 'xmax', 'ymin', 'ymax'], nameOf: b => b.opts.title },
+  graph:     { tag: 'graph',     label: 'Graph',           list: 'both', kind: 'graph', idBase: 'graph',    known: ['id', 'table', 'x', 'y', 'series', 'rows', 'type', 'color', 'fit', 'title', 'xlabel', 'ylabel', 'xmin', 'xmax', 'ymin', 'ymax'], nameOf: b => b.opts.title },
   pagebreak: { tag: 'pagebreak', label: 'Page break',      list: 'procedure', known: [] },
   widget:    { tag: 'widget',    label: 'Widget',          list: 'procedure', kind: 'widget', idBase: 'widget', known: ['id', 'type', 'label', 'table', 'bank', 'columns', 'rawcolumns', 'help'], nameOf: b => b.opts.label || b.opts.type },
   usetable:  { tag: 'usetable',  label: 'Include a table', list: 'report' },
@@ -6003,7 +6097,7 @@ function bmBlockFromOcc(occ, ctx) {
     case 'notes': return { type: 'notes', opts: o, label: B.trim() };
     case 'video': return { type: 'video', opts: o, url: B.trim() };
     case 'figure': return { type: 'figure', opts: o, path: B.trim() };
-    case 'graph': return { type: 'graph', opts: o, caption: B.trim() };
+    case 'graph': { const g = ltGraphLayers(B), blk = { type: 'graph', opts: o, caption: g.caption }; if (g.layers.length) blk.layers = g.layers; return blk; }   // layers: plain option objects, typed values in .data
     case 'pagebreak': return (Bp == null || B.trim() === '') ? { type: 'pagebreak', opts: o } : raw(BM_W.pagebreak);
     case 'usetable': case 'usegraph': case 'useanswer': case 'usephoto': return { type, ref: B.trim() };
     case 'usesocratic': return { type, opts: o, ref: B.trim() };
@@ -6033,6 +6127,14 @@ function bmOptsFor(type, opts) {
   return parts.length ? `[${parts.join(', ')}]` : '';
 }
 function bmOpts(block) { return bmOptsFor(block.type, block.opts); }
+const BM_LAYER_KNOWN = ['name', 'table', 'x', 'y', 'rows', 'type', 'color', 'fit'];
+function bmLayerText(l) {   // one \layer line of a graph: its options, then typed values (if any) in braces
+  const o = l || {}, keys = [...BM_LAYER_KNOWN.filter(k => k in o), ...Object.keys(o).filter(k => !BM_LAYER_KNOWN.includes(k) && k !== 'data' && k[0] !== '_')];
+  const parts = [];
+  for (const k of keys) { const v = o[k]; if (v === '' || v == null || v === false) continue; parts.push(v === true ? k : `${k}=${bmOptValue(v)}`); }
+  const data = o.data != null ? ltGraphDataClean(o.data) : '';
+  return '\\layer' + (parts.length ? `[${parts.join(', ')}]` : '') + (data ? `{\n${data}\n}` : '');
+}
 function bmBodyInfo(s) {
   const c = bmNewCtx(); const p = bmProtect(String(s ?? ''), c);
   const stack = [], esc = new Set();
@@ -6078,7 +6180,7 @@ function bmSerializeBlock(b) {
     case 'answer': case 'photo': case 'widget': return `\\${tag}${bmOpts(b)}` + (b.prompt ? `{${bmBody(b.prompt)}}` : '');
     case 'choice': { const cs = (b.choices || []).map(c => String(c ?? '').trim()).filter(Boolean); return `\\choice${bmOpts(b)}{\n${[bmBody(String(b.prompt ?? '').trim()), ...cs.map(c => '- ' + bmBody(c))].filter(Boolean).join('\n')}\n}`; }
     case 'notes': return `\\notes${bmOpts(b)}` + (b.label ? `{${bmBody(b.label)}}` : '');
-    case 'graph': return `\\graph${bmOpts(b)}` + (b.caption ? `{${bmBody(b.caption)}}` : '');
+    case 'graph': { const ls = (b.layers || []).map(bmLayerText), cap = b.caption ? bmBody(b.caption) : ''; const body = ls.length ? '\n' + [...ls, cap].filter(Boolean).join('\n') + '\n' : cap; return `\\graph${bmOpts(b)}` + (body ? `{${body}}` : ''); }
     case 'video': return `\\video${bmOpts(b)}{${bmBody(b.url ?? '')}}`;
     case 'usetable': case 'usegraph': case 'useanswer': case 'usephoto': return `\\${tag}{${bmBody(b.ref ?? '')}}`;
     case 'usesocratic': return `\\usesocratic${bmOpts(b)}{${bmBody(b.ref ?? '')}}`;
@@ -6227,6 +6329,7 @@ function bmRenameId(model, oldId, newId) {
   if (!oldId || oldId === newId) return;
   for (const b of bmAllBlocks(model)) {
     if ((b.type === 'graph' || b.type === 'widget') && b.opts && b.opts.table === oldId) b.opts.table = newId;
+    if (b.type === 'graph') (b.layers || []).forEach(l => { if (l && l.table === oldId) l.table = newId; });
     if (['usetable', 'usegraph', 'useanswer', 'usephoto', 'usesocratic'].includes(b.type) && b.ref === oldId) b.ref = newId;
   }
 }
@@ -6234,6 +6337,7 @@ function bmReferencesTo(model, id) {
   const out = [];
   for (const b of bmAllBlocks(model)) {
     if ((b.type === 'graph' || b.type === 'widget') && b.opts && b.opts.table === id) out.push({ block: b, field: 'table' });
+    else if (b.type === 'graph' && (b.layers || []).some(l => l && l.table === id)) out.push({ block: b, field: 'layer' });
     if (['usetable', 'usegraph', 'useanswer', 'usephoto', 'usesocratic'].includes(b.type) && b.ref === id) out.push({ block: b, field: 'ref' });
   }
   return out;
@@ -6321,9 +6425,16 @@ function bmReferenceProblems(model, auto) {   // shared by builderParse (strings
   for (const id of auto.dups) out.push({ k: null, msg: `Two blocks are both named '${id}'; students' answers would collide.` });
   for (const b of bmAllBlocks(model)) {
     if (b.type === 'graph') {
-      const t = b.opts && b.opts.table;
-      if (t == null || t === '') { if (!tables.has('table1')) out.push({ k: b._k ?? null, msg: 'This graph has no table chosen, and there is no table it can read by default. Choose a table.' }); }
+      const t = b.opts && b.opts.table, layers = b.layers || [];
+      if (t === 'none') { if (!layers.length) out.push({ k: b._k ?? null, msg: 'This graph has no table and no extra layers, so it draws nothing. Choose a table or add a layer.' }); }
+      else if (t == null || t === '') { if (!tables.has('table1')) out.push({ k: b._k ?? null, msg: 'This graph has no table chosen, and there is no table it can read by default. Choose a table.' }); }
       else if (!tables.has(String(t))) out.push({ k: b._k ?? null, msg: `This graph reads a table named '${t}', but no table has that name.` });
+      layers.forEach((l, i) => {
+        if (!l) return;
+        if (l.data != null) { if (!ltGraphData(l.data).length) out.push({ k: b._k ?? null, msg: `Layer ${i + 1} of this graph has no values typed in yet. Type one point per line, for example 0.5, 1.82.` }); }
+        else if (l.table) { if (!tables.has(String(l.table))) out.push({ k: b._k ?? null, msg: `Layer ${i + 1} of this graph reads a table named '${l.table}', but no table has that name.` }); }
+        else if (t === 'none') out.push({ k: b._k ?? null, msg: `Layer ${i + 1} of this graph has no table chosen and no values typed in.` });
+      });
     }
     if (b.type === 'widget') {
       const ty = b.opts && b.opts.type, t = b.opts && b.opts.table, WD = typeof WIDGETS !== 'undefined' ? WIDGETS[ty] : null;
@@ -6435,7 +6546,7 @@ function bmWidgetSignature(text) {
     else if (name === 'answer' || name === 'section') shape = [body && body.trim() ? bmMdOf(body.trim(), ctx) : '', info.opts.hint ? bmNormalizeMd(String(info.opts.hint)) : ''];
     else if (name === 'choice') { const c = ltChoiceParts(body ?? ''); shape = [c.prompt ? bmMdOf(c.prompt, ctx) : '', c.choices.map(x => bmRestore(x, ctx).trim())]; }
     else if (name === 'notes' || name === 'photo' || name === 'widget') shape = body ? bmMdOf(body.trim(), ctx) : '';
-    else if (name === 'graph') shape = body ? bmRestore(body, ctx).trim() : '';
+    else if (name === 'graph') { const g = ltGraphLayers(body ? bmRestore(body, ctx) : ''); shape = g.layers.length ? [g.caption, g.layers.map(l => { const { data, ...rest } = l; return [sortedOpts(rest), ltGraphData(data)]; })] : g.caption; }   // layers compare by meaning, not by spacing
     else if (body != null) shape = bmRestore(body, ctx).trim();
     widgets.push([name, info.id, opts, info.depth, info.where, shape]);
     return null;
@@ -7035,7 +7146,7 @@ function buSummary(b) {
     case 'video': return buHost.youtubeId(b.url) || b.url || '(no link yet)';
     case 'figure': { const p = String(b.path || '').replace(/^img:/, ''); if (!p) return 'Waiting for a picture'; if (/^(IMAGE|FIGURE)[_-]?\w*$/i.test(p)) return `Waiting for picture ${p}`; return p.split('/').pop(); }
     case 'callout': return `${buOptStr(b, 'label') || BU_CALLOUT_LABELS[b.kind] || b.kind} · ${buFirstLine(buPlainInputs(b.body), 60)}`;
-    case 'graph': { const t = buTables().find(x => x.id && x.id === buOptStr(b, 'table')); return `${buOptStr(b, 'title') || buGraphAxesName(b)} · from "${t ? (t.title || 'Untitled table') : (buOptStr(b, 'table') || 'first table')}"`; }
+    case 'graph': { const t = buTables().find(x => x.id && x.id === buOptStr(b, 'table')), nl = (b.layers || []).length, more = nl ? ` + ${nl} layer${nl === 1 ? '' : 's'}` : ''; if (buOptStr(b, 'table') === 'none') return `${buOptStr(b, 'title') || 'Graph'} · ${nl} layer${nl === 1 ? '' : 's'}`; return `${buOptStr(b, 'title') || buGraphAxesName(b)} · from "${t ? (t.title || 'Untitled table') : (buOptStr(b, 'table') || 'first table')}"${more}`; }
     case 'pagebreak': return 'Page break';
     case 'widget': {
       const W = buWidgetInfo(b), t = buTables().find(x => x.id && x.id === buOptStr(b, 'table'));
@@ -7351,27 +7462,69 @@ function buFormWidget(b) {
   }
   return h + buIdRow(b);
 }
+const BU_GRAPH_TYPES = [['', 'Dots only'], ['both', 'Dots joined by a line'], ['line', 'Line with small dots'], ['solid', 'Solid line'], ['dashed', 'Dashed line'], ['dotted', 'Dotted line'], ['dashed+points', 'Dashed line with dots']];
+const BU_GRAPH_COLORS = [['', 'Automatic'], ['accent', 'Blue (site colour)'], ['red', 'Red'], ['green', 'Green'], ['orange', 'Orange'], ['purple', 'Purple'], ['gray', 'Grey'], ['black', 'Black']];
+function buPick(list, cur, attrs) {   // a select over [value, label] pairs; a value typed in the lab file that is not in the list is kept as its own choice
+  const c = cur === 'scatter' ? '' : cur, known = list.some(([v]) => v === c);
+  return `<select ${attrs}>${list.map(([v, label]) => `<option value="${buEsc(v)}" ${v === c ? 'selected' : ''}>${buEsc(label)}</option>`).join('')}${known ? '' : `<option value="${buEsc(c)}" selected>(as typed: ${buEsc(c)})</option>`}</select>`;
+}
+function buLayerStr(l, key) { const v = l ? l[key] : undefined; return (v === true || v == null) ? '' : String(v); }
+function buFormLayers(b) {
+  const layers = b.layers || [], tables = buTables(), own = buOptStr(b, 'table') !== 'none';
+  const cards = layers.map((l, i) => {
+    const a = `data-bind="layers" data-kind="layer" data-layer="${i}"`, typed = l.data != null, cur = buLayerStr(l, 'table');
+    let src = `<select ${a} data-part="source"><option value="typed" ${typed ? 'selected' : ''}>Values typed in here</option>${own ? `<option value="" ${!typed && !cur ? 'selected' : ''}>The graph's own table</option>` : (!typed && !cur ? `<option value="" selected>Choose…</option>` : '')}`;
+    let found = typed || !cur;
+    tables.forEach(t => { const label = 'Table: ' + (t.title || 'Untitled table'); if (t.id) { if (cur === t.id) found = true; src += `<option value="${buEsc(t.id)}" ${!typed && cur === t.id ? 'selected' : ''}>${buEsc(label)}</option>`; } else src += `<option disabled>${buEsc(label)} (give it a permanent name first)</option>`; });
+    if (!found) src += `<option value="${buEsc(cur)}" class="bu-missing" selected>Missing: ${buEsc(cur)}</option>`;
+    src += '</select>';
+    const tbl = typed ? null : (cur ? tables.find(t => t.id === cur) : buGraphTable(b)), headers = tbl ? tbl.block.headers : [];
+    const legend = headers.map((hname, c) => `c${c + 1} = ${hname && String(hname).trim() ? hname : 'Column ' + (c + 1)}`).join(', ');
+    let h = `<div class="bu-layer" data-layer="${i}"><div class="form-grid-2">${buRow('Name in the legend', `<input type="text" ${a} data-part="name" value="${buEsc(buLayerStr(l, 'name'))}" placeholder="e.g. Accepted values"/>`)}${buRow('Where its values come from', src)}</div>`;
+    if (typed) h += `<div class="form-row"><label>Values</label><textarea ${a} data-part="data" class="bu-grow" rows="4" spellcheck="false" placeholder="0.1, 1.87&#10;0.5, 1.82&#10;1.0, 1.81">${buEsc(l.data || '')}</textarea><div class="hint">One point per line: the horizontal value, a comma, the vertical value. Pasting two columns from a spreadsheet works.</div></div>`;
+    else h += `<div class="form-grid-2">${buRow('Horizontal value', `<input type="text" ${a} data-part="x" value="${buEsc(buLayerStr(l, 'x'))}" placeholder="${buEsc(own && buOptStr(b, 'x') ? buOptStr(b, 'x') : 'c1')}" spellcheck="false"/>`)}${buRow('Vertical value', `<input type="text" ${a} data-part="y" value="${buEsc(buLayerStr(l, 'y'))}" placeholder="c2" spellcheck="false"/>`)}</div><div class="hint" style="margin-bottom:0.8rem;">${buEsc(legend ? 'Columns: ' + legend + '. ' : '')}Write a column as c1, c2, … or a formula such as c3-c2. Numbers, + - * / ^, ln, log, exp, sqrt, abs.</div>
+      ${buRow('Rows to plot (optional)', `<input type="text" ${a} data-part="rows" value="${buEsc(buLayerStr(l, 'rows'))}" placeholder="every row"/>`, 'For example 2, or 1-3. Leave empty for every row.')}`;
+    h += `<div class="form-grid-2">${buRow('Drawn as', buPick(BU_GRAPH_TYPES, buLayerStr(l, 'type'), `${a} data-part="type"`))}${buRow('Colour', buPick(BU_GRAPH_COLORS, buLayerStr(l, 'color'), `${a} data-part="color"`))}</div>`;
+    h += `<div class="form-grid-2"><div class="form-row"><label class="bu-check"><input type="checkbox" ${a} data-part="fit" ${l.fit && String(l.fit).toLowerCase() !== 'none' ? 'checked' : ''}/> Draw its best-fit straight line</label></div><div class="form-row bu-tools"><button type="button" class="btn-small" data-act="del-layer" data-layer="${i}">✕ Remove this layer</button></div></div></div>`;
+    return h;
+  }).join('');
+  return `<div class="bu-axis" data-axis="layers"><div class="bu-axis-title">Extra layers</div><div class="hint" style="margin-bottom:0.5rem;">A layer draws one more set of values in the same axes: literature values you type in, or another table. Lines are drawn underneath points.</div>${cards}<div class="bu-tools"><button type="button" class="btn-small" data-act="add-layer">+ Add a layer</button></div></div>`;
+}
 function buFormGraph(b) {
-  const sel = buTableSelect(b, 'first table (automatic)');
-  const tbl = buGraphTable(b), headers = tbl ? tbl.block.headers : [];
-  let h = buRow('Table', sel, 'The graph reads its numbers from this table and redraws as students type.');
-  h += `<div class="bu-axis" data-axis="x"><div class="bu-axis-title">Horizontal axis</div>${buAxisControls('x', null, buExprViewOf(b.opts.x, 1), headers)}</div>`;
-  let series = [];
-  try { series = bmSeriesView(buOptStr(b, 'y') || 'c2', buOptStr(b, 'series')); } catch (e) { series = [{ axis: { mode: 'formula', expr: buOptStr(b, 'y') || 'c2' }, name: '' }]; }
-  if (!series.length) series = [{ axis: { mode: 'column', col: 2, transform: '' }, name: '' }];
-  h += `<div class="bu-axis" data-axis="y"><div class="bu-axis-title">Vertical axis</div>${series.map((s, i) => `<div class="bu-series" data-series="${i}">${buAxisControls('y', i, s.axis, headers)}
+  const none = buOptStr(b, 'table') === 'none';
+  let sel = buTableSelect(b, 'first table (automatic)');
+  if (none) sel = sel.replace(/<option value="none" class="bu-missing" selected>[^<]*<\/option>/, '');
+  sel = sel.replace('</select>', `<option value="none" ${none ? 'selected' : ''}>No table: draw only the extra layers</option></select>`);
+  const tbl = none ? null : buGraphTable(b), headers = tbl ? tbl.block.headers : [];
+  let h = buRow('Table', sel, none ? 'This graph draws only its extra layers.' : 'The graph reads its numbers from this table and redraws as students type.');
+  if (!none) {
+    h += `<div class="bu-axis" data-axis="x"><div class="bu-axis-title">Horizontal axis</div>${buAxisControls('x', null, buExprViewOf(b.opts.x, 1), headers)}</div>`;
+    let series = [];
+    try { series = bmSeriesView(buOptStr(b, 'y') || 'c2', buOptStr(b, 'series')); } catch (e) { series = [{ axis: { mode: 'formula', expr: buOptStr(b, 'y') || 'c2' }, name: '' }]; }
+    if (!series.length) series = [{ axis: { mode: 'column', col: 2, transform: '' }, name: '' }];
+    h += `<div class="bu-axis" data-axis="y"><div class="bu-axis-title">Vertical axis</div>${series.map((s, i) => `<div class="bu-series" data-series="${i}">${buAxisControls('y', i, s.axis, headers)}
     <div class="form-grid-2"><div class="form-row"><label>Series name (optional)</label><input type="text" data-bind="opts.y" data-kind="series" data-series="${i}" data-part="name" value="${buEsc(s.name || '')}" placeholder="e.g. Trial 1"/></div>
     <div class="form-row bu-tools">${series.length > 1 ? `<button type="button" class="btn-small" data-act="del-series" data-series="${i}">✕ Remove this series</button>` : ''}</div></div></div>`).join('')}
     <div class="bu-tools"><button type="button" class="btn-small" data-act="add-series">+ Another series</button></div></div>`;
-  const type = buOptStr(b, 'type'), known = ['', 'scatter', 'both', 'line'].includes(type);
-  h += buRow('Points', `<select data-bind="opts.type" data-kind="str"><option value="" ${type === '' || type === 'scatter' ? 'selected' : ''}>Dots only</option><option value="both" ${type === 'both' ? 'selected' : ''}>Dots joined by lines</option><option value="line" ${type === 'line' ? 'selected' : ''}>Lines only</option>${known ? '' : `<option value="${buEsc(type)}" selected>(as typed: ${buEsc(type)})</option>`}</select>`);
-  const fit = b.opts && b.opts.fit, fitOn = !!fit && String(fit).toLowerCase() !== 'none';
-  h += `<div class="form-row">${buCheck('opts.fit', fitOn, 'Draw the best-fit straight line and show its equation', 'fit')}</div>`;
+    h += `<div class="form-grid-2">${buRow('Points', buPick(BU_GRAPH_TYPES, buOptStr(b, 'type'), 'data-bind="opts.type" data-kind="str"'))}${buRow('Colour', buPick(BU_GRAPH_COLORS, buOptStr(b, 'color'), 'data-bind="opts.color" data-kind="str"'))}</div>`;
+    const fit = b.opts && b.opts.fit, fitOn = !!fit && String(fit).toLowerCase() !== 'none';
+    h += `<div class="form-row">${buCheck('opts.fit', fitOn, 'Draw the best-fit straight line and show its equation', 'fit')}</div>`;
+  }
+  h += buFormLayers(b);
   h += buRow('Title', buInput('opts.title', buOptStr(b, 'title'), 'opt', 'placeholder="e.g. Viscosity vs temperature"'));
   h += `<div class="form-grid-2">${buRow('Horizontal axis label', buInput('opts.xlabel', buOptStr(b, 'xlabel'), 'opt'))}${buRow('Vertical axis label', buInput('opts.ylabel', buOptStr(b, 'ylabel'), 'opt'))}</div>`;
   h += `<div class="form-row"><label>Caption</label>${buTextarea('caption', b.caption, 'str', 'rows="2" data-brace="1"')}${buBraceLine(b.caption)}</div>`;
   h += `<details class="bu-idrow"><summary>Fix the axis range (optional)</summary><div class="form-grid-2">${['xmin', 'xmax', 'ymin', 'ymax'].map(k => buRow({ xmin: 'Horizontal from', xmax: 'Horizontal to', ymin: 'Vertical from', ymax: 'Vertical to' }[k], buNum('opts.' + k, buOptStr(b, k), 'step="any"'))).join('')}</div><div class="hint">Leave empty for automatic ranges.</div></details>`;
+  if (!none) h += `<details class="bu-idrow" ${buOptStr(b, 'rows') ? 'open' : ''}><summary>Plot only some rows of the table (optional)</summary>${buRow('Rows to plot', buInput('opts.rows', buOptStr(b, 'rows'), 'opt', 'placeholder="every row"'), 'For example 2, or 1-3. Leave empty for every row.')}</details>`;
   return h + buIdRow(b);
+}
+function buLayerAction(f, act, btn) {
+  if (!f || f.block.type !== 'graph') return;
+  const b = f.block, k = b._k;
+  if (!Array.isArray(b.layers)) b.layers = [];
+  if (act === 'add-layer') b.layers.push({ type: 'dashed', data: '' });   // the usual first layer: reference values typed in, drawn as a dashed line
+  else { const i = +btn.dataset.layer; if (!(i >= 0) || i >= b.layers.length) return; b.layers.splice(i, 1); }
+  buRenderCard(k); buChanged(k, true);
 }
 function buReadAxis(scope) {
   const col = scope.querySelector('[data-part="col"]'); if (!col) return null;
@@ -7543,6 +7696,14 @@ function buWrite(found, bind, kind, el, card) {
       return false;
     }
     case 'cell': { const nv = buCellClean(v); if (el.value !== nv) { const p = el.selectionStart; el.value = nv; try { el.setSelectionRange(p, p); } catch (e) {} } buSetPath(b, bind, nv); return false; }
+    case 'layer': {   // one field of one extra layer of a graph (b.layers[i])
+      const l = b.layers && b.layers[+el.dataset.layer], part = el.dataset.part; if (!l || !part) return false;
+      if (part === 'source') { if (v === 'typed') { if (l.data == null) l.data = ''; delete l.table; delete l.x; delete l.y; delete l.rows; } else { delete l.data; if (v) l.table = v; else delete l.table; } return true; }
+      if (part === 'fit') { if (v) l.fit = 'linear'; else delete l.fit; return false; }
+      if (part === 'data') { const nv = String(v).replace(/\u2212/g, '-').replace(/[^0-9eE+\-.,;\s]/g, ''); if (el.value !== nv) { const pos = el.selectionStart; el.value = nv; try { el.setSelectionRange(pos - 1, pos - 1); } catch (e) {} } l.data = nv; return false; }
+      const nv = String(v).trim(); if (nv) l[part] = nv; else delete l[part];
+      return false;
+    }
     case 'expr': return buWriteAxisX(found, card, el);
     case 'series': return buWriteSeries(found, card, el);
     case 'words': buWriteWords(found, card); return false;
@@ -7588,7 +7749,7 @@ function buOnInput(e) {
   const card = el.closest('.bu-card[data-k]'); if (!card) return;
   const found = buFindBlock(+card.dataset.k); if (!found) return;
   const kind = el.dataset.kind || 'str';
-  buLiveFilter(el, kind);
+  buLiveFilter(el, kind === 'layer' && el.dataset.part !== 'data' ? 'opt' : kind);
   buWrite(found, el.dataset.bind, kind, el, card);
   buAfterWrite(found, el.dataset.bind, el, card);
   buChanged(found.block._k, false, true);
@@ -7686,6 +7847,7 @@ function buOnClick(e) {
     case 'add-step': case 'del-step': case 'step-up': case 'step-down': buStepAction(found, act, btn); break;
     case 'add-choice': case 'del-choice': case 'choice-up': case 'choice-down': buChoiceAction(found, act, btn); break;
     case 'add-series': case 'del-series': buSeriesAction(found, act, btn); break;
+    case 'add-layer': case 'del-layer': buLayerAction(found, act, btn); break;
     case 'insert-input': buOpenPopover(card, found, btn.dataset.field, null, btn); break;
     case 'edit-input': buOpenPopover(card, found, btn.dataset.field, +btn.dataset.index, btn); break;
     case 'name-input': buNameInput(found, btn.dataset.field, +btn.dataset.index); break;
@@ -7726,7 +7888,7 @@ function buIsBlank(b) {
     case 'video': return !String(b.url || '').trim();
     case 'figure': return !String(b.path || '').trim();
     case 'callout': return !String(b.body || '').trim();
-    case 'graph': return !buOptStr(b, 'title') && !buOptStr(b, 'x') && !buOptStr(b, 'y') && !String(b.caption || '').trim();
+    case 'graph': return !buOptStr(b, 'title') && !buOptStr(b, 'x') && !buOptStr(b, 'y') && !String(b.caption || '').trim() && !(b.layers && b.layers.length);
     case 'widget': return !buOptStr(b, 'type');
     case 'usetable': case 'usegraph': case 'useanswer': case 'usephoto': case 'usesocratic': return !String(b.ref || '').trim();
     case 'pagebreak': return true;
