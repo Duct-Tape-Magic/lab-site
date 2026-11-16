@@ -297,7 +297,7 @@
   .rich-content .embed-youtube { position: relative; width: 100%; padding-bottom: 56.25%; margin: 1.5rem 0; background: var(--card-bg); }
   .rich-content .embed-youtube iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
   .rich-content .katex { font-size: 1.05em; }
-  .rich-content .katex-display { margin: 1.4rem 0; overflow-x: auto; overflow-y: hidden; }
+  .rich-content .katex-display { margin: calc(1.4rem - 0.3em) 0; padding: 0.3em 0; overflow-x: auto; overflow-y: hidden; }   /* the padding keeps the cut-off edge clear of the ink: without it the top of a fraction's numerator was shaved */
   .home-intro { max-width: var(--measure); margin-bottom: 1rem; }
   .home-nudge { font-size: 13px; color: var(--muted); max-width: var(--measure); margin: -0.25rem 0 1rem; }
   .home-nudge a { color: var(--accent); }
