@@ -1531,7 +1531,9 @@ const DEFAULTS = {
   widgetNoTable: 'This tool has no table to record into. Type your values into your data table.',
   widgetRefLabel: 'Reference',
   widgetMeasLabel: 'Sample',
-  widgetRefBright: 'The reference is too bright. Dim the light or move the paper.'
+  widgetRefBright: 'The reference is too bright. Dim the light or move the paper.',
+  widgetAutoStart: 'Start auto record',
+  widgetAutoStop: 'Stop auto record'
 };
 
 const SITE_TEXT_GROUPS = [
@@ -1575,7 +1577,7 @@ const TEXT_LABELS = {
   widgetStart: 'Widget: Start button', widgetStop: 'Widget: Stop button', widgetLoading: 'Widget: starting message', widgetNoCamera: 'Widget: no-camera note', widgetFailed: 'Widget: could-not-start message', widgetDenied: 'Widget: camera-not-allowed message', widgetUnavailable: 'Widget: not-available message', widgetGetHelp: 'Widget: Get help button', widgetSignIn: 'Widget: sign-in note',
   socSend: 'Tutor: Send button', socEnd: 'Tutor: End session button', socAgain: 'Tutor: new session button', socStart: 'Tutor: Start session button', socLevelAsk: 'Tutor: opening question when a bank has no \\levelcheck of its own', socPlaceholder: 'Tutor: answer box placeholder', socProgress: 'Tutor: progress line ({topics} {total} {posed} {credited})', socAllDone: 'Tutor: every-topic-credited note', socThinking: 'Tutor: thinking note', socLimit: 'Tutor: weekly limit note', socSiteLimit: 'Tutor: site limit note', socError: 'Tutor: error note', socEnded: 'Tutor: session ended note', socDoneLine: 'Tutor: report completion line ({topics} {total} {posed} {credited} {done})', socNotDone: 'Tutor: report not-finished note', socNoSession: 'Tutor: report no-session note', socTranscriptTitle: 'Tutor: transcript heading', socSkip: 'Tutor: Skip button', socReportButton: 'Tutor: Report a problem button', socReportIntro: 'Tutor: report box intro', socReportPlaceholder: 'Tutor: report box placeholder', socReportSend: 'Tutor: send report button', socReportSent: 'Tutor: report sent confirmation', socReportError: 'Tutor: report failed note', socNoBank: 'Tutor: no-bank-chosen note',
   widgetRecord: 'Colorimeter: Record button', widgetRecorded: 'Colorimeter: data recorded text', widgetTableFull: 'Colorimeter: table full message', widgetNoTable: 'Colorimeter: no table message',
-  widgetRefLabel: 'Colorimeter: reference square label', widgetMeasLabel: 'Colorimeter: sample square label', widgetRefBright: 'Colorimeter: reference-too-bright warning'
+  widgetRefLabel: 'Colorimeter: reference square label', widgetMeasLabel: 'Colorimeter: sample square label', widgetRefBright: 'Colorimeter: reference-too-bright warning', widgetAutoStart: 'Colorimeter: start auto record button', widgetAutoStop: 'Colorimeter: stop auto record button'
 };
 
 /* ============================================================
@@ -5289,16 +5291,19 @@ function ltBindGraphs(area) {
 const WIDGETS = {
   colorimeter: {
     label: 'Colorimeter',
-    texts: ['widgetRecord', 'widgetRecorded', 'widgetTableFull', 'widgetRefLabel', 'widgetMeasLabel', 'widgetRefBright'],
+    texts: ['widgetRecord', 'widgetRecorded', 'widgetTableFull', 'widgetRefLabel', 'widgetMeasLabel', 'widgetRefBright', 'widgetAutoStart', 'widgetAutoStop'],
     description: 'Reads two small squares in the camera picture that students drag into place: a Reference on a sheet of white printer paper and a Sample. The paper is taken as white, so the sample\'s red, green and blue (0–255) are read relative to it and changes in lighting, exposure and white balance cancel. One table row per reading.',
     device: 'Needs a camera; a phone works best. On a laptop without a camera the tool shows a calm note and students type the values in.',
     camera: true,   // the host checks for a camera, pauses the tool when the page is hidden, and releases it on navigation
     records: 'One row per reading into a data table: corrected R, G and B in the columns you choose; optionally the camera\'s uncorrected R, G, B.',
-    file: 'widgets/colorimeter.v12.js',
+    file: 'widgets/colorimeter.v13.js',
     options: [
       { name: 'table', label: 'Data table to record into', kind: 'table', help: 'Let students add rows to that table, so every reading gets its own row.' },
       { name: 'columns', label: 'Columns for the corrected R, G, B', kind: 'columns', parts: ['Red', 'Green', 'Blue'], default: 'c1;c2;c3', help: 'Corrected = sample × 255 ÷ (what the camera reads on the white paper), channel by channel, every frame. Lighting, exposure and white-balance drift move both squares together, so it cancels. Keep the paper the brightest matte thing in the picture; a sample brighter than the paper reads 255.' },
       { name: 'rawcolumns', label: 'Columns for the camera\'s uncorrected R, G, B (optional)', kind: 'columns', parts: ['Red', 'Green', 'Blue'], optional: true, help: 'Useful when students should see what the correction did.' },
+      { name: 'interval', label: 'Auto record: seconds between readings (optional)', kind: 'num', help: 'Adds a Start auto record button beside Record. One reading is recorded when the student taps it, then one every this many seconds, until the student taps Stop auto record, the tool stops, or the table has no room. Let students add rows to the table. Leave empty for no auto record.' },
+      { name: 'readings', label: 'Auto record: stop after this many readings (optional)', kind: 'num', help: 'Leave empty to stop after 200.' },
+      { name: 'timecolumn', label: 'Auto record: column for the time in seconds (optional)', kind: 'column', none: 'Not recorded', help: 'Seconds since the student tapped Start auto record: 0, then the interval, and so on. A reading taken with Record leaves this column empty.' },
       { name: 'help', label: 'Offer Get help when it fails', kind: 'help' },
     ],
     print() { return ''; },
@@ -5759,7 +5764,7 @@ const BM_TYPES = {
   callout:   { tag: null,        label: 'Callout',         list: 'procedure', known: ['label'] },
   graph:     { tag: 'graph',     label: 'Graph',           list: 'both', kind: 'graph', idBase: 'graph',    known: ['id', 'table', 'x', 'y', 'series', 'rows', 'type', 'color', 'fit', 'title', 'xlabel', 'ylabel', 'xmin', 'xmax', 'ymin', 'ymax'], nameOf: b => b.opts.title },
   pagebreak: { tag: 'pagebreak', label: 'Page break',      list: 'procedure', known: [] },
-  widget:    { tag: 'widget',    label: 'Widget',          list: 'procedure', kind: 'widget', idBase: 'widget', known: ['id', 'type', 'label', 'table', 'bank', 'columns', 'rawcolumns', 'help'], nameOf: b => b.opts.label || b.opts.type },
+  widget:    { tag: 'widget',    label: 'Widget',          list: 'procedure', kind: 'widget', idBase: 'widget', known: ['id', 'type', 'label', 'table', 'bank', 'columns', 'rawcolumns', 'interval', 'readings', 'timecolumn', 'help'], nameOf: b => b.opts.label || b.opts.type },
   usetable:  { tag: 'usetable',  label: 'Include a table', list: 'report' },
   usegraph:  { tag: 'usegraph',  label: 'Include a graph', list: 'report' },
   useanswer: { tag: 'useanswer', label: 'Include an answer', list: 'report' },

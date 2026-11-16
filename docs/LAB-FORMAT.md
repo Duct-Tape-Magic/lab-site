@@ -191,6 +191,10 @@ Shows the camera picture with two small squares the student drags into place: a 
 
 - `columns=c2;c3;c4` the table columns (1-based, `c1`, `c2`, …) that take the corrected R, G and B, in that order. Default `c1;c2;c3`.
 - `rawcolumns=c5;c6;c7` optional columns for the camera's uncorrected R, G, B, when students should see what the correction did.
+- `interval=10` optional **auto record** (2026-11-16): the number of seconds between readings (1 to 3600). The tool then shows a second button, "Start auto record", beside Record. One reading is recorded when the student taps it and then one every `interval` seconds, each on its own table row, until the student taps "Stop auto record", stops the tool, leaves the page, or the table has no room. Give the table `addrows`. Without `interval` there is no auto record button.
+- `readings=30` optional: an auto-record run stops by itself after this many readings. Default 200.
+- `timecolumn=c1` optional: the table column that takes the time of each auto-recorded reading, in seconds since the student tapped "Start auto record" (0, then 10, 20, … for `interval=10`). A reading taken with the plain Record button leaves this column empty.
+- The tool shows one warning by itself: "The reference is too bright. Dim the light or move the paper." when the camera overexposes the paper under the Reference square. Readings taken while it shows are not reliable.
 
 ```
 \datatable[id=color-data, title="Colour readings", addrows]{
@@ -200,6 +204,18 @@ Shows the camera picture with two small squares the student drags into place: a 
 }
 
 \widget[type=colorimeter, id=color-reader, table=color-data, columns=c2;c3;c4]{Put a sheet of white paper beside the cuvette. Drag the Reference square onto the paper and the Sample square onto the liquid, keep the lamp still, then tap Record for each tube.}
+```
+
+A timed run (kinetics), one reading every 10 seconds for 5 minutes:
+
+```
+\datatable[id=fade-data, title="Colour against time", addrows]{
+| Time (s) | R | G | B |
+|---|---|---|---|
+| ___ | ___ | ___ | ___ |
+}
+
+\widget[type=colorimeter, id=fade-reader, table=fade-data, columns=c2;c3;c4, timecolumn=c1, interval=10, readings=31]{Set the squares, mix the solutions, then tap Start auto record straight away. Keep the phone and the lamp still until it stops.}
 ```
 
 ## Report tab (write-up skeleton)
