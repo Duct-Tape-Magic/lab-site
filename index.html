@@ -606,6 +606,7 @@
   .cm-actions { display: flex; gap: 0.8rem; flex-wrap: wrap; margin-top: 0.8rem; align-items: center; }
   .cm-status { font-size: 12.5px; color: var(--muted); min-height: 1.2em; margin-top: 0.4rem; line-height: 1.4; }
   .cm-status.ok { color: #2e7d32; }
+  .cm-status.warn { color: var(--danger); }   /* the reference square is overexposed */
   @media (max-width: 600px) { .cm { grid-template-columns: 1fr; } }
   .wd-card { border: 0.5px solid var(--rule-strong); padding: 1.2rem 1.4rem; margin-bottom: 1.2rem; }
   .wd-row { display: flex; align-items: center; gap: 1rem; padding: 0.9rem 0.2rem; border-bottom: 0.5px solid var(--rule); cursor: pointer; }
@@ -1529,7 +1530,8 @@ const DEFAULTS = {
   widgetTableFull: 'The table has no empty row left for this reading.',
   widgetNoTable: 'This tool has no table to record into. Type your values into your data table.',
   widgetRefLabel: 'Reference',
-  widgetMeasLabel: 'Sample'
+  widgetMeasLabel: 'Sample',
+  widgetRefBright: 'The reference is too bright. Dim the light or move the paper.'
 };
 
 const SITE_TEXT_GROUPS = [
@@ -1573,7 +1575,7 @@ const TEXT_LABELS = {
   widgetStart: 'Widget: Start button', widgetStop: 'Widget: Stop button', widgetLoading: 'Widget: starting message', widgetNoCamera: 'Widget: no-camera note', widgetFailed: 'Widget: could-not-start message', widgetDenied: 'Widget: camera-not-allowed message', widgetUnavailable: 'Widget: not-available message', widgetGetHelp: 'Widget: Get help button', widgetSignIn: 'Widget: sign-in note',
   socSend: 'Tutor: Send button', socEnd: 'Tutor: End session button', socAgain: 'Tutor: new session button', socStart: 'Tutor: Start session button', socLevelAsk: 'Tutor: opening question when a bank has no \\levelcheck of its own', socPlaceholder: 'Tutor: answer box placeholder', socProgress: 'Tutor: progress line ({topics} {total} {posed} {credited})', socAllDone: 'Tutor: every-topic-credited note', socThinking: 'Tutor: thinking note', socLimit: 'Tutor: weekly limit note', socSiteLimit: 'Tutor: site limit note', socError: 'Tutor: error note', socEnded: 'Tutor: session ended note', socDoneLine: 'Tutor: report completion line ({topics} {total} {posed} {credited} {done})', socNotDone: 'Tutor: report not-finished note', socNoSession: 'Tutor: report no-session note', socTranscriptTitle: 'Tutor: transcript heading', socSkip: 'Tutor: Skip button', socReportButton: 'Tutor: Report a problem button', socReportIntro: 'Tutor: report box intro', socReportPlaceholder: 'Tutor: report box placeholder', socReportSend: 'Tutor: send report button', socReportSent: 'Tutor: report sent confirmation', socReportError: 'Tutor: report failed note', socNoBank: 'Tutor: no-bank-chosen note',
   widgetRecord: 'Colorimeter: Record button', widgetRecorded: 'Colorimeter: data recorded text', widgetTableFull: 'Colorimeter: table full message', widgetNoTable: 'Colorimeter: no table message',
-  widgetRefLabel: 'Colorimeter: reference square label', widgetMeasLabel: 'Colorimeter: sample square label'
+  widgetRefLabel: 'Colorimeter: reference square label', widgetMeasLabel: 'Colorimeter: sample square label', widgetRefBright: 'Colorimeter: reference-too-bright warning'
 };
 
 /* ============================================================
@@ -5287,12 +5289,12 @@ function ltBindGraphs(area) {
 const WIDGETS = {
   colorimeter: {
     label: 'Colorimeter',
-    texts: ['widgetRecord', 'widgetRecorded', 'widgetTableFull', 'widgetRefLabel', 'widgetMeasLabel'],
+    texts: ['widgetRecord', 'widgetRecorded', 'widgetTableFull', 'widgetRefLabel', 'widgetMeasLabel', 'widgetRefBright'],
     description: 'Reads two small squares in the camera picture that students drag into place: a Reference on a sheet of white printer paper and a Sample. The paper is taken as white, so the sample\'s red, green and blue (0–255) are read relative to it and changes in lighting, exposure and white balance cancel. One table row per reading.',
     device: 'Needs a camera; a phone works best. On a laptop without a camera the tool shows a calm note and students type the values in.',
     camera: true,   // the host checks for a camera, pauses the tool when the page is hidden, and releases it on navigation
     records: 'One row per reading into a data table: corrected R, G and B in the columns you choose; optionally the camera\'s uncorrected R, G, B.',
-    file: 'widgets/colorimeter.v11.js',
+    file: 'widgets/colorimeter.v12.js',
     options: [
       { name: 'table', label: 'Data table to record into', kind: 'table', help: 'Let students add rows to that table, so every reading gets its own row.' },
       { name: 'columns', label: 'Columns for the corrected R, G, B', kind: 'columns', parts: ['Red', 'Green', 'Blue'], default: 'c1;c2;c3', help: 'Corrected = sample × 255 ÷ (what the camera reads on the white paper), channel by channel, every frame. Lighting, exposure and white-balance drift move both squares together, so it cancels. Keep the paper the brightest matte thing in the picture; a sample brighter than the paper reads 255.' },
