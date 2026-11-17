@@ -220,13 +220,17 @@ A timed run (kinetics), one reading every 10 seconds for 5 minutes:
 
 ### Colorimeter, continuous runs (`type=colorimeter-run`, 2026-11-17)
 
-For a reaction whose colour changes over a minute or a few minutes (kinetics). The same camera picture and the same two squares as the colorimeter, but the output is a **curve, not numbers**: the student picks a run, taps **Start recording**, and until they tap **Stop recording** the tool writes one reading every interval into that run's table. Graphs that read the table redraw as each reading arrives, so the student watches the line form. The tool itself shows no numbers.
+For a reaction whose colour changes over a minute or a few minutes (kinetics): a colour that fades, or a clear solution that gains colour. The same camera picture and the same two squares as the colorimeter, but the output is a **curve, not numbers**: the student picks a run, taps **Start recording**, and until they tap **Stop recording** the tool writes one reading every interval into that run's table. Graphs that read the table redraw as each reading arrives, so the student watches the line form. The tool itself shows no numbers.
 
 Each reading is the **relative concentration** of whatever colours the sample, per colour channel:
 
 1. the Sample and Reference values are converted from camera RGB to linear light;
 2. A = log(reference ÷ sample), averaged over every camera frame in the interval;
-3. value = A ÷ A₀, where A₀ is A of the run's first reading. Every run therefore starts at exactly 1 and falls as the colour fades.
+3. the value follows from how A changes during the run, and the tool works out which case it is by itself (per channel, from the run; there is nothing to set):
+   - **the colour fades**: value = A ÷ A₀, where A₀ is A of the run's first reading. The run starts at exactly 1 and falls.
+   - **colour forms** (the run starts clear or pale and darkens): value = (A − A₀) ÷ the largest (A − A₀) of the run. The run starts at 0 and its highest point is 1, so the value is the fraction of the final colour reached. Because the starting reading is subtracted, whatever the clear sample read at the start does not matter.
+
+   While colour is still forming the highest point keeps moving, so the numbers on the y axis rescale as the run goes; the shape of the curve does not change. A run in which nothing changes records a flat line near 0 (or near 1 if it started coloured).
 
 Options (there is no `table=`):
 
@@ -240,9 +244,10 @@ What the lab must know:
 
 - **The y axis of a graph fits the curve by itself** unless the graph fixes `ymin`/`ymax`. Draw runs with `type=solid` (a run has too many points for dots).
 - **A run that already holds a recording is never overwritten silently.** Choosing it and tapping Start recording asks "… already has a recording. Record over it?" first. After a run the list moves to the next empty run. A lab that wants three trials lists three runs.
-- **Relative means relative to the moment Start recording was tapped**, not to the moment of mixing. A first-order slope (ln of the value against time) is unaffected; zero- and second-order slopes come out divided or multiplied by the concentration at that moment.
-- **The reference must be "the sample with no colour".** A = 0 has to mean "no dye", so put the Reference square on an identical container of plain water (or the colourless solvent) standing beside the sample, in the same light, not on bare paper. With bare paper the container and the water add a constant to A, the value never reaches 0, and an ln plot of a true first-order reaction bends.
-- Start recording is disabled while the tool shows "The reference is too bright". If the Sample reads the same as the Reference on every channel, the run does not start and the tool says so. A channel the sample hardly absorbs at the start is left blank, so plot the right column.
+- **Relative means relative to the moment Start recording was tapped**, not to the moment of mixing. For a fading colour, a first-order slope (ln of the value against time) is unaffected; zero- and second-order slopes come out divided or multiplied by the concentration at that moment.
+- **For a colour that forms, 1 is the highest point of the run, not the end of the reaction.** If the student stops early, 1 is simply where they stopped. Have them record until the colour stops changing when the lab needs the fraction of the final amount (for example `y="ln(1-c2)"` against time for a first-order product; the last point, exactly 1, is skipped by the graph).
+- **For a colour that fades, the reference must be "the sample with no colour".** A = 0 has to mean "no dye", so put the Reference square on an identical container of plain water (or the colourless solvent) standing beside the sample, in the same light, not on bare paper. With bare paper the container and the water add a constant to A, the value never reaches 0, and an ln plot of a true first-order reaction bends. A colour that forms does not need this (the clear start is subtracted), though the same setup does no harm.
+- Start recording is disabled while the tool shows "The reference is too bright". A channel that shows no colour during the run stays near 0, so plot the column of the channel the coloured substance absorbs.
 - The phone has to stay put for the whole run: tell students to stand it up before they mix. A run ends, keeping what it recorded, when the student taps Stop recording, stops the tool, or leaves the page; it cannot be resumed, only recorded again.
 - A hidden run table cannot be typed into, so this tool has no type-it-in fallback: a student without a camera cannot do this part.
 

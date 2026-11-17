@@ -1547,8 +1547,7 @@ const DEFAULTS = {
   widgetRunDone: 'Run recorded',
   widgetRunName: 'Run {n}',
   widgetRunRecorded: '{name} (recorded)',
-  widgetRunReplace: '{name} already has a recording. Record over it? The old recording will be erased.',
-  widgetRunNoColor: 'The sample reads the same as the reference. Check the two squares and start again.'
+  widgetRunReplace: '{name} already has a recording. Record over it? The old recording will be erased.'
 };
 
 const SITE_TEXT_GROUPS = [
@@ -1594,7 +1593,7 @@ const TEXT_LABELS = {
   widgetRecord: 'Colorimeter: Record button', widgetRecorded: 'Colorimeter: data recorded text', widgetTableFull: 'Colorimeter: table full message', widgetNoTable: 'Colorimeter: no table message',
   widgetRefLabel: 'Colorimeter: reference square label', widgetMeasLabel: 'Colorimeter: sample square label', widgetRefBright: 'Colorimeter: reference-too-bright warning', widgetAutoStart: 'Colorimeter: start auto record button', widgetAutoStop: 'Colorimeter: stop auto record button',
   widgetRunStart: 'Continuous colorimeter: start button', widgetRunStop: 'Continuous colorimeter: stop button', widgetRunDone: 'Continuous colorimeter: run recorded text', widgetRunName: 'Continuous colorimeter: name of a run whose table has no title', widgetRunRecorded: 'Continuous colorimeter: a run that holds a recording, in the list',
-  widgetRunReplace: 'Continuous colorimeter: question before recording over a run', widgetRunNoColor: 'Continuous colorimeter: sample has no colour message'
+  widgetRunReplace: 'Continuous colorimeter: question before recording over a run'
 };
 
 /* ============================================================
@@ -4262,7 +4261,7 @@ function openWidgetPage(type) {
       <div class="form-row"><label>What this widget is called (students see it above the tool; the Builder uses it too)</label><div class="lt-toolbar" style="margin:0"><input type="text" id="wd-name" value="${escapeHTML(c.label)}" placeholder="${escapeHTML(W.label)}" style="flex:1"/><button type="button" class="btn-small" onclick="saveWidgetName('${type}')">Save name</button></div><div class="hint">Leave empty to use the built-in name, ${escapeHTML(W.label)}.</div></div>
     </div>
     ${texts ? `<div class="wd-settings wd-texts"><h4 style="margin:0 0 0.6rem">Words students see</h4>${texts}<div class="lt-toolbar" style="margin:0.4rem 0 0"><button type="button" class="btn btn-accent btn-small" onclick="saveWidgetTexts('${type}')">Save words</button><span class="hint" style="margin:0">Curly-bracket names such as {n} are filled in by the site.</span></div></div>` : ''}
-    ${W.noDemo ? '' : `<div class="wd-settings"><h4 style="margin:0 0 0.6rem">Try it</h4><p class="hint">${W.demoLab ? 'This demo reads a sample picture instead of the camera; its sample fades while a run records. The graph underneath is a graph block reading the two hidden run tables, as in a lab. Nothing here is kept.' : 'This demo reads a moving sample picture instead of the camera. Record only shows what would be written. Students see exactly this, minus the demo picture and with no text around it.'}</p><div class="wd-demo">${W.demoLab ? ltRender(W.demoLab).html : ltWidgetBlock('demo-' + type, { type, demo: true, columns: 'c2;c3;c4' }, '')}</div></div>`}
+    ${W.noDemo ? '' : `<div class="wd-settings"><h4 style="margin:0 0 0.6rem">Try it</h4><p class="hint">${W.demoLab ? 'This demo reads a sample picture instead of the camera; its sample fades while Run 1 records and gains colour while Run 2 records. The graph underneath is a graph block reading the two hidden run tables, as in a lab. Nothing here is kept.' : 'This demo reads a moving sample picture instead of the camera. Record only shows what would be written. Students see exactly this, minus the demo picture and with no text around it.'}</p><div class="wd-demo">${W.demoLab ? ltRender(W.demoLab).html : ltWidgetBlock('demo-' + type, { type, demo: true, columns: 'c2;c3;c4' }, '')}</div></div>`}
     ${W.settings ? `<div class="wd-settings" id="wd-settings-${type}"><div class="hint">Loading…</div></div>` : ''}
   </div>`;
   if (W.demoLab) { try { localStorage.removeItem(ltKey('widget-demo')); } catch (e) { /* ignore */ } ltBind(box.querySelector('.wd-demo'), 'widget-demo'); }   // a small real lab (tables + tool + graph), started empty every time; kept only in this browser
@@ -5322,7 +5321,7 @@ const WIDGETS = {
     device: 'Needs a camera; a phone works best. On a laptop without a camera the tool shows a calm note and students type the values in.',
     camera: true,   // the host checks for a camera, pauses the tool when the page is hidden, and releases it on navigation
     records: 'One row per reading into a data table: corrected R, G and B in the columns you choose; optionally the camera\'s uncorrected R, G, B.',
-    file: 'widgets/colorimeter.v14.js',
+    file: 'widgets/colorimeter.v15.js',
     options: [
       { name: 'table', label: 'Data table to record into', kind: 'table', help: 'Let students add rows to that table, so every reading gets its own row.' },
       { name: 'columns', label: 'Columns for the corrected R, G, B', kind: 'columns', parts: ['Red', 'Green', 'Blue'], default: 'c1;c2;c3', help: 'Corrected = sample × 255 ÷ (what the camera reads on the white paper), channel by channel, every frame. Lighting, exposure and white-balance drift move both squares together, so it cancels. Keep the paper the brightest matte thing in the picture; a sample brighter than the paper reads 255.' },
@@ -5336,17 +5335,17 @@ const WIDGETS = {
   },
   'colorimeter-run': {   // the colorimeter's continuous output (2026-11-17): same file and squares, records a curve into a run instead of single readings
     label: 'Colorimeter (continuous)',
-    texts: ['widgetRunStart', 'widgetRunStop', 'widgetRunDone', 'widgetRunName', 'widgetRunRecorded', 'widgetRunReplace', 'widgetRunNoColor', 'widgetRefLabel', 'widgetMeasLabel', 'widgetRefBright'],
-    description: 'The colorimeter\'s two squares, recording continuously. From Start recording to Stop recording it writes one reading every interval into a run, and the lab\'s graphs draw the run as it forms. Each reading is the relative concentration of whatever colours the sample (1 at the start of the run), worked out from the absorbance against the Reference square. Students see no numbers, only the graphs.',
+    texts: ['widgetRunStart', 'widgetRunStop', 'widgetRunDone', 'widgetRunName', 'widgetRunRecorded', 'widgetRunReplace', 'widgetRefLabel', 'widgetMeasLabel', 'widgetRefBright'],
+    description: 'The colorimeter\'s two squares, recording continuously. From Start recording to Stop recording it writes one reading every interval into a run, and the lab\'s graphs draw the run as it forms. Each reading is the relative concentration of whatever colours the sample, worked out from the absorbance against the Reference square: a colour that fades starts at 1 and falls, a colour that forms starts at 0 and rises to 1. The tool tells which from the run itself. Students see no numbers, only the graphs.',
     device: 'Needs a camera; a phone on a stand works best, because the squares must stay on the sample for the whole run.',
     camera: true,
     runs: true,   // records into several tables (runs=), one per run, instead of one table=
     records: 'One row per reading into the run\'s own data table: the time in seconds and the relative concentration by the red, green and blue channel. Each run is a data table, usually hidden; graphs read it.',
-    file: 'widgets/colorimeter.v14.js',
+    file: 'widgets/colorimeter.v15.js',
     options: [
       { name: 'runs', label: 'Runs: the data tables this tool records into', kind: 'tables', help: 'One data table per run. Students pick the run before they start; a table\'s title is the run\'s name. Tick "Students may add rows" on each table, and set it to Hidden if students should only see graphs.' },
       { name: 'timecolumn', label: 'Column for the time in seconds', kind: 'column', none: 'Not recorded', default: 'c1', help: 'Seconds since the student tapped Start recording: 0, then the interval, and so on.' },
-      { name: 'columns', label: 'Columns for the relative concentration', kind: 'columns', parts: ['By red', 'By green', 'By blue'], optional: true, default: 'c2;c3;c4', help: 'Relative concentration = A ÷ A at the start of the run, where A = log(reference ÷ sample) after both are converted to linear light. Use the channel the sample absorbs: red for a blue or green sample, green for a red or purple one, blue for a yellow one. A channel the sample hardly absorbs is left blank.' },
+      { name: 'columns', label: 'Columns for the relative concentration', kind: 'columns', parts: ['By red', 'By green', 'By blue'], optional: true, default: 'c2;c3;c4', help: 'A = log(reference ÷ sample) after both are converted to linear light. When the colour fades, the value is A ÷ A at the start of the run. When colour forms, it is the rise in A since the start ÷ the largest rise. Use the channel the coloured substance absorbs: red for a blue or green one, green for a red or purple one, blue for a yellow one. A channel that shows no colour stays near 0.' },
       { name: 'interval', label: 'Seconds between readings', kind: 'num', help: 'Leave empty for one reading a second. Each reading is the average of every camera frame in its interval.' },
       { name: 'minutes', label: 'Stop by itself after this many minutes', kind: 'num', help: 'A run ends when the student taps Stop recording. This is only for a forgotten run. Leave empty for 10.' },
       { name: 'help', label: 'Offer Get help when it fails', kind: 'help' },
@@ -5434,17 +5433,18 @@ function ltWidgetHost({ labId, readOnly, tableApi, entries, save }) {
       r.api.tbody.dispatchEvent(new Event('input', { bubbles: true }));
       return true;
     },
-    runWriter(id, opts) {   // → { add(time, values) → { ok, reason } }: each reading takes the next row that is empty in the tool's columns, else a new row
+    runWriter(id, opts) {   // → { add(time, values) → { ok, reason }, set(n, values) }: each reading takes the next row that is empty in the tool's columns, else a new row
       const r = runApi(id, opts); if (!r || readOnly || !runIds(opts).includes(id)) return null;
-      let p = 0;
+      let p = 0; const written = [];
+      const put = (tr, ci, text) => { const td = ci ? cellAt(tr, ci) : null; if (!td) return; td.textContent = String(text); if (String(text) === '') delete entries[td.dataset.field]; else entries[td.dataset.field] = String(text); };
       return {
+        set(n, values) { const tr = written[n]; if (!tr || !tr.isConnected) return false; r.vals.forEach((ci, i) => put(tr, ci, values[i] ?? '')); save(); return true; },   // the scale of a run moved: a row this writer added takes its new values (the next add tells the graphs)
         add(time, values) {
           let tr = null;
           while (p < r.api.tbody.children.length && !tr) { const c = r.api.tbody.children[p++]; if (!runFilled(r, c) && r.live.some(ci => cellAt(c, ci))) tr = c; }
           if (!tr) { if (!r.api.canAdd) return { ok: false, reason: getText('widgetTableFull') }; tr = r.api.addRow(); p = r.api.tbody.children.length; }
-          const put = (ci, text) => { const td = ci ? cellAt(tr, ci) : null; if (!td) return; td.textContent = String(text); if (String(text) === '') delete entries[td.dataset.field]; else entries[td.dataset.field] = String(text); };
-          put(r.time, time); r.vals.forEach((ci, i) => put(ci, values[i] ?? ''));
-          save();
+          put(tr, r.time, time); r.vals.forEach((ci, i) => put(tr, ci, values[i] ?? ''));
+          written.push(tr); save();
           tr.dispatchEvent(new Event('input', { bubbles: true }));   // graphs redraw as the run forms
           return { ok: true };
         },
@@ -8600,10 +8600,11 @@ Value: \\input[id=f]{}
     if (JSON.stringify(H.runs(ro)) !== JSON.stringify([{ id: 'runa', name: 'Run A', rows: 0 }])) throw new Error('run list is wrong: ' + JSON.stringify(H.runs(ro)));
     const wr = H.runWriter('runa', ro); if (!wr || !wr.add('0', ['1', '', '0.5']).ok || !wr.add('1', ['0.9', '', '0.4']).ok) throw new Error('run rows were not written');
     if (H.runs(ro)[0].rows !== 2 || (host.querySelector('[data-field="runa.r2c2"]') || {}).textContent !== '0.9') throw new Error('run rows did not land in the run table');
+    if (!wr.set(0, ['0.5', '', '0.2']) || wr.set(5, ['9', '9', '9']) || host.querySelector('[data-field="runa.r1c2"]').textContent !== '0.5' || host.querySelector('[data-field="runa.r1c1"]').textContent !== '0') throw new Error('rewriting a run row went wrong');
     if (H.runWriter('tbl', ro) || H.runClear('tbl', ro)) throw new Error('a run tool reached a table that is not one of its runs');
     await new Promise(res => setTimeout(res, 500));
     const saved3 = JSON.parse(localStorage.getItem(ltKey(labId)) || '{}');
-    if (saved3['runa.r1c1'] !== '0' || saved3['runa.r2c4'] !== '0.4' || saved3['runa.rows'] !== 2 || 'runa.r1c3' in saved3) throw new Error('run rows were not saved like typed rows');
+    if (saved3['runa.r1c1'] !== '0' || saved3['runa.r1c2'] !== '0.5' || saved3['runa.r1c4'] !== '0.2' || saved3['runa.r2c4'] !== '0.4' || saved3['runa.rows'] !== 2 || 'runa.r1c3' in saved3) throw new Error('run rows were not saved like typed rows');
     if (!H.runClear('runa', ro) || H.runs(ro)[0].rows !== 0 || rw.querySelectorAll('tbody tr').length !== 0) throw new Error('clearing a run left rows behind');
     await new Promise(res => setTimeout(res, 500));
     const saved4 = JSON.parse(localStorage.getItem(ltKey(labId)) || '{}');
