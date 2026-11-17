@@ -579,6 +579,9 @@
   .lt-g-empty { font-size: 13px; fill: var(--muted); }
   .lt-graph-fit { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted); margin-top: 0.4rem; }
   .lt-graph-caption { font-size: 12px; color: var(--muted); margin-top: 0.3rem; }
+  .lt-graph-tools { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.4rem; }   /* Delete for a recorded run the graph draws */
+  .lt-graph-delete { background: var(--danger); color: #fff; border: 1px solid var(--danger); padding: 0.3rem 0.8rem; font: inherit; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; border-radius: var(--border-radius, 0); }
+  .lt-graph-delete:hover { filter: brightness(0.9); }
   /* ---------- Widgets: in-lab tools (docs/WIDGETS.md). The frame is the host's; .cm-* is the colorimeter's. ---------- */
   .lt-widget { border: 0.5px solid var(--rule-strong); background: var(--card-bg); padding: 1rem 1.1rem; margin: 1.4rem 0; max-width: 680px; }
   /* In a lab, a widget spans the whole lab column (the same width as the toolbar row under the lab), not the 760px text measure,
@@ -922,7 +925,7 @@
     .slideshow-slide.active { display: block; }
     .slideshow-slide iframe, .embed-youtube { display: none; }
     .pdf-frame { display: none; }
-    .lt-status, .lt-photo-actions, .lt-table-add, .lt-table-toggle, .lt-photo:not(.has-photo), .lt-widget { display: none !important; }
+    .lt-status, .lt-photo-actions, .lt-table-add, .lt-table-toggle, .lt-graph-tools, .lt-photo:not(.has-photo), .lt-widget { display: none !important; }
     .lt-field, .lt-table td.lt-cell { background: white !important; border-color: #888 !important; box-shadow: none !important; }
     .lt-pagebreak { display: block; page-break-before: always; break-before: page; }
     .lt-notes:not([open]) { display: none; }
@@ -1475,6 +1478,9 @@ const DEFAULTS = {
   calloutHint: 'Hint',
   figurePending: 'Figure not uploaded yet',
   graphEmpty: 'Enter data in the table above to draw the graph',
+  graphDeleteRun: 'Delete',
+  graphDeleteRunNamed: 'Delete {name}',
+  graphDeleteRunConfirm: 'Delete the recording in {name}? It cannot be brought back.',
   procedureTab: 'Procedure',
   reportTab: 'Report',
   reportPreview: 'Preview report',
@@ -1593,7 +1599,8 @@ const TEXT_LABELS = {
   widgetRecord: 'Colorimeter: Record button', widgetRecorded: 'Colorimeter: data recorded text', widgetTableFull: 'Colorimeter: table full message', widgetNoTable: 'Colorimeter: no table message',
   widgetRefLabel: 'Colorimeter: reference square label', widgetMeasLabel: 'Colorimeter: sample square label', widgetRefBright: 'Colorimeter: reference-too-bright warning', widgetAutoStart: 'Colorimeter: start auto record button', widgetAutoStop: 'Colorimeter: stop auto record button',
   widgetRunStart: 'Continuous colorimeter: start button', widgetRunStop: 'Continuous colorimeter: stop button', widgetRunDone: 'Continuous colorimeter: run recorded text', widgetRunName: 'Continuous colorimeter: name of a run whose table has no title', widgetRunRecorded: 'Continuous colorimeter: a run that holds a recording, in the list',
-  widgetRunReplace: 'Continuous colorimeter: question before recording over a run'
+  widgetRunReplace: 'Continuous colorimeter: question before recording over a run',
+  graphDeleteRun: 'Continuous colorimeter: Delete button on a graph', graphDeleteRunNamed: 'Continuous colorimeter: Delete button on a graph that draws several runs', graphDeleteRunConfirm: 'Continuous colorimeter: question before deleting a run'
 };
 
 /* ============================================================
@@ -2769,7 +2776,7 @@ function buildPdfDocument(which, lab) {
   doc.innerHTML = `<div class="pdf-head"><div class="pdf-title">${escapeHTML(lab.title)}${which === 'report' ? ` — ${escapeHTML(getText('reportTab'))}` : (which !== 'procedure' && labTabName(which) ? ` — ${escapeHTML(labTabName(which))}` : '')}</div><div class="pdf-meta">${[who, new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })].filter(Boolean).map(escapeHTML).join(' · ')}</div></div>`;
   const body = src.cloneNode(true); body.hidden = false; body.removeAttribute('hidden');
   // remove interactive chrome
-  body.querySelectorAll('.rp-toolbar, .rp-doc-header, .rp-meter, .lab-toolbar, .lt-table-add, .lt-photo-actions, .lt-status, .rp-hint, .admin-inline, .lt-widget, .review-banner, .lab-footer-nav, button, input[type="file"]').forEach(el => el.remove());
+  body.querySelectorAll('.rp-toolbar, .rp-doc-header, .rp-meter, .lab-toolbar, .lt-table-add, .lt-graph-tools, .lt-photo-actions, .lt-status, .rp-hint, .admin-inline, .lt-widget, .review-banner, .lab-footer-nav, button, input[type="file"]').forEach(el => el.remove());
   // answer boxes and cells → static text
   body.querySelectorAll('[contenteditable]').forEach(el => { const live = src.querySelector(`[data-field="${el.dataset.field}"]`); el.textContent = live ? ltFieldText(live) : ltFieldText(el); el.removeAttribute('contenteditable'); el.classList.add('pdf-field'); if (!el.textContent.trim()) { el.classList.add('pdf-empty'); if (el.tagName === 'TD') el.textContent = '\u00a0'; } });
   body.querySelectorAll('details').forEach(d => { const f = d.querySelector('.lt-field'); if (f && f.textContent.trim()) d.open = true; else if (!d.classList.contains('rp-hint')) d.remove(); });
@@ -5042,8 +5049,9 @@ function ltBind(area, labId, cloud = null, readOnly = false) {
     if (rm) rm.addEventListener('click', () => removeSlot(1));
     prev.addEventListener('click', e => { const b = e.target.closest('.lt-photo-item-remove'); if (b) removeSlot(parseInt(b.dataset.slot, 10)); });
   });
+  area._ltWidgetHost = ltWidgetHost({ labId, readOnly, tableApi, entries, save });   // before the graphs: a graph asks it which recorded runs it may offer Delete for
   ltBindGraphs(area);
-  area._ltWidgetHost = ltWidgetHost({ labId, readOnly, tableApi, entries, save }); ltBindWidgets(area, area._ltWidgetHost);   // the host is exposed for entriesSelfTest
+  ltBindWidgets(area, area._ltWidgetHost);   // the host is exposed for entriesSelfTest
   if (readOnly) {
     area.querySelectorAll('[contenteditable]').forEach(el => el.setAttribute('contenteditable', 'false'));
     area.querySelectorAll('[data-check], .lt-choice input').forEach(cb => { cb.disabled = true; });
@@ -5215,7 +5223,7 @@ function ltGraphSeries(area, o) {
   const push = (src, layerNo) => {
     const fit = !!src.fit && String(src.fit).toLowerCase() !== 'none';
     if (layerNo && src.data != null && String(src.data).trim()) {
-      series.push({ name: split(src.name)[0] || `Layer ${layerNo}`, pts: ltGraphData(src.data), style: ltGraphStyle(nth(src.type, 0)), color: nth(src.color, 0), fit });
+      series.push({ name: split(src.name)[0] || `Layer ${layerNo}`, pts: ltGraphData(src.data), style: ltGraphStyle(nth(src.type, 0)), color: nth(src.color, 0), fit, table: '' });
       return true;
     }
     const own = t => (t && t !== true && String(t) !== 'none' ? String(t) : '');
@@ -5229,7 +5237,7 @@ function ltGraphSeries(area, o) {
     fys.forEach((fy, k) => series.push({
       name: named ? split(names)[k] || ySpecs[k] : (/^c?\d+$/i.test(ySpecs[k]) && header[parseInt(ySpecs[k].replace(/^c/i, ''), 10) - 1]) || ySpecs[k],
       pts: rows.map((r, ri) => ({ r, ri })).filter(x => !pick || pick.has(x.ri)).map(({ r, ri }) => { const ctx = { label: labels[ri], cell }; return [fx(r, ctx), fy(r, ctx)]; }).filter(pt => Number.isFinite(pt[0]) && Number.isFinite(pt[1])),
-      style: ltGraphStyle(nth(src.type, k)), color: nth(src.color, k), fit
+      style: ltGraphStyle(nth(src.type, k)), color: nth(src.color, k), fit, table
     }));
     return true;
   };
@@ -5240,12 +5248,32 @@ function ltGraphSeries(area, o) {
   series.forEach((sr, i) => { sr.pts.sort((a, b) => a[0] - b[0]); sr.color = ltGraphColor(sr.color, i); });
   return series;
 }
+// Recorded runs (tables a run-recording tool lists in runs=) on this page: Map(table id → { opts, name, rows }). Only where the student may edit.
+function ltRunTables(area) {
+  const out = new Map(), host = area._ltWidgetHost; if (!host || host.readOnly || !host.runs || !host.runClear) return out;
+  area.querySelectorAll('.lt-widget[data-widget-type]').forEach(el => {
+    const type = el.dataset.widgetType, W = WIDGETS[type]; if (!W || !W.runs) return;
+    let opts; try { opts = { ...widgetDefaults(type), ...JSON.parse(el.dataset.opts || '{}') }; } catch (e) { return; }
+    host.runs(opts).forEach(r => { if (!out.has(r.id)) out.set(r.id, { opts, name: r.name, rows: r.rows }); });
+  });
+  return out;
+}
+// The red Delete buttons of a graph: one per recorded run it draws that holds data and is not being recorded right now.
+function ltGraphRunTools(area, box, series) {
+  if (box.classList.contains('rp-graph')) return '';   // the report's copy of a graph only shows
+  const drawn = new Set(series.map(sr => (sr.table ? ltSafeId(sr.table) : '')).filter(Boolean)); if (!drawn.size) return '';
+  const host = area._ltWidgetHost, mine = [...ltRunTables(area)].filter(([id]) => drawn.has(id)), runs = mine.filter(([id, r]) => r.rows && !(host.runBusy && host.runBusy(id)));
+  if (!runs.length) return '';
+  const plain = (key, name) => getText(key).replace('{name}', name);
+  return `<div class="lt-graph-tools">${runs.map(([id, r]) => `<button type="button" class="lt-graph-delete" data-run="${escapeHTML(id)}">${escapeHTML(mine.length > 1 ? plain('graphDeleteRunNamed', r.name) : getText('graphDeleteRun'))}</button>`).join('')}</div>`;
+}
 let ltGraphSeq = 0;
 function ltRenderGraph(area, box) {
   let o; try { o = JSON.parse(box.dataset.opts || '{}'); } catch (e) { box.innerHTML = `<div class="lt-error">Graph: could not read the graph options.</div>`; return; }
   const series = ltGraphSeries(area, o);
   if (!series) { box.innerHTML = `<div class="lt-error">Graph: could not read the x or y expression.</div>`; return; }
   const all = series.flatMap(sr => sr.pts);
+  const tools = ltGraphRunTools(area, box, series);
   // Legend: one entry per series when there are several, on a 150-unit grid that widens for long names and wraps onto more rows (the plot keeps its size).
   const W = 640, mL = 64, mR = 20, mB = 56, mT0 = o.title ? 40 : 20;
   const legend = series.length > 1 && all.length > 0;
@@ -5258,7 +5286,7 @@ function ltRenderGraph(area, box) {
   if (o.title) svg += `<text x="${W / 2}" y="22" text-anchor="middle" class="lt-g-title">${escapeHTML(o.title)}</text>`;
   if (!all.length) {
     svg += `<text x="${W / 2}" y="${H / 2}" text-anchor="middle" class="lt-g-empty">${escapeHTML(getText('graphEmpty'))}</text></svg>`;
-    box.innerHTML = svg; return;
+    box.innerHTML = tools + svg; return;
   }
   const xs = all.map(p => p[0]), ys = all.map(p => p[1]);
   let xmin = Math.min(...xs), xmax = Math.max(...xs), ymin = Math.min(...ys), ymax = Math.max(...ys);
@@ -5297,7 +5325,7 @@ function ltRenderGraph(area, box) {
     else svg += `<circle cx="${x0}" cy="${y0}" r="4" fill="${sr.color}"/><text x="${x0 + 10}" y="${y0 + 4}" class="lt-g-tick">${escapeHTML(sr.name)}</text>`;
   });
   svg += `</svg>`;
-  box.innerHTML = svg + (fitNotes.length ? `<div class="lt-graph-fit">${fitNotes.map(escapeHTML).join('<br>')}</div>` : '') + (o.caption ? `<div class="lt-graph-caption">${escapeHTML(o.caption)}</div>` : '');
+  box.innerHTML = tools + svg + (fitNotes.length ? `<div class="lt-graph-fit">${fitNotes.map(escapeHTML).join('<br>')}</div>` : '') + (o.caption ? `<div class="lt-graph-caption">${escapeHTML(o.caption)}</div>` : '');
 }
 function ltBindGraphs(area) {
   const boxes = Array.from(area.querySelectorAll('.lt-graph')); if (!boxes.length) return;
@@ -5306,6 +5334,14 @@ function ltBindGraphs(area) {
   let t = null;
   area.addEventListener('input', e => { if (e.target.closest('.lt-table-wrap')) { clearTimeout(t); t = setTimeout(redraw, 150); } });
   area.addEventListener('click', e => { if (e.target.closest('.lt-table-add')) setTimeout(redraw, 50); });
+  area.addEventListener('click', e => {   // Delete on a graph: empties one recorded run, after asking. The only other way a run is emptied is recording over it, which also asks.
+    const b = e.target.closest('.lt-graph-delete'); if (!b) return;
+    const host = area._ltWidgetHost, r = ltRunTables(area).get(b.dataset.run);
+    if (!host || !r || (host.runBusy && host.runBusy(b.dataset.run))) { redraw(); return; }
+    if (!window.confirm(getText('graphDeleteRunConfirm').replace('{name}', r.name))) return;
+    host.runClear(b.dataset.run, r.opts);
+    redraw();
+  });
 }
 
 /* ---------- Widgets: in-lab tools that use the device and record into ordinary blocks (docs/WIDGETS.md) ----------
@@ -5321,7 +5357,7 @@ const WIDGETS = {
     device: 'Needs a camera; a phone works best. On a laptop without a camera the tool shows a calm note and students type the values in.',
     camera: true,   // the host checks for a camera, pauses the tool when the page is hidden, and releases it on navigation
     records: 'One row per reading into a data table: corrected R, G and B in the columns you choose; optionally the camera\'s uncorrected R, G, B.',
-    file: 'widgets/colorimeter.v15.js',
+    file: 'widgets/colorimeter.v16.js',
     options: [
       { name: 'table', label: 'Data table to record into', kind: 'table', help: 'Let students add rows to that table, so every reading gets its own row.' },
       { name: 'columns', label: 'Columns for the corrected R, G, B', kind: 'columns', parts: ['Red', 'Green', 'Blue'], default: 'c1;c2;c3', help: 'Corrected = sample × 255 ÷ (what the camera reads on the white paper), channel by channel, every frame. Lighting, exposure and white-balance drift move both squares together, so it cancels. Keep the paper the brightest matte thing in the picture; a sample brighter than the paper reads 255.' },
@@ -5335,13 +5371,13 @@ const WIDGETS = {
   },
   'colorimeter-run': {   // the colorimeter's continuous output (2026-11-17): same file and squares, records a curve into a run instead of single readings
     label: 'Colorimeter (continuous)',
-    texts: ['widgetRunStart', 'widgetRunStop', 'widgetRunDone', 'widgetRunName', 'widgetRunRecorded', 'widgetRunReplace', 'widgetRefLabel', 'widgetMeasLabel', 'widgetRefBright'],
+    texts: ['widgetRunStart', 'widgetRunStop', 'widgetRunDone', 'widgetRunName', 'widgetRunRecorded', 'widgetRunReplace', 'graphDeleteRun', 'graphDeleteRunNamed', 'graphDeleteRunConfirm', 'widgetRefLabel', 'widgetMeasLabel', 'widgetRefBright'],
     description: 'The colorimeter\'s two squares, recording continuously. From Start recording to Stop recording it writes one reading every interval into a run, and the lab\'s graphs draw the run as it forms. Each reading is the relative concentration of whatever colours the sample, worked out from the absorbance against the Reference square: a colour that fades starts at 1 and falls, a colour that forms starts at 0 and rises to 1. The tool tells which from the run itself. Students see no numbers, only the graphs.',
     device: 'Needs a camera; a phone on a stand works best, because the squares must stay on the sample for the whole run.',
     camera: true,
     runs: true,   // records into several tables (runs=), one per run, instead of one table=
     records: 'One row per reading into the run\'s own data table: the time in seconds and the relative concentration by the red, green and blue channel. Each run is a data table, usually hidden; graphs read it.',
-    file: 'widgets/colorimeter.v15.js',
+    file: 'widgets/colorimeter.v16.js',
     options: [
       { name: 'runs', label: 'Runs: the data tables this tool records into', kind: 'tables', help: 'One data table per run. Students pick the run before they start; a table\'s title is the run\'s name. Tick "Students may add rows" on each table, and set it to Hidden if students should only see graphs.' },
       { name: 'timecolumn', label: 'Column for the time in seconds', kind: 'column', none: 'Not recorded', default: 'c1', help: 'Seconds since the student tapped Start recording: 0, then the interval, and so on.' },
@@ -5410,8 +5446,10 @@ function ltWidgetHost({ labId, readOnly, tableApi, entries, save }) {
   const runApi = (id, opts) => { const api = tableApi.get(id); if (!api) return null; const time = colIndex(opts.timecolumn, api.cols), vals = colsOf(opts.columns, api.cols), live = [time, ...vals].filter(Boolean); return live.length ? { api, time, vals, live } : null; };
   const cellAt = (tr, ci) => { const td = tr.children[ci - 1]; return td && td.classList.contains('lt-cell') ? td : null; };
   const runFilled = (r, tr) => r.live.some(ci => { const td = cellAt(tr, ci); return !!td && !!td.textContent.trim(); });
+  const busy = new Map();   // run table id → the writer recording into it now; graphs offer no Delete for it meanwhile
   return {
     labId, readOnly,
+    runBusy(id) { return busy.has(id); },
     runs(opts) {   // → [{ id, name, rows }]: the run tables that exist, each with its title (or "Run n") and how many rows hold a recording
       return runIds(opts).map((id, i) => {
         const r = runApi(id, opts); if (!r) return null;
@@ -5433,11 +5471,12 @@ function ltWidgetHost({ labId, readOnly, tableApi, entries, save }) {
       r.api.tbody.dispatchEvent(new Event('input', { bubbles: true }));
       return true;
     },
-    runWriter(id, opts) {   // → { add(time, values) → { ok, reason }, set(n, values) }: each reading takes the next row that is empty in the tool's columns, else a new row
+    runWriter(id, opts) {   // → { add(time, values) → { ok, reason }, set(n, values), end() }: each reading takes the next row that is empty in the tool's columns, else a new row
       const r = runApi(id, opts); if (!r || readOnly || !runIds(opts).includes(id)) return null;
-      let p = 0; const written = [];
+      let p = 0; const written = [], me = {}; busy.set(id, me);
       const put = (tr, ci, text) => { const td = ci ? cellAt(tr, ci) : null; if (!td) return; td.textContent = String(text); if (String(text) === '') delete entries[td.dataset.field]; else entries[td.dataset.field] = String(text); };
-      return {
+      return Object.assign(me, {
+        end() { if (busy.get(id) === me) busy.delete(id); r.api.tbody.dispatchEvent(new Event('input', { bubbles: true })); },   // the run is over: graphs redraw and may offer Delete
         set(n, values) { const tr = written[n]; if (!tr || !tr.isConnected) return false; r.vals.forEach((ci, i) => put(tr, ci, values[i] ?? '')); save(); return true; },   // the scale of a run moved: a row this writer added takes its new values (the next add tells the graphs)
         add(time, values) {
           let tr = null;
@@ -5448,7 +5487,7 @@ function ltWidgetHost({ labId, readOnly, tableApi, entries, save }) {
           tr.dispatchEvent(new Event('input', { bubbles: true }));   // graphs redraw as the run forms
           return { ok: true };
         },
-      };
+      });
     },
     canRecord(tableId, opts) {
       const api = tableApi.get(tableId); if (!api) return { ok: false, reason: getText('widgetNoTable') };
@@ -8526,6 +8565,7 @@ Value: \\input[id=f]{}
 |---|---|---|---|
 }
 \\widget[type=colorimeter-run, id=crun, runs=runa]
+\\graph[id=grun, table=runa, x=c1, y=c2]{}
 \\tab[name="Data"]{
 \\datatable[id=t2]{
 | C |
@@ -8605,7 +8645,19 @@ Value: \\input[id=f]{}
     await new Promise(res => setTimeout(res, 500));
     const saved3 = JSON.parse(localStorage.getItem(ltKey(labId)) || '{}');
     if (saved3['runa.r1c1'] !== '0' || saved3['runa.r1c2'] !== '0.5' || saved3['runa.r1c4'] !== '0.2' || saved3['runa.r2c4'] !== '0.4' || saved3['runa.rows'] !== 2 || 'runa.r1c3' in saved3) throw new Error('run rows were not saved like typed rows');
-    if (!H.runClear('runa', ro) || H.runs(ro)[0].rows !== 0 || rw.querySelectorAll('tbody tr').length !== 0) throw new Error('clearing a run left rows behind');
+    // the graph of a recorded run offers Delete once the run is over, asks, and only then empties the run
+    const gbox = host.querySelector('.lt-graph[data-graph="grun"]'); ltRenderGraph(host, gbox);
+    if (!H.runBusy('runa') || gbox.querySelector('.lt-graph-delete')) throw new Error('Delete was offered while the run was still recording');
+    wr.end(); ltRenderGraph(host, gbox);
+    const delBtn = gbox.querySelector('.lt-graph-delete'); if (H.runBusy('runa') || !delBtn || delBtn.textContent !== getText('graphDeleteRun')) throw new Error('the graph of a recorded run has no Delete button');
+    const realConfirm = window.confirm; let asked = 0;
+    try {
+      window.confirm = () => { asked++; return false; }; delBtn.click();
+      if (asked !== 1 || H.runs(ro)[0].rows !== 2) throw new Error('Delete did not ask, or deleted after a No');
+      window.confirm = () => { asked++; return true; }; gbox.querySelector('.lt-graph-delete').click();
+    } finally { window.confirm = realConfirm; }
+    if (asked !== 2 || H.runs(ro)[0].rows !== 0 || rw.querySelectorAll('tbody tr').length !== 0 || gbox.querySelector('.lt-graph-delete')) throw new Error('Delete left the run or its button behind');
+    if (host.querySelector('[data-field="tbl.r3c1"]').textContent !== '10') throw new Error('deleting a run touched another table');
     await new Promise(res => setTimeout(res, 500));
     const saved4 = JSON.parse(localStorage.getItem(ltKey(labId)) || '{}');
     if (Object.keys(saved4).some(k => k.startsWith('runa.'))) throw new Error('clearing a run left saved cells behind');
