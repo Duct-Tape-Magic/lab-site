@@ -199,6 +199,7 @@ Not built yet: Phase 3 access control (Edge Functions, private bucket flow, pass
 
 ## Guardrails
 
+- **Link the format guide after every push that changes it (owner's rule, 2026-11-17).** When a push changes `docs/LAB-FORMAT.md` (or `docs/socratic/BANK-FORMAT.md`), the reply that reports the push ends with the link to the file on GitHub, so the owner can hand it to his lab-design session: https://github.com/Duct-Tape-Magic/lab-site/blob/main/docs/LAB-FORMAT.md and https://github.com/Duct-Tape-Magic/lab-site/blob/main/docs/socratic/BANK-FORMAT.md
 - **Backup before every risky push (owner's rule, 2026-10-26).** Before pushing anything that touches student entries, photos, ids, the local/cloud merge, sign-in adoption, Clear entries, or deletion: run `node scripts/backup.mjs --verify` and paste its printed counts into the chat. Stakes: ~49 students, ~3 h per lab; one bad push can erase more hours than the site took to build. Ship such changes outside lab hours.
 - **Every new table needs an explicit Data API grant** (Supabase stopped granting them automatically on 2026-10-30): after `create table public.x`, add `grant select, insert, update, delete on public.x to anon, authenticated;` (and `grant usage, select on sequence …` for identity columns), then enable RLS and write the policies as usual. `supabase/grants.sql` re-grants every public table and is run after `schema.sql` on a fresh project.
 
