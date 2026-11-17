@@ -507,6 +507,10 @@
   .lt-table td.lt-cell { background: rgba(47,93,138,0.05); min-width: 4.5em; cursor: text; outline: none; white-space: pre-wrap; }
   .lt-table td.lt-cell:focus { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--bg); }
   .lt-table-add { margin-top: 0.4rem; }
+  .lt-table-wrap.lt-view-hidden { display: none !important; }   /* \datatable[view=hidden]: the table holds data (a recorded run) that only graphs show */
+  .lt-view-collapsed:not(.open) > .lt-table, .lt-view-collapsed:not(.open) > .lt-table-add { display: none; }   /* view=collapsed: closed until "Show the numbers" */
+  .lt-table-toggle { background: none; border: 0; padding: 0; margin: 0 0 0.4rem; cursor: pointer; font: inherit; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .lt-table-toggle:hover { color: var(--ink); }
   .lt-answer { margin: 1rem 0 1.4rem; }
   .lt-choice-list { display: flex; flex-direction: column; gap: 0.4rem; margin: 0.3rem 0 0.2rem; }
   .lt-choice-item { display: flex; gap: 0.6rem; align-items: baseline; cursor: pointer; font-size: 0.95em; }
@@ -607,6 +611,8 @@
   .cm-status { font-size: 12.5px; color: var(--muted); min-height: 1.2em; margin-top: 0.4rem; line-height: 1.4; }
   .cm-status.ok { color: #2e7d32; }
   .cm-status.warn { color: var(--danger); }   /* the reference square is overexposed */
+  .cm-runs { width: 100%; margin-top: 0.8rem; }   /* continuous runs: which run the next recording goes into */
+  .cm-clock { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; }
   @media (max-width: 600px) { .cm { grid-template-columns: 1fr; } }
   .wd-card { border: 0.5px solid var(--rule-strong); padding: 1.2rem 1.4rem; margin-bottom: 1.2rem; }
   .wd-row { display: flex; align-items: center; gap: 1rem; padding: 0.9rem 0.2rem; border-bottom: 0.5px solid var(--rule); cursor: pointer; }
@@ -916,7 +922,7 @@
     .slideshow-slide.active { display: block; }
     .slideshow-slide iframe, .embed-youtube { display: none; }
     .pdf-frame { display: none; }
-    .lt-status, .lt-photo-actions, .lt-table-add, .lt-photo:not(.has-photo), .lt-widget { display: none !important; }
+    .lt-status, .lt-photo-actions, .lt-table-add, .lt-table-toggle, .lt-photo:not(.has-photo), .lt-widget { display: none !important; }
     .lt-field, .lt-table td.lt-cell { background: white !important; border-color: #888 !important; box-shadow: none !important; }
     .lt-pagebreak { display: block; page-break-before: always; break-before: page; }
     .lt-notes:not([open]) { display: none; }
@@ -1457,6 +1463,8 @@ const DEFAULTS = {
   answerPlaceholder: 'Type your answer…',
   cellPlaceholder: '',
   tableAddRow: '+ Add row',
+  tableShowNumbers: 'Show the numbers',
+  tableHideNumbers: 'Hide the numbers',
   photoAdd: 'Add photo',
   photoChange: 'Change photo',
   photoRemove: 'Remove',
@@ -1533,7 +1541,14 @@ const DEFAULTS = {
   widgetMeasLabel: 'Sample',
   widgetRefBright: 'The reference is too bright. Dim the light or move the paper.',
   widgetAutoStart: 'Start auto record',
-  widgetAutoStop: 'Stop auto record'
+  widgetAutoStop: 'Stop auto record',
+  widgetRunStart: 'Start recording',
+  widgetRunStop: 'Stop recording',
+  widgetRunDone: 'Run recorded',
+  widgetRunName: 'Run {n}',
+  widgetRunRecorded: '{name} (recorded)',
+  widgetRunReplace: '{name} already has a recording. Record over it? The old recording will be erased.',
+  widgetRunNoColor: 'The sample reads the same as the reference. Check the two squares and start again.'
 };
 
 const SITE_TEXT_GROUPS = [
@@ -1545,7 +1560,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Lab page', keys: ['labMinutes', 'labReportMinutes', 'labUpdated', 'labFilesLabel', 'labDownloadFile', 'labViewInline', 'labPrint', 'labDownloadPdf', 'pdfPreparing', 'pdfReady', 'pdfFailed', 'labCopyLink', 'labLinkCopied', 'labNoContent'] },
   { label: 'Locked labs', keys: ['lockPasswordTitle', 'lockAccountsTitle', 'lockAccountsPrompt', 'lockNotAllowed', 'lockAdminOnly'] },
   { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'accessTitle', 'accessHint', 'accessButton', 'accessWrong', 'accessArchived', 'seatName', 'seatShort', 'seatUnknown', 'seatManaged', 'privacyLink', 'privacyTitle'] },
-  { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'entriesClearFailed', 'entriesSaveFailed', 'photoSyncFailed', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
+  { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'entriesClearFailed', 'entriesSaveFailed', 'photoSyncFailed', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'tableShowNumbers', 'tableHideNumbers', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty'] },
   { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef', 'reportNoPhotoYet'] },
   { label: 'Get help', keys: ['helpButton', 'helpIntro', 'helpLoginNudge', 'helpMessagePlaceholder', 'helpSend', 'helpSent', 'helpError', 'helpAutoReply', 'helpAutoLabel', 'helpYou', 'helpTeacher', 'helpResolvedNote', 'helpEmailFrom', 'helpEmailSubject'] },
   { label: 'Widgets (shared by every tool; each widget\'s own words are on its page in the Widgets tab)', keys: ['widgetStart', 'widgetStop', 'widgetLoading', 'widgetNoCamera', 'widgetFailed', 'widgetDenied', 'widgetUnavailable', 'widgetGetHelp', 'widgetNoTable', 'widgetSignIn'] },
@@ -1569,7 +1584,7 @@ const TEXT_LABELS = {
   notFoundTitle: 'Not found title', notFoundBody: 'Not found text', notFoundHome: 'Not found home link', unavailableTitle: 'Unavailable title', unavailableBody: 'Unavailable text',
   fallbackBanner: 'Saved-copy banner', errorBanner: 'Error banner',
   entriesInfo: 'Autosave notice', entriesSaved: 'Saved flash', entriesClear: 'Clear entries button', entriesClearFailed: 'Clear entries failed message', entriesSaveFailed: 'Local save failed message', photoSyncFailed: 'Photo account save failed message', entriesClearConfirm: 'Clear entries confirmation',
-  notesLabel: 'Notes toggle', notesPlaceholder: 'Notes placeholder', answerPlaceholder: 'Answer placeholder', tableAddRow: 'Add row button',
+  notesLabel: 'Notes toggle', notesPlaceholder: 'Notes placeholder', answerPlaceholder: 'Answer placeholder', tableAddRow: 'Add row button', tableShowNumbers: 'Collapsed table: show button', tableHideNumbers: 'Collapsed table: hide button',
   photoAdd: 'Add photo button', photoChange: 'Change photo button', photoRemove: 'Remove photo button',
   calloutSafety: 'Safety box label', calloutWarning: 'Caution box label', calloutInfo: 'Note box label', calloutTip: 'Tip box label', calloutHint: 'Hint box label', figurePending: 'Missing figure text', graphEmpty: 'Empty graph message',
   procedureTab: 'Procedure tab label', reportTab: 'Report tab label', reportPreview: 'Preview report button', reportStyleTitle: 'Style guide heading', reportRequired: 'Required badge', reportHint: 'Hint toggle', reportWords: 'Word count', reportWordsAim: 'Word range hint', reportEmptyRequired: 'Empty required question note', reportTableLabel: 'Table caption word', reportFigureLabel: 'Figure caption word', reportMissingRef: 'Missing table/graph message', reportNoPhotoYet: 'No photo yet message',
@@ -1577,7 +1592,9 @@ const TEXT_LABELS = {
   widgetStart: 'Widget: Start button', widgetStop: 'Widget: Stop button', widgetLoading: 'Widget: starting message', widgetNoCamera: 'Widget: no-camera note', widgetFailed: 'Widget: could-not-start message', widgetDenied: 'Widget: camera-not-allowed message', widgetUnavailable: 'Widget: not-available message', widgetGetHelp: 'Widget: Get help button', widgetSignIn: 'Widget: sign-in note',
   socSend: 'Tutor: Send button', socEnd: 'Tutor: End session button', socAgain: 'Tutor: new session button', socStart: 'Tutor: Start session button', socLevelAsk: 'Tutor: opening question when a bank has no \\levelcheck of its own', socPlaceholder: 'Tutor: answer box placeholder', socProgress: 'Tutor: progress line ({topics} {total} {posed} {credited})', socAllDone: 'Tutor: every-topic-credited note', socThinking: 'Tutor: thinking note', socLimit: 'Tutor: weekly limit note', socSiteLimit: 'Tutor: site limit note', socError: 'Tutor: error note', socEnded: 'Tutor: session ended note', socDoneLine: 'Tutor: report completion line ({topics} {total} {posed} {credited} {done})', socNotDone: 'Tutor: report not-finished note', socNoSession: 'Tutor: report no-session note', socTranscriptTitle: 'Tutor: transcript heading', socSkip: 'Tutor: Skip button', socReportButton: 'Tutor: Report a problem button', socReportIntro: 'Tutor: report box intro', socReportPlaceholder: 'Tutor: report box placeholder', socReportSend: 'Tutor: send report button', socReportSent: 'Tutor: report sent confirmation', socReportError: 'Tutor: report failed note', socNoBank: 'Tutor: no-bank-chosen note',
   widgetRecord: 'Colorimeter: Record button', widgetRecorded: 'Colorimeter: data recorded text', widgetTableFull: 'Colorimeter: table full message', widgetNoTable: 'Colorimeter: no table message',
-  widgetRefLabel: 'Colorimeter: reference square label', widgetMeasLabel: 'Colorimeter: sample square label', widgetRefBright: 'Colorimeter: reference-too-bright warning', widgetAutoStart: 'Colorimeter: start auto record button', widgetAutoStop: 'Colorimeter: stop auto record button'
+  widgetRefLabel: 'Colorimeter: reference square label', widgetMeasLabel: 'Colorimeter: sample square label', widgetRefBright: 'Colorimeter: reference-too-bright warning', widgetAutoStart: 'Colorimeter: start auto record button', widgetAutoStop: 'Colorimeter: stop auto record button',
+  widgetRunStart: 'Continuous colorimeter: start button', widgetRunStop: 'Continuous colorimeter: stop button', widgetRunDone: 'Continuous colorimeter: run recorded text', widgetRunName: 'Continuous colorimeter: name of a run whose table has no title', widgetRunRecorded: 'Continuous colorimeter: a run that holds a recording, in the list',
+  widgetRunReplace: 'Continuous colorimeter: question before recording over a run', widgetRunNoColor: 'Continuous colorimeter: sample has no colour message'
 };
 
 /* ============================================================
@@ -2622,6 +2639,7 @@ function rpRefreshMirrors(area) {
     if (have && have.contains(document.activeElement)) return;   // a row is being added while the student types here: catch up on the next refresh
     const clone = src.cloneNode(true);
     clone.classList.add('rp-table'); clone.removeAttribute('data-table');
+    clone.classList.remove('lt-view-hidden', 'lt-view-collapsed', 'open'); { const tg = clone.querySelector('.lt-table-toggle'); if (tg) tg.remove(); }   // view= hides a table where it stands; a report that includes it shows it
     clone.querySelectorAll('[data-field]').forEach(td => td.removeAttribute('data-bound'));   // not bound by ltBind: rpBind's write-through does the saving
     const add = clone.querySelector('.lt-table-add'), srcAdd = src.querySelector('.lt-table-add');
     if (add) { if (!srcAdd || srcAdd.hidden) add.remove(); else add.addEventListener('click', () => srcAdd.click()); }   // one add-row path (ltBind's), so the row is counted and saved once
@@ -4244,10 +4262,11 @@ function openWidgetPage(type) {
       <div class="form-row"><label>What this widget is called (students see it above the tool; the Builder uses it too)</label><div class="lt-toolbar" style="margin:0"><input type="text" id="wd-name" value="${escapeHTML(c.label)}" placeholder="${escapeHTML(W.label)}" style="flex:1"/><button type="button" class="btn-small" onclick="saveWidgetName('${type}')">Save name</button></div><div class="hint">Leave empty to use the built-in name, ${escapeHTML(W.label)}.</div></div>
     </div>
     ${texts ? `<div class="wd-settings wd-texts"><h4 style="margin:0 0 0.6rem">Words students see</h4>${texts}<div class="lt-toolbar" style="margin:0.4rem 0 0"><button type="button" class="btn btn-accent btn-small" onclick="saveWidgetTexts('${type}')">Save words</button><span class="hint" style="margin:0">Curly-bracket names such as {n} are filled in by the site.</span></div></div>` : ''}
-    ${W.noDemo ? '' : `<div class="wd-settings"><h4 style="margin:0 0 0.6rem">Try it</h4><p class="hint">This demo reads a moving sample picture instead of the camera. Record only shows what would be written. Students see exactly this, minus the demo picture and with no text around it.</p><div class="wd-demo">${ltWidgetBlock('demo-' + type, { type, demo: true, columns: 'c2;c3;c4' }, '')}</div></div>`}
+    ${W.noDemo ? '' : `<div class="wd-settings"><h4 style="margin:0 0 0.6rem">Try it</h4><p class="hint">${W.demoLab ? 'This demo reads a sample picture instead of the camera; its sample fades while a run records. The graph underneath is a graph block reading the two hidden run tables, as in a lab. Nothing here is kept.' : 'This demo reads a moving sample picture instead of the camera. Record only shows what would be written. Students see exactly this, minus the demo picture and with no text around it.'}</p><div class="wd-demo">${W.demoLab ? ltRender(W.demoLab).html : ltWidgetBlock('demo-' + type, { type, demo: true, columns: 'c2;c3;c4' }, '')}</div></div>`}
     ${W.settings ? `<div class="wd-settings" id="wd-settings-${type}"><div class="hint">Loading…</div></div>` : ''}
   </div>`;
-  if (!W.noDemo) ltBindWidgets(box, { labId: 'demo', readOnly: false, demo: true, canRecord: () => ({ ok: true }), record: (t, o, v) => { toast(`Demo: would record ${v.join(', ')}`); return { ok: true, row: 0 }; } });
+  if (W.demoLab) { try { localStorage.removeItem(ltKey('widget-demo')); } catch (e) { /* ignore */ } ltBind(box.querySelector('.wd-demo'), 'widget-demo'); }   // a small real lab (tables + tool + graph), started empty every time; kept only in this browser
+  else if (!W.noDemo) ltBindWidgets(box, { labId: 'demo', readOnly: false, demo: true, canRecord: () => ({ ok: true }), record: (t, o, v) => { toast(`Demo: would record ${v.join(', ')}`); return { ok: true, row: 0 }; } });
   if (type === 'socratic' && W.settings) renderSocraticAdmin();
 }
 async function saveWidgetConf(type, patch) {
@@ -4735,8 +4754,10 @@ function ltDataTable(id, o, body, ctx) {
   const cellHtml = (c, r, ci) => /^_{3,}$/.test(c)
     ? `<td class="lt-cell" contenteditable="plaintext-only" data-field="${id}.r${r}c${ci}"></td>`
     : `<td>${ltInline(c, ctx)}</td>`;
-  let html = `<div class="lt-table-wrap" data-table="${id}" data-cols="${cols}">`;
+  const view = String(o.view == null || o.view === true ? '' : o.view).trim().toLowerCase();   // view=hidden: never shown where it stands (graphs still read it); view=collapsed: behind a "Show the numbers" line
+  let html = `<div class="lt-table-wrap${view === 'hidden' ? ' lt-view-hidden' : view === 'collapsed' ? ' lt-view-collapsed' : ''}" data-table="${id}" data-cols="${cols}">`;
   if (o.title) html += `<div class="lt-table-title">${escapeHTML(o.title)}</div>`;
+  if (view === 'collapsed') html += `<button type="button" class="lt-table-toggle" aria-expanded="false">${escapeHTML(getText('tableShowNumbers'))}</button>`;
   html += `<table class="lt-table">`;
   if (header.length) html += `<thead><tr>${header.map(h => `<th>${ltInline(h, ctx)}</th>`).join('')}</tr></thead>`;
   html += `<tbody>${bodyRows.map((r, ri) => `<tr>${Array.from({ length: cols }, (_, ci) => cellHtml(r[ci] ?? '', ri + 1, ci + 1)).join('')}</tr>`).join('')}</tbody></table>`;
@@ -4948,6 +4969,11 @@ function ltBind(area, labId, cloud = null, readOnly = false) {
     if (btn) btn.addEventListener('click', () => { addRowBound(); save(); });
     tableApi.set(id, { id, cols, tbody, canAdd: !!btn && !readOnly, addRow: addRowBound });
   });
+
+  area.querySelectorAll('.lt-table-toggle').forEach(btn => btn.addEventListener('click', () => {   // \datatable[view=collapsed]; nothing is saved, it opens closed every time
+    const w = btn.closest('.lt-table-wrap'); if (!w) return;
+    const open = w.classList.toggle('open'); btn.textContent = getText(open ? 'tableHideNumbers' : 'tableShowNumbers'); btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }));
 
   function bindField(el) {
     if (!el || el.dataset.bound) return; el.dataset.bound = '1';
@@ -5296,7 +5322,7 @@ const WIDGETS = {
     device: 'Needs a camera; a phone works best. On a laptop without a camera the tool shows a calm note and students type the values in.',
     camera: true,   // the host checks for a camera, pauses the tool when the page is hidden, and releases it on navigation
     records: 'One row per reading into a data table: corrected R, G and B in the columns you choose; optionally the camera\'s uncorrected R, G, B.',
-    file: 'widgets/colorimeter.v13.js',
+    file: 'widgets/colorimeter.v14.js',
     options: [
       { name: 'table', label: 'Data table to record into', kind: 'table', help: 'Let students add rows to that table, so every reading gets its own row.' },
       { name: 'columns', label: 'Columns for the corrected R, G, B', kind: 'columns', parts: ['Red', 'Green', 'Blue'], default: 'c1;c2;c3', help: 'Corrected = sample × 255 ÷ (what the camera reads on the white paper), channel by channel, every frame. Lighting, exposure and white-balance drift move both squares together, so it cancels. Keep the paper the brightest matte thing in the picture; a sample brighter than the paper reads 255.' },
@@ -5306,6 +5332,26 @@ const WIDGETS = {
       { name: 'timecolumn', label: 'Auto record: column for the time in seconds (optional)', kind: 'column', none: 'Not recorded', help: 'Seconds since the student tapped Start auto record: 0, then the interval, and so on. A reading taken with Record leaves this column empty.' },
       { name: 'help', label: 'Offer Get help when it fails', kind: 'help' },
     ],
+    print() { return ''; },
+  },
+  'colorimeter-run': {   // the colorimeter's continuous output (2026-11-17): same file and squares, records a curve into a run instead of single readings
+    label: 'Colorimeter (continuous)',
+    texts: ['widgetRunStart', 'widgetRunStop', 'widgetRunDone', 'widgetRunName', 'widgetRunRecorded', 'widgetRunReplace', 'widgetRunNoColor', 'widgetRefLabel', 'widgetMeasLabel', 'widgetRefBright'],
+    description: 'The colorimeter\'s two squares, recording continuously. From Start recording to Stop recording it writes one reading every interval into a run, and the lab\'s graphs draw the run as it forms. Each reading is the relative concentration of whatever colours the sample (1 at the start of the run), worked out from the absorbance against the Reference square. Students see no numbers, only the graphs.',
+    device: 'Needs a camera; a phone on a stand works best, because the squares must stay on the sample for the whole run.',
+    camera: true,
+    runs: true,   // records into several tables (runs=), one per run, instead of one table=
+    records: 'One row per reading into the run\'s own data table: the time in seconds and the relative concentration by the red, green and blue channel. Each run is a data table, usually hidden; graphs read it.',
+    file: 'widgets/colorimeter.v14.js',
+    options: [
+      { name: 'runs', label: 'Runs: the data tables this tool records into', kind: 'tables', help: 'One data table per run. Students pick the run before they start; a table\'s title is the run\'s name. Tick "Students may add rows" on each table, and set it to Hidden if students should only see graphs.' },
+      { name: 'timecolumn', label: 'Column for the time in seconds', kind: 'column', none: 'Not recorded', default: 'c1', help: 'Seconds since the student tapped Start recording: 0, then the interval, and so on.' },
+      { name: 'columns', label: 'Columns for the relative concentration', kind: 'columns', parts: ['By red', 'By green', 'By blue'], optional: true, default: 'c2;c3;c4', help: 'Relative concentration = A ÷ A at the start of the run, where A = log(reference ÷ sample) after both are converted to linear light. Use the channel the sample absorbs: red for a blue or green sample, green for a red or purple one, blue for a yellow one. A channel the sample hardly absorbs is left blank.' },
+      { name: 'interval', label: 'Seconds between readings', kind: 'num', help: 'Leave empty for one reading a second. Each reading is the average of every camera frame in its interval.' },
+      { name: 'minutes', label: 'Stop by itself after this many minutes', kind: 'num', help: 'A run ends when the student taps Stop recording. This is only for a forgotten run. Leave empty for 10.' },
+      { name: 'help', label: 'Offer Get help when it fails', kind: 'help' },
+    ],
+    demoLab: '\\datatable[id=demo-run1, title="Run 1", view=hidden, addrows]{\n| Time (s) | Red | Green | Blue |\n|---|---|---|---|\n}\n\\datatable[id=demo-run2, title="Run 2", view=hidden, addrows]{\n| Time (s) | Red | Green | Blue |\n|---|---|---|---|\n}\n\\widget[type=colorimeter-run, id=demo-colorimeter-run, demo, runs=demo-run1;demo-run2]{}\n\\graph[table=demo-run1, x=c1, y=c2, type=solid, series="Run 1", xlabel="Time (s)", ylabel="Relative concentration"]{\n\\layer[name="Run 2", table=demo-run2, x=c1, y=c2, type=solid]\n}',
     print() { return ''; },
   },
   socratic: {
@@ -5360,8 +5406,50 @@ function ltWidgetHost({ labId, readOnly, tableApi, entries, save }) {
   const cell = (api, tr, ci) => tr.querySelector(`.lt-cell[data-field="${api.id}.r${Array.from(api.tbody.children).indexOf(tr) + 1}c${ci}"]`);
   const freeRow = (api, cols) => Array.from(api.tbody.children).find(tr => cols.every(ci => { const td = cell(api, tr, ci); return td && !td.textContent.trim(); })) || null;
   const targets = (api, opts) => { const cols = colsOf(opts.columns, api.cols); return { cols, live: cols.filter(Boolean) }; };
+  // Runs (2026-11-17): a tool that records a whole series lists several tables in runs=, one per run, and writes time + values row by row.
+  const runIds = opts => (typeof opts.runs === 'string' ? opts.runs : '').split(/[;|,]/).map(s => ltSafeId(s.trim())).filter(Boolean);
+  const runApi = (id, opts) => { const api = tableApi.get(id); if (!api) return null; const time = colIndex(opts.timecolumn, api.cols), vals = colsOf(opts.columns, api.cols), live = [time, ...vals].filter(Boolean); return live.length ? { api, time, vals, live } : null; };
+  const cellAt = (tr, ci) => { const td = tr.children[ci - 1]; return td && td.classList.contains('lt-cell') ? td : null; };
+  const runFilled = (r, tr) => r.live.some(ci => { const td = cellAt(tr, ci); return !!td && !!td.textContent.trim(); });
   return {
     labId, readOnly,
+    runs(opts) {   // → [{ id, name, rows }]: the run tables that exist, each with its title (or "Run n") and how many rows hold a recording
+      return runIds(opts).map((id, i) => {
+        const r = runApi(id, opts); if (!r) return null;
+        const wrap = r.api.tbody.closest('.lt-table-wrap'), title = wrap && wrap.querySelector('.lt-table-title');
+        return { id, name: (title && title.textContent.trim()) || getText('widgetRunName').replace('{n}', i + 1), rows: Array.from(r.api.tbody.children).filter(tr => runFilled(r, tr)).length };
+      }).filter(Boolean);
+    },
+    runClear(id, opts) {   // empties the tool's own columns of one run and drops the rows that leaves empty. The tool asks the student first.
+      const r = runApi(id, opts); if (!r || readOnly || !runIds(opts).includes(id)) return false;
+      const trs = Array.from(r.api.tbody.children);
+      trs.forEach(tr => r.live.forEach(ci => { const td = cellAt(tr, ci); if (td) { td.textContent = ''; delete entries[td.dataset.field]; } }));
+      let extra = parseInt(entries[id + '.rows'], 10) || 0;
+      for (let i = trs.length - 1; i >= 0 && extra > 0; i--) {   // added rows, from the end; a row that still holds something the student typed stays, and so does everything above it
+        const cells = Array.from(trs[i].querySelectorAll('.lt-cell')); if (cells.some(td => td.textContent.trim())) break;
+        cells.forEach(td => { delete entries[td.dataset.field]; }); trs[i].remove(); extra--;
+      }
+      if (extra) entries[id + '.rows'] = extra; else delete entries[id + '.rows'];
+      save();
+      r.api.tbody.dispatchEvent(new Event('input', { bubbles: true }));
+      return true;
+    },
+    runWriter(id, opts) {   // → { add(time, values) → { ok, reason } }: each reading takes the next row that is empty in the tool's columns, else a new row
+      const r = runApi(id, opts); if (!r || readOnly || !runIds(opts).includes(id)) return null;
+      let p = 0;
+      return {
+        add(time, values) {
+          let tr = null;
+          while (p < r.api.tbody.children.length && !tr) { const c = r.api.tbody.children[p++]; if (!runFilled(r, c) && r.live.some(ci => cellAt(c, ci))) tr = c; }
+          if (!tr) { if (!r.api.canAdd) return { ok: false, reason: getText('widgetTableFull') }; tr = r.api.addRow(); p = r.api.tbody.children.length; }
+          const put = (ci, text) => { const td = ci ? cellAt(tr, ci) : null; if (!td) return; td.textContent = String(text); if (String(text) === '') delete entries[td.dataset.field]; else entries[td.dataset.field] = String(text); };
+          put(r.time, time); r.vals.forEach((ci, i) => put(ci, values[i] ?? ''));
+          save();
+          tr.dispatchEvent(new Event('input', { bubbles: true }));   // graphs redraw as the run forms
+          return { ok: true };
+        },
+      };
+    },
     canRecord(tableId, opts) {
       const api = tableApi.get(tableId); if (!api) return { ok: false, reason: getText('widgetNoTable') };
       const t = targets(api, opts); if (!t.live.length) return { ok: false, reason: getText('widgetNoTable') };
@@ -5443,6 +5531,8 @@ function ltBindWidgets(area, host) {
           begin: !auto,   // the person already pressed Start, so a tool that has its own opening step may go straight in
           canRecord: () => host.canRecord(tableId, opts),
           record: values => host.record(tableId, opts, values),
+          runs: () => (host.runs ? host.runs(opts) : []), runClear: id => !!(host.runClear && host.runClear(id, opts)), runWriter: id => (host.runWriter ? host.runWriter(id, opts) : null),   // tools that record whole runs (WIDGETS[type].runs)
+          confirm: msg => window.confirm(msg),
           call: (payload, onDelta) => ltFnStream('socratic', { ...payload, lab_id: host.labId }, onDelta),   // the site's server function, with the student's login
           renderMath: node => { try { renderMathIn([node]); socTidyMath(node); } catch (e) { /* ignore */ } },
           updated: () => { socraticForget(state.session && state.session.user ? state.session.user.id : null, opts.bank); const area = el.closest('#lab-content-area, #lab-markup-preview'); if (area && area.querySelector('.rp-mirror[data-mirror-socratic]')) rpRefreshMirrors(area); },
@@ -5754,7 +5844,7 @@ const BM_TYPES = {
   comment:   { label: 'Note to self',     list: 'both' },
   raw:       { label: 'Raw',              list: 'both' },
   steps:     { tag: 'procedure', label: 'Numbered steps',  list: 'procedure', kind: 'proc',  idBase: 'steps',    known: ['id'] },
-  table:     { tag: 'datatable', label: 'Data table',      list: 'both', kind: 'table', idBase: 'table',    known: ['id', 'title', 'addrows'], nameOf: b => b.opts.title },
+  table:     { tag: 'datatable', label: 'Data table',      list: 'both', kind: 'table', idBase: 'table',    known: ['id', 'title', 'addrows', 'view'], nameOf: b => b.opts.title },
   answer:    { tag: 'answer',    label: 'Question',        list: 'both', kind: 'q',     idBase: 'question', known: ['id', 'lines', 'title', 'required', 'words', 'hint'] },
   choice:    { tag: 'choice',    label: 'Multiple choice', list: 'both', kind: 'choice', idBase: 'choice',  known: ['id', 'multi', 'required', 'title'] },
   notes:     { tag: 'notes',     label: 'Notes box',       list: 'both', kind: 'notes', idBase: 'notes',    known: ['id'], nameOf: b => b.label },
@@ -5764,7 +5854,7 @@ const BM_TYPES = {
   callout:   { tag: null,        label: 'Callout',         list: 'procedure', known: ['label'] },
   graph:     { tag: 'graph',     label: 'Graph',           list: 'both', kind: 'graph', idBase: 'graph',    known: ['id', 'table', 'x', 'y', 'series', 'rows', 'type', 'color', 'fit', 'title', 'xlabel', 'ylabel', 'xmin', 'xmax', 'ymin', 'ymax'], nameOf: b => b.opts.title },
   pagebreak: { tag: 'pagebreak', label: 'Page break',      list: 'procedure', known: [] },
-  widget:    { tag: 'widget',    label: 'Widget',          list: 'procedure', kind: 'widget', idBase: 'widget', known: ['id', 'type', 'label', 'table', 'bank', 'columns', 'rawcolumns', 'interval', 'readings', 'timecolumn', 'help'], nameOf: b => b.opts.label || b.opts.type },
+  widget:    { tag: 'widget',    label: 'Widget',          list: 'procedure', kind: 'widget', idBase: 'widget', known: ['id', 'type', 'label', 'table', 'runs', 'bank', 'timecolumn', 'columns', 'rawcolumns', 'interval', 'readings', 'minutes', 'help'], nameOf: b => b.opts.label || b.opts.type },
   usetable:  { tag: 'usetable',  label: 'Include a table', list: 'report' },
   usegraph:  { tag: 'usegraph',  label: 'Include a graph', list: 'report' },
   useanswer: { tag: 'useanswer', label: 'Include an answer', list: 'report' },
@@ -6372,10 +6462,12 @@ function bmNewId(model, name, base, extra) {
   else { let k = 1; do { id = (base || 'block') + '-' + k++; } while (taken.has(id)); }
   return id;
 }
+function bmRunIds(b) { const v = b && b.opts ? b.opts.runs : ''; return (typeof v === 'string' ? v : '').split(/[;|,]/).map(s => s.trim()).filter(Boolean); }   // the tables a run-recording widget lists in runs=
 function bmRenameId(model, oldId, newId) {
   if (!oldId || oldId === newId) return;
   for (const b of bmAllBlocks(model)) {
     if ((b.type === 'graph' || b.type === 'widget') && b.opts && b.opts.table === oldId) b.opts.table = newId;
+    if (b.type === 'widget' && bmRunIds(b).includes(oldId)) b.opts.runs = bmRunIds(b).map(r => (r === oldId ? newId : r)).join(';');
     if (b.type === 'graph') {
       (b.layers || []).forEach(l => { if (l && l.table === oldId) l.table = newId; });
       [b.opts || {}, ...(b.layers || [])].forEach(o => ['x', 'y'].forEach(k => { if (o && typeof o[k] === 'string' && o[k].includes(oldId + '(')) o[k] = ltExprRenameTable(o[k], oldId, newId); }));   // cell references inside formulas
@@ -6392,6 +6484,7 @@ function bmReferencesTo(model, id) {
   const out = [];
   for (const b of bmAllBlocks(model)) {
     if ((b.type === 'graph' || b.type === 'widget') && b.opts && b.opts.table === id) out.push({ block: b, field: 'table' });
+    else if (b.type === 'widget' && bmRunIds(b).includes(id)) out.push({ block: b, field: 'table' });
     else if (b.type === 'graph' && (b.layers || []).some(l => l && l.table === id)) out.push({ block: b, field: 'layer' });
     else if (b.type === 'graph' && bmGraphFormulaTables(b, t => t === id).includes(id)) out.push({ block: b, field: 'formula' });
     if (['usetable', 'usegraph', 'useanswer', 'usephoto', 'usesocratic'].includes(b.type) && b.ref === id) out.push({ block: b, field: 'ref' });
@@ -6498,6 +6591,14 @@ function bmReferenceProblems(model, auto) {   // shared by builderParse (strings
       if (!ty) out.push({ k: b._k ?? null, msg: 'This widget has no type. Remove it and add a widget from the picker.' });
       else if (typeof WIDGETS !== 'undefined' && !WD) out.push({ k: b._k ?? null, msg: `No widget of type '${ty}' exists on this site.` });
       if (WD && WD.noTable) { if (!(b.opts && b.opts.bank)) out.push({ k: b._k ?? null, msg: 'Choose the problem bank this tutor uses.' }); }
+      else if (WD && WD.runs) {
+        const runs = bmRunIds(b);
+        if (!runs.length) out.push({ k: b._k ?? null, msg: 'Choose the data tables this tool records its runs into: one table per run.' });
+        for (const rid of runs) {
+          if (!tables.has(rid)) out.push({ k: b._k ?? null, msg: `This tool records a run into a table named '${rid}', but no table has that name.` });
+          else for (const [tb, id] of eff) if (tb.type === 'table' && id === rid && !(tb.opts && tb.opts.addrows)) out.push({ k: b._k ?? null, msg: `The run table '${rid}' does not let students add rows, so a run has nowhere to go. Tick "Students may add rows" on that table.` });
+        }
+      }
       else if (t == null || t === '') out.push({ k: b._k ?? null, msg: 'Choose the data table this widget records into.' });
       else if (!tables.has(String(t))) out.push({ k: b._k ?? null, msg: `This widget records into a table named '${t}', but no table has that name.` });
       else { for (const [tb, id] of eff) if (tb.type === 'table' && id === String(t) && !(tb.opts && tb.opts.addrows)) out.push({ k: b._k ?? null, msg: 'The table this widget records into does not let students add rows, so only its blank rows can take readings. Tick "Students may add rows" on that table.' }); }
@@ -6543,7 +6644,7 @@ function bmValidate(model, auto = bmAutoIds(model)) {
   for (const b of model.procedure || []) if (['usetable', 'usegraph', 'useanswer', 'usephoto', 'usesocratic'].includes(b.type)) push(b, BM_W.sectionOutside);
   const braceMsg = 'A curly bracket here has no partner. It is shown as a plain character, which is usually what you want.';
   for (const b of bmAllBlocks(model)) {
-    if (b.type === 'table' && !(b.rows || []).some(r => r.some(c => BM_FILL.test(c)))) push(b, 'This table has no blank cells for students to fill in.');
+    if (b.type === 'table' && !(b.rows || []).some(r => r.some(c => BM_FILL.test(c))) && !(b.opts && b.opts.addrows && !(b.rows || []).length)) push(b, 'This table has no blank cells for students to fill in.');   // a header with "may add rows" and nothing else is a table a tool fills
     if (b.type === 'video' && !bmYoutubeId(b.url)) push(b, b.url ? 'This does not look like a YouTube link; students will see it as a plain link.' : 'Paste a YouTube link.');
     if (b.type === 'figure') { const src = String(b.path || '').replace(/^img:/, ''); if (!src || /^(IMAGE|FIGURE)[_-]?\w*$/i.test(src)) push(b, 'Waiting for a picture.'); }
     const bodies = [];
@@ -7378,6 +7479,7 @@ function buFormTable(b) {
   const blanks = b.rows.reduce((n, r) => n + r.filter(c => c === '___').length, 0);
   let h = buRow('Title', buInput('opts.title', buOptStr(b, 'title'), 'opt', 'placeholder="e.g. Trial 1 data"'));
   h += `<div class="form-row">${buCheck('opts.addrows', !!(b.opts && b.opts.addrows), 'Students may add rows')}</div>`;
+  h += buRow('Shown to students', buPick([['', 'Shown'], ['collapsed', 'Collapsed: behind a "Show the numbers" line'], ['hidden', 'Hidden: only graphs show its values']], buOptStr(b, 'view'), 'data-bind="opts.view" data-kind="opt"'), 'Hidden is for a table a tool fills, such as a continuous colorimeter run that students should only see as a graph. A hidden table cannot be typed into.');
   h += `<div class="bu-sheet-wrap"><table class="bu-sheet"><thead><tr class="bu-coltools">`;
   for (let c = 0; c < cols; c++) h += `<th><button type="button" data-act="col-left" data-c="${c}" title="Move column left" ${c === 0 ? 'disabled' : ''}>◂</button><button type="button" data-act="col-right" data-c="${c}" title="Move column right" ${c === cols - 1 ? 'disabled' : ''}>▸</button><button type="button" data-act="del-col" data-c="${c}" class="danger" title="Remove column" ${cols === 1 ? 'disabled' : ''}>✕</button></th>`;
   h += `<th class="bu-rowtools"><button type="button" data-act="add-col" title="Add a column">+ Column</button></th></tr><tr>`;
@@ -7395,7 +7497,7 @@ function buFormTable(b) {
   });
   h += `</tbody></table></div><div class="bu-tools"><button type="button" class="btn-small" data-act="add-row">+ Row</button></div>`;
   h += `<div class="hint">Cells marked "student fills in" become boxes students type into. To make one, click the small "blank" button in the corner of a cell (or double-click the cell). Everything else is shown as written. Formulas between dollar signs are fine.</div>`;
-  if (!blanks) h += `<div class="bu-note">This table has no boxes for students yet; click "blank" in the corner of a cell to make one.</div>`;
+  if (!blanks && !(b.opts && b.opts.addrows && !b.rows.length)) h += `<div class="bu-note">This table has no boxes for students yet; click "blank" in the corner of a cell to make one.</div>`;
   if (buShiftNoted[b._k]) h += `<div class="bu-note">Students who already typed into this table keep their entries by row and column position, so adding or removing in the middle shifts what is below or to the right.</div>`;
   return h + buIdRow(b);
 }
@@ -7484,7 +7586,7 @@ function buTableSelect(b, noneLabel) {
   return sel + '</select>';
 }
 // Widget card: the instruction, the target table, then the widget type's own settings as the WIDGETS catalog lists them.
-function buWidgetTable(b) { const id = buOptStr(b, 'table'); return id ? buTables().find(t => t.id && t.id === id) || null : null; }
+function buWidgetTable(b) { const id = buOptStr(b, 'table') || bmRunIds(b)[0] || ''; return id ? buTables().find(t => t.id && t.id === id) || null : null; }
 function buFormWidget(b) {
   const type = buOptStr(b, 'type'), W = buWidgetInfo(b);
   if (!W) return `<div class="bu-err">${type ? `No widget of type "${buEsc(type)}" exists on this site.` : 'This widget has no type.'} Remove this block and add a widget with the Widget… button.</div>${buIdRow(b)}`;
@@ -7505,12 +7607,19 @@ function buFormWidget(b) {
     switch (o.kind) {
       case 'table': h += buRow(o.label, buTableSelect(b, null), o.help); break;
       case 'bank': h += buRow(o.label, buBankSelect(b), o.help); break;
+      case 'tables': {   // several tables, one per run: ticked in the order the tables stand in the lab
+        const cur = bmRunIds(b), all = buTables();
+        const boxes = all.map(t => (t.id ? `<label class="bu-check"><input type="checkbox" data-bind="opts.${o.name}" data-kind="wtables" value="${buEsc(t.id)}" ${cur.includes(t.id) ? 'checked' : ''}/> ${buEsc(t.title || 'Untitled table')}</label>` : `<label class="bu-check" style="opacity:0.6"><input type="checkbox" disabled/> ${buEsc(t.title || 'Untitled table')} (give it a permanent name first)</label>`)).join('')
+          + cur.filter(id => !all.some(t => t.id === id)).map(id => `<label class="bu-check" style="color:var(--danger)"><input type="checkbox" data-bind="opts.${o.name}" data-kind="wtables" value="${buEsc(id)}" checked/> Missing: ${buEsc(id)}</label>`).join('');
+        h += `<div class="form-row"><label>${buEsc(o.label)}</label>${boxes || '<div class="bu-note">Add a data table for each run first.</div>'}${o.help ? `<div class="hint">${buEsc(o.help)}</div>` : ''}</div>`;
+        break;
+      }
       case 'columns': {
         const cur = String(buOptStr(b, o.name) || o.default || '').split(/[;|,]/).map(s => s.trim());
         h += `<div class="form-row"><label>${buEsc(o.label)}</label>${tbl ? `<div class="form-grid-3">${(o.parts || []).map((p, i) => `<div class="form-row" style="margin-bottom:0.3rem"><label style="font-size:11px">${buEsc(p)}</label>${colSel(`data-bind="opts.${o.name}" data-kind="wcols" data-part="${i}"`, cur[i] || '', o.optional ? 'Not recorded' : null)}</div>`).join('')}</div>` : needTable}${o.help ? `<div class="hint">${buEsc(o.help)}</div>` : ''}</div>`;
         break;
       }
-      case 'column': h += buRow(o.label, tbl ? colSel(`data-bind="opts.${o.name}" data-kind="wcol"`, buOptStr(b, o.name), o.none || 'None') : needTable, o.help); break;
+      case 'column': h += buRow(o.label, tbl ? colSel(`data-bind="opts.${o.name}" data-kind="wcol"`, buOptStr(b, o.name) || o.default || '', o.none || 'None') : needTable, o.help); break;
       case 'num': h += buRow(o.label, buNum('opts.' + o.name, buOptStr(b, o.name), 'min="1" step="1"'), o.help); break;
       case 'flag': h += `<div class="form-row">${buCheck('opts.' + o.name, !!(b.opts && b.opts[o.name] === true), o.label)}${o.help ? `<div class="hint">${buEsc(o.help)}</div>` : ''}</div>`; break;
       case 'help': h += `<div class="form-row">${buCheck('opts.' + o.name, buOptStr(b, o.name) !== 'off', o.label, 'whelp')}<div class="hint">If the tool cannot start, students see a short note and the table to type into; with this on, a Get help button too (only when this lab has Get help on and the student is signed in). It opens the usual empty help box; nothing is prefilled.</div></div>`; break;
@@ -7769,6 +7878,7 @@ function buWrite(found, bind, kind, el, card) {
     case 'table-ref': buSetOpt(b, 'table', v); return true;
     case 'wcols': { const vals = Array.from(card.querySelectorAll(`select[data-bind="${bind}"][data-kind="wcols"]`)).map(s => s.value || ''); buSetOpt(b, key, vals.some(Boolean) ? vals.join(';') : undefined); return false; }   // widget: several column selects → "c2;c3;c4"
     case 'wcol': buSetOpt(b, key, v); return false;
+    case 'wtables': { const vals = Array.from(card.querySelectorAll(`input[data-bind="${bind}"][data-kind="wtables"]`)).filter(i => i.checked).map(i => i.value); buSetOpt(b, key, vals.length ? vals.join(';') : undefined); return true; }   // widget: ticked run tables → "run1;run2"; the column lists follow the first
     case 'whelp': buSetOpt(b, key, v ? undefined : 'off'); return false;   // on is the default and stays implicit in the file
     case 'picture': if (v) { b.path = v; return true; } return false;
     case 'body': case 'opt': case 'str': default:
@@ -8012,7 +8122,7 @@ function buAddBlock(type, list, afterK, extra) {
     buSetOpt(b, 'type', wt);
     const d = typeof widgetDefaults === 'function' ? widgetDefaults(wt) : {}; for (const k of Object.keys(d)) buSetOpt(b, k, d[k]);
   }
-  if (type === 'graph' || (type === 'widget' && !(extra && WIDGETS[extra.type] && WIDGETS[extra.type].noTable))) {
+  if (type === 'graph' || (type === 'widget' && !(extra && WIDGETS[extra.type] && (WIDGETS[extra.type].noTable || WIDGETS[extra.type].runs)))) {
     // Default to the nearest preceding table that already has a permanent name (never touches that table).
     const before = arr.slice(0, index).filter(x => x.type === 'table' && x.opts && x.opts.id).pop() || buTables().filter(t => t.id).pop();
     if (before) buSetOpt(b, 'table', before.opts ? before.opts.id : before.id);
@@ -8411,6 +8521,11 @@ Pick some
 \\answer{Auto question}
 Value: \\input[id=f]{}
 \\widget[type=colorimeter, id=cr, table=tbl, columns=c1;c2]
+\\datatable[id=runa, title="Run A", view=hidden, addrows]{
+| t | R | G | B |
+|---|---|---|---|
+}
+\\widget[type=colorimeter-run, id=crun, runs=runa]
 \\tab[name="Data"]{
 \\datatable[id=t2]{
 | C |
@@ -8479,6 +8594,21 @@ Value: \\input[id=f]{}
     const saved2 = JSON.parse(localStorage.getItem(ltKey(labId)) || '{}');
     if (saved2['tbl.r3c1'] !== '10' || saved2['tbl.r3c2'] !== '20' || saved2['tbl.rows'] !== 2) throw new Error('widget record was not saved like a typed row: ' + JSON.stringify({ r3c1: saved2['tbl.r3c1'], r3c2: saved2['tbl.r3c2'], rows: saved2['tbl.rows'] }));
     for (const k of Object.keys(fixture)) if (!k.startsWith('_') && !(k in saved2)) throw new Error(`key ${k} was dropped by the widget save`);
+    // run-recording tools: a hidden run table takes rows through the host, only runClear empties it, and neither reaches a table that is not one of the tool's runs
+    const H = host._ltWidgetHost, ro = { runs: 'runa', timecolumn: 'c1', columns: 'c2;c3;c4' };
+    const rw = host.querySelector('.lt-table-wrap[data-table="runa"]'); if (!rw || getComputedStyle(rw).display !== 'none') throw new Error('view=hidden table is not hidden');
+    if (JSON.stringify(H.runs(ro)) !== JSON.stringify([{ id: 'runa', name: 'Run A', rows: 0 }])) throw new Error('run list is wrong: ' + JSON.stringify(H.runs(ro)));
+    const wr = H.runWriter('runa', ro); if (!wr || !wr.add('0', ['1', '', '0.5']).ok || !wr.add('1', ['0.9', '', '0.4']).ok) throw new Error('run rows were not written');
+    if (H.runs(ro)[0].rows !== 2 || (host.querySelector('[data-field="runa.r2c2"]') || {}).textContent !== '0.9') throw new Error('run rows did not land in the run table');
+    if (H.runWriter('tbl', ro) || H.runClear('tbl', ro)) throw new Error('a run tool reached a table that is not one of its runs');
+    await new Promise(res => setTimeout(res, 500));
+    const saved3 = JSON.parse(localStorage.getItem(ltKey(labId)) || '{}');
+    if (saved3['runa.r1c1'] !== '0' || saved3['runa.r2c4'] !== '0.4' || saved3['runa.rows'] !== 2 || 'runa.r1c3' in saved3) throw new Error('run rows were not saved like typed rows');
+    if (!H.runClear('runa', ro) || H.runs(ro)[0].rows !== 0 || rw.querySelectorAll('tbody tr').length !== 0) throw new Error('clearing a run left rows behind');
+    await new Promise(res => setTimeout(res, 500));
+    const saved4 = JSON.parse(localStorage.getItem(ltKey(labId)) || '{}');
+    if (Object.keys(saved4).some(k => k.startsWith('runa.'))) throw new Error('clearing a run left saved cells behind');
+    for (const k of Object.keys(saved2)) if (!k.startsWith('_') && saved4[k] !== saved2[k]) throw new Error(`clearing a run changed ${k}`);
     console.log('entriesSelfTest: OK'); return true;
   } finally { host.remove(); localStorage.removeItem(ltKey(labId)); }
 }

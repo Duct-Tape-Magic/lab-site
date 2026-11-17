@@ -1,0 +1,328 @@
+/* Colorimeter widget for the Lab Site (see docs/WIDGETS.md).
+   Loaded on demand by index.html the first time a student taps Start on a \widget[type=colorimeter] block, and registers
+   window.LabWidgets.colorimeter = { mount(stage, ctx) → { stop } }.
+   The host (index.html) owns Start/Stop, the idle/running/failed states, and the Record path into the lab's data table.
+   This file opens the camera (or draws a sample picture in demo mode) and reads two squares the student drags into place:
+   a REFERENCE square on plain white printer paper and a SAMPLE square. The paper is taken as white, so every reading is
+       corrected = sample × 255 / reference_now      (channel by channel, clamped to 0–255)
+   The correction is continuous: changes in lighting, exposure and white balance move both squares together and cancel, and
+   there is nothing to set. The widget keeps no memory; the squares start at their default places every run.
+   One warning (v12): when the camera overexposes the paper itself (a quarter of the Reference square's pixels at or above
+   CLIP on any channel), the reference is clipped and the corrected numbers are wrong, so the status line says so (text key
+   widgetRefBright). Record is not blocked. Without the warning, a reading near 255 means "the same as the paper".
+   The interface is deliberately bare: the picture, the two squares, the R G B readout and Record; a line of green text under the
+   button says "Data recorded" for a second. Nothing is stored or sent anywhere by this file; the pixels stay in the browser.
+   Auto record (v13): with interval=<seconds> on the block, a second button starts a timed run: one reading at once, then one
+   every interval, until the student taps it again, the tool stops, the table is full, or `readings` readings are in
+   (AUTO_MAX when not given). Each reading goes through the same ctx.record as a tap on Record; with timecolumn= set, the
+   seconds since the run began go into that column (values.also.timecolumn). The screen is kept awake during a run where the
+   browser allows it. A run does not survive Stop or the page being hidden (the host releases the camera).
+   ctx: { opts, labId, demo, text(key), fmt(key, vars), canRecord() → {ok, reason}, record(values) → {ok, row | reason}, fail(why) }
+   values: corrected R, G, B as strings, plus values.also = { rawcolumns: [R, G, B], timecolumn: [seconds] (auto record only) }.
+   Continuous runs (v14): this file also registers window.LabWidgets['colorimeter-run'], the same camera and squares with a
+   different output. The student picks one of the lab's runs (each run is a \datatable named in runs=) and taps Start
+   recording; until they tap Stop recording (or the tool stops, or `minutes` pass) the tool writes one row every `interval`
+   seconds: the time, and per channel the RELATIVE CONCENTRATION of whatever colours the sample:
+       linear  = camera value converted from sRGB to linear light (pixel by pixel)
+       A       = log10(reference_linear / sample_linear), averaged over every frame of the interval
+       value   = A / A0, where A0 is A of the run's first reading (so every run starts at 1)
+   A channel the sample barely absorbs at the start (A0 below MIN_A) is left blank; when no channel absorbs, the run does
+   not start (text key widgetRunNoColor). The student sees no numbers: the lab's \graph blocks draw the run as rows arrive.
+   A run that already holds a recording is only replaced after a confirm (widgetRunReplace). Start is disabled while the
+   reference is overexposed. Run ctx: runs() → [{ id, name, rows }], runClear(id), runWriter(id) → { add(time, [r, g, b]) → { ok, reason } },
+   confirm(message). Single readings (window.LabWidgets.colorimeter) are exactly as in v13.
+   New version → new filename (colorimeter.v15.js) and update the file of BOTH catalog entries in index.html. */
+(function () {
+  'use strict';
+  var W = window.LabWidgets = window.LabWidgets || {};
+  var SMOOTH = 10;          // frames averaged so the numbers hold steady
+  var PERIOD_MS = 100;      // about 10 readings a second
+  var SAMPLE_PX = 16;       // each square is scaled down to this many pixels across before averaging
+  var CLIP = 250;           // a pixel with any channel at or above this counts as overexposed
+  var BRIGHT_ON = 0.25, BRIGHT_OFF = 0.10;   // share of the Reference square that must be overexposed to show the warning, and to clear it
+  var AUTO_MAX = 200;       // readings in one auto-record run when the block gives no readings=
+  var REGION = 16;          // side of each square in picture pixels (old files may still carry region=)
+  var MIN_A = 0.02;         // continuous runs: a channel whose starting absorbance is below this carries no signal and is left blank
+  var FLOOR = 1e-4;         // continuous runs: the darkest linear value used, so a black sample cannot divide by zero
+  var RUN_MAX = 1200;       // continuous runs: readings in one run at most
+  var DEMO_TAU = 30;        // continuous runs, demo picture: the sample fades with this time constant (seconds), first order
+  var LIN = []; for (var li = 0; li < 256; li++) { var lv = li / 255; LIN.push(lv <= 0.04045 ? lv / 12.92 : Math.pow((lv + 0.055) / 1.055, 2.4)); }   // sRGB byte → linear light
+  function toByte(v) { v = Math.max(0, Math.min(1, v)); return Math.round(255 * (v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055)); }
+  function fill(s, vars) { return String(s).replace(/\{(\w+)\}/g, function (m, k) { return vars[k] != null ? vars[k] : m; }); }   // plain text (ctx.fmt escapes for HTML)
+  function clockText(sec) { sec = Math.max(0, Math.floor(sec)); var m = Math.floor(sec / 60), r = sec % 60; return m + ':' + (r < 10 ? '0' : '') + r; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  function mount(isRun, stage, ctx) {
+      var opts = ctx.opts || {};
+      var t = function (k) { return ctx.text(k); };
+      var every = parseFloat(opts.interval); every = every > 0 ? Math.min(3600, Math.max(1, every)) : (isRun ? 1 : 0);   // seconds between readings; single readings: 0 = no auto record
+      var maxSec = parseFloat(opts.minutes); maxSec = (maxSec > 0 ? Math.min(60, maxSec) : 10) * 60;   // continuous runs: a forgotten run ends by itself
+      var autoMax = parseInt(opts.readings, 10); autoMax = autoMax > 0 ? Math.min(1000, autoMax) : AUTO_MAX;
+      var pos = { ref: { x: 0.22, y: 0.5 }, meas: { x: 0.62, y: 0.5 } };   // square centres as fractions of the picture; this run only
+
+      stage.innerHTML = '<div class="cm">' +
+        '<div class="cm-view">' + (ctx.demo ? '<canvas class="cm-src" width="320" height="240"></canvas>' : '<video playsinline muted autoplay></video>') +
+          '<div class="cm-box ref" data-role="ref"><span class="cm-sq"></span><span class="cm-tag">' + esc(t('widgetRefLabel')) + '</span></div>' +
+          '<div class="cm-box meas" data-role="meas"><span class="cm-sq"></span><span class="cm-tag">' + esc(t('widgetMeasLabel')) + '</span></div>' +
+        '</div>' +
+        '<div class="cm-side">' +
+          '<div class="cm-swatch"></div>' +
+          (isRun
+            ? '<select class="cm-runs" hidden></select>' +
+              '<div class="cm-actions"><button type="button" class="btn-small btn-primary-small cm-run" disabled>' + esc(t('widgetRunStart')) + '</button><span class="cm-clock"></span></div>'
+            : '<div class="cm-nums"><div class="cm-num"><b data-ch="0">–</b><span>R</span></div><div class="cm-num"><b data-ch="1">–</b><span>G</span></div><div class="cm-num"><b data-ch="2">–</b><span>B</span></div></div>' +
+              '<div class="cm-actions"><button type="button" class="btn-small btn-primary-small cm-record" disabled>' + esc(t('widgetRecord')) + '</button>' + (every ? '<button type="button" class="btn-small cm-auto" disabled>' + esc(t('widgetAutoStart')) + '</button>' : '') + '</div>') +
+          '<div class="cm-status">&nbsp;</div>' +
+        '</div></div>';
+
+      var q = function (s) { return stage.querySelector(s); };
+      var view = q('.cm-view'), video = q('video'), demoSrc = q('canvas.cm-src');
+      var boxes = { ref: q('.cm-box.ref'), meas: q('.cm-box.meas') };
+      var swatch = q('.cm-swatch'), nums = [q('[data-ch="0"]'), q('[data-ch="1"]'), q('[data-ch="2"]')];
+      var recBtn = q('.cm-record'), autoBtn = q('.cm-auto'), status = q('.cm-status');
+      var runBtn = q('.cm-run'), runSel = q('.cm-runs'), clock = q('.cm-clock');
+      var run = null, runNote = '', runList = [];   // run: the recording in progress; runNote: why the last one ended, shown until the next Start
+      var work = document.createElement('canvas'); work.width = work.height = SAMPLE_PX;
+      var wctx = work.getContext('2d', { willReadFrequently: true });
+      var stream = null, timer = null, hist = { ref: [], meas: [] }, cur = null, stopped = false, demoT = 0, drag = null, sayTimer = null, bright = false, auto = null, lock = null;
+
+      function say(msg) {   // green confirmation under the button, gone after one second
+        status.textContent = msg; status.classList.remove('warn'); status.classList.add('ok');
+        clearTimeout(sayTimer); sayTimer = setTimeout(function () { status.classList.remove('ok'); refreshRecord(); }, 1000);
+      }
+      function refreshRecord() {   // Record is disabled, with the reason shown, only when the table cannot take another reading
+        if (isRun) { refreshRun(); return; }
+        var can = ctx.canRecord ? ctx.canRecord() : { ok: false };
+        recBtn.disabled = !can.ok || !cur || !!auto;   // during a timed run only the run records
+        if (autoBtn) autoBtn.disabled = !auto && (!can.ok || !cur);
+        if (status.classList.contains('ok')) return;
+        var why = !can.ok && can.reason ? can.reason : '';   // the table's reason comes before the warning
+        status.classList.toggle('warn', bright && !why);
+        status.textContent = why || (bright ? t('widgetRefBright') : ' ');
+      }
+      function source() {
+        if (demoSrc) return { el: demoSrc, w: demoSrc.width, h: demoSrc.height };
+        if (video && video.readyState >= 2 && video.videoWidth) return { el: video, w: video.videoWidth, h: video.videoHeight };
+        return null;
+      }
+      function regionSide(w, h) { var r = parseInt(opts.region, 10); return Math.max(4, Math.min(r > 0 ? r : REGION, w, h)); }
+      function geom(s) {   // the picture is shown with object-fit: cover; map picture pixels to the view
+        var vw = view.clientWidth, vh = view.clientHeight, scale = Math.max(vw / s.w, vh / s.h) || 1;
+        return { scale: scale, ox: (vw - s.w * scale) / 2, oy: (vh - s.h * scale) / 2, vw: vw, vh: vh };
+      }
+      function clampPos(s, p) {   // keep a square whole, and inside the part of the picture that is visible
+        var g = geom(s), m = regionSide(s.w, s.h) / 2;
+        var x0 = Math.max(m / s.w, (-g.ox) / (s.w * g.scale)), x1 = Math.min(1 - m / s.w, (g.vw - g.ox) / (s.w * g.scale));
+        var y0 = Math.max(m / s.h, (-g.oy) / (s.h * g.scale)), y1 = Math.min(1 - m / s.h, (g.vh - g.oy) / (s.h * g.scale));
+        return { x: Math.max(x0, Math.min(x1, p.x)), y: Math.max(y0, Math.min(y1, p.y)) };
+      }
+      function place(s) {
+        var g = geom(s), px = Math.max(12, Math.round(regionSide(s.w, s.h) * g.scale));
+        Object.keys(boxes).forEach(function (k) {
+          var b = boxes[k], sq = b.querySelector('.cm-sq');
+          b.style.left = (g.ox + pos[k].x * s.w * g.scale) + 'px'; b.style.top = (g.oy + pos[k].y * s.h * g.scale) + 'px';
+          sq.style.width = sq.style.height = px + 'px';
+        });
+      }
+      Object.keys(boxes).forEach(function (k) {   // drag a square with a finger or the mouse
+        var b = boxes[k];
+        b.addEventListener('pointerdown', function (e) { if (!source()) return; e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } drag = { k: k, id: e.pointerId }; b.classList.add('dragging'); });
+        b.addEventListener('pointermove', function (e) {
+          if (!drag || drag.k !== k || e.pointerId !== drag.id) return;
+          var s = source(); if (!s) return;
+          var g = geom(s), r = view.getBoundingClientRect();
+          pos[k] = clampPos(s, { x: (e.clientX - r.left - g.ox) / (s.w * g.scale), y: (e.clientY - r.top - g.oy) / (s.h * g.scale) });
+          place(s);
+        });
+        var end = function () { if (!drag || drag.k !== k) return; drag = null; b.classList.remove('dragging'); hist = { ref: [], meas: [] }; };
+        b.addEventListener('pointerup', end); b.addEventListener('pointercancel', end);
+      });
+      function drawDemo() {   // a bench, a sheet of white paper, a blue tube, and lighting that keeps changing
+        var c = demoSrc.getContext('2d'); demoT += 0.02;
+        c.fillStyle = '#8f8a84'; c.fillRect(0, 0, 320, 240);
+        c.fillStyle = '#f4f2ee'; c.fillRect(36, 68, 72, 104);
+        c.fillStyle = 'rgb(38, 112, 186)'; c.fillRect(170, 56, 56, 128);
+        c.fillStyle = 'hsla(' + ((demoT * 20) % 360) + ', 60%, 50%, ' + (0.22 + 0.18 * Math.sin(demoT)).toFixed(3) + ')'; c.fillRect(0, 0, 320, 240);
+      }
+      function drawRunDemo() {   // the same scene in linear light: the lighting drifts by multiplying every colour, and the tube fades (first order) while a run records
+        var c = demoSrc.getContext('2d'); demoT += 0.02;
+        var L = [1 + 0.12 * Math.sin(demoT * 1.3), 1 + 0.12 * Math.sin(demoT * 0.9 + 1), 1 + 0.12 * Math.sin(demoT * 0.7 + 2)];
+        var left = run ? Math.exp(-((Date.now() - run.t0) / 1000) / DEMO_TAU) : 1, T0 = [0.03, 0.2, 0.6], paper = 0.72;
+        var css = function (lin) { return 'rgb(' + lin.map(function (v, i) { return toByte(v * L[i]); }).join(',') + ')'; };
+        c.fillStyle = css([0.26, 0.25, 0.23]); c.fillRect(0, 0, 320, 240);
+        c.fillStyle = css([paper, paper, paper]); c.fillRect(36, 68, 72, 104);
+        c.fillStyle = css(T0.map(function (v) { return paper * Math.pow(v, left); })); c.fillRect(170, 56, 56, 128);
+      }
+      function sampleAt(s, p, side) {
+        wctx.drawImage(s.el, p.x * s.w - side / 2, p.y * s.h - side / 2, side, side, 0, 0, SAMPLE_PX, SAMPLE_PX);
+        var d = wctx.getImageData(0, 0, SAMPLE_PX, SAMPLE_PX).data, n = d.length / 4, r = 0, g = 0, b = 0, hot = 0, lr = 0, lg = 0, lb = 0;
+        for (var i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2]; if (d[i] >= CLIP || d[i + 1] >= CLIP || d[i + 2] >= CLIP) hot++; if (isRun) { lr += LIN[d[i]]; lg += LIN[d[i + 1]]; lb += LIN[d[i + 2]]; } }
+        return [r / n, g / n, b / n, hot / n, lr / n, lg / n, lb / n];   // the fourth number is the share of overexposed pixels; the last three are the linear-light means (continuous runs)
+      }
+      function smooth(k, v) { var h = hist[k]; h.push(v); if (h.length > SMOOTH) h.shift(); return [0, 1, 2, 3].map(function (i) { return h.reduce(function (a, x) { return a + x[i]; }, 0) / h.length; }); }
+      function correct(raw, ref) { return raw.slice(0, 3).map(function (v, i) { return Math.max(0, Math.min(255, v * 255 / Math.max(1, ref[i]))); }); }   // the paper is white
+      function show(c) {
+        var rgb = correct(c.raw, c.ref).map(function (v) { return Math.round(v); });
+        nums.forEach(function (el, i) { if (el) el.textContent = rgb[i]; });
+        swatch.style.background = 'rgb(' + rgb.join(',') + ')';
+      }
+      function tick() {
+        if (stopped) return;
+        if (demoSrc) { if (isRun) drawRunDemo(); else drawDemo(); }
+        var s = source(); if (!s) return;
+        place(s);
+        var side = regionSide(s.w, s.h), ref, raw, fr, fm;
+        try { fr = sampleAt(s, pos.ref, side); fm = sampleAt(s, pos.meas, side); ref = smooth('ref', fr); raw = smooth('meas', fm); } catch (e) { return; }
+        var was = bright; bright = ref[3] >= (bright ? BRIGHT_OFF : BRIGHT_ON);
+        var first = !cur; cur = { raw: raw.slice(0, 3), ref: ref.slice(0, 3) }; show(cur);
+        if (first || was !== bright) refreshRecord();
+        if (isRun) runStep(Date.now(), fr, fm); else autoStep(Date.now());
+      }
+      function take(seconds) {   // one reading into the table; seconds is given only by a timed run
+        var round = function (c) { return c.map(function (v) { return String(Math.round(v)); }); };
+        var vals = round(correct(cur.raw, cur.ref)); vals.also = { rawcolumns: round(cur.raw) };
+        if (seconds != null) vals.also.timecolumn = [seconds];
+        var r = null;
+        try { r = ctx.record(vals); } catch (e) { r = { ok: false, reason: e && e.message }; }
+        if (r && r.ok) say(t('widgetRecorded'));
+        else { status.classList.remove('ok'); status.classList.remove('warn'); status.textContent = (r && r.reason) || t('widgetFailed'); }
+        return !!(r && r.ok);
+      }
+      if (recBtn) recBtn.addEventListener('click', function () {
+        if (!cur || auto) return;
+        var can = ctx.canRecord ? ctx.canRecord() : { ok: true };
+        if (!can.ok) { refreshRecord(); return; }
+        take(null);
+        refreshRecord();
+      });
+      function autoEnd() {
+        auto = null;
+        if (lock) { try { lock.release(); } catch (e) { /* ignore */ } lock = null; }
+        if (autoBtn) autoBtn.textContent = t('widgetAutoStart');
+        refreshRecord();
+      }
+      function autoStep(now) {   // called every tick: record when the next reading is due
+        if (!auto || !cur) return;
+        var el = (now - auto.t0) / 1000;
+        if (el < auto.n * every) return;
+        var can = ctx.canRecord ? ctx.canRecord() : { ok: true };
+        if (!can.ok) { autoEnd(); return; }   // the table is full: the run ends and the reason shows
+        var ok = take(every % 1 ? el.toFixed(1) : String(Math.round(el)));
+        auto.count++; auto.n = Math.floor(el / every) + 1;   // a late tick records once; missed slots are skipped, and the time written is the real one
+        if (!ok || auto.count >= autoMax) autoEnd();
+      }
+      if (autoBtn) autoBtn.addEventListener('click', function () {
+        if (auto) { autoEnd(); return; }
+        if (!cur) return;
+        var can = ctx.canRecord ? ctx.canRecord() : { ok: true };
+        if (!can.ok) { refreshRecord(); return; }
+        auto = { t0: Date.now(), n: 0, count: 0 };
+        autoBtn.textContent = t('widgetAutoStop');
+        try { if (navigator.wakeLock && navigator.wakeLock.request) navigator.wakeLock.request('screen').then(function (l) { if (auto && !stopped) lock = l; else l.release(); }).catch(function () { /* not allowed: the run goes on */ }); } catch (e) { /* ignore */ }
+        refreshRecord();
+        autoStep(Date.now());   // the first reading, at 0 s
+      });
+      /* ---- continuous runs ---- */
+      function runName(r) { return r.rows ? fill(t('widgetRunRecorded'), { name: r.name }) : r.name; }
+      function refreshRuns(pickEmpty) {   // the picker: one entry per run of the lab, recorded ones marked; shown only when there is a choice
+        runList = ctx.runs ? ctx.runs() : [];
+        var keep = runSel.value;
+        runSel.innerHTML = '';
+        runList.forEach(function (r) { var o = document.createElement('option'); o.value = r.id; o.textContent = runName(r); runSel.appendChild(o); });
+        var empty = runList.filter(function (r) { return !r.rows; })[0];
+        if (pickEmpty && empty) runSel.value = empty.id;
+        else if (keep && runList.some(function (r) { return r.id === keep; })) runSel.value = keep;
+        runSel.hidden = runList.length < 2;
+      }
+      function refreshRun() {
+        runBtn.disabled = !run && (!cur || bright || !runList.length);
+        runSel.disabled = !!run;
+        if (status.classList.contains('ok')) return;
+        var why = !runList.length ? t('widgetNoTable') : runNote;
+        status.classList.toggle('warn', !why && bright);
+        status.textContent = why || (bright ? t('widgetRefBright') : '\xa0');
+      }
+      function runEnd(note) {   // rows are saved as they are written, so whatever was recorded stays
+        var had = run && run.count;
+        run = null; runNote = note || '';
+        if (lock) { try { lock.release(); } catch (e) { /* ignore */ } lock = null; }
+        runBtn.textContent = t('widgetRunStart'); clock.textContent = '';
+        refreshRuns(true);
+        if (had && !runNote) say(t('widgetRunDone')); else { status.classList.remove('ok'); refreshRun(); }
+      }
+      function runEmit() {   // the window that just closed becomes one row; false when the run ended here
+        var a = run.acc; if (!a.n) return true;   // no frame arrived in this window (a stalled page): no row
+        var A = [0, 1, 2].map(function (i) { return Math.log(Math.max(a.ref[i] / a.n, FLOOR) / Math.max(a.meas[i] / a.n, FLOOR)) / Math.LN10; });
+        if (!run.a0) {
+          if (!A.some(function (v) { return v >= MIN_A; })) { runEnd(t('widgetRunNoColor')); return false; }
+          run.a0 = A;
+        }
+        var vals = A.map(function (v, i) { return run.a0[i] >= MIN_A ? String(+(v / run.a0[i]).toFixed(4)) : ''; });
+        var tm = run.k * every, r = null;
+        try { r = run.writer.add(every % 1 ? tm.toFixed(1) : String(tm), vals); } catch (e) { r = { ok: false, reason: e && e.message }; }
+        if (!r || !r.ok) { runEnd((r && r.reason) || t('widgetFailed')); return false; }
+        run.count++; return true;
+      }
+      function runStep(now, fr, fm) {   // called every tick. Reading k is the mean of the frames within half an interval of k × interval.
+        if (!run) return;
+        var el = (now - run.t0) / 1000;
+        clock.textContent = clockText(el);
+        if (el >= (run.k + 0.5) * every) {
+          if (!runEmit()) return;
+          run.k = Math.floor(el / every + 0.5); run.acc = { ref: [0, 0, 0], meas: [0, 0, 0], n: 0 };
+          if (run.count >= RUN_MAX || el >= maxSec) { runEnd(''); return; }
+        }
+        for (var i = 0; i < 3; i++) { run.acc.ref[i] += fr[4 + i]; run.acc.meas[i] += fm[4 + i]; }
+        run.acc.n++;
+      }
+      if (runBtn) runBtn.addEventListener('click', function () {
+        if (run) { runEnd(''); return; }
+        if (!cur || bright) return;
+        refreshRuns(false);
+        var pick = runList.filter(function (r) { return r.id === runSel.value; })[0]; if (!pick) { refreshRun(); return; }
+        if (pick.rows) {   // never over a recording without asking
+          if (!ctx.confirm || !ctx.confirm(fill(t('widgetRunReplace'), { name: pick.name }))) return;
+          if (!ctx.runClear(pick.id)) { runNote = t('widgetFailed'); refreshRun(); return; }
+        }
+        var writer = ctx.runWriter(pick.id); if (!writer) { runNote = t('widgetNoTable'); refreshRun(); return; }
+        runNote = ''; status.classList.remove('ok');
+        run = { id: pick.id, t0: Date.now(), k: 0, count: 0, a0: null, writer: writer, acc: { ref: [0, 0, 0], meas: [0, 0, 0], n: 0 } };
+        runBtn.textContent = t('widgetRunStop'); clock.textContent = clockText(0);
+        try { if (navigator.wakeLock && navigator.wakeLock.request) navigator.wakeLock.request('screen').then(function (l) { if (run && !stopped) lock = l; else l.release(); }).catch(function () { /* not allowed: the run goes on */ }); } catch (e) { /* ignore */ }
+        refreshRun();
+      });
+      if (isRun) refreshRuns(true);
+      function release() {
+        clearInterval(timer); timer = null;
+        if (stream) { try { stream.getTracks().forEach(function (tr) { tr.stop(); }); } catch (e) { /* ignore */ } stream = null; }
+        if (video) { try { video.pause(); video.srcObject = null; } catch (e) { /* ignore */ } }
+      }
+      function loop() { if (stopped) return; clearInterval(timer); timer = setInterval(tick, PERIOD_MS); refreshRecord(); }
+      function start() {
+        if (ctx.demo) { loop(); return; }
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { ctx.fail('nocamera'); return; }
+        var constraints = { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false };
+        navigator.mediaDevices.getUserMedia(constraints)
+          .catch(function (e) {
+            if (e && (e.name === 'NotAllowedError' || e.name === 'SecurityError')) throw e;
+            return navigator.mediaDevices.getUserMedia({ video: true, audio: false });   // no rear camera: any camera
+          })
+          .then(function (s) {
+            if (stopped) { try { s.getTracks().forEach(function (tr) { tr.stop(); }); } catch (e) { /* ignore */ } return; }
+            stream = s; video.srcObject = s;
+            var p = video.play(); if (p && p.catch) p.catch(function () { /* the autoplay attributes carry it on iOS */ });
+            s.getVideoTracks().forEach(function (tr) { tr.addEventListener('ended', function () { if (!stopped) ctx.fail('died'); }); });
+            loop();
+          })
+          .catch(function (e) {
+            console.warn('colorimeter', e);
+            var n = e && e.name;
+            ctx.fail(n === 'NotAllowedError' || n === 'SecurityError' ? 'denied' : (n === 'NotFoundError' || n === 'DevicesNotFoundError' || n === 'OverconstrainedError') ? 'nocamera' : 'died');
+          });
+      }
+      start();
+      return { stop: function () { stopped = true; auto = null; run = null; clearTimeout(sayTimer); if (lock) { try { lock.release(); } catch (e) { /* ignore */ } lock = null; } release(); } };
+  }
+  W.colorimeter = { mount: function (stage, ctx) { return mount(false, stage, ctx); } };
+  W['colorimeter-run'] = { mount: function (stage, ctx) { return mount(true, stage, ctx); } };
+})();

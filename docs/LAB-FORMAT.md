@@ -27,7 +27,7 @@ Headings (`#`, `##`, `###`), paragraphs, **bold**, *italic*, numbered lists (`1.
 | Command | What it does |
 |---|---|
 | `\title{…}` `\summary{…}` `\tags{a, b}` `\minutes{90}` | Header. Not shown in the lab; the website uses them to fill in the lab's title, card summary, tags, and estimated time. |
-| `\datatable[id=…, title=…, addrows]{ table }` | A table students fill in. Write a normal Markdown table inside; every cell containing `___` becomes an editable cell, other cells are fixed text. `addrows` lets students add rows. |
+| `\datatable[id=…, title=…, addrows]{ table }` | A table students fill in. Write a normal Markdown table inside; every cell containing `___` becomes an editable cell, other cells are fixed text. `addrows` lets students add rows. `view=hidden` never shows the table where it stands (graphs still read it; use it for a table a tool fills, such as a continuous colorimeter run); `view=collapsed` keeps it behind a "Show the numbers" line the student can open. Without `view=` the table is shown as usual. A `\usetable` in the report shows the table whatever its `view`. |
 | `\input[id=…, label=…, unit=…]` | A small inline box for one value, e.g. `Mass of sample: \input[id=mass, unit=g]`. |
 | `\answer[id=…, lines=4]{Optional prompt}` | A multi-line answer box, `lines` tall. Usually placed right after a question. |
 | `\choice[id=…, multi, required, title=…]{ question, then one `- choice` per line }` | A multiple-choice question. Write the question first, then each choice on its own line starting with `- `. Students tick one; `multi` lets them tick several. `required` and `title` work as on `\answer`. The saved value is the text of the chosen choice(s). |
@@ -177,7 +177,7 @@ The widget is passive until the student taps Start (no camera prompt on page loa
 
 Options common to every widget:
 
-- `type=` which tool (required). Available: `colorimeter`, `socratic` (an oral tutor over a problem bank the teacher writes on the Widgets tab; `bank=` names the bank, no table; students must be signed in; the student presses Start session and the bank's own overview and level question open it; see docs/SOCRATIC.md).
+- `type=` which tool (required). Available: `colorimeter` (single readings), `colorimeter-run` (a continuous run drawn as a graph; it takes `runs=` instead of `table=`, see "Colorimeter, continuous runs" below), `socratic` (an oral tutor over a problem bank the teacher writes on the Widgets tab; `bank=` names the bank, no table; students must be signed in; the student presses Start session and the bank's own overview and level question open it; see docs/SOCRATIC.md).
 - `fullpage` (socratic only, beta): the tutor is the whole page, laid out like a chat, for a Socratic-only review with no lab around it. Builder: the "Full page interface" checkbox on the widget block.
 - `id=` a permanent name, like any block.
 - `table=` the `id` of the `\datatable` it records into (required). Give the table `addrows` so every reading gets a row; otherwise only the table's blank rows can take readings.
@@ -217,6 +217,60 @@ A timed run (kinetics), one reading every 10 seconds for 5 minutes:
 
 \widget[type=colorimeter, id=fade-reader, table=fade-data, columns=c2;c3;c4, timecolumn=c1, interval=10, readings=31]{Set the squares, mix the solutions, then tap Start auto record straight away. Keep the phone and the lamp still until it stops.}
 ```
+
+### Colorimeter, continuous runs (`type=colorimeter-run`, 2026-11-17)
+
+For a reaction whose colour changes over a minute or a few minutes (kinetics). The same camera picture and the same two squares as the colorimeter, but the output is a **curve, not numbers**: the student picks a run, taps **Start recording**, and until they tap **Stop recording** the tool writes one reading every interval into that run's table. Graphs that read the table redraw as each reading arrives, so the student watches the line form. The tool itself shows no numbers.
+
+Each reading is the **relative concentration** of whatever colours the sample, per colour channel:
+
+1. the Sample and Reference values are converted from camera RGB to linear light;
+2. A = log(reference ÷ sample), averaged over every camera frame in the interval;
+3. value = A ÷ A₀, where A₀ is A of the run's first reading. Every run therefore starts at exactly 1 and falls as the colour fades.
+
+Options (there is no `table=`):
+
+- `runs=run1;run2;run3` (required) the `id`s of the `\datatable`s it records into, **one table per run**. The student chooses the run from a list before starting; a table's `title=` is the run's name in that list (without a title: "Run 1", "Run 2", … in the order listed). With one run there is no list. Write each run table as a header row only, give it `addrows`, and usually `view=hidden` (students see only graphs) or `view=collapsed`.
+- `timecolumn=c1` the column that takes the time in seconds since Start recording (0, then the interval, …). Default `c1`.
+- `columns=c2;c3;c4` the columns that take the relative concentration by the **red, green and blue** channel, in that order. Default `c2;c3;c4`. Leave an entry out to skip a channel: a two-column table with the default records time and red only; `columns=";c2;"` records only green. Use the channel the sample absorbs: red for a blue or green sample, green for a red or purple one, blue for a yellow one.
+- `interval=1` seconds between readings, 1 to 3600. Default 1.
+- `minutes=10` a forgotten run stops by itself after this many minutes (at most 60; never more than 1200 readings). Default 10. Normally the student ends the run.
+
+What the lab must know:
+
+- **The y axis of a graph fits the curve by itself** unless the graph fixes `ymin`/`ymax`. Draw runs with `type=solid` (a run has too many points for dots).
+- **A run that already holds a recording is never overwritten silently.** Choosing it and tapping Start recording asks "… already has a recording. Record over it?" first. After a run the list moves to the next empty run. A lab that wants three trials lists three runs.
+- **Relative means relative to the moment Start recording was tapped**, not to the moment of mixing. A first-order slope (ln of the value against time) is unaffected; zero- and second-order slopes come out divided or multiplied by the concentration at that moment.
+- **The reference must be "the sample with no colour".** A = 0 has to mean "no dye", so put the Reference square on an identical container of plain water (or the colourless solvent) standing beside the sample, in the same light, not on bare paper. With bare paper the container and the water add a constant to A, the value never reaches 0, and an ln plot of a true first-order reaction bends.
+- Start recording is disabled while the tool shows "The reference is too bright". If the Sample reads the same as the Reference on every channel, the run does not start and the tool says so. A channel the sample hardly absorbs at the start is left blank, so plot the right column.
+- The phone has to stay put for the whole run: tell students to stand it up before they mix. A run ends, keeping what it recorded, when the student taps Stop recording, stops the tool, or leaves the page; it cannot be resumed, only recorded again.
+- A hidden run table cannot be typed into, so this tool has no type-it-in fallback: a student without a camera cannot do this part.
+
+```
+\datatable[id=fade-1, title="Trial 1", view=hidden, addrows]{
+| Time (s) | Relative concentration |
+|---|---|
+}
+
+\datatable[id=fade-2, title="Trial 2", view=hidden, addrows]{
+| Time (s) | Relative concentration |
+|---|---|
+}
+
+\widget[type=colorimeter-run, id=fade-recorder, runs=fade-1;fade-2]{Stand the phone up. Drag Reference onto the tube of plain water and Sample onto the dye. Mix, then tap Start recording at once. Tap Stop recording when the colour is gone.}
+
+\graph[id=fade-curve, table=fade-1, x=c1, y=c2, type=solid, series="Trial 1", xlabel="Time (s)", ylabel="Relative concentration"]{
+\layer[name="Trial 2", table=fade-2, x=c1, y=c2, type=solid]
+How the dye concentration falls.
+}
+
+\graph[id=fade-ln, table=fade-1, x=c1, y="ln(c2)", type=solid, fit=linear, series="Trial 1", xlabel="Time (s)", ylabel="ln(relative concentration)"]{
+\layer[name="Trial 2", table=fade-2, x=c1, y="ln(c2)", type=solid, fit=linear]
+First-order test: a straight line, slope −k.
+}
+```
+
+The same run can feed any number of graphs: `y=c2` (zero-order test), `y="ln(c2)"` (first order), `y="1/c2"` (second order).
 
 ## Report tab (write-up skeleton)
 
