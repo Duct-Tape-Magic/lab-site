@@ -87,22 +87,55 @@ Whenever the lab asks students to plot their data, add a `\graph` right after th
 
 - `table=` the `id` of the `\datatable` to read (required).
 - `x=` and `y=` which columns to plot, as `c1`, `c2`, … (1-based). Simple formulas are allowed: `x="1/(c1+273.15)"`, `y="ln(c2)"`, `y="c3-c2"`. Functions: `ln`, `log` (base 10), `exp`, `sqrt`, `abs`; operators `+ - * / ^`. Quote any value containing commas or spaces.
-- Several y series: `y="c2;c3"`, with optional names `series="Trial 1;Trial 2"`.
+- Several y series: `y="c2;c3"`, with optional names `series="Trial 1;Trial 2"`. Each entry of the list may be a formula: `y="ln(c2);ln(c3)"`, `y="1/c2;1/c3"`.
 - `type=` how the series is drawn: `scatter` (default, dots), `both` (dots joined by a line), `line` (a line with small dots), `solid`, `dashed` or `dotted` (a bare line), or `dashed+points` / `dotted+points` / `solid+points`. With several y series, a list sets each one: `type="scatter;dashed"`.
 - `color=` a fixed colour: `accent` (the site's blue), `red`, `green`, `orange`, `purple`, `gray`, `black`, or `#rrggbb`. Without it colours are assigned in order. A list works as for `type`.
 - `rows=` plot only some rows of the table: `rows=2`, `rows=1-3`, `rows="1,4"` (1-based, in table order).
-- `fit=linear` adds a least-squares line and prints its equation and R².
+- `fit=linear` adds a least-squares line and prints its equation and R². Other kinds, several at once, and limiting which points a fit uses: see "Best-fit curves" below. With several y series every series gets its own fit and its own equation, labelled with the series name.
 - `title=`, `xlabel=`, `ylabel=` for labels; `xmin/xmax/ymin/ymax` to fix axis ranges (otherwise automatic).
 - Caption in the braces.
 
-Rows with a blank or non-numeric x or y are skipped, so the graph simply grows as the student fills the table.
+Rows with a blank or non-numeric x or y are skipped, so the graph simply grows as the student fills the table. "Non-numeric" includes every result that is not a real number: `ln` or `log` of zero or a negative number, the square root of a negative number, division by zero, and anything computed from one of those (`0*sqrt(-1)` is skipped too, not 0).
+
+A graph may stand anywhere and read any table: a `\graph` inside `\report{}` (or on any tab) can take its `table=`, its layers' `table=` and its cell references from tables on the Procedure tab or any other tab, hidden ones included.
+
+### Best-fit curves (2026-11-18)
+
+`fit=` draws a best-fit curve through a series and prints its equation and R² under the graph. Three kinds:
+
+| `fit=` | Curve | Equation printed | Rate-law reading (y = concentration, x = time) |
+|---|---|---|---|
+| `linear` | a straight line | `y = mx + b` | zero order, k = −m |
+| `exponential` | an exponential rise or decay | `y = a·e^(bx)` | first order, k = −b |
+| `reciprocal` | a curve for which 1/y is a straight line in x | `1/y = mx + c` | second order, k = m |
+
+- **Several fits on one series**: join the kinds with `+`: `fit=linear+exponential+reciprocal`. Each curve is drawn across the whole graph in its own colour and dash, and each gets its own line under the graph: a sample of its line, its name (Straight line, Exponential, Reciprocal; the three names are in Site text) and its equation with R². This is the one-graph comparison of models: the data with all three curves over it.
+- **How they are fitted.** Every kind is the least-squares fit **to the plotted y values themselves**, and R² is 1 − (squared distance of the points from the curve) ÷ (squared distance of the points from their mean) on those same y values. So the three R² values on one graph can be compared directly, and the drawn curve is the closest curve of that shape to the points. This is not the same as fitting a straight line to ln y or 1/y on a separate graph: that fit weights the small values at the end of a run much more heavily, so its slope differs slightly from `b` or `m` here.
+- An exponential or reciprocal needs y values on one side of zero; a few points on the other side (noise around zero) are tolerated. With fewer than two usable points no curve is drawn.
+- **On layers and several series**: `fit=` works the same on a `\layer` (also on a graph with `table=none`); each layer is fitted on its own and its equations carry the layer's name. With `y="c2;c3"` every series gets the same fits; a `;` list gives each series its own: `fit="linear;exponential"`.
+
+**Limiting which points a fit uses.** Every point is still drawn; only the fit ignores the points outside the limits.
+
+- `fitmin=0.1` use only points whose plotted y is at least 0.1. `fitmax=` at most.
+- `fitvalue=c2` makes `fitmin`/`fitmax` test that column or formula instead of the plotted y. Example: on a graph of `y="ln(c2)"`, `fitvalue=c2, fitmin=0.1` fits only the rows where the concentration itself is 0.1 or more.
+- `fitxmin=5`, `fitxmax=60` use only points whose plotted x lies in that range (here: ignore the first 5 seconds and everything after one minute).
+- They combine (a point must pass all that are set) and apply to every fit of the series. On a `\layer`, a limit that is not written takes the graph's own value, so limits written once on a `table=none` graph apply to all its layers.
+
+```
+\graph[id=models, table=fade-1, x=c1, y=c2, type=solid, fit=linear+exponential+reciprocal, fitmin=0.1, fitxmin=5,
+  xlabel="Time (s)", ylabel="Relative concentration"]{Which curve follows your data?}
+```
+
+### Reading a point off a graph (2026-11-18)
+
+Every graph does this by itself; nothing is written in the lab file. A tap or click inside the plot marks the nearest plotted point (of any series) with a ring and guide lines to both axes, and a line under the graph gives its coordinates, using the axis labels: `Time (s): 42 · Relative concentration: 0.513` (with the series name first when the graph draws several). Dragging sideways along the plot moves the mark from point to point; with a mouse, hovering does the same. A tap in the margin of the graph clears it. It reads plotted data points only, never the fitted curves, and nothing about it is saved, printed or put in the PDF. Tell students to use it where the lab asks for a value from a curve ("tap the curve to find the time at which the concentration reaches 0.5").
 
 ### Layers: several data sources in one graph (2026-11-14)
 
 A graph can draw more than its own table. Put one `\layer` line per extra data source inside the graph's braces, before the caption. Every layer is drawn in the same axes; lines are always drawn underneath points, so student points sit on top of reference curves.
 
 - **Values typed in** (literature or accepted values): `\layer[name="NaCl, accepted", type=dashed, color=red]{ … }` with one point per line in the braces, `x, y` (a comma, a tab or spaces between the two numbers; `;` may separate points on one line). Digits, signs, decimal points and `e` only.
-- **Another table**: `\layer[name="Trial 2", table=other, x=c1, y=c2]`. Options: `table=` (default: the graph's own table), `x=`, `y=` (same expressions as the graph; `x` defaults to the graph's `x`, `y` to `c2`), `rows=`, `type=`, `color=`, `fit=linear`, `name=` (the legend entry).
+- **Another table**: `\layer[name="Trial 2", table=other, x=c1, y=c2]`. Options: `table=` (default: the graph's own table), `x=`, `y=` (same expressions as the graph; `x` defaults to the graph's `x`, `y` to `c2`), `rows=`, `type=`, `color=`, `fit=` with its limits `fitmin=`, `fitmax=`, `fitvalue=`, `fitxmin=`, `fitxmax=` (see "Best-fit curves"), `name=` (the legend entry).
 - `table=none` on the graph itself means it has no table of its own and draws only its layers.
 - The legend lists every series when there is more than one and wraps onto extra lines as needed.
 
@@ -227,28 +260,37 @@ Each reading is the **relative concentration** of whatever colours the sample, p
 1. the Sample and Reference values are converted from camera RGB to linear light;
 2. A = log(reference ÷ sample), averaged over every camera frame in the interval;
 3. the value follows from how A changes during the run, and the tool works out which case it is by itself (per channel, from the run; there is nothing to set):
-   - **the colour fades**: value = A ÷ A₀, where A₀ is A of the run's first reading. The run starts at exactly 1 and falls.
+   - **the colour fades**: value = A ÷ A₀, where A₀ is A at the start of the run. The run starts at 1 and falls.
    - **colour forms** (the run starts clear or pale and darkens): value = (A − A₀) ÷ the largest (A − A₀) of the run. The run starts at 0 and its highest point is 1, so the value is the fraction of the final colour reached. Because the starting reading is subtracted, whatever the clear sample read at the start does not matter.
 
    While colour is still forming the highest point keeps moving, so the numbers on the y axis rescale as the run goes; the shape of the curve does not change. A run in which nothing changes records a flat line near 0 (or near 1 if it started coloured).
+
+   **A₀ does not rest on one reading** (2026-11-18). It is read from every camera frame of the first four seconds: a line is fitted through them by medians and its value at time 0 is A₀. A stirring rod leaving the picture or liquid still settling in the first second therefore does not rescale the whole run, and the reaction's own progress during those seconds is not mistaken for the start. The first few points adjust slightly while those four seconds pass. The points recorded during a disturbance are still recorded as they were read; use `fitxmin=` to keep them out of a fit.
 
 Options (there is no `table=`):
 
 - `runs=run1;run2;run3` (required) the `id`s of the `\datatable`s it records into, **one table per run**. The student chooses the run from a list before starting; a table's `title=` is the run's name in that list (without a title: "Run 1", "Run 2", … in the order listed). With one run there is no list. Write each run table as a header row only, give it `addrows`, and usually `view=hidden` (students see only graphs) or `view=collapsed`.
 - `timecolumn=c1` the column that takes the time in seconds since Start recording (0, then the interval, …). Default `c1`.
-- `columns=c2;c3;c4` the columns that take the relative concentration by the **red, green and blue** channel, in that order. Default `c2;c3;c4`. Leave an entry out to skip a channel: a two-column table with the default records time and red only; `columns=";c2;"` records only green. Use the channel the sample absorbs: red for a blue or green sample, green for a red or purple one, blue for a yellow one.
+- `columns=c2;c3;c4` the columns that take the relative concentration by the **red, green and blue** channel, in that order. Default `c2;c3;c4`. Leave an entry empty to skip that channel (quote the value when it starts or ends with `;`): `columns="c2;c3;"` records red and green and skips blue, `columns=";c2;"` records only green, `columns=";;c2"` records only blue; a two-column table with the default records time and red only. Use the channel the sample absorbs: red for a blue or green sample, green for a red or purple one, blue for a yellow one. **Record only the channels the lab uses**: the too-dark warning below looks at every recorded channel.
 - `interval=1` seconds between readings, 1 to 3600. Default 1.
 - `minutes=10` a forgotten run stops by itself after this many minutes (at most 60; never more than 1200 readings). Default 10. Normally the student ends the run.
+- `change=fades` or `change=forms` (optional, 2026-11-18) says what the colour does. Write it whenever the lab knows: the run is then always scaled that way and never has to be worked out from the data. `change=fades` also makes Start recording wait while the sample has too little colour (see the warnings below). Without `change=` the tool works out the direction itself and a run may start clear.
+- `mixtable=mix` (optional, 2026-11-18) adds a **Mixed now** button and names the `\datatable` that takes each run's **time from mixing to the start of recording**, in seconds. The student taps Mixed now at the moment of mixing (the tool then counts "Mixed 0:07 ago"; a second tap marks it again) and Start recording when the sample is in place; the seconds in between, to one decimal, go into **row n of that table for the n-th run listed in `runs=`**, in the column `mixcolumn=` (default `c2`). Give the table one row per run with a `___` cell in that column. It is an ordinary table: students see the number, a `\usetable` shows it in the report, and a graph formula reads it as `mix(1).c2` for the first run, `mix(2).c2` for the second. A student who did not tap Mixed now leaves the cell as it was and may type their own count into it. Deleting a run from its graph, or recording over it, empties that run's cell too.
 
 What the lab must know:
 
 - **The y axis of a graph fits the curve by itself** unless the graph fixes `ymin`/`ymax`. Draw runs with `type=solid` (a run has too many points for dots).
 - **Every graph of a recorded run carries a red Delete button** (top right of the graph) once the run is over: "Delete", or "Delete Trial 1" / "Delete Trial 2" when the graph draws several runs. It asks "Delete the recording in Trial 1? It cannot be brought back." and then empties that run, in every graph that draws it. There is no button while the run is recording, on an empty graph, in the report's copy of a graph, or in a PDF. Nothing needs to be written in the lab file for it.
 - **A run that already holds a recording is never overwritten silently.** Choosing it and tapping Start recording asks "… already has a recording. Record over it?" first. After a run the list moves to the next empty run. A lab that wants three trials lists three runs.
-- **Relative means relative to the moment Start recording was tapped**, not to the moment of mixing. For a fading colour, a first-order slope (ln of the value against time) is unaffected; zero- and second-order slopes come out divided or multiplied by the concentration at that moment.
+- **Relative means relative to the moment Start recording was tapped**, not to the moment of mixing. For a fading colour, a first-order slope (ln of the value against time) is unaffected; zero- and second-order slopes come out divided or multiplied by the concentration at that moment. With `mixtable=` the lab has the delay and can plot against time since mixing, `x="c1+mix(1).c2"`, so a fitted line or curve can be read back to x = 0, the moment of mixing. (A formula that reads an empty delay cell skips every point, so keep one graph against plain `c1` as well, or tell students to type 0 if they did not mark the mixing.)
 - **For a colour that forms, 1 is the highest point of the run, not the end of the reaction.** If the student stops early, 1 is simply where they stopped. Have them record until the colour stops changing when the lab needs the fraction of the final amount (for example `y="ln(1-c2)"` against time for a first-order product; the last point, exactly 1, is skipped by the graph).
 - **For a colour that fades, the reference must be "the sample with no colour".** A = 0 has to mean "no dye", so put the Reference square on an identical container of plain water (or the colourless solvent) standing beside the sample, in the same light, not on bare paper. With bare paper the container and the water add a constant to A, the value never reaches 0, and an ln plot of a true first-order reaction bends. A colour that forms does not need this (the clear start is subtracted), though the same setup does no harm.
-- Start recording is disabled while the tool shows "The reference is too bright". A channel that shows no colour during the run stays near 0, so plot the column of the channel the coloured substance absorbs.
+- **Warnings that hold Start recording back** (2026-11-18). Start recording is disabled while the tool shows any of these, and works again as soon as the warning clears; a run that is already recording is never stopped by one.
+  - "The reference is too bright. …" the camera overexposes the Reference square.
+  - "The sample is too dark to measure. …" in **any channel the chosen run records**, the sample absorbs more than about 1.5 (it lets through under about 3% of the reference's light), or it is all but black. A phone camera cannot tell such a sample from black, and the run comes out as a jagged trace. The cure is a more dilute solution or a thinner container; choose concentrations that start well under this.
+  - "The sample has too little colour to measure. …" **only with `change=fades`**, and only when **every** recorded channel absorbs less than about 0.08. (Without `change=fades` there is no such warning, because a colour that forms has to start clear.)
+  - All three texts are in Site text. They also appear while the squares are not yet in place, which is the usual reason for them.
+- A channel that shows no colour during the run stays near 0, so plot the column of the channel the coloured substance absorbs.
 - The phone has to stay put for the whole run: tell students to stand it up before they mix. A run ends, keeping what it recorded, when the student taps Stop recording, stops the tool, or leaves the page; it cannot be resumed, only recorded again.
 - A hidden run table cannot be typed into, so this tool has no type-it-in fallback: a student without a camera cannot do this part.
 
@@ -263,7 +305,14 @@ What the lab must know:
 |---|---|
 }
 
-\widget[type=colorimeter-run, id=fade-recorder, runs=fade-1;fade-2]{Stand the phone up. Drag Reference onto the tube of plain water and Sample onto the dye. Mix, then tap Start recording at once. Tap Stop recording when the colour is gone.}
+\datatable[id=mix, title="Time from mixing to recording"]{
+| Trial | Delay (s) |
+|---|---|
+| Trial 1 | ___ |
+| Trial 2 | ___ |
+}
+
+\widget[type=colorimeter-run, id=fade-recorder, runs=fade-1;fade-2, change=fades, mixtable=mix]{Stand the phone up. Drag Reference onto the tube of plain water and Sample onto the dye. Tap Mixed now as you pour the solutions together, then tap Start recording as soon as the tube is back in place. Tap Stop recording when the colour is gone.}
 
 \graph[id=fade-curve, table=fade-1, x=c1, y=c2, type=solid, series="Trial 1", xlabel="Time (s)", ylabel="Relative concentration"]{
 \layer[name="Trial 2", table=fade-2, x=c1, y=c2, type=solid]
@@ -276,7 +325,12 @@ First-order test: a straight line, slope −k.
 }
 ```
 
-The same run can feed any number of graphs: `y=c2` (zero-order test), `y="ln(c2)"` (first order), `y="1/c2"` (second order).
+The same run can feed any number of graphs: `y=c2` (zero-order test), `y="ln(c2)"` (first order), `y="1/c2"` (second order). Or one graph with all three models drawn over the data, fitted only where the reading is reliable (see "Best-fit curves"):
+
+```
+\graph[id=fade-models, table=fade-1, x="c1+mix(1).c2", y=c2, type=solid, fit=linear+exponential+reciprocal, fitmin=0.1,
+  xlabel="Time since mixing (s)", ylabel="Relative concentration"]{Trial 1 with a zero-, first- and second-order curve.}
+```
 
 ## Report tab (write-up skeleton)
 
