@@ -5517,7 +5517,7 @@ const WIDGETS = {
     device: 'Needs a camera; a phone works best. On a laptop without a camera the tool shows a calm note and students type the values in.',
     camera: true,   // the host checks for a camera, pauses the tool when the page is hidden, and releases it on navigation
     records: 'One row per reading into a data table: corrected R, G and B in the columns you choose; optionally the camera\'s uncorrected R, G, B.',
-    file: 'widgets/colorimeter.v17.js',
+    file: 'widgets/colorimeter.v18.js',
     options: [
       { name: 'table', label: 'Data table to record into', kind: 'table', help: 'Let students add rows to that table, so every reading gets its own row.' },
       { name: 'columns', label: 'Columns for the corrected R, G, B', kind: 'columns', parts: ['Red', 'Green', 'Blue'], default: 'c1;c2;c3', help: 'Corrected = sample × 255 ÷ (what the camera reads on the white paper), channel by channel, every frame. Lighting, exposure and white-balance drift move both squares together, so it cancels. Keep the paper the brightest matte thing in the picture; a sample brighter than the paper reads 255.' },
@@ -5537,14 +5537,16 @@ const WIDGETS = {
     camera: true,
     runs: true,   // records into several tables (runs=), one per run, instead of one table=
     records: 'One row per reading into the run\'s own data table: the time in seconds and the relative concentration by the red, green and blue channel. Each run is a data table, usually hidden; graphs read it.',
-    file: 'widgets/colorimeter.v17.js',
+    file: 'widgets/colorimeter.v18.js',
     options: [
       { name: 'runs', label: 'Runs: the data tables this tool records into', kind: 'tables', help: 'One data table per run. Students pick the run before they start; a table\'s title is the run\'s name. Tick "Students may add rows" on each table, and set it to Hidden if students should only see graphs.' },
       { name: 'timecolumn', label: 'Column for the time in seconds', kind: 'column', none: 'Not recorded', default: 'c1', help: 'Seconds since the student tapped Start recording: 0, then the interval, and so on.' },
       { name: 'columns', label: 'Columns for the relative concentration', kind: 'columns', parts: ['By red', 'By green', 'By blue'], optional: true, default: 'c2;c3;c4', help: 'A = log(reference ÷ sample) after both are converted to linear light. When the colour fades, the value is A ÷ A at the start of the run. When colour forms, it is the rise in A since the start ÷ the largest rise. Use the channel the coloured substance absorbs: red for a blue or green one, green for a red or purple one, blue for a yellow one. A channel that shows no colour stays near 0.' },
       { name: 'interval', label: 'Seconds between readings', kind: 'num', help: 'Leave empty for one reading a second. Each reading is the average of every camera frame in its interval.' },
       { name: 'minutes', label: 'Stop by itself after this many minutes', kind: 'num', help: 'A run ends when the student taps Stop recording. This is only for a forgotten run. Leave empty for 10.' },
-      { name: 'change', label: 'What the colour does during a run', kind: 'pick', choices: [['', 'The tool works it out from the run'], ['fades', 'It fades'], ['forms', 'It forms']], help: 'Say which when you know: the run is then always scaled that way. With "It fades", Start recording also waits while the sample has too little colour to measure. Start always waits while the sample is too dark to measure.' },
+      { name: 'change', label: 'What the colour does during a run', kind: 'pick', choices: [['', 'The tool works it out from the run'], ['fades', 'It fades'], ['forms', 'It forms']], help: 'Say which when you know: the run is then always scaled that way. With "It fades", Start recording also waits while the sample has too little colour to measure. Start always waits while the sample is too dark to measure. The two cutoffs are set below.' },
+      { name: 'darklimit', label: 'Too dark: absorbance above which Start recording waits', kind: 'text', placeholder: '1.5', help: 'Absorbance = log(reference ÷ sample) in a recorded channel; 1.5 means the sample lets through about 3% of the light. Leave empty for 1.5. Lower it to be stricter, raise it to allow darker samples, or write off for no too-dark warning.' },
+      { name: 'palelimit', label: 'Too pale: absorbance below which Start recording waits (only with "It fades")', kind: 'text', placeholder: '0.08', help: 'Leave empty for 0.08. Raise it to demand more colour at the start, or write off for no too-pale warning.' },
       { name: 'mixtable', label: 'Table for the time from mixing to recording (optional)', kind: 'anytable', none: 'Not recorded', help: 'Adds a Mixed now button. The student taps it at the moment of mixing; when they tap Start recording, the seconds in between go into this table: row 1 for the first run, row 2 for the second, and so on. Give the table one row per run with a blank cell in the column below.' },
       { name: 'mixcolumn', label: 'Column of that table for the seconds', kind: 'text', placeholder: 'c2', help: 'Leave empty for the second column.' },
       { name: 'help', label: 'Offer Get help when it fails', kind: 'help' },
@@ -6072,7 +6074,7 @@ const BM_TYPES = {
   callout:   { tag: null,        label: 'Callout',         list: 'procedure', known: ['label'] },
   graph:     { tag: 'graph',     label: 'Graph',           list: 'both', kind: 'graph', idBase: 'graph',    known: ['id', 'table', 'x', 'y', 'series', 'rows', 'type', 'color', 'fit', 'fitmin', 'fitmax', 'fitvalue', 'fitxmin', 'fitxmax', 'title', 'xlabel', 'ylabel', 'xmin', 'xmax', 'ymin', 'ymax'], nameOf: b => b.opts.title },
   pagebreak: { tag: 'pagebreak', label: 'Page break',      list: 'procedure', known: [] },
-  widget:    { tag: 'widget',    label: 'Widget',          list: 'procedure', kind: 'widget', idBase: 'widget', known: ['id', 'type', 'label', 'table', 'runs', 'bank', 'timecolumn', 'columns', 'rawcolumns', 'interval', 'readings', 'minutes', 'change', 'mixtable', 'mixcolumn', 'help'], nameOf: b => b.opts.label || b.opts.type },
+  widget:    { tag: 'widget',    label: 'Widget',          list: 'procedure', kind: 'widget', idBase: 'widget', known: ['id', 'type', 'label', 'table', 'runs', 'bank', 'timecolumn', 'columns', 'rawcolumns', 'interval', 'readings', 'minutes', 'change', 'darklimit', 'palelimit', 'mixtable', 'mixcolumn', 'help'], nameOf: b => b.opts.label || b.opts.type },
   usetable:  { tag: 'usetable',  label: 'Include a table', list: 'report' },
   usegraph:  { tag: 'usegraph',  label: 'Include a graph', list: 'report' },
   useanswer: { tag: 'useanswer', label: 'Include an answer', list: 'report' },
@@ -6823,6 +6825,7 @@ function bmReferenceProblems(model, auto) {   // shared by builderParse (strings
           else if (runs.includes(mt)) out.push({ k: b._k ?? null, msg: 'The table for the time from mixing to recording cannot be one of the run tables. Give it a table of its own.' });
           else for (const [tb, id] of eff) if (tb.type === 'table' && id === mt && (tb.rows || []).length < runs.length) out.push({ k: b._k ?? null, msg: `The table '${mt}' needs one row per run (${runs.length}) to hold each run's time from mixing to recording.` });
         }
+        for (const key of ['darklimit', 'palelimit']) { const v = b.opts ? b.opts[key] : null; if (v != null && v !== '' && !/^(off|none|no)$/i.test(String(v).trim()) && !(parseFloat(v) > 0)) out.push({ k: b._k ?? null, msg: `${key}= must be a number above 0, or off (it is '${v}').` }); }
         if (b.opts && b.opts.change != null && !['fades', 'forms'].includes(String(b.opts.change))) out.push({ k: b._k ?? null, msg: `change= must be fades or forms (it is '${b.opts.change}'). Leave it out to let the tool work it out.` });
       }
       else if (t == null || t === '') out.push({ k: b._k ?? null, msg: 'Choose the data table this widget records into.' });
