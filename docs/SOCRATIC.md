@@ -75,3 +75,7 @@ A monthly spend limit in the Anthropic Console is the backstop.
 No emails, no student logins beyond codes/seats. Every student-facing string is a text key (`soc*`, `widgetSignIn`).
 Widgets passive until tapped, nothing kept in the browser, bare interface, calm failures, Get help never automatic.
 Nothing student-authored is deleted by the site; a bank with sessions cannot be deleted, only hidden.
+
+## Privacy page (2026-11-20)
+
+The site's Privacy page (`privacyBody` in `DEFAULTS`; the live copy is the `site_content` row `privacyBody`, which wins over the default) describes the tutor: what the site stores (every message, the end summary, problems served, a message count; visible to the student and to admins; removed with the account by `on delete cascade`), what it does not (no audio or video, nothing graded), and what goes to Anthropic (the conversation text, the bank and the instructions, optionally the last summary; never the name, email, access code, seat, class or user id; the request leaves from the Edge Function, not the student's device). **If `runTurn` ever sends anything else (a `metadata.user_id`, a name in the prompt, an image), or the storage changes, update that text in both places in the same change.** The sentence about Anthropic's own retention (not used for training, deleted within about 30 days unless flagged) was checked against Anthropic's published API retention pages on 2026-11-20 and should be re-checked if the model or the account's terms change.
