@@ -423,16 +423,21 @@ create trigger on_auth_user_created after insert on auth.users
 -- Students may update their own display name
 drop policy if exists "student updates self" on public.students;   -- removed 2026-10-13: nothing on the site needs it, and it allowed self-renaming
 
--- A student can delete their own account (cascades to students, lab_entries, group_members)
-create or replace function public.delete_my_account() returns void
+-- Any student may delete their own account, class code accounts (seats) included, without a teacher (owner, 2026-11-21; before that a seat
+-- was refused). Deleting the auth user cascades to the seat row (so its access code stops working), class membership, lab entries, help
+-- threads, Socratic 1 sessions and preferences. delete_my_account(true) only checks that the caller may delete and changes nothing: the page
+-- calls it first, before it removes the student's photos from storage, so a refusal can never cost a student their photos.
+drop function if exists public.delete_my_account();   -- the earlier form without the check argument
+create or replace function public.delete_my_account(p_check boolean default false) returns void
 language plpgsql security definer set search_path = public as $$
 begin
   if auth.uid() is null then raise exception 'not signed in'; end if;
   if is_admin() then raise exception 'admin accounts cannot be deleted from the site'; end if;
+  if p_check then return; end if;
   delete from auth.users where id = auth.uid();
 end $$;
-revoke execute on function public.delete_my_account() from public, anon;
-grant execute on function public.delete_my_account() to authenticated;
+revoke execute on function public.delete_my_account(boolean) from public, anon;
+grant execute on function public.delete_my_account(boolean) to authenticated;
 
 
 -- Admin management: any admin may grant or revoke the admin role by email (used by the Admins panel)
@@ -648,15 +653,7 @@ language sql stable security definer set search_path = public as $$
   select c.name, s.seat_no, s.nickname, c.archived from seats s join classes c on c.id = s.class_id where s.user_id = auth.uid()
 $$;
 
--- Seats cannot delete themselves; their teacher manages them
-create or replace function public.delete_my_account() returns void
-language plpgsql security definer set search_path = public as $$
-begin
-  if auth.uid() is null then raise exception 'not signed in'; end if;
-  if is_admin() then raise exception 'admin accounts cannot be deleted from the site'; end if;
-  if exists (select 1 from seats s where s.user_id = auth.uid()) then raise exception 'access code accounts are managed by the teacher'; end if;
-  delete from auth.users where id = auth.uid();
-end $$;
+-- Seats may delete their own account since 2026-11-21: delete_my_account (defined once, above) no longer refuses them.
 
 revoke execute on function public.gen_passcode(text) from public, anon;
 revoke execute on function public.seat_email(text) from public, anon;

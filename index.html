@@ -1437,6 +1437,8 @@ const DEFAULTS = {
   accountDelete: 'Delete my account',
   accountDeleteConfirm: 'Delete your account and every saved entry? This cannot be undone.',
   accountDeleted: 'Your account has been deleted.',
+  accountDeleteUnavailable: 'Deleting this kind of account is not switched on yet. Nothing was deleted.',
+  seatDeleteConfirm: 'Deleting means that you will permanently lose all your lab data. You will no longer have access to class specific labs through this account. Your class code login will no longer work.',
   accessTitle: 'Access Code Login',
   accessHint: 'Your teacher may have given you an access code. It works on any device and needs no email.',
   accessButton: 'Log in',
@@ -1445,10 +1447,10 @@ const DEFAULTS = {
   seatName: '{cls} · Seat {n}',
   seatShort: 'Seat {n}',
   seatUnknown: 'Access code account',
-  seatManaged: 'This account was created by your teacher with an access code. Your teacher manages it; nothing about you is stored except your lab entries.',
+  seatManaged: 'This account was created by your teacher with an access code. It has no name and no email address. You can delete it below at any time.',
   privacyLink: 'Privacy',
   privacyTitle: 'Privacy',
-  privacyBody: '<p>This site publishes lab procedures for students. You can use it without an account but many labs require a class code.</p><p>If you choose to sign in with Google, the site stores only your name and email address so your lab entries can follow you between devices. If your teacher gives you an access code instead, the site stores no name and no email at all: only a seat number in your class and your lab entries. Your entries are visible to you and to the site administrators. Lab entries are not sold or shared with anyone else, and no advertising is shown.</p><p><strong>The tutor (Socratic 1)</strong></p><p>Some labs include a tutor you talk with by typing. It only works when you are signed in.</p><p><strong>What is recorded.</strong> The site keeps each conversation under your account: every message you type, every reply from the tutor, the summary written when a session ends, which problems you worked on, and a count of the messages you have sent (used for the weekly limit). You can read your own conversations. The site administrators (your teachers) can read the conversations of every student. If you report a faulty problem, your note is saved and reaches your teachers like a help request.</p><p><strong>What is not recorded.</strong> No sound, pictures or video: the tutor never uses your microphone or camera.</p><p><strong>How it works.</strong> The replies are written by Claude, an AI model made by the company Anthropic. Each time you send a message, the server of this site sends Anthropic the conversation so far, together with the problems and instructions your teacher wrote (and, if your teacher has switched it on, the summary of your last session on the same topic), and passes the reply back to you. Your name, email address, Google account, access code, seat number and class are never sent, and the request comes from the server of this site, not from your device. So Anthropic receives the text of the conversation with nothing that says which student wrote it. The words you type are sent exactly as you wrote them, so do not type your name or other personal details into the tutor. Under the terms Anthropic sets for this service, it does not use these conversations to train its AI models, and it deletes them within about 30 days unless it must keep them longer for safety or legal reasons.</p><p>You can delete your account and every saved entry, including your tutor conversations, at any time: while signed in, click your name at the top of the page and choose Delete my account. An account made with an access code is managed by your teacher; ask them to remove it. Anonymous usage statistics (which labs are opened, on what kind of device) are collected without any personal information.</p>',
+  privacyBody: '<p>This site publishes lab procedures for students. You can use it without an account but many labs require a class code. If you choose to sign in with Google, the site stores your name, email address, and lab entries. If your teacher gives you an access code instead, the site stores no name and no email at all: only a seat number in your class and your lab entries. Your teacher may add a short label to your seat. The purpose of storing your lab entries is to ensure that your data is saved in a more reliable place than your browser data. Your entries are visible to you and to the site administrators. Lab entries are not sold or shared with anyone else, and no advertising is shown. </p><p>Lab entries include any photos you add. The site also stores the Get help messages you send (these are also emailed to the site administrators through an email delivery service, Resend), your color theme if you pick one, and, while you are signed in, a record of which pages you open, on what kind of device, and which page you came from. All of this is kept in the database of this site, which is hosted by Supabase. The pages load their fonts from Google Fonts.</p><p>If you ever want to delete your data you can do so: while signed in, click the greeting at the top of the page and choose Delete my account. This works for Google accounts and for class code accounts, and nobody has to approve it. It permanently removes your lab entries, photos, Get help messages and Socratic 1 conversations from the site, and a class code stops working. The record of which pages were opened is kept, under an account number that no longer belongs to anyone. Backup copies made before the deletion may still exist; they are kept privately by the site administrators.</p><p><br></p><p><strong>Socratic 1 (Not accessible to Chem 10 Student Accounts yet)</strong></p><p>Socratic 1 is an AI review tool that gives the student chemistry problems. It adapts the difficulty of the problems to the student, helps the student when they are stuck (without giving too much of the problem away), and then grades the students solution. I have found it very effective as a chemistry review tool, but it is currently in beta and not accessible to Chem 10 Student Accounts. The site keeps each Socratic 1 conversation under your account: what you typed, what Socratic 1 replied, and which problems you worked on. You can read your own conversations, and the site administrators can read all of them. A report of a faulty problem is handled like a Get help message. Because it uses Anthropic\'s Sonnet 5.5 model it passes the data from each conversation to Anthropic. Your name, email address, Google account, access code, seat number and class are never sent, and the request comes from the server of this site, not from your device. Anthropic receives the text of the conversation with nothing that says which student wrote it. The words you type are sent exactly as you wrote them, so do not type your name or other personal details into Socratic 1.</p><p><br></p>',
   notFoundTitle: 'Page not found',
   notFoundBody: 'That link does not go anywhere. It may have been moved or unpublished.',
   notFoundHome: 'Go to the home page',
@@ -1527,15 +1529,15 @@ const DEFAULTS = {
   socPlaceholder: 'Answer in words, not just a number…',
   socProgress: '{topics} of {total} topics credited · {posed} problems worked',
   socAllDone: 'You have shown every topic in this set. End the session when you are ready, or keep going.',
-  socThinking: 'The tutor is thinking…',
-  socLimit: 'You have used all of this week\'s messages with the tutor. It opens again next week.',
-  socSiteLimit: 'The tutor is resting for today. Come back tomorrow.',
-  socError: 'The tutor could not answer just now. Try again in a moment.',
+  socThinking: 'Socratic 1 is thinking…',
+  socLimit: 'You have used all of this week\'s messages with Socratic 1. It opens again next week.',
+  socSiteLimit: 'Socratic 1 is resting for today. Come back tomorrow.',
+  socError: 'Socratic 1 could not answer just now. Try again in a moment.',
   socEnded: 'Session ended.',
   socDoneLine: 'Socratic topics credited: {topics} of {total} · {posed} problems worked',
-  socNotDone: 'The tutor session has not been completed yet.',
-  socNoSession: 'No tutor session yet.',
-  socTranscriptTitle: 'Tutor conversation',
+  socNotDone: 'The Socratic 1 session has not been completed yet.',
+  socNoSession: 'No Socratic 1 session yet.',
+  socTranscriptTitle: 'Socratic 1 conversation',
   socSkip: 'Skip this problem',
   socReportButton: 'Report a problem',
   socReportIntro: 'Tell me what is wrong with this question: an incorrect solution, a wrong assumption, anything unclear. I read every report.',
@@ -1543,7 +1545,7 @@ const DEFAULTS = {
   socReportSend: 'Send report',
   socReportSent: 'Report sent. Thank you.',
   socReportError: 'The report could not be sent. Try again in a moment.',
-  socNoBank: 'No problem bank has been chosen for this tutor yet.',
+  socNoBank: 'No problem bank has been chosen for Socratic 1 here yet.',
   widgetGetHelp: 'Get help',
   widgetRecord: 'Record',
   widgetRecorded: 'Data recorded',
@@ -1577,7 +1579,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Cards', keys: ['cardMinutes', 'cardReportMinutes', 'cardUpdated', 'lockedBadge', 'signInRequiredBadge', 'draftBadge', 'scheduledBadge', 'hiddenBadge'] },
   { label: 'Lab page', keys: ['labMinutes', 'labReportMinutes', 'labUpdated', 'labFilesLabel', 'labDownloadFile', 'labViewInline', 'labPrint', 'labDownloadPdf', 'pdfPreparing', 'pdfReady', 'pdfFailed', 'labCopyLink', 'labLinkCopied', 'labNoContent'] },
   { label: 'Locked labs', keys: ['lockPasswordTitle', 'lockAccountsTitle', 'lockAccountsPrompt', 'lockNotAllowed', 'lockAdminOnly'] },
-  { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'accountDeleted', 'accessTitle', 'accessHint', 'accessButton', 'accessWrong', 'accessArchived', 'seatName', 'seatShort', 'seatUnknown', 'seatManaged', 'privacyLink', 'privacyTitle'] },
+  { label: 'Log in and accounts', keys: ['signInLink', 'loginTitle', 'loginAdminToggle', 'signOutLink', 'signInTitle', 'signInIntro', 'signInGoogle', 'signInCreateHint', 'signInError', 'accountTitle', 'accountSignedInAs', 'accountSyncOn', 'accountHello', 'accountDelete', 'accountDeleteConfirm', 'seatDeleteConfirm', 'accountDeleted', 'accountDeleteUnavailable', 'accessTitle', 'accessHint', 'accessButton', 'accessWrong', 'accessArchived', 'seatName', 'seatShort', 'seatUnknown', 'seatManaged', 'privacyLink', 'privacyTitle'] },
   { label: 'Interactive labs', keys: ['entriesSaved', 'entriesClear', 'entriesClearConfirm', 'entriesClearFailed', 'entriesSaveFailed', 'photoSyncFailed', 'notesLabel', 'notesPlaceholder', 'answerPlaceholder', 'tableAddRow', 'tableShowNumbers', 'tableHideNumbers', 'photoAdd', 'photoChange', 'photoRemove', 'calloutSafety', 'calloutWarning', 'calloutInfo', 'calloutTip', 'calloutHint', 'figurePending', 'graphEmpty', 'graphFitLinear', 'graphFitExponential', 'graphFitReciprocal'] },
   { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef', 'reportNoPhotoYet'] },
   { label: 'Get help', keys: ['helpButton', 'helpIntro', 'helpLoginNudge', 'helpMessagePlaceholder', 'helpSend', 'helpSent', 'helpError', 'helpAutoReply', 'helpAutoLabel', 'helpYou', 'helpTeacher', 'helpResolvedNote', 'helpEmailFrom', 'helpEmailSubject'] },
@@ -1598,7 +1600,7 @@ const TEXT_LABELS = {
   lockPasswordWrong: 'Wrong password message', lockTooMany: 'Too many attempts message', lockAccountsTitle: 'Account lock title', lockAccountsPrompt: 'Account lock prompt',
   lockNotAllowed: 'Not allowed message', lockAdminOnly: 'Admin-only message', lockUnavailable: 'Lock server unavailable message',
   signInLink: 'Log in button / link', loginTitle: 'Log-in box title', loginAdminToggle: 'Admin fields toggle', signOutLink: 'Sign-out link', signInTitle: 'Sign-in title', signInIntro: 'Sign-in explanation', signInGoogle: 'Google button', signInCreateHint: 'Creates-an-account note', signInError: 'Sign-in error',
-  accountTitle: 'Account page title', accountSignedInAs: 'Signed-in-as line', accountSyncOn: 'Syncing note', accountHello: 'Greeting in the menu', accountDelete: 'Delete account button', accountDeleteConfirm: 'Delete account confirmation', accountDeleted: 'Account deleted message', accessTitle: 'Access code heading', accessHint: 'Access code hint', accessButton: 'Access code button', accessWrong: 'Wrong access code message', accessArchived: 'Closed access code message', seatName: 'Seat name ({cls}, {n})', seatShort: 'Short seat name ({n})', seatUnknown: 'Seat fallback name', seatManaged: 'Seat account note', privacyLink: 'Privacy link', privacyTitle: 'Privacy page title', privacyBody: 'Privacy page text',
+  accountTitle: 'Account page title', accountSignedInAs: 'Signed-in-as line', accountSyncOn: 'Syncing note', accountHello: 'Greeting in the menu', accountDelete: 'Delete account button', accountDeleteConfirm: 'Delete account confirmation', seatDeleteConfirm: 'Delete account confirmation for a class code account', accountDeleteUnavailable: 'Message when an account cannot be deleted yet', accountDeleted: 'Account deleted message', accessTitle: 'Access code heading', accessHint: 'Access code hint', accessButton: 'Access code button', accessWrong: 'Wrong access code message', accessArchived: 'Closed access code message', seatName: 'Seat name ({cls}, {n})', seatShort: 'Short seat name ({n})', seatUnknown: 'Seat fallback name', seatManaged: 'Seat account note', privacyLink: 'Privacy link', privacyTitle: 'Privacy page title', privacyBody: 'Privacy page text',
   notFoundTitle: 'Not found title', notFoundBody: 'Not found text', notFoundHome: 'Not found home link', unavailableTitle: 'Unavailable title', unavailableBody: 'Unavailable text',
   fallbackBanner: 'Saved-copy banner', errorBanner: 'Error banner',
   entriesInfo: 'Autosave notice', entriesSaved: 'Saved flash', entriesClear: 'Clear entries button', entriesClearFailed: 'Clear entries failed message', entriesSaveFailed: 'Local save failed message', photoSyncFailed: 'Photo account save failed message', entriesClearConfirm: 'Clear entries confirmation',
@@ -2210,7 +2212,7 @@ function renderSignIn(view) {
         <div style="margin-top:1.25rem;"><span class="theme-pick" data-theme-pick></span></div>
         <div class="lab-toolbar" style="margin-top:1.5rem;">
           <button class="btn" onclick="signOutStudent()">${escapeHTML(getText('signOutLink'))}</button>
-          ${isSeat() ? '' : `<button class="btn btn-danger" onclick="deleteMyAccount()">${escapeHTML(getText('accountDelete'))}</button>`}
+          <button class="btn btn-danger" onclick="deleteMyAccount()">${escapeHTML(getText('accountDelete'))}</button>
         </div>
       </div></section>`;
     renderThemePicker();
@@ -2499,15 +2501,20 @@ function startAdminIdleWatch() {
   setInterval(adminIdleCheck, 5 * 60 * 1000);
   adminIdleCheck();
 }
-async function deleteMyAccount() {
-  if (!confirm(getText('accountDeleteConfirm'))) return;
+async function deleteMyAccount() {   // a Google account or a class code account (a seat): the student decides, no teacher needed (owner, 2026-11-21)
+  if (!confirm(getText(isSeat() ? 'seatDeleteConfirm' : 'accountDeleteConfirm'))) return;
+  // Ask the server first, before anything is removed: a refusal must never cost a student their photos. PGRST202 = the database has not
+  // been given delete_my_account(p_check) yet (supabase/seat-delete-2026-11-21.sql); a Google account can still be deleted the old way then.
+  const ask = await sb.rpc('delete_my_account', { p_check: true });
+  if (ask.error && (isSeat() || ask.error.code !== 'PGRST202')) { toast(ask.error.code === 'PGRST202' ? getText('accountDeleteUnavailable') : ask.error.message, true); return; }
   try { await removePrivatePrefix(`photos/${state.session.user.id}`); } catch (e) { /* ignore */ }
   const { error } = await sb.rpc('delete_my_account');
   if (error) { toast(error.message, true); return; }
   const mine = ltScope();   // only this account's compartment on the device, entries and photos
   try { Object.keys(localStorage).filter(k => k.startsWith(LT_STORE + mine)).forEach(k => localStorage.removeItem(k)); } catch (e) { /* ignore */ }
   try { for (const k of await ltPhotoKeys(mine)) await ltPhotoDel(k); } catch (e) { /* ignore */ }
-  await sb.auth.signOut(); state.session = null; state.role = null;
+  try { await sb.auth.signOut(); } catch (e) { /* the account is already gone */ }
+  state.session = null; state.role = null; state.seat = null;
   renderChrome(); navigate('#/'); toast(getText('accountDeleted'));
 }
 
