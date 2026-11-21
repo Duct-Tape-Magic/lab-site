@@ -1077,7 +1077,7 @@ create or replace function public.beta_ok_media(p text) returns boolean
 language sql immutable as $$
   select p is not null and length(p) <= 900 and (
     p ~ '^youtube:[A-Za-z0-9_-]{6,20}$'
-    or (p !~ '^youtube:' and split_part(p, '|', 1) ~ '^(img:)?[A-Za-z0-9._~:/?#@!$&()*+,;=%-]{1,500}$'
+    or (p !~ '^youtube:' and length(split_part(p, '|', 1)) <= 600 and split_part(p, '|', 1) ~ '^(img:)?[A-Za-z0-9._~:/?#@!$&()*+,;=%-]+$'   -- (Postgres caps a {n,m} count at 255, hence the separate length test)
         and substr(p, length(split_part(p, '|', 1)) + 2) !~ '[[:cntrl:]\\]'))
 $$;
 
