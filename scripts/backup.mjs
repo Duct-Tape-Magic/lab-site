@@ -13,28 +13,36 @@ import { refreshInstalled } from './backup-schedule.mjs';
 
 const key = loadKey();
 const name = stamp(), dir = path.join(BACKUP_ROOT, name), store = path.join(BACKUP_ROOT, 'files-store');
-fs.mkdirSync(path.join(dir, 'tables'), { recursive: true }); fs.mkdirSync(store, { recursive: true });
+// Everything fetched in one step, so that a run that fails part-way (no network, a bad key) leaves no half-written folder behind.
+async function collect() {
+  fs.mkdirSync(path.join(dir, 'tables'), { recursive: true }); fs.mkdirSync(store, { recursive: true });
 
-const counts = {};
-for (const t of TABLES) {
-  const rows = await fetchAll(key, t);
-  fs.writeFileSync(path.join(dir, 'tables', t + '.json'), JSON.stringify(rows));
-  counts[t] = rows.length;
-}
-const entries = JSON.parse(fs.readFileSync(path.join(dir, 'tables', 'lab_entries.json'), 'utf8'));
-const students = new Set(entries.map(r => r.user_id)), labs = new Set(entries.map(r => r.lab_id));
+  const counts = {};
+  for (const t of TABLES) {
+    const rows = await fetchAll(key, t);
+    fs.writeFileSync(path.join(dir, 'tables', t + '.json'), JSON.stringify(rows));
+    counts[t] = rows.length;
+  }
+  const entries = JSON.parse(fs.readFileSync(path.join(dir, 'tables', 'lab_entries.json'), 'utf8'));
+  const students = new Set(entries.map(r => r.user_id)), labs = new Set(entries.map(r => r.lab_id));
 
-const files = await listBucket(key, '');
-let downloaded = 0, reused = 0, bytes = 0;
-for (const f of files) {
-  const local = path.join(store, f.path);
-  if (fs.existsSync(local) && (f.size == null || fs.statSync(local).size === f.size)) { reused++; continue; }
-  const buf = await downloadObject(key, f.path);
-  fs.mkdirSync(path.dirname(local), { recursive: true }); fs.writeFileSync(local, buf); downloaded++; bytes += buf.length;
+  const files = await listBucket(key, '');
+  let downloaded = 0, reused = 0, bytes = 0;
+  for (const f of files) {
+    const local = path.join(store, f.path);
+    if (fs.existsSync(local) && (f.size == null || fs.statSync(local).size === f.size)) { reused++; continue; }
+    const buf = await downloadObject(key, f.path);
+    fs.mkdirSync(path.dirname(local), { recursive: true }); fs.writeFileSync(local, buf); downloaded++; bytes += buf.length;
+  }
+  fs.writeFileSync(path.join(dir, 'files.json'), JSON.stringify(files));
+  const summary = { backup: name, when: new Date().toISOString(), rows: counts, students_with_entries: students.size, labs_with_entries: labs.size, files: files.length, files_downloaded: downloaded, files_already_stored: reused, bytes_downloaded: bytes };
+  fs.writeFileSync(path.join(dir, 'summary.json'), JSON.stringify(summary, null, 2));
+  return { counts, students, labs, files, downloaded, reused, summary };
 }
-fs.writeFileSync(path.join(dir, 'files.json'), JSON.stringify(files));
-const summary = { backup: name, when: new Date().toISOString(), rows: counts, students_with_entries: students.size, labs_with_entries: labs.size, files: files.length, files_downloaded: downloaded, files_already_stored: reused, bytes_downloaded: bytes };
-fs.writeFileSync(path.join(dir, 'summary.json'), JSON.stringify(summary, null, 2));
+let got;
+try { got = await collect(); }
+catch (e) { fs.rmSync(dir, { recursive: true, force: true }); console.error('Backup failed, nothing was kept from this attempt: ' + String(e.message).slice(0, 300)); process.exit(1); }
+const { counts, students, labs, files, downloaded, reused, summary } = got;
 
 if (process.argv.includes('--verify')) {
   let bad = 0;

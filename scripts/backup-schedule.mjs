@@ -6,7 +6,8 @@
 //   node scripts/backup-schedule.mjs remove    → stop the daily check (backups already made stay where they are)
 //   node scripts/backup-schedule.mjs run       → what the schedule runs: back up if one is due, then delete what has expired
 //                                                (run --force backs up even when none is due; used to test the job)
-// How it works: macOS (launchd) runs `run` once a day at 17:00, at the next wake if the Mac was asleep, and at login. The job
+// How it works: macOS (launchd) runs `run` once a day at 17:00, at the next wake if the Mac was asleep at 17:00, and at login.
+// A failed backup stays due, so the next daily check tries again; nothing is deleted until a backup has verified. The job
 // runs a COPY of these scripts kept in ~/.config/ohschemlabs/backup, because a background job is not reliably allowed to read
 // files inside Dropbox. backup.mjs refreshes that copy whenever it is run from the project, so the two cannot drift apart.
 // No AI is involved in a scheduled run: it is plain node, and it prints counts only.
@@ -34,7 +35,10 @@ export function refreshInstalled() {
 }
 
 function log(line) { fs.mkdirSync(BACKUP_ROOT, { recursive: true }); fs.appendFileSync(LOG, `${new Date().toISOString()}  ${scrub(line)}\n`); console.log(scrub(line)); }
-function notify(text) { try { spawnSync('/usr/bin/osascript', ['-e', `display notification ${JSON.stringify(text)} with title "Lab site backup"`], { timeout: 10000 }); } catch (e) { /* a notification is a courtesy; the log has the line */ } }
+function notify(text) {   // a courtesy: the log has the line either way
+  let ok = false; try { ok = spawnSync('/usr/bin/osascript', ['-e', `display notification ${JSON.stringify(text)} with title "Lab site backup"`], { timeout: 10000 }).status === 0; } catch (e) { /* ignore */ }
+  if (!ok) log('(the Mac notification could not be shown)');
+}
 const ageDays = name => (Date.now() - backupTime(name)) / 864e5;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -51,8 +55,8 @@ async function run() {
   for (let attempt = 1; attempt <= 4; attempt++) {   // the Mac may have just woken with no network yet
     out = spawnSync(process.execPath, [path.join(HERE, 'backup.mjs'), '--verify'], { encoding: 'utf8', timeout: 30 * 60 * 1000 });
     if (out.status === 0) break;
-    log(`backup attempt ${attempt} failed: ${(out.stderr || out.error?.message || '').trim().split('\n').pop()}`);
-    if (attempt < 4) await sleep(90 * 1000);
+    log(`backup attempt ${attempt} failed: ${(out.stderr || out.error?.message || 'no reason given').trim().split('\n').filter(l => l.trim() && !/^Node\.js v/.test(l)).pop() || 'no reason given'}`);
+    if (attempt < 4) await sleep((+process.env.LAB_BACKUP_RETRY_SECONDS || 90) * 1000);   // the override exists for testing the failure path
   }
   if (out.status === 0) { for (const l of out.stdout.trim().split('\n')) log(l.trim()); return; }
   const last = newestVerified();
@@ -64,7 +68,7 @@ async function run() {
 function loaded() { return spawnSync('/bin/launchctl', ['print', `gui/${process.getuid()}/${LABEL}`], { encoding: 'utf8' }).status === 0; }
 function status() {
   const all = listBackups(), good = newestVerified();
-  console.log(`schedule: ${loaded() ? 'running (daily check at 17:00, on wake, at login)' : 'NOT running: node scripts/backup-schedule.mjs install'}`);
+  console.log(`schedule: ${loaded() ? 'running (daily check at 17:00, or at the next wake if the Mac was asleep then, and at login)' : 'NOT running: node scripts/backup-schedule.mjs install'}`);
   console.log(`backups in ${BACKUP_ROOT}: ${all.length}${all.length ? ` (oldest ${all[0]}, newest ${all.at(-1)})` : ''}`);
   console.log(`newest verified backup: ${good ? `${good} (${ageDays(good).toFixed(1)} days old)` : 'none'}; a new one is made every ${BACKUP_EVERY_DAYS} days, each is deleted after ${KEEP_DAYS}`);
   if (fs.existsSync(LOG)) { console.log('last lines of the log:'); for (const l of fs.readFileSync(LOG, 'utf8').trim().split('\n').slice(-6)) console.log('  ' + l); }
