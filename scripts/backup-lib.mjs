@@ -3,13 +3,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { fileURLToPath } from 'node:url';
 
 export const URL_BASE = 'https://nioebkjtrweyxvboajyv.supabase.co';
 export const BUCKET = 'lab-files-private';
 export const KEY_FILE = path.join(os.homedir(), '.config', 'ohschemlabs', 'service-role.key');
-// Backups live next to the project in Dropbox (so there is an off-machine copy), never inside the repo.
-export const BACKUP_ROOT = process.env.LAB_BACKUP_DIR || path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'Lab Site Backups');
+// Backups live in the owner's home folder, outside Dropbox and outside the repo (owner, 2026-11-21): a copy inside Dropbox is
+// held by Dropbox, shared with whoever shares that folder, and kept by Dropbox after we delete it, so the Privacy page's promise
+// that backups are deleted after KEEP_DAYS could not be kept there.
+export const BACKUP_ROOT = process.env.LAB_BACKUP_DIR || path.join(os.homedir(), 'Lab Site Backups');
+export const KEEP_DAYS = 30;        // a backup older than this is deleted (the Privacy page says so: change both together)
+export const BACKUP_EVERY_DAYS = 7; // the scheduled job makes a new backup when the newest verified one is this old
 export const TABLES = ['lab_entries', 'students', 'seats', 'classes', 'group_members', 'help_threads', 'help_messages', 'user_prefs', 'labs', 'lab_content', 'folders', 'site_content', 'attachments', 'item_groups', 'item_users', 'help_notify', 'lab_revisions',
   'oral_banks', 'oral_settings', 'oral_sessions', 'oral_messages', 'oral_reports', 'oral_usage'];   // the Socratic tutor: banks, settings, every student conversation, problem reports, usage (added 2026-11-13)
 const ORDER = { oral_banks: 'id', oral_settings: 'key', oral_sessions: 'id', oral_messages: 'id', oral_reports: 'id', oral_usage: 'user_id,day' };   // an explicit order, so paging through a table of more than 1000 rows cannot skip or repeat one
@@ -68,3 +71,29 @@ export function listBackups() {
   return fs.readdirSync(BACKUP_ROOT).filter(n => /^\d{4}-\d{2}-\d{2}-\d{2}-\d{2}$/.test(n)).sort();
 }
 export function readTable(backup, table) { const p = path.join(BACKUP_ROOT, backup, 'tables', table + '.json'); return fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')) : []; }
+
+// ---- Expiry (owner, 2026-11-21): a student who deletes their account must also disappear from the backups, so no backup is
+// kept longer than KEEP_DAYS. The newest verified backup is always kept, however old, so a broken schedule can never leave the
+// site with no backup at all. A stored photo goes once no kept backup lists it.
+export function backupTime(name) { const m = /^(\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})$/.exec(name); return m ? Date.UTC(+m[1], m[2] - 1, +m[3], +m[4], +m[5]) : NaN; }   // stamp() names are UTC
+export function isVerified(name) { try { return JSON.parse(fs.readFileSync(path.join(BACKUP_ROOT, name, 'summary.json'), 'utf8')).verified === true; } catch (e) { return false; } }
+export function newestVerified() { return listBackups().filter(isVerified).at(-1) || null; }
+export function expireBackups(now = Date.now()) {
+  const all = listBackups(), good = newestVerified();
+  if (!good) return { removed: 0, kept: all.length, files: 0, note: 'no verified backup yet, nothing deleted' };
+  const cutoff = now - KEEP_DAYS * 864e5, old = all.filter(n => n !== good && backupTime(n) < cutoff), kept = all.filter(n => !old.includes(n));
+  // Which stored photos the kept backups still need. Worked out BEFORE anything is deleted: an unreadable manifest stops the run.
+  const need = new Set();
+  for (const n of kept) { const p = path.join(BACKUP_ROOT, n, 'files.json'); if (fs.existsSync(p)) for (const f of JSON.parse(fs.readFileSync(p, 'utf8'))) need.add(f.path); }
+  for (const n of old) fs.rmSync(path.join(BACKUP_ROOT, n), { recursive: true, force: true });
+  const store = path.join(BACKUP_ROOT, 'files-store'); let files = 0;
+  const walk = (dir, rel) => {
+    for (const it of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, it.name), r = rel ? rel + '/' + it.name : it.name;
+      if (it.isDirectory()) { walk(full, r); if (!fs.readdirSync(full).length) fs.rmdirSync(full); }
+      else if (!need.has(r) && now - fs.statSync(full).mtimeMs > 864e5) { fs.rmSync(full); files++; }   // a day's grace: a backup running right now has stored photos its manifest does not list yet
+    }
+  };
+  if (fs.existsSync(store)) walk(store, '');
+  return { removed: old.length, kept: kept.length, files, note: backupTime(good) < cutoff ? `the newest verified backup (${good}) is older than ${KEEP_DAYS} days and was kept: the schedule is not running` : '' };
+}
