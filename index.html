@@ -81,10 +81,9 @@
     display: flex; justify-content: space-between; gap: 1rem; align-items: center;
   }
   .banner.error { background: #fde3e3; color: #6b1e1e; }
-  .banner.beta { background: var(--ink); color: var(--bg); letter-spacing: 0.06em; text-transform: uppercase; font-size: 12px; }
-  .admin-controls.beta-controls { display: flex; }
-  .beta-inline { display: inline-flex; gap: 0.4rem; margin-left: 0.75rem; vertical-align: middle; }
-  #lab-modal.beta-edit .beta-hide { display: none !important; }
+  .admin-controls.editor-controls { display: flex; }
+  .editor-inline { display: inline-flex; gap: 0.4rem; margin-left: 0.75rem; vertical-align: middle; }
+  #lab-modal.editor-edit .editor-hide { display: none !important; }
   .banner.announce { background: var(--card-bg); color: var(--ink); }
   .banner button {
     background: none; border: 0.5px solid currentColor; color: inherit; font-family: inherit;
@@ -470,6 +469,7 @@
   .access-list input[type="checkbox"] { width: auto; accent-color: var(--accent); }
   .access-list .acc-filter { width: 100%; margin-bottom: 0.4rem; }
   .access-list .acc-people { max-height: 200px; overflow: auto; border-top: 0.5px solid var(--rule); padding-top: 0.3rem; }
+  .access-list summary { cursor: pointer; font-size: 13px; color: var(--ink); }
   .cls-code { font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.06em; font-size: 13px; }
   .cls-nick { width: 100%; background: transparent; border: none; border-bottom: 0.5px solid var(--rule); font-family: var(--font-body); font-size: 13px; color: var(--ink); padding: 0.2rem 0; }
   .cls-nick:focus { outline: none; border-bottom-color: var(--rule-strong); }
@@ -923,7 +923,7 @@
   }
 
   @media print {
-    nav, footer, .admin-bar, .banner, .lab-toolbar, .admin-controls, .beta-inline, .lab-footer-nav, .breadcrumb, .slideshow-arrow, .slideshow-dots, .slideshow-counter, .toast, #loading { display: none !important; }
+    nav, footer, .admin-bar, .banner, .lab-toolbar, .admin-controls, .editor-inline, .lab-footer-nav, .breadcrumb, .slideshow-arrow, .slideshow-dots, .slideshow-counter, .toast, #loading { display: none !important; }
     body { background: white; color: black; font-size: 12pt; }
     .page { padding: 0; max-width: none; }
     .lab-body, .lab-summary { max-width: none; }
@@ -976,7 +976,6 @@
 
 <div class="banner error" id="error-banner" hidden><span id="error-banner-text"></span><button onclick="location.reload()">Reload</button></div>
 <div class="banner" id="fallback-banner" hidden><span id="fallback-banner-text"></span></div>
-<div class="banner beta" id="beta-banner" hidden><span id="beta-banner-text"></span></div>
 <div class="banner announce" id="announce-banner" hidden><span id="announce-banner-text"></span><button id="announce-dismiss" onclick="dismissAnnouncement()">Dismiss</button></div>
 
 <nav>
@@ -1033,7 +1032,7 @@
 
     <div class="form-grid-2">
       <div class="form-row"><label>Title</label><input type="text" id="lab-title" placeholder="e.g. Lab 3 — Titration of vinegar" oninput="onLabTitleInput()"/></div>
-      <div class="form-row beta-hide"><label>Link name (slug)</label><input type="text" id="lab-slug" placeholder="lab-3-titration" oninput="labSlugTouched = true"/><div class="hint">Becomes the address: <span id="lab-slug-preview">#/lab/…</span></div></div>
+      <div class="form-row editor-hide"><label>Link name (slug)</label><input type="text" id="lab-slug" placeholder="lab-3-titration" oninput="labSlugTouched = true"/><div class="hint">Becomes the address: <span id="lab-slug-preview">#/lab/…</span></div></div>
     </div>
     <div class="form-row"><label>Folder</label><select id="lab-folder"></select></div>
     <div class="form-row"><label>Summary (one or two sentences, shown only on the lab card and in search)</label><textarea id="lab-summary" style="min-height:56px;"></textarea></div>
@@ -1045,7 +1044,7 @@
     <div class="form-grid-3">
       <div class="form-row"><label>Report write-up minutes (optional)</label><input type="number" id="lab-report-minutes" min="0" step="5"/><div class="hint">Shown next to the procedure time when filled in. Leave empty for labs without a report.</div></div>
     </div>
-    <div class="form-grid-3 beta-hide">
+    <div class="form-grid-3 editor-hide">
       <div class="form-row">
         <label>Status</label>
         <select id="lab-status" onchange="onLabStatusChange()">
@@ -1066,9 +1065,9 @@
         <div class="hint" id="lab-access-hint"></div>
       </div>
     </div>
-    <div class="form-row access-list beta-hide" id="lab-access-list" hidden></div>
-    <div class="form-row beta-hide" id="lab-beta-row"><label style="display:flex; align-items:center; gap:0.5rem; text-transform:none; letter-spacing:0; font-size:14px;"><input type="checkbox" id="lab-beta"/> Beta editable</label><div class="hint">Beta users who can see this lab may edit it. They cannot move it, remove it or change who sees it. To let them also add, move and remove labs, switch this on for the folder instead.</div></div>
-    <div class="form-row beta-hide"><label style="display:flex; align-items:center; gap:0.5rem; text-transform:none; letter-spacing:0; font-size:14px;"><input type="checkbox" id="lab-help" onchange="if (this.checked) labHelpAdmins.autoTick = true; renderLabHelpAdmins()"/> Show a "Get help" button at the top of this lab</label><div class="hint">Signed-in students can send a question from the lab page. Replies come from the Help panel; the student sees them on the lab page.</div>
+    <div class="form-row access-list editor-hide" id="lab-access-list" hidden></div>
+    <div class="form-row access-list editor-hide" id="lab-edit-list"></div>
+    <div class="form-row editor-hide"><label style="display:flex; align-items:center; gap:0.5rem; text-transform:none; letter-spacing:0; font-size:14px;"><input type="checkbox" id="lab-help" onchange="if (this.checked) labHelpAdmins.autoTick = true; renderLabHelpAdmins()"/> Show a "Get help" button at the top of this lab</label><div class="hint">Signed-in students can send a question from the lab page. Replies come from the Help panel; the student sees them on the lab page.</div>
       <div id="lab-help-admins" style="margin-top:0.6rem;"></div>
       <div id="lab-help-auto-row" style="margin-top:0.8rem;"><label>Automatic reply to a student's first question (this lab)</label><textarea id="lab-help-auto" rows="2"></textarea><div class="hint">Shown in the student's thread right after they send, so they know it went somewhere. Leave empty to use the site-wide text from Site text ("Help: automatic first reply").</div></div></div>
 
@@ -1164,7 +1163,7 @@
       <div class="form-row"><label>Listing</label><label style="display:flex; align-items:center; gap:0.5rem; text-transform:none; letter-spacing:0; font-size:13px; color:var(--ink);"><input type="checkbox" id="folder-listed" checked/> Show in navigation</label><div class="hint">Unlisted folders still open from a direct link.</div></div>
     </div>
     <div class="form-row access-list" id="folder-access-list" hidden></div>
-    <div class="form-row" id="folder-beta-row"><label style="display:flex; align-items:center; gap:0.5rem; text-transform:none; letter-spacing:0; font-size:14px;"><input type="checkbox" id="folder-beta"/> Beta editable</label><div class="hint">Beta users who can see this folder may edit every lab inside it (subfolders included), add labs, and move or remove them. A lab they add is published at once with this folder's access. They cannot change who sees anything.</div></div>
+    <div class="form-row access-list" id="folder-edit-list"></div>
     <div class="modal-actions">
       <button class="btn btn-accent" onclick="saveFolder()" id="save-folder-btn">Save</button>
       <button class="btn" onclick="closeModal('folder-modal')">Cancel</button>
@@ -1329,10 +1328,6 @@
     <p style="font-size:13px; color:var(--muted); margin-bottom:1.25rem; line-height:1.6;">Admins can edit everything on the site and add or remove other admins. A person must have signed in to the site with Google at least once before they can be made an admin, and they need to sign out and back in for the change to take effect.</p>
     <ul class="attach-list" id="admins-list"></ul>
     <div class="media-add-row" style="margin-top:1rem;"><input type="email" id="admin-email" placeholder="email@example.com"/><button type="button" onclick="addAdmin()">Make admin</button></div>
-    <h2 style="margin-top:2rem;">Beta users</h2>
-    <p style="font-size:13px; color:var(--muted); margin-bottom:1.25rem; line-height:1.6;">A beta user is an ordinary user who may also edit the labs and folders you mark "Beta editable", when they can see them. They never see student work and cannot change who sees a lab. Like admins, they must have signed in with Google once. Removing someone takes effect at once.</p>
-    <ul class="attach-list" id="beta-list"></ul>
-    <div class="media-add-row" style="margin-top:1rem;"><input type="email" id="beta-email" placeholder="email@example.com"/><button type="button" onclick="addBeta()">Add to beta</button></div>
     <div class="modal-actions"><button class="btn" onclick="closeModal('admins-modal')">Close</button></div>
   </div>
 </div>
@@ -1467,7 +1462,6 @@ const DEFAULTS = {
   notFoundHome: 'Go to the home page',
   unavailableTitle: 'Content temporarily unavailable',
   unavailableBody: 'The site could not reach its content. Please try again in a few minutes.',
-  betaBanner: 'Beta mode',
   fallbackBanner: 'Showing a saved copy of the site. Recent changes and locked labs may be unavailable until the connection is restored.',
   errorBanner: 'Something went wrong on this page. Reloading usually fixes it.',
   loadingText: 'Loading…',
@@ -1596,7 +1590,7 @@ const SITE_TEXT_GROUPS = [
   { label: 'Report tab', keys: ['procedureTab', 'reportTab', 'reportPreview', 'reportStyleTitle', 'reportRequired', 'reportHint', 'reportWords', 'reportWordsAim', 'reportEmptyRequired', 'reportTableLabel', 'reportFigureLabel', 'reportMissingRef', 'reportNoPhotoYet'] },
   { label: 'Get help', keys: ['helpButton', 'helpIntro', 'helpLoginNudge', 'helpMessagePlaceholder', 'helpSend', 'helpSent', 'helpError', 'helpAutoReply', 'helpAutoLabel', 'helpYou', 'helpTeacher', 'helpResolvedNote', 'helpEmailFrom', 'helpEmailSubject'] },
   { label: 'Widgets (shared by every tool; each widget\'s own words are on its page in the Widgets tab)', keys: ['widgetStart', 'widgetStop', 'widgetLoading', 'widgetNoCamera', 'widgetFailed', 'widgetDenied', 'widgetUnavailable', 'widgetGetHelp', 'widgetNoTable', 'widgetSignIn'] },
-  { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner', 'betaBanner'] }
+  { label: 'Errors and fallbacks', keys: ['notFoundTitle', 'notFoundBody', 'notFoundHome', 'unavailableTitle', 'unavailableBody', 'fallbackBanner', 'errorBanner'] }
 ];
 
 const TEXT_LABELS = {
@@ -1614,7 +1608,7 @@ const TEXT_LABELS = {
   signInLink: 'Log in button / link', loginTitle: 'Log-in box title', loginAdminToggle: 'Admin fields toggle', signOutLink: 'Sign-out link', signInTitle: 'Sign-in title', signInIntro: 'Sign-in explanation', signInGoogle: 'Google button', signInCreateHint: 'Creates-an-account note', signInError: 'Sign-in error',
   accountTitle: 'Account page title', accountSignedInAs: 'Signed-in-as line', accountSyncOn: 'Syncing note', accountHello: 'Greeting in the menu', accountDelete: 'Delete account button', accountDeleteConfirm: 'Delete account confirmation', seatDeleteConfirm: 'Delete account confirmation for a class code account', accountDeleteUnavailable: 'Message when an account cannot be deleted yet', accountDeleted: 'Account deleted message', accessTitle: 'Access code heading', accessHint: 'Access code hint', accessButton: 'Access code button', accessWrong: 'Wrong access code message', accessArchived: 'Closed access code message', seatName: 'Seat name ({cls}, {n})', seatShort: 'Short seat name ({n})', seatUnknown: 'Seat fallback name', seatManaged: 'Seat account note', privacyLink: 'Privacy link', privacyTitle: 'Privacy page title', privacyBody: 'Privacy page text',
   notFoundTitle: 'Not found title', notFoundBody: 'Not found text', notFoundHome: 'Not found home link', unavailableTitle: 'Unavailable title', unavailableBody: 'Unavailable text',
-  fallbackBanner: 'Saved-copy banner', errorBanner: 'Error banner', betaBanner: 'Beta mode banner',
+  fallbackBanner: 'Saved-copy banner', errorBanner: 'Error banner',
   entriesInfo: 'Autosave notice', entriesSaved: 'Saved flash', entriesClear: 'Clear entries button', entriesClearFailed: 'Clear entries failed message', entriesSaveFailed: 'Local save failed message', photoSyncFailed: 'Photo account save failed message', entriesClearConfirm: 'Clear entries confirmation',
   notesLabel: 'Notes toggle', notesPlaceholder: 'Notes placeholder', answerPlaceholder: 'Answer placeholder', tableAddRow: 'Add row button', tableShowNumbers: 'Collapsed table: show button', tableHideNumbers: 'Collapsed table: hide button',
   photoAdd: 'Add photo button', photoChange: 'Change photo button', photoRemove: 'Remove photo button',
@@ -1694,8 +1688,8 @@ function escapeHTML(str) {
 function jsAttr(str) { return escapeHTML(String(str == null ? '' : str).replace(/[\\'"\n\r\u2028\u2029<>&]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'))); }
 
 /* ============================================================
-   CLEANING LAB CONTENT (2026-11-21, built for beta mode)
-   A lab's procedure is written by whoever may edit the lab, and since beta mode that is no longer only the owner. Whatever
+   CLEANING LAB CONTENT (2026-11-21, built when people other than the owner became able to edit labs)
+   A lab's procedure is written by whoever may edit the lab, and with the edit lists that is no longer only the owner. Whatever
    they write is shown inside the page of everyone who opens the lab, admins included, so nothing in it may be able to run
    code. safeHTML() is applied to every piece of lab content on its way to the page: the output of ltRender (each tab), a
    rich-text procedure, and the rich-text editor when it loads a lab.
@@ -1958,26 +1952,35 @@ function effectiveFolderAccess(folder) {
 }
 function isRealAdmin() { return state.role === 'admin'; }
 function isAdmin() { return state.role === 'admin' && !state.adminPreview; }   // false while an admin is viewing as a student
-// BETA MODE (owner, 2026-11-21). A beta user is an ordinary signed-in user (same access, never drafts) who may also edit the labs
-// and folders the owner marked "Beta editable", when they can see them. The database decides (beta_can_edit_lab and
-// beta_can_use_folder in supabase/beta-2026-11-21.sql) and every beta write goes through a function there; the helpers below
-// only decide which buttons to show.
-function isBeta() { return !!state.beta && !!state.session && !isRealAdmin(); }
-async function loadBeta() {
-  state.beta = false;
-  if (!sb || !state.session || isRealAdmin()) return;
-  try { const { data, error } = await sb.rpc('is_beta'); state.beta = !error && data === true; } catch (e) { /* not in beta */ }
+// EDITORS (owner, 2026-11-22; replaces beta mode). Every lab and folder has a "who can edit" list of classes and accounts, kept
+// by admins. Someone on a list is an ordinary signed-in user (same access, never drafts) who may also edit that lab, or
+// everything in that folder, when they can see it. The database decides (editor_can_edit_lab and editor_can_use_folder in
+// supabase/editors-2026-11-22.sql) and every editor write goes through a function there; the helpers below only decide which
+// buttons to show, from the answer of my_edit_rights().
+function isEditor() { return !!state.session && !isRealAdmin() && !!state.editFolders && (state.editFolders.size + state.editLabs.size) > 0; }
+async function loadEditRights() {
+  const folders = new Set(), labs = new Set(), listed = new Set();   // swapped in together at the end, so a render in between keeps the old answer
+  if (sb && state.session) {
+    try {
+      if (isRealAdmin()) {   // admins edit everything; they only need to know which items have a list, for the badge
+        const [g, u] = await Promise.all([sb.from('item_edit_groups').select('item_id'), sb.from('item_edit_users').select('item_id')]);
+        for (const r of [...(g.data || []), ...(u.data || [])]) listed.add(r.item_id);
+      } else {
+        const { data, error } = await sb.rpc('my_edit_rights');
+        if (!error) for (const r of data || []) (r.kind === 'folder' ? folders : labs).add(r.item);
+      }
+    } catch (e) { /* no edit rights */ }
+  }
+  state.editFolders = folders; state.editLabs = labs; state.editListed = listed;
 }
-function folderInBeta(folderId) { return folderChain(folderId).some(f => f.beta_editable); }   // the switch covers everything inside the folder
-function betaCanUseFolder(folderId) { return isBeta() && !!folderId && !!folderById(folderId) && folderInBeta(folderId); }   // add labs here, move labs in or out
-function betaCanEditLab(lab) { return isBeta() && !!lab && labIsLive(lab) && (!!lab.beta_editable || folderInBeta(lab.folder_id)); }
-function betaLabInFolder(lab) { return betaCanEditLab(lab) && betaCanUseFolder(lab.folder_id); }   // also move, reorder, remove
-function betaColumnsReady() { return [...state.folders, ...state.labs].some(r => 'beta_editable' in r); }   // false until the beta SQL has been run on the database
-function betaFolderOptionsHTML(lab) {   // a lab moves only between beta folders; a lab that is beta editable on its own stays where it is
+function editorCanUseFolder(folderId) { return isEditor() && !!folderId && !!folderById(folderId) && state.editFolders.has(folderId); }   // add labs here, move labs in or out
+function editorCanEditLab(lab) { return isEditor() && !!lab && labIsLive(lab) && (state.editLabs.has(lab.id) || state.editFolders.has(lab.folder_id)); }
+function editorLabInFolder(lab) { return editorCanEditLab(lab) && editorCanUseFolder(lab.folder_id); }   // also move, reorder, delete
+function editorFolderOptionsHTML(lab) {   // a lab moves only between folders the editor may edit; a lab they edit on its own list stays where it is
   const cur = (lab ? lab.folder_id : (state.route.view === 'folder' ? folderBySlug(state.route.slug)?.id : null)) || null;
-  const movable = !lab || betaCanUseFolder(lab.folder_id);
+  const movable = !lab || editorCanUseFolder(lab.folder_id);
   const label = f => folderChain(f.id).map(x => x.name).join(' / ');
-  const opts = state.folders.filter(f => f.id === cur || (movable && betaCanUseFolder(f.id))).sort((a, b) => label(a).localeCompare(label(b)))
+  const opts = state.folders.filter(f => f.id === cur || (movable && editorCanUseFolder(f.id))).sort((a, b) => label(a).localeCompare(label(b)))
     .map(f => `<option value="${escapeHTML(f.id)}" ${f.id === cur ? 'selected' : ''}>${escapeHTML(label(f))}</option>`);
   if (!cur) opts.unshift('<option value="" selected>(Top level)</option>');
   return opts.join('');
@@ -2015,12 +2018,12 @@ async function moveItem(kind, id, dir) {
   const items = itemsIn(parent);
   const i = items.findIndex(it => it.kind === kind && it.row.id === id), j = i + dir;
   if (i < 0 || j < 0 || j >= items.length) return;
-  if (!isAdmin()) {   // beta mode: only this lab's own number changes, to a value just past the neighbour it steps over
-    if (kind !== 'lab' || !betaLabInFolder(row)) return;
+  if (!isAdmin()) {   // an editor: only this lab's own number changes, to a value just past the neighbour it steps over
+    if (kind !== 'lab' || !editorLabInFolder(row)) return;
     const near = items[j].row.sort_order || 0, far = items[j + dir] ? (items[j + dir].row.sort_order || 0) : near + dir * 20;
     let v = Math.round((near + far) / 2); if (v === near) v = near + dir;
     const was = row.sort_order; row.sort_order = v; render();
-    const { error } = await sb.rpc('beta_set_lab_order', { p_lab_id: id, p_order: v });
+    const { error } = await sb.rpc('editor_set_lab_order', { p_lab_id: id, p_order: v });
     if (error) { row.sort_order = was; render(); toast('Could not save the new order: ' + error.message, true); }
     return;
   }
@@ -2075,7 +2078,6 @@ function renderChrome() {
   $('search-input').placeholder = getText('searchPlaceholder');
   $('search-btn').textContent = getText('searchButton');
   $('nav-login').textContent = getText('signInLink'); $('nav-login').hidden = !!state.session;
-  document.body.classList.toggle('beta-mode', isBeta()); $('beta-banner-text').textContent = getText('betaBanner'); $('beta-banner').hidden = !isBeta();
   const greet = fmt('accountHello', { name: studentFirstName() });
   $('nav-signin').innerHTML = greet; $('nav-signin').hidden = !isStudent();
   $('footer-signin').innerHTML = isStudent() ? greet : getText('signInLink'); $('footer-signin').hidden = isAdmin();
@@ -2168,7 +2170,7 @@ function labBadges(lab) {
   if (isAdmin()) {
     if (lab.status === 'draft') b.push(`<span class="badge draft">${escapeHTML(getText('draftBadge'))}</span>`);
     else if (lab.status === 'scheduled' && !labIsLive(lab)) b.push(`<span class="badge scheduled">${escapeHTML(getText('scheduledBadge'))}</span>`);
-    if (lab.beta_editable) b.push(`<span class="badge">Beta editable</span>`);
+    if (state.editListed && state.editListed.has(lab.id)) b.push(`<span class="badge">Editors</span>`);
   }
   const acc = effectiveAccess(lab).level;
   if (acc === 'password') b.push(`<span class="badge lock">${escapeHTML(getText('lockedBadge'))}</span>`);
@@ -2196,7 +2198,7 @@ function labCardHTML(lab) {
         <button onclick="openLabModal('${lab.id}')">Edit</button>
         <button class="delete" onclick="confirmDeleteLab('${lab.id}')">Delete</button>
       </div>
-      ${betaCanEditLab(lab) ? `<div class="admin-controls beta-controls" onclick="event.preventDefault(); event.stopPropagation();">${betaLabInFolder(lab) ? `<button onclick="moveItem('lab', '${jsAttr(lab.id)}', -1)" title="Move earlier">←</button><button onclick="moveItem('lab', '${jsAttr(lab.id)}', 1)" title="Move later">→</button>` : ''}<button onclick="openLabModal('${jsAttr(lab.id)}')">Edit</button>${betaLabInFolder(lab) ? `<button class="delete" onclick="confirmDeleteLab('${jsAttr(lab.id)}')">Remove</button>` : ''}</div>` : ''}
+      ${editorCanEditLab(lab) ? `<div class="admin-controls editor-controls" onclick="event.preventDefault(); event.stopPropagation();">${editorLabInFolder(lab) ? `<button onclick="moveItem('lab', '${jsAttr(lab.id)}', -1)" title="Move earlier">←</button><button onclick="moveItem('lab', '${jsAttr(lab.id)}', 1)" title="Move later">→</button>` : ''}<button onclick="openLabModal('${jsAttr(lab.id)}')">Edit</button>${editorLabInFolder(lab) ? `<button class="delete" onclick="confirmDeleteLab('${jsAttr(lab.id)}')">Delete</button>` : ''}</div>` : ''}
       <div class="card-img">${img}</div>
       <div class="card-title">${escapeHTML(lab.title)}</div>
       ${lab.summary ? `<div class="card-summary">${escapeHTML(lab.summary)}</div>` : ''}
@@ -2212,7 +2214,7 @@ function folderCardHTML(f) {
   if (acc === 'password') badges.push(`<span class="badge lock">${escapeHTML(getText('lockedBadge'))}</span>`);
   if (acc === 'accounts' && isAdmin()) badges.push(`<span class="badge lock">${escapeHTML(getText('signInRequiredBadge'))}</span>`);
   if (acc === 'admin') badges.push(`<span class="badge draft">Admin only</span>`);
-  if (isAdmin() && f.beta_editable) badges.push(`<span class="badge">Beta editable</span>`);
+  if (isAdmin() && state.editListed && state.editListed.has(f.id)) badges.push(`<span class="badge">Editors</span>`);
   return `
     <a class="card" href="#/f/${encodeURIComponent(f.slug)}">
       <div class="admin-controls" onclick="event.preventDefault(); event.stopPropagation();">
@@ -2283,7 +2285,7 @@ function renderFolder(view) {
   const items = itemsIn(f.id);
   let html = `<section class="page">
     ${breadcrumbHTML(f.parent_id)}
-    <h1 class="page-title">${escapeHTML(f.name)} <span class="admin-inline"><button class="btn-small" onclick="openFolderModal('${f.id}')">Edit folder</button></span>${betaCanUseFolder(f.id) ? `<span class="beta-inline"><button class="btn-small" onclick="openLabModal()">+ Lab</button></span>` : ''}</h1>
+    <h1 class="page-title">${escapeHTML(f.name)} <span class="admin-inline"><button class="btn-small" onclick="openFolderModal('${f.id}')">Edit folder</button></span>${editorCanUseFolder(f.id) ? `<span class="editor-inline"><button class="btn-small" onclick="openLabModal()">+ Lab</button></span>` : ''}</h1>
     ${f.description ? `<p class="lab-summary" style="margin-top:-0.5rem; margin-bottom:1rem;">${escapeHTML(f.description)}</p>` : ''}`;
   if (!items.length) html += `<div class="empty-state" style="margin-top:2rem;">${escapeHTML(getText('folderEmpty'))}</div>`;
   else html += `<div style="margin-top:1.5rem;">${gridOrEmpty(items.map(itemCardHTML), '')}</div>`;
@@ -2655,7 +2657,7 @@ async function renderLab(view) {
   view.innerHTML = `<section class="page lab-page">
     ${breadcrumbHTML(lab.folder_id)}
     <header class="lab-header">
-      <h1 class="lab-title">${escapeHTML(lab.title)} <span class="admin-inline"><button class="btn-small" onclick="openLabModal('${lab.id}')">Edit lab</button></span>${betaCanEditLab(lab) ? `<span class="beta-inline"><button class="btn-small" onclick="openLabModal('${jsAttr(lab.id)}')">Edit lab</button></span>` : ''}</h1>
+      <h1 class="lab-title">${escapeHTML(lab.title)} <span class="admin-inline"><button class="btn-small" onclick="openLabModal('${lab.id}')">Edit lab</button></span>${editorCanEditLab(lab) ? `<span class="editor-inline"><button class="btn-small" onclick="openLabModal('${jsAttr(lab.id)}')">Edit lab</button></span>` : ''}</h1>
       <div class="lab-meta">${labBadges(lab)}${meta.join('')}</div>
     </header>
     ${lab.help_enabled ? '<div id="help-host"></div>' : ''}
@@ -2922,7 +2924,7 @@ function buildPdfDocument(which, lab) {
   doc.innerHTML = `<div class="pdf-head"><div class="pdf-title">${escapeHTML(lab.title)}${which === 'report' ? ` — ${escapeHTML(getText('reportTab'))}` : (which !== 'procedure' && labTabName(which) ? ` — ${escapeHTML(labTabName(which))}` : '')}</div><div class="pdf-meta">${[who, new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })].filter(Boolean).map(escapeHTML).join(' · ')}</div></div>`;
   const body = src.cloneNode(true); body.hidden = false; body.removeAttribute('hidden');
   // remove interactive chrome
-  body.querySelectorAll('.rp-toolbar, .rp-doc-header, .rp-meter, .lab-toolbar, .lt-table-add, .lt-graph-tools, .lt-graph-read, .lt-g-probe, .lt-photo-actions, .lt-status, .rp-hint, .admin-inline, .beta-inline, .lt-widget, .review-banner, .lab-footer-nav, button, input[type="file"]').forEach(el => el.remove());
+  body.querySelectorAll('.rp-toolbar, .rp-doc-header, .rp-meter, .lab-toolbar, .lt-table-add, .lt-graph-tools, .lt-graph-read, .lt-g-probe, .lt-photo-actions, .lt-status, .rp-hint, .admin-inline, .editor-inline, .lt-widget, .review-banner, .lab-footer-nav, button, input[type="file"]').forEach(el => el.remove());
   // answer boxes and cells → static text
   body.querySelectorAll('[contenteditable]').forEach(el => { const live = src.querySelector(`[data-field="${el.dataset.field}"]`); el.textContent = live ? ltFieldText(live) : ltFieldText(el); el.removeAttribute('contenteditable'); el.classList.add('pdf-field'); if (!el.textContent.trim()) { el.classList.add('pdf-empty'); if (el.tagName === 'TD') el.textContent = '\u00a0'; } });
   body.querySelectorAll('details').forEach(d => { const f = d.querySelector('.lt-field'); if (f && f.textContent.trim()) d.open = true; else if (!d.classList.contains('rp-hint')) d.remove(); });
@@ -3046,7 +3048,7 @@ async function checkSession() {
     state.session = data.session; state.role = roleFromSession(data.session);
     await ltSwitchUser(data.session?.user?.id || null);
     await loadMySeat();
-    await loadBeta();
+    await loadEditRights();
   } catch (e) { console.warn('session check failed', e); }
   document.body.classList.toggle('admin-mode', isAdmin());
   document.body.classList.toggle('admin-preview', isRealAdmin() && !!state.adminPreview);
@@ -3144,7 +3146,7 @@ async function reloadCatalogue() {
   if (reloadCatalogue._p) return reloadCatalogue._p;
   reloadCatalogue._p = (async () => {
     state.content = {};
-    try { await loadCatalogue(); } finally { reloadCatalogue._p = null; }
+    try { await loadCatalogue(); await loadEditRights(); } finally { reloadCatalogue._p = null; }
     renderChrome(); render();
   })();
   return reloadCatalogue._p;
@@ -3177,7 +3179,7 @@ async function compressImage(file) {
   return { blob, ext };
 }
 async function uploadFile(file, folderPath, { compress = true } = {}) {
-  if (!sb || !(isAdmin() || isBeta())) throw new Error('Not logged in');   // the database lets a beta user add files only under labs/<a lab they may edit>/
+  if (!sb || !(isAdmin() || isEditor())) throw new Error('Not logged in');   // the database lets an editor add files only under labs/<a lab they may edit>/
   if (file.size > CONFIG.MAX_UPLOAD_BYTES) throw new Error(`"${file.name}" is larger than 50 MB`);
   let body = file, name = safeFilename(file.name), contentType = file.type || 'application/octet-stream';
   if (compress && file.type.startsWith('image/')) {
@@ -3516,6 +3518,62 @@ async function saveAccessList(kind, itemId) {
   if (st.users.size) { r = await sb.from('item_users').insert([...st.users].map(u => ({ item_id: itemId, user_id: u }))); if (r.error) throw r.error; }
 }
 
+/* ---------- Edit lists (who may edit a lab, or everything in a folder) ----------
+   Kept by admins in item_edit_groups / item_edit_users (supabase/editors-2026-11-22.sql) and shown on every lab and folder,
+   whatever its access setting. Being on a list never lets anyone SEE the item: the access setting still decides that. */
+let editListState = { lab: null, folder: null };   // { itemId, classes: Set, users: Set, allClasses, allPeople, dirty, open }
+async function loadEditList(kind, itemId) {
+  const box = $(kind + '-edit-list'); editListState[kind] = null;
+  box.innerHTML = '<span class="hint">Loading who can edit…</span>';
+  const current = () => (kind === 'lab' ? editingLabId : editingFolderId) === itemId;   // the editor may have moved on to another item meanwhile
+  try {
+    const [classes, people, ig, iu] = await Promise.all([
+      rpc('list_classes'), rpc('list_account_choices'),
+      sb.from('item_edit_groups').select('group_id').eq('item_id', itemId), sb.from('item_edit_users').select('user_id').eq('item_id', itemId)
+    ]);
+    if (ig.error) throw ig.error; if (iu.error) throw iu.error;
+    if (!current()) return;
+    editListState[kind] = { itemId, classes: new Set((ig.data || []).map(r => r.group_id)), users: new Set((iu.data || []).map(r => r.user_id)), allClasses: classes || [], allPeople: people || [], dirty: false, open: false };
+    renderEditList(kind);
+  } catch (e) {
+    if (!current()) return;
+    const missing = e && (e.code === '42P01' || e.code === 'PGRST205');
+    box.innerHTML = `<div class="lt-error">${escapeHTML(missing ? 'Who can edit: not set up in the database yet.' : 'Who can edit could not be loaded (' + (e.message || e) + '). It is left as it was when you save.')}</div>`;
+  }
+}
+function editListSummary(st) {
+  const c = st.classes.size, u = st.users.size;
+  return 'Who can edit: ' + (c || u ? [c ? `${c} class${c === 1 ? '' : 'es'}` : '', u ? `${u} account${u === 1 ? '' : 's'}` : ''].filter(Boolean).join(', ') : 'admins only');
+}
+function renderEditList(kind, filter = '') {
+  const st = editListState[kind], box = $(kind + '-edit-list'); if (!st) return;
+  const f = filter.trim().toLowerCase();
+  const people = st.allPeople.filter(p => !f || p.label.toLowerCase().includes(f));
+  box.innerHTML = `<details ${st.open ? 'open' : ''}><summary>${escapeHTML(editListSummary(st))}</summary>
+    <h4>Classes</h4>
+    ${st.allClasses.length ? st.allClasses.map(c => `<label class="bu-check"><input type="checkbox" data-edit="class" data-id="${escapeHTML(c.id)}" ${st.classes.has(c.id) ? 'checked' : ''}/> ${escapeHTML(c.name)}${c.archived ? ' <span class="badge">closed</span>' : ''} <span class="hint" style="margin:0;">${c.seat_count} seats</span></label>`).join('') : '<span class="hint">No classes yet. Create them from the Classes button in the admin bar.</span>'}
+    <h4>Individual accounts (Google sign-in)</h4>
+    ${st.allPeople.length ? `<input type="text" class="acc-filter" placeholder="Filter by name or email…" value="${escapeHTML(filter)}" oninput="renderEditList('${kind}', this.value)"/>
+      <div class="acc-people">${people.map(p => `<label class="bu-check"><input type="checkbox" data-edit="user" data-id="${escapeHTML(p.user_id)}" ${st.users.has(p.user_id) ? 'checked' : ''}/> ${escapeHTML(p.label)}</label>`).join('') || '<span class="hint">No matches.</span>'}</div>` : '<span class="hint">No Google accounts have signed in yet.</span>'}
+    <div class="hint" style="margin-top:0.6rem;">${kind === 'lab'
+      ? 'Ticked classes and accounts may edit this lab (text, photos, files) if they can open it. They cannot move it, delete it or change who sees it. To let them also add, move and delete labs, tick them on the folder instead.'
+      : 'Ticked classes and accounts may edit every lab inside this folder (subfolders included), add labs, and move or delete them, if they can open the folder. A lab they add is published at once with this folder\'s access.'} Ticking someone here never lets them see anything new, and editors never see student work.</div></details>`;
+  box.querySelector('details').addEventListener('toggle', e => { st.open = e.target.open; });
+  box.querySelectorAll('input[data-edit]').forEach(cb => cb.addEventListener('change', () => {
+    const set = cb.dataset.edit === 'class' ? st.classes : st.users; cb.checked ? set.add(cb.dataset.id) : set.delete(cb.dataset.id);
+    st.dirty = true; box.querySelector('summary').textContent = editListSummary(st);
+  }));
+  const filt = box.querySelector('.acc-filter'); if (filt && f) { filt.focus(); filt.setSelectionRange(filt.value.length, filt.value.length); }
+}
+async function saveEditList(kind, itemId) {
+  const st = editListState[kind]; if (!st || !st.dirty || st.itemId !== itemId) return;   // rewritten only when it loaded for this item and was changed
+  let r = await sb.from('item_edit_groups').delete().eq('item_id', itemId); if (r.error) throw r.error;
+  r = await sb.from('item_edit_users').delete().eq('item_id', itemId); if (r.error) throw r.error;
+  if (st.classes.size) { r = await sb.from('item_edit_groups').insert([...st.classes].map(g => ({ item_id: itemId, group_id: g }))); if (r.error) throw r.error; }
+  if (st.users.size) { r = await sb.from('item_edit_users').insert([...st.users].map(u => ({ item_id: itemId, user_id: u }))); if (r.error) throw r.error; }
+  st.dirty = false;
+}
+
 /* ---------- Student-work guard: warn before an edit hides saved entries ----------
    Entries are saved under widget ids (q1, t1.r2c3, proc1.step2, …). Removing a block, renaming its id, or changing a table's
    shape leaves those entries in the database but invisible (or in the wrong cell). While a lab is being edited, `labWork`
@@ -3524,9 +3582,9 @@ let labWork = null, labWorkPromise = null;
 async function loadLabWork(labId, oldText) {
   labWork = null;
   if (!labId || !sb || state.source !== 'live') return null;
-  if (!isAdmin()) {   // beta mode never reads entries: the database only says WHICH blocks hold saved work (no values, counts or accounts)
+  if (!isAdmin()) {   // an editor never reads entries: the database only says WHICH blocks hold saved work (no values, counts or accounts)
     try {
-      const { data, error } = await sb.rpc('beta_lab_work_keys', { p_lab_id: labId }); if (error) throw error;
+      const { data, error } = await sb.rpc('editor_lab_work_keys', { p_lab_id: labId }); if (error) throw error;
       const keys = new Map((data || []).map(r => [r.key, 1]));
       labWork = { labId, students: keys.size ? 1 : 0, keys, oldSchema: ltEntrySchema(oldText), vague: true };
     } catch (e) { console.warn('could not check for saved work:', e.message); labWork = null; }
@@ -3614,7 +3672,7 @@ function labBlockLabels(text) {
 function labWorkWarning(problems, oldText) {
   const labels = labBlockLabels(oldText);
   const lines = problems.map(p => {
-    const who = labWork && labWork.vague ? 'Saved work' : `${p.students} student${p.students === 1 ? '' : 's'}`;   // beta mode is not told how many
+    const who = labWork && labWork.vague ? 'Saved work' : `${p.students} student${p.students === 1 ? '' : 's'}`;   // an editor is not told how many
     const what = labels.get(p.id) || `"${p.id}"`;
     return p.kind === 'missing' ? `• ${who}: ${what} is gone from this version, so their saved answers will no longer show.` : `• ${who}: ${what} changed shape, so their saved cells may show in the wrong place.`;
   });
@@ -3645,11 +3703,11 @@ function renderLabHelpAdmins() {
   box.innerHTML = `<div class="hint" style="margin-bottom:0.3rem;">Email these admins when a student asks (untick everyone for panel-only):</div>` +
     labHelpAdmins.admins.map(a => `<label style="display:flex; align-items:center; gap:0.5rem; text-transform:none; letter-spacing:0; font-size:13px; margin:0.2rem 0;"><input type="checkbox" data-help-admin="${escapeHTML(a.user_id)}" ${labHelpAdmins.checked.has(a.user_id) ? 'checked' : ''} onchange="this.checked ? labHelpAdmins.checked.add(this.dataset.helpAdmin) : labHelpAdmins.checked.delete(this.dataset.helpAdmin)"/> ${escapeHTML(a.email)}${a.user_id === me ? ' <span class="badge">you</span>' : ''}</label>`).join('') || '<div class="hint">No admins found.</div>';
 }
-let labBetaEdit = false;   // the lab editor is open in beta mode: fewer fields, and the save goes through beta_save_lab
+let labEditorEdit = false;   // the lab editor is open for an editor (not an admin): fewer fields, and the save goes through editor_save_lab
 async function openLabModal(id) {
-  const beta = !isAdmin() && (id ? betaCanEditLab(state.labs.find(l => l.id === id)) : betaCanUseFolder(state.route.view === 'folder' ? folderBySlug(state.route.slug)?.id : null));
-  if (!isAdmin() && !beta) return;
-  labBetaEdit = beta;
+  const asEditor = !isAdmin() && (id ? editorCanEditLab(state.labs.find(l => l.id === id)) : editorCanUseFolder(state.route.view === 'folder' ? folderBySlug(state.route.slug)?.id : null));   // true = opened by an editor, not an admin
+  if (!isAdmin() && !asEditor) return;
+  labEditorEdit = asEditor;
   if (state.source !== 'live') { toast('The site is showing a saved copy of its content right now, so labs cannot be edited safely. Try again in a minute.', true); return; }
   const lab = id ? state.labs.find(l => l.id === id) : null;
   let entry = null;
@@ -3671,15 +3729,15 @@ async function openLabModal(id) {
   labFigureUploads = [];
   labSlugTouched = !!lab;
   $('lab-modal-title').textContent = lab ? 'Edit lab' : 'Add a lab';
-  $('delete-lab-btn').style.display = lab && (!beta || betaLabInFolder(lab)) ? 'inline-block' : 'none'; $('delete-lab-btn').textContent = beta ? 'Remove' : 'Delete';
-  $('lab-modal').classList.toggle('beta-edit', beta);
-  $('lab-beta').checked = !!lab?.beta_editable; $('lab-beta-row').style.display = betaColumnsReady() ? '' : 'none';
-  $('lab-folder').disabled = $('lab-order').disabled = beta && !!lab && !betaCanUseFolder(lab.folder_id);   // beta editable on its own: it stays where it is
+  $('delete-lab-btn').style.display = lab && (!asEditor || editorLabInFolder(lab)) ? 'inline-block' : 'none'; $('delete-lab-btn').textContent = 'Delete';
+  $('lab-modal').classList.toggle('editor-edit', asEditor);
+  editListState.lab = null; $('lab-edit-list').innerHTML = ''; if (!asEditor) loadEditList('lab', editingLabId);   // the edit list is an admin's to keep
+  $('lab-folder').disabled = $('lab-order').disabled = asEditor && !!lab && !editorCanUseFolder(lab.folder_id);   // edited on its own list: it stays where it is
   $('lab-id').value = lab ? lab.id : '';
   $('lab-title').value = lab?.title || '';
   $('lab-slug').value = lab?.slug || '';
   $('lab-slug-preview').textContent = '#/lab/' + (lab?.slug || '…');
-  $('lab-folder').innerHTML = beta ? betaFolderOptionsHTML(lab) : folderOptionsHTML(lab?.folder_id || (state.route.view === 'folder' ? folderBySlug(state.route.slug)?.id : null) || null);
+  $('lab-folder').innerHTML = asEditor ? editorFolderOptionsHTML(lab) : folderOptionsHTML(lab?.folder_id || (state.route.view === 'folder' ? folderBySlug(state.route.slug)?.id : null) || null);
   $('lab-summary').value = lab?.summary || '';
   $('lab-tags').value = (lab?.tags || []).join(', ');
   $('lab-minutes').value = lab?.estimated_minutes || '';
@@ -3689,11 +3747,11 @@ async function openLabModal(id) {
   $('lab-publish-at').value = toLocalDatetime(lab?.publish_at);
   onLabStatusChange();
   accessListState.lab = null;
-  $('lab-access').value = lab?.access || 'inherit'; if (!beta) updateAccessHint();   // the access list is admin-only data, and beta mode cannot change access anyway
+  $('lab-access').value = lab?.access || 'inherit'; if (!asEditor) updateAccessHint();   // the access list is admin-only data, and an editor cannot change access anyway
   $('lab-help').checked = !!lab?.help_enabled;
   $('lab-help-auto').value = lab?.help_auto_reply || ''; $('lab-help-auto').placeholder = getText('helpAutoReply');
   labHelpAdmins = { admins: [], checked: new Set(), loaded: false, autoTick: !lab, error: null, labId: lab ? lab.id : null };
-  if (!beta) loadLabHelpAdmins(lab ? lab.id : null);   // the admin list is not a beta user's to read; Get help settings are left as they are
+  if (!asEditor) loadLabHelpAdmins(lab ? lab.id : null);   // the admin list is not an editor's to read; Get help settings are left as they are
   labCoverItem = lab?.cover_path ? parseMediaEntry(lab.cover_path) : null;
   labCoverZoom = lab?.cover_zoom || 100;
   labMediaItems = (entry?.media || []).map(parseMediaEntry).filter(Boolean);
@@ -3735,7 +3793,7 @@ async function saveLab() {
   slug = uniqueSlug(slug, null, existingId || null, state.labs);
   const status = $('lab-status').value;
   const publishAt = status === 'scheduled' && $('lab-publish-at').value ? new Date($('lab-publish-at').value).toISOString() : null;
-  if (!labBetaEdit && status === 'scheduled' && !publishAt) { toast('Please choose a publish date and time', true); return; }
+  if (!labEditorEdit && status === 'scheduled' && !publishAt) { toast('Please choose a publish date and time', true); return; }
 
   const sel = $('lab-format').value;
   const format = sel === 'html' ? 'html' : 'labtags';           // the Builder is a view of a lab file, so it saves as 'labtags'
@@ -3764,10 +3822,9 @@ async function saveLab() {
     help_enabled: $('lab-help').checked,
     help_auto_reply: $('lab-help-auto').value.trim() || null
   };
-  if (!labBetaEdit && betaColumnsReady()) lab.beta_editable = $('lab-beta').checked;   // the column exists only once the beta SQL has been run
   if (original && originalEntry?.format === 'labtags' && format === 'html' && !confirm('This lab is a lab file. Saving it as Rich text replaces the whole procedure with what is in the rich-text box (empty unless you typed there). Continue?')) return;
   if (original && originalEntry?.format === 'html' && format === 'labtags' && isEmpty && (originalEntry.content || '').replace('<p><br></p>', '').trim() && !confirm('This lab is rich text. Saving it as an empty lab file discards that rich text. Continue?')) return;
-  if (!labBetaEdit && $('lab-access').value === 'accounts' && !accessListState.lab) { toast('The list of classes and accounts has not loaded yet, so nobody could open this lab. Wait a moment (or reopen the lab) and save again.', true); return; }
+  if (!labEditorEdit && $('lab-access').value === 'accounts' && !accessListState.lab) { toast('The list of classes and accounts has not loaded yet, so nobody could open this lab. Wait a moment (or reopen the lab) and save again.', true); return; }
   const btn = $('save-lab-btn'); btn.disabled = true; btn.textContent = 'Saving…';
   try {
     if (original) {
@@ -3775,10 +3832,10 @@ async function saveLab() {
       const problems = labWorkProblems(work, isEmpty ? '' : content, format === 'labtags');
       if (problems.length && !confirm(labWorkWarning(problems, originalEntry?.format === 'labtags' ? (originalEntry.content || '') : ''))) { btn.disabled = false; btn.textContent = 'Save lab'; return; }
     }
-    if (labBetaEdit) {
-      // Beta mode: one database function checks the right to edit and writes only what a beta user may change (never status, access,
-      // the link name or the beta switch). It keeps a revision first and returns the lab's link name.
-      const r = await sb.rpc('beta_save_lab', {
+    if (labEditorEdit) {
+      // An editor: one database function checks the right to edit and writes only what an editor may change (never status, access
+      // or the link name). It keeps a revision first and returns the lab's link name.
+      const r = await sb.rpc('editor_save_lab', {
         p_lab: { id: lab.id, title: lab.title, slug: lab.slug, folder_id: lab.folder_id, summary: lab.summary, cover_path: lab.cover_path, cover_zoom: lab.cover_zoom, tags: lab.tags, estimated_minutes: lab.estimated_minutes, report_minutes: lab.report_minutes, sort_order: lab.sort_order },
         p_content: { media: mediaArr, content: isEmpty ? null : content, format },
         p_attachments: labAttachmentItems.map(a => ({ id: a.id, name: a.name.trim() || 'File', path: a.path, mime: a.mime || null, size_bytes: a.size_bytes || 0 }))
@@ -3800,6 +3857,7 @@ async function saveLab() {
       if (r.error) throw r.error;
     }
     await saveAccessList('lab', lab.id);
+    await saveEditList('lab', lab.id);
     // Who gets emailed about help requests on this lab (only rewritten once the admin list has loaded, so a quick save cannot wipe it).
     if (labHelpAdmins.loaded || !lab.help_enabled) {
       r = await sb.from('help_notify').delete().eq('lab_id', lab.id); if (r.error) throw r.error;
@@ -3818,7 +3876,7 @@ async function saveLab() {
   }
   btn.disabled = false; btn.textContent = 'Save';
   if (sel === 'builder' && buLabLive()) { bmFreezeAll(buLabLive()); buLastSerialized = $('lab-markup').value; }   // saved ids are now permanent
-  if (!labBetaEdit && lab.help_enabled && !labHelpAdmins.loaded) toast('Saved, but the email recipients for Get help could not be loaded. Open the lab again to check who gets emailed.', true);
+  if (!labEditorEdit && lab.help_enabled && !labHelpAdmins.loaded) toast('Saved, but the email recipients for Get help could not be loaded. Open the lab again to check who gets emailed.', true);
   closeModal('lab-modal');
   delete state.content[lab.id];
   await reloadCatalogue();
@@ -3826,20 +3884,26 @@ async function saveLab() {
   if (!existingId) navigate('#/lab/' + encodeURIComponent(slug));
 }
 
-// Beta mode never deletes: "Remove" turns the lab into a draft that only admins see, so the owner can put it back. The database refuses
-// when anyone else has saved work in the lab, and is asked first so the confirmation is only shown when the removal can happen.
-async function betaRemoveLab(id) {
-  const lab = state.labs.find(l => l.id === id); if (!lab || !betaLabInFolder(lab)) return false;
-  const ask = await sb.rpc('beta_remove_lab', { p_lab_id: id, p_check: true });
+// An editor deletes a lab inside a folder they may edit. It is a real deletion (owner, 2026-11-22). The database refuses when anyone
+// else has saved work, a Get help thread or a Socratic 1 session in the lab, and is asked first so the confirmation is only shown
+// when the deletion can happen.
+async function editorDeleteLab(id) {
+  const lab = state.labs.find(l => l.id === id); if (!lab || !editorLabInFolder(lab)) return false;
+  const ask = await sb.rpc('editor_delete_lab', { p_lab_id: id, p_check: true });
   if (ask.error) { toast(ask.error.message, true); return false; }
-  if (!confirm(`Remove "${lab.title}"? It disappears from the site for everyone except the site owner, who can put it back.`)) return false;
-  const { error } = await sb.rpc('beta_remove_lab', { p_lab_id: id });
-  if (error) { toast('Could not remove: ' + error.message, true); return false; }
+  if (!confirm(`Delete "${lab.title}"? Its photos and files are removed too. This cannot be undone.`)) return false;
+  // The lab's files go first: once the lab is gone the database no longer lets an editor touch its storage folder.
+  let files = [];
+  try { files = referencedPaths(lab, await getLabContent(lab)).filter(p => p.startsWith(`labs/${id}/`)); } catch (e) { console.warn('could not list the files of the lab being deleted:', e.message); }
+  files.push(...await listStorageFolder(`labs/${id}`));
+  await removeStoragePaths(files);
+  const { error } = await sb.rpc('editor_delete_lab', { p_lab_id: id });
+  if (error) { toast('Could not delete: ' + error.message + ' Try again.', true); return false; }
   delete state.content[id];
   return true;
 }
 async function deleteLabById(id) {
-  if (!isAdmin()) return betaRemoveLab(id);
+  if (!isAdmin()) return editorDeleteLab(id);
   const lab = state.labs.find(l => l.id === id); if (!lab) return false;
   let n = 0, unknown = false;
   try { const r = await sb.from('lab_entries').select('user_id', { count: 'exact', head: true }).eq('lab_id', id); if (r.error || r.count == null) unknown = true; else n = r.count; } catch (e) { unknown = true; }
@@ -3852,8 +3916,8 @@ async function deleteLabById(id) {
   delete state.content[id];
   return true;
 }
-async function confirmDeleteLab(id) { if (await deleteLabById(id)) { await reloadCatalogue(); toast(isAdmin() ? 'Lab deleted' : 'Lab removed'); if (state.route.view === 'lab') navigate('#/'); } }
-async function deleteLabFromModal() { const id = $('lab-id').value; if (id && await deleteLabById(id)) { closeModal('lab-modal'); await reloadCatalogue(); toast(isAdmin() ? 'Lab deleted' : 'Lab removed'); if (state.route.view === 'lab') navigate('#/'); } }
+async function confirmDeleteLab(id) { if (await deleteLabById(id)) { await reloadCatalogue(); toast('Lab deleted'); if (state.route.view === 'lab') navigate('#/'); } }
+async function deleteLabFromModal() { const id = $('lab-id').value; if (id && await deleteLabById(id)) { closeModal('lab-modal'); await reloadCatalogue(); toast('Lab deleted'); if (state.route.view === 'lab') navigate('#/'); } }
 
 /* ============================================================
    FOLDER CRUD
@@ -3890,8 +3954,8 @@ function openFolderModal(id) {
   $('folder-order').value = f?.sort_order ?? 0;
   $('folder-access').value = f?.access || 'inherit';
   $('folder-listed').checked = f ? f.listed !== false : true;
-  $('folder-beta').checked = !!f?.beta_editable; $('folder-beta-row').style.display = betaColumnsReady() ? '' : 'none';
   editingFolderId = f ? f.id : 'f-' + Date.now();
+  loadEditList('folder', editingFolderId);
   folderCoverItem = f?.cover_path || null;
   folderCoverZoom = f?.cover_zoom || 100;
   renderFolderCoverManager();
@@ -3916,13 +3980,13 @@ async function saveFolder() {
     sort_order: parseInt($('folder-order').value, 10) || 0,
     access: $('folder-access').value, listed: $('folder-listed').checked
   };
-  if (betaColumnsReady()) folder.beta_editable = $('folder-beta').checked;
   const btn = $('save-folder-btn'); btn.disabled = true; btn.textContent = 'Saving…';
   const { error } = await sb.from('folders').upsert(folder);
   btn.disabled = false; btn.textContent = 'Save';
   if (error) { toast('Could not save: ' + error.message, true); return; }
   if (original?.cover_path && original.cover_path !== folder.cover_path) await removeStoragePaths([original.cover_path]);
   try { await saveAccessList('folder', folder.id); } catch (e) { toast('Saved, but the access list failed: ' + e.message, true); }
+  try { await saveEditList('folder', folder.id); } catch (e) { toast('Saved, but the list of who can edit failed: ' + e.message, true); }
   closeModal('folder-modal');
   await reloadCatalogue();
   toast(existingId ? 'Folder updated' : 'Folder added');
@@ -4135,30 +4199,8 @@ function copyCodeList() {
 /* ============================================================
    ADMINS PANEL (any admin may add or remove admins)
    ============================================================ */
-async function renderBetaList() {
-  const ul = $('beta-list'); ul.innerHTML = '<li style="color:var(--muted);">Loading…</li>';
-  const { data, error } = await sb.rpc('list_beta_users');
-  if (error) { ul.innerHTML = `<li class="lt-error">${escapeHTML(error.code === 'PGRST202' ? 'Beta mode is not set up in the database yet.' : error.message)}</li>`; return; }
-  ul.innerHTML = (data || []).map(a => `<li><span style="flex:1;">${escapeHTML(a.email)}</span><button type="button" class="remove" onclick="removeBeta('${jsAttr(a.email)}')">Remove</button></li>`).join('') || '<li style="color:var(--muted);">Nobody is in beta.</li>';
-}
-async function addBeta() {
-  const email = $('beta-email').value.trim();
-  if (!email) { toast('Enter an email address', true); return; }
-  const { data, error } = await sb.rpc('set_beta', { p_email: email, p_beta: true });
-  if (error) { toast(error.message, true); return; }
-  if (data === 'not_found') { toast('No account with that email yet. Ask them to sign in with Google once, then try again.', true); return; }
-  $('beta-email').value = ''; toast(`${email} is now in beta`); renderBetaList();
-}
-async function removeBeta(email) {
-  if (!confirm(`Remove ${email} from beta?`)) return;
-  const { data, error } = await sb.rpc('set_beta', { p_email: email, p_beta: false });
-  if (error) { toast(error.message, true); return; }
-  if (data !== 'ok') { toast(data, true); return; }
-  toast('Removed from beta'); renderBetaList();
-}
 async function openAdminsModal() {
-  openModal('admins-modal'); $('admin-email').value = ''; $('beta-email').value = '';
-  renderBetaList();
+  openModal('admins-modal'); $('admin-email').value = '';
   await renderAdminsList();
   setTimeout(() => $('admin-email').focus(), 100);
 }
@@ -4186,7 +4228,6 @@ async function removeAdmin(email) {
   toast('Admin access removed'); renderAdminsList();
 }
 $('admin-email').addEventListener('keydown', e => { if (e.key === 'Enter') addAdmin(); });
-$('beta-email').addEventListener('keydown', e => { if (e.key === 'Enter') addBeta(); });
 
 /* ============================================================
    STATS PANEL (admin): activity, students, results
@@ -9116,7 +9157,7 @@ function buEquivalenceCheck(text) {
       const was = isAdmin(); state.session = session; state.role = roleFromSession(session);
       if (prevUser === nextUser) return;
       if (!nextUser) { state.adminPreview = false; try { sessionStorage.removeItem('labsite.adminPreview'); } catch (e) { /* ignore */ } }
-      Promise.all([loadMySeat(), loadBeta()]).then(() => { renderChrome(); if (state.route.view === 'signin' || isBeta()) render(); });   // beta: the edit buttons appear once the answer is in
+      Promise.all([loadMySeat(), loadEditRights()]).then(() => { renderChrome(); if (state.route.view === 'signin' || isEditor() || isRealAdmin()) render(); });   // the edit buttons (and an admin's Editors badges) appear once the answer is in
       if (!isRealAdmin()) reloadCatalogue();   // a student signed in (Google, or a code in another tab) or out: what they may see has changed. Admin login/logout reload on their own.
       if (nextUser) loadUserTheme();
       document.body.classList.toggle('admin-mode', isAdmin());
