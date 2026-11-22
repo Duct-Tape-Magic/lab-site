@@ -967,8 +967,7 @@
   <div>
     <button onclick="openLabModal()">+ Lab</button>
     <button onclick="openFolderModal()">+ Folder</button>
-    <button onclick="openSiteTextModal()">Site text</button>
-    <button onclick="openDesignModal()">Design</button>
+    <button onclick="openDesignModal()">Site design</button>
     <button onclick="openWidgetsModal()">Widgets</button>
     <button onclick="openStatsModal()">Stats</button>
     <button onclick="openHelpModal()">Help<span class="help-count" id="help-count" hidden></span></button>
@@ -1205,20 +1204,6 @@
   </div>
 </div>
 
-<!-- Site text -->
-<div class="modal-backdrop" id="site-text-modal">
-  <div class="modal" style="max-width:640px;">
-    <button class="modal-close" onclick="closeModal('site-text-modal')">×</button>
-    <h2>Site text</h2>
-    <p style="font-size:13px; color:var(--muted); margin-bottom:2rem; line-height:1.6;">Every word students see. Placeholders such as {n}, {date} and {year} are filled in automatically.</p>
-    <div id="site-text-form"></div>
-    <div class="modal-actions">
-      <button class="btn btn-accent" onclick="saveSiteText()" id="save-site-text-btn">Save all</button>
-      <button class="btn" onclick="closeModal('site-text-modal')">Cancel</button>
-    </div>
-  </div>
-</div>
-
 <!-- Design -->
 <div class="modal-backdrop" id="widgets-modal">
   <div class="modal" style="max-width:760px;">
@@ -1232,12 +1217,13 @@
 <div class="modal-backdrop" id="design-modal">
   <div class="modal" style="max-width:680px;">
     <button class="modal-close" onclick="cancelDesign()">×</button>
-    <h2>Design</h2>
-    <p style="font-size:13px; color:var(--muted); margin-bottom:1.5rem; line-height:1.6;">Changes preview live. Save to publish them, or Cancel to discard.</p>
+    <h2>Site design</h2>
+    <p style="font-size:13px; color:var(--muted); margin-bottom:1.5rem; line-height:1.6;">The look of the site and its wording. Design changes preview live; text changes show once saved. Save publishes both, Cancel discards both.</p>
     <div style="display:flex; gap:1rem; margin-bottom:2rem; border-bottom:0.5px solid var(--rule); padding-bottom:0.5rem; flex-wrap:wrap;">
       <button type="button" class="design-tab active" data-tab="palette" onclick="switchDesignTab(event)">Palette</button>
       <button type="button" class="design-tab" data-tab="cards" onclick="switchDesignTab(event)">Cards</button>
       <button type="button" class="design-tab" data-tab="layout" onclick="switchDesignTab(event)">Layout</button>
+      <button type="button" class="design-tab" data-tab="text" onclick="switchDesignTab(event)">Site text</button>
     </div>
 
     <div class="design-tab-panel" id="design-panel-palette">
@@ -1284,10 +1270,15 @@
       <div class="hint">Open a lab page in another tab, or behind this panel, to see these change live. Values are in rem (1 rem is the base text size).</div>
     </div>
 
+    <div class="design-tab-panel" id="design-panel-text" style="display:none;">
+      <p style="font-size:13px; color:var(--muted); margin-bottom:2rem; line-height:1.6;">Every word students see. Placeholders such as {n}, {date} and {year} are filled in automatically.</p>
+      <div id="site-text-form"></div>
+    </div>
+
     <div class="modal-actions">
       <button class="btn btn-accent" onclick="saveDesign()" id="save-design-btn">Save</button>
       <button class="btn" onclick="cancelDesign()">Cancel</button>
-      <button class="btn btn-danger" onclick="resetDesign()" style="margin-left:auto;">Reset to default</button>
+      <button class="btn btn-danger" onclick="resetDesign()" id="reset-design-btn" style="margin-left:auto;">Reset design to default</button>
     </div>
   </div>
 </div>
@@ -1398,7 +1389,7 @@ const CONFIGURED = !CONFIG.SUPABASE_URL.includes('YOUR-PROJECT') && !CONFIG.SUPA
 const sb = CONFIGURED && window.supabase ? window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY) : null;
 
 /* ============================================================
-   STUDENT-FACING TEXT — every string here is editable in the Site text panel.
+   STUDENT-FACING TEXT — every string here is editable in Site design → Site text.
    Placeholders: {n}, {date}, {year}, {title}.
    ============================================================ */
 const DEFAULTS = {
@@ -4162,7 +4153,7 @@ async function saveText() {
 /* ============================================================
    SITE TEXT PANEL
    ============================================================ */
-function openSiteTextModal() {
+function buildSiteTextForm() {   // the "Site text" tab of the Site design panel
   $('site-text-form').innerHTML = SITE_TEXT_GROUPS.map(group => `
     <div class="text-group"><p class="text-group-label">${group.label}</p>
       ${group.keys.map(key => {
@@ -4171,17 +4162,11 @@ function openSiteTextModal() {
           ${isLong ? `<textarea data-key="${key}" style="min-height:56px;">${escapeHTML(value)}</textarea>` : `<input type="text" data-key="${key}" value="${escapeHTML(value)}"/>`}</div>`;
       }).join('')}
     </div>`).join('');
-  openModal('site-text-modal');
 }
-async function saveSiteText() {
+function changedSiteText() {   // only the fields whose wording was edited, so a save cannot overwrite text nobody touched
   const updates = [];
-  document.querySelectorAll('#site-text-form [data-key]').forEach(input => { updates.push({ key: input.dataset.key, value: input.value }); });
-  const btn = $('save-site-text-btn'); btn.disabled = true; btn.textContent = 'Saving…';
-  const { error } = await sb.from('site_content').upsert(updates);
-  btn.disabled = false; btn.textContent = 'Save all';
-  if (error) { toast('Could not save: ' + error.message, true); return; }
-  updates.forEach(u => { state.text[u.key] = u.value; });
-  closeModal('site-text-modal'); renderChrome(); render(); toast('Site text updated');
+  document.querySelectorAll('#site-text-form [data-key]').forEach(input => { if (input.value !== getText(input.dataset.key)) updates.push({ key: input.dataset.key, value: input.value }); });
+  return updates;
 }
 
 /* ============================================================
@@ -4592,6 +4577,7 @@ function openDesignModal() {
   $('dl-page-width').value = designState.pageWidth; $('dl-measure').value = designState.measure; $('dl-centered').checked = !!designState.labCentered;
   $('dl-lab-top').value = designState.labTop ?? 3.5; $('dl-header-gap').value = designState.labHeaderGap ?? 2; $('dl-body-top').value = designState.labBodyTop ?? 2.5; $('dl-title-max').value = designState.labTitleMax ?? 2.9;
   updateLayoutLabels();
+  buildSiteTextForm();
   openModal('design-modal');
 }
 function updateLayoutLabels() {
@@ -4601,8 +4587,9 @@ function updateLayoutLabels() {
 }
 function switchDesignTab(event) {
   const tab = event.target.dataset.tab;
-  document.querySelectorAll('.design-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
-  document.querySelectorAll('.design-tab-panel').forEach(p => { p.style.display = p.id === 'design-panel-' + tab ? 'block' : 'none'; });
+  document.querySelectorAll('#design-modal .design-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('#design-modal .design-tab-panel').forEach(p => { p.style.display = p.id === 'design-panel-' + tab ? 'block' : 'none'; });
+  $('reset-design-btn').style.display = tab === 'text' ? 'none' : '';   // the reset is for the design only
 }
 function selectPalette(id) {
   const p = findPaletteById(id);
@@ -4621,10 +4608,17 @@ function cancelDesign() { if (designStateBackup) { designState = { ...designStat
 async function saveDesign() {
   previewDesign();
   const btn = $('save-design-btn'); btn.disabled = true; btn.textContent = 'Saving…';
+  const text = changedSiteText();
   const { error } = await sb.from('site_content').upsert({ key: '_design', value: JSON.stringify(designState) });
+  const textErr = error || !text.length ? null : (await sb.from('site_content').upsert(text)).error;
   btn.disabled = false; btn.textContent = 'Save';
   if (error) { toast('Could not save: ' + error.message, true); return; }
-  state.text._design = JSON.stringify(designState); designStateBackup = null; closeModal('design-modal'); applySiteDesign(); toast('Design saved');
+  state.text._design = JSON.stringify(designState); designStateBackup = { ...designState };
+  if (textErr) { toast('The design was saved, but the text was not: ' + textErr.message, true); return; }   // the panel stays open with the edits in it
+  text.forEach(u => { state.text[u.key] = u.value; });
+  designStateBackup = null; closeModal('design-modal'); applySiteDesign();
+  if (text.length) { renderChrome(); render(); }
+  toast(text.length ? 'Site design and text saved' : 'Design saved');
 }
 async function resetDesign() {
   if (!confirm('Reset the design to the default look?')) return;
