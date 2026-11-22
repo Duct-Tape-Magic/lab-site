@@ -972,8 +972,7 @@
     <button onclick="openWidgetsModal()">Widgets</button>
     <button onclick="openStatsModal()">Stats</button>
     <button onclick="openHelpModal()">Help<span class="help-count" id="help-count" hidden></span></button>
-    <button onclick="openClassesModal()">Classes</button>
-    <button onclick="openAdminsModal()">Admins</button>
+    <button onclick="openUsersModal()">Users</button>
     <button onclick="toggleAdminPreview()">View as student</button>
     <button onclick="logoutAdmin()">Log out</button>
   </div>
@@ -1300,7 +1299,6 @@
     <h2>Stats</h2>
     <div id="stats-tabs" style="display:flex; gap:1rem; margin-bottom:1.5rem; border-bottom:0.5px solid var(--rule); padding-bottom:0.5rem; flex-wrap:wrap;">
       <button type="button" class="design-tab active" data-tab="overview" onclick="switchStatsTab('overview')">Activity</button>
-      <button type="button" class="design-tab" data-tab="students" onclick="switchStatsTab('students')">Students</button>
       <button type="button" class="design-tab" data-tab="results" onclick="switchStatsTab('results')">Results</button>
     </div>
     <div id="stats-body"></div>
@@ -1316,25 +1314,36 @@
   </div>
 </div>
 
-<!-- Classes (access-code accounts) -->
-<div class="modal-backdrop" id="classes-modal">
+<!-- Users: admins (their own section), and the folder tree of classes and Google accounts -->
+<div class="modal-backdrop" id="users-modal">
   <div class="modal modal-wide">
-    <button class="modal-close" onclick="closeModal('classes-modal')">×</button>
-    <h2>Classes</h2>
-    <p style="font-size:13px; color:var(--muted); margin-bottom:1.25rem; line-height:1.6;">A class is a set of accounts that log in with an access code instead of an email. Hand each student one code; keep your own list of who has which. The site never learns a student's name. A code works on any number of devices at once.</p>
-    <div id="classes-body"></div>
-  </div>
-</div>
-
-<!-- Admins -->
-<div class="modal-backdrop" id="admins-modal">
-  <div class="modal modal-narrow">
-    <button class="modal-close" onclick="closeModal('admins-modal')">×</button>
-    <h2>Admins</h2>
-    <p style="font-size:13px; color:var(--muted); margin-bottom:1.25rem; line-height:1.6;">Admins can edit everything on the site and add or remove other admins. A person must have signed in to the site with Google at least once before they can be made an admin, and they need to sign out and back in for the change to take effect.</p>
-    <ul class="attach-list" id="admins-list"></ul>
-    <div class="media-add-row" style="margin-top:1rem;"><input type="email" id="admin-email" placeholder="email@example.com"/><button type="button" onclick="addAdmin()">Make admin</button></div>
-    <div class="modal-actions"><button class="btn" onclick="closeModal('admins-modal')">Close</button></div>
+    <button class="modal-close" onclick="closeModal('users-modal')">×</button>
+    <h2>Users</h2>
+    <div class="text-group">
+      <p class="text-group-label">Admins</p>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:1rem; line-height:1.6;">Admins can edit everything on the site and add or remove other admins. A person must have signed in to the site with Google at least once before they can be made an admin, and they need to sign out and back in for the change to take effect. Admins are not filed in folders.</p>
+      <ul class="attach-list" id="admins-list"></ul>
+      <div class="media-add-row" style="margin-top:1rem;"><input type="email" id="admin-email" placeholder="email@example.com"/><button type="button" onclick="addAdmin()">Make admin</button></div>
+    </div>
+    <p class="text-group-label">Accounts and classes</p>
+    <div class="lt-toolbar" style="margin-bottom:1rem;">
+      <span class="hint" style="margin:0;" id="users-count"></span>
+      <button type="button" class="btn-small" id="users-add-folder" onclick="acctAddFolder()">+ Folder</button>
+      <button type="button" class="btn-small" onclick="toggleNewClassForm()">+ Class</button>
+      <input type="text" id="users-filter" placeholder="Filter by name, email or class…" oninput="renderUsers()" style="flex:1; min-width:11rem; width:auto; padding:0.35rem 0.5rem; border:0.5px solid var(--rule-strong); background:transparent; font-family:var(--font-body); font-size:13px; color:var(--ink);"/>
+      <button type="button" class="btn-small" onclick="exportStudentsCsv()">Export CSV</button>
+    </div>
+    <div class="text-group" id="cls-new" hidden>
+      <p class="text-group-label">New class</p>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:1rem; line-height:1.6;">A class is a set of accounts that log in with an access code instead of an email. Hand each student one code; keep your own list of who has which. The site never learns a student's name. A code works on any number of devices at once.</p>
+      <div class="form-grid-3">
+        <div class="form-row"><label>Class name</label><input type="text" id="cls-name" placeholder="e.g. Period 3 Chemistry"/></div>
+        <div class="form-row"><label>Short code (starts every access code)</label><input type="text" id="cls-prefix" placeholder="e.g. P3" maxlength="6" style="text-transform:uppercase;"/></div>
+        <div class="form-row"><label>Number of seats</label><input type="number" id="cls-count" min="1" max="200" value="30"/></div>
+      </div>
+      <button type="button" class="btn btn-accent" onclick="createClass()" id="cls-create-btn">Create class</button>
+    </div>
+    <div id="users-body"></div>
   </div>
 </div>
 
@@ -3529,7 +3538,7 @@ function acctPickerHTML(st, filter, attr, rerender) {
   const tree = acctChildren(null).map(folderHTML).join(''), filed = acct.folders.length > 0, classes = cIn(null), people = pIn(null), rest = filed ? ' not in a folder' : '';
   return `${st.allPeople.length || filed ? `<input type="text" class="acc-filter" placeholder="Filter by name or email…" value="${escapeHTML(filter || '')}" oninput="${rerender}"/>` : ''}
     ${filed ? `<h4>Account folders</h4>${tree || '<span class="hint">No matches.</span>'}` : ''}
-    ${classes.length || !filed ? `<h4>Classes${rest}</h4>${classes.map(classRow).join('') || `<span class="hint">${st.allClasses.length ? 'No matches.' : 'No classes yet. Create them from the Classes button in the admin bar.'}</span>`}` : ''}
+    ${classes.length || !filed ? `<h4>Classes${rest}</h4>${classes.map(classRow).join('') || `<span class="hint">${st.allClasses.length ? 'No matches.' : 'No classes yet. Create them from the Users button in the admin bar.'}</span>`}` : ''}
     ${people.length || !filed ? `<h4>Individual accounts (Google sign-in)${rest}</h4>${st.allPeople.length ? `<div class="acc-people">${people.map(personRow).join('') || '<span class="hint">No matches.</span>'}</div>` : '<span class="hint">No Google accounts have signed in yet.</span>'}` : ''}`;
 }
 function acctPickerBind(box, st, attr, onChange) {
@@ -3551,26 +3560,29 @@ function acctPickerBind(box, st, attr, onChange) {
   box.querySelectorAll('details.acct-folder').forEach(d => d.addEventListener('toggle', () => { d.open ? st.openFolders.add(d.dataset.folder) : st.openFolders.delete(d.dataset.folder); }));
   marks();
 }
-// Folder tools, used from Stats → Students. Every one of them changes filing only.
-let acctOpen = new Set();   // which folders ('f:<id>') and classes ('c:<id>') are unfolded in the Students list; kept only while the page is open
+// Folder tools, used from the Users panel. Every one of them changes filing only.
+let acctOpen = new Set();   // which folders ('f:<id>') and classes ('c:<id>') are unfolded in the Users panel; kept only while the page is open
 function acctApplyFold() {
-  document.querySelectorAll('#stats-body tr[data-anc]').forEach(tr => { tr.style.display = tr.dataset.anc.split(' ').filter(Boolean).some(k => !acctOpen.has(k)) ? 'none' : ''; });
-  document.querySelectorAll('#stats-body tr[data-key]').forEach(tr => { const m = tr.querySelector('.acct-mark'); if (m) m.textContent = acctOpen.has(tr.dataset.key) ? '▾' : '▸'; });
+  document.querySelectorAll('#users-body tr[data-anc]').forEach(tr => { tr.style.display = tr.dataset.anc.split(' ').filter(Boolean).some(k => !acctOpen.has(k)) ? 'none' : ''; });
+  document.querySelectorAll('#users-body tr[data-key]').forEach(tr => { const m = tr.querySelector('.acct-mark'); if (m) m.textContent = acctOpen.has(tr.dataset.key) ? '▾' : '▸'; });
 }
-function acctToggle(key) { acctOpen.has(key) ? acctOpen.delete(key) : acctOpen.add(key); acctApplyFold(); }
+function acctToggle(key) {
+  acctOpen.has(key) ? acctOpen.delete(key) : acctOpen.add(key); acctApplyFold();
+  if (key.startsWith('c:') && acctOpen.has(key)) openClass(key.slice(2));   // a class loads its seats when it is unfolded
+}
 async function acctAddFolder(parentId) {
   const name = (prompt(parentId ? `Name of the new folder inside "${acctFolderById(parentId)?.name || ''}"` : 'Name of the new account folder') || '').trim(); if (!name) return;
   const { error } = await sb.from('account_folders').insert({ id: 'af-' + Date.now(), name: name.slice(0, 80), parent_id: parentId || null });
   if (error) { toast('Could not add the folder: ' + error.message, true); return; }
   if (parentId) acctOpen.add('f:' + parentId);
-  switchStatsTab('students');
+  renderUsers(true);
 }
 async function acctRenameFolder(id) {
   const f = acctFolderById(id); if (!f) return;
   const name = (prompt('Folder name', f.name) || '').trim(); if (!name || name === f.name) return;
   const { error } = await sb.from('account_folders').update({ name: name.slice(0, 80) }).eq('id', id);
   if (error) { toast('Could not rename: ' + error.message, true); return; }
-  switchStatsTab('students');
+  renderUsers(true);
 }
 async function acctDeleteFolder(id) {
   const f = acctFolderById(id); if (!f) return;
@@ -3578,19 +3590,19 @@ async function acctDeleteFolder(id) {
   let r = await sb.from('account_folders').update({ parent_id: f.parent_id || null }).eq('parent_id', id);
   if (!r.error) r = await sb.from('account_folders').delete().eq('id', id);
   if (r.error) { toast('Could not delete the folder: ' + r.error.message, true); return; }
-  switchStatsTab('students');
+  renderUsers(true);
 }
 async function acctSetParent(id, parentId) {
-  if (parentId && acctUnder(id).has(parentId)) { toast('A folder cannot be moved inside itself', true); switchStatsTab('students'); return; }
+  if (parentId && acctUnder(id).has(parentId)) { toast('A folder cannot be moved inside itself', true); renderUsers(true); return; }
   const { error } = await sb.from('account_folders').update({ parent_id: parentId || null }).eq('id', id);
   if (error) toast('Could not move the folder: ' + error.message, true);
-  switchStatsTab('students');
+  renderUsers(true);
 }
 async function acctSetFolder(kind, id, folderId) {   // kind: 'class' (the whole class moves) or 'user' (one Google account)
   const table = kind === 'class' ? 'account_folder_classes' : 'account_folder_users', col = kind === 'class' ? 'class_id' : 'user_id';
   const r = folderId ? await sb.from(table).upsert({ [col]: id, folder_id: folderId }) : await sb.from(table).delete().eq(col, id);
   if (r.error) toast('Could not move it: ' + r.error.message, true); else toast(folderId ? `Moved to ${acctPath(folderId)}` : 'Taken out of its folder');
-  switchStatsTab('students');
+  renderUsers(true);
 }
 
 /* ---------- Access lists (who can open an account-locked item) ---------- */
@@ -4175,24 +4187,67 @@ async function saveSiteText() {
 /* ============================================================
    CLASSES PANEL (access-code accounts)
    ============================================================ */
-let classesView = { classId: null, seats: [] };
-async function openClassesModal() { classesView = { classId: null, seats: [] }; openModal('classes-modal'); await renderClassesList(); }
-async function renderClassesList() {
-  const body = $('classes-body'); body.innerHTML = '<p style="color:var(--muted);">Loading…</p>';
-  let classes;
-  try { classes = await rpc('list_classes'); } catch (e) { body.innerHTML = `<div class="lt-error">${escapeHTML(e.message)}</div>`; return; }
-  body.innerHTML = `
-    <div class="text-group">
-      <p class="text-group-label">New class</p>
-      <div class="form-grid-3">
-        <div class="form-row"><label>Class name</label><input type="text" id="cls-name" placeholder="e.g. Period 3 Chemistry"/></div>
-        <div class="form-row"><label>Short code (starts every access code)</label><input type="text" id="cls-prefix" placeholder="e.g. P3" maxlength="6" style="text-transform:uppercase;"/></div>
-        <div class="form-row"><label>Number of seats</label><input type="number" id="cls-count" min="1" max="200" value="30"/></div>
-      </div>
-      <button type="button" class="btn btn-accent" onclick="createClass()" id="cls-create-btn">Create class</button>
-    </div>
-    ${classes.length ? `<table class="stats-table"><thead><tr><th>Class</th><th>Code starts with</th><th>Seats</th><th>Created</th><th></th></tr></thead><tbody>${classes.map(c => `<tr class="${c.archived ? 'cls-archived' : ''}"><td>${escapeHTML(c.name)}${c.archived ? ' <span class="badge">closed</span>' : ''}</td><td>${escapeHTML(c.prefix)}-…</td><td>${c.seat_count}</td><td>${escapeHTML(formatDate(c.created_at))}</td><td><button type="button" class="btn-small" onclick="openClass('${c.id}')">Open</button></td></tr>`).join('')}</tbody></table>` : `<div class="empty-state" style="padding:1.5rem;">No classes yet. Create one above and print its access codes.</div>`}`;
-  setTimeout(() => $('cls-name')?.focus(), 100);
+let classesView = { classId: null, seats: [] };   // the class the last-used class tool belongs to
+let classViews = {};   // class id → { classId, cls, seats, html } for every class unfolded in the Users panel
+function useClass(id) { if (classViews[id]) classesView = classViews[id]; return classesView; }   // every button in a class's panel calls this first
+let usersReq = 0;
+async function openUsersModal() {
+  classViews = {}; openModal('users-modal'); $('admin-email').value = ''; $('users-filter').value = ''; $('cls-new').hidden = true; $('users-body').innerHTML = '';
+  renderAdminsList();
+  await renderUsers(true);
+}
+function toggleNewClassForm() { const box = $('cls-new'); box.hidden = !box.hidden; if (!box.hidden) setTimeout(() => $('cls-name').focus(), 50); }
+// The one list of accounts: account folders, then classes (each unfolds to its seats and class tools), then Google accounts. Admins
+// are listed in their own section above and are left out here. reload = fetch everything again (after any change).
+async function renderUsers(reload) {
+  const body = $('users-body'), req = ++usersReq;
+  if (!body.firstChild) body.innerHTML = '<p style="color:var(--muted);">Loading…</p>';
+  if (reload) statsCache = {};
+  let students, entries, classes;
+  try {
+    [{ students, entries, classes }] = await Promise.all([loadStudentsAndEntries(), reload || !acct.ready ? loadAccountFolders() : acct]);
+    if (!statsCache.adminIds) { statsCache.adminIds = new Set(); try { (await rpc('list_admins')).forEach(a => statsCache.adminIds.add(a.user_id)); } catch (e) { /* the admins section shows the error */ } }
+  } catch (e) { if (req === usersReq) body.innerHTML = `<div class="lt-error">${escapeHTML(e.message || String(e))}</div>`; return; }
+  if (req !== usersReq) return;
+  const adminIds = statsCache.adminIds, list = students.filter(s => !adminIds.has(s.user_id));
+  const byUser = {}; entries.forEach(e => { (byUser[e.user_id] = byUser[e.user_id] || []).push(e); });
+  const google = list.filter(s => !s.seat), seatsOf = id => list.filter(s => s.seat && s.class_id === id), pad = d => `padding-left:${0.6 + d * 1.25}rem;`;
+  const f = $('users-filter').value.trim().toLowerCase();
+  const folderSelect = (kind, id, cur) => acct.ready ? `<select class="acct-select" title="Account folder" onclick="event.stopPropagation()" onchange="acctSetFolder('${kind}', '${jsAttr(id)}', this.value)">${acctOptionsHTML(cur || null)}</select>` : '';
+  const accountRows = (s, anc, d) => {
+    const es = byUser[s.user_id] || []; const last = es.length ? es.map(e => e.updated_at).sort().pop() : null;
+    return `<tr class="stats-row" data-anc="${anc}" onclick="showStudentLabs('${s.user_id}')"><td style="${pad(d)}">${escapeHTML(s.full_name || '')}</td><td style="white-space:nowrap;">${escapeHTML(s.email || '')}</td><td>${escapeHTML(formatDate(s.created_at))}</td><td>${es.length}</td><td>${last ? escapeHTML(formatDate(last)) : '—'}</td><td>${folderSelect('user', s.user_id, acct.userFolder.get(s.user_id))}</td></tr>
+      <tr id="studentlabs-${s.user_id}" data-anc="${anc}" hidden><td colspan="6" style="${pad(d + 1)}">${es.length ? es.map(e => `<div style="display:flex; gap:0.75rem; align-items:center; padding:0.3rem 0;"><span style="flex:1;">${escapeHTML(labTitle(e.lab_id))}</span><span class="hint" style="margin:0;">${escapeHTML(formatDate(e.updated_at))}</span><button type="button" class="btn-small" onclick="event.stopPropagation(); reviewEntries('${s.user_id}', '${e.lab_id}')">View entries</button></div>`).join('') : '<span class="hint">No saved entries yet.</span>'}
+        <div style="margin-top:0.5rem;"><button type="button" class="btn-small" onclick="event.stopPropagation(); makeAdminFromRow('${jsAttr(s.email || '')}')">Make admin</button></div></td></tr>`;
+  };
+  const classBlock = (c, anc, d) => {
+    const key = 'c:' + c.id, n = seatsOf(c.id).length, inner = (anc + ' ' + key).trim();
+    return `<tr class="acct-head" data-key="${escapeHTML(key)}" data-anc="${anc}" onclick="acctToggle('${jsAttr(key)}')"><td colspan="5" style="${pad(d)}"><span class="acct-mark"></span>${escapeHTML(c.name)}${c.archived ? ' <span class="badge">closed</span>' : ''} <span class="hint" style="margin:0;">class · ${n} seat${n === 1 ? '' : 's'}</span></td><td>${folderSelect('class', c.id, acct.classFolder.get(c.id))}</td></tr>
+      <tr data-anc="${inner}"><td colspan="6" style="${pad(d + 1)}"><div id="classbox-${escapeHTML(c.id)}">${(classViews[c.id] && classViews[c.id].html) || '<span class="hint">Loading…</span>'}</div></td></tr>`;
+  };
+  const byName = (a, b) => a.name.localeCompare(b.name);
+  const classesIn = fid => (classes || []).filter(c => (acct.classFolder.get(c.id) || null) === fid).sort(byName);
+  const googleIn = fid => google.filter(s => (acct.userFolder.get(s.user_id) || null) === fid);
+  const folderBlock = (fo, anc, d) => {
+    const key = 'f:' + fo.id, mine = (anc + ' ' + key).trim(), under = acctUnder(fo.id);
+    const n = list.filter(s => under.has(s.seat ? acct.classFolder.get(s.class_id) : acct.userFolder.get(s.user_id))).length;
+    return `<tr class="acct-head" data-key="${escapeHTML(key)}" data-anc="${anc}" onclick="acctToggle('${jsAttr(key)}')"><td colspan="5" style="${pad(d)}"><span class="acct-mark"></span><strong>${escapeHTML(fo.name)}</strong> <span class="hint" style="margin:0;">${n} account${n === 1 ? '' : 's'}</span><span class="acct-tools"><button type="button" class="btn-small" onclick="event.stopPropagation(); acctRenameFolder('${jsAttr(fo.id)}')">Rename</button> <button type="button" class="btn-small" onclick="event.stopPropagation(); acctAddFolder('${jsAttr(fo.id)}')">+ Folder inside</button> <button type="button" class="btn-small" onclick="event.stopPropagation(); acctDeleteFolder('${jsAttr(fo.id)}')">Delete</button></span></td><td><select class="acct-select" title="Put this folder inside another" onclick="event.stopPropagation()" onchange="acctSetParent('${jsAttr(fo.id)}', this.value)">${acctOptionsHTML(fo.parent_id || null, fo.id, 'Top level')}</select></td></tr>`
+      + acctChildren(fo.id).map(k => folderBlock(k, mine, d + 1)).join('') + classesIn(fo.id).map(c => classBlock(c, mine, d + 1)).join('') + googleIn(fo.id).map(s => accountRows(s, mine, d + 1)).join('');
+  };
+  let rowsHTML;
+  if (f) {   // filtering: matching classes (by class name or a seat's label) and accounts, listed flat; folders are left out
+    const cls = (classes || []).filter(c => c.name.toLowerCase().includes(f) || seatsOf(c.id).some(x => String(x.full_name || '').toLowerCase().includes(f))).sort(byName);
+    const ppl = google.filter(x => (String(x.full_name || '') + ' ' + String(x.email || '')).toLowerCase().includes(f));
+    rowsHTML = cls.map(c => classBlock(c, '', 0)).join('') + ppl.map(x => accountRows(x, '', 0)).join('') || `<tr><td colspan="6"><span class="hint">No matches.</span></td></tr>`;
+  } else rowsHTML = acctChildren(null).map(fo => folderBlock(fo, '', 0)).join('') + classesIn(null).map(c => classBlock(c, '', 0)).join('') + googleIn(null).map(x => accountRows(x, '', 0)).join('');
+  const nSeats = list.filter(x => x.seat).length;
+  $('users-count').textContent = `${list.length} account${list.length === 1 ? '' : 's'}: ${google.length} Google, ${nSeats} class-code seat${nSeats === 1 ? '' : 's'} in ${(classes || []).length} class${(classes || []).length === 1 ? '' : 'es'}`;
+  $('users-add-folder').hidden = !acct.ready;
+  body.innerHTML = (list.length || (classes || []).length || acct.folders.length) ? `<div style="overflow-x:auto;"><table class="stats-table"><thead><tr><th>Name</th><th>Email</th><th>Joined</th><th>Labs with entries</th><th>Last activity</th><th>Folder</th></tr></thead><tbody>${rowsHTML}</tbody></table></div>
+    <p class="hint" style="margin-top:1rem;">${f ? 'Showing matches only; clear the filter to see the folders. ' : ''}Click a folder or a class to open it, and an account to see its labs. ${acct.ready ? 'Folders only organize this list and the tick lists in the lab and folder editors: filing an account or a class never changes what it can see or edit. A class is filed as a whole.' : 'Account folders are not set up in the database yet.'}</p>`
+    : `<div class="empty-state" style="padding:1.5rem;">No accounts yet. Students create one with the Log in button, or you create a class of access codes with "+ Class".</div>`;
+  acctApplyFold();
+  for (const c of classes || []) if (acctOpen.has('c:' + c.id) && (reload || !classViews[c.id])) openClass(c.id);   // unfolded classes load their seats (again after any change)
 }
 async function createClass() {
   const name = $('cls-name').value.trim(), prefix = $('cls-prefix').value.trim() || 'C', count = parseInt($('cls-count').value, 10) || 0;
@@ -4205,42 +4260,42 @@ async function createClass() {
   try { await rpc('add_seats', { p_class_id: id, p_count: count }); toast(`${name} created with ${count} access codes`); }
   catch (e) { toast(`"${name}" was created, but its seats could not be added (${e.message}). Open it and use "Add seats…".`, true); }
   btn.disabled = false; btn.textContent = 'Create class';
-  await openClass(id);
+  $('cls-name').value = ''; $('cls-prefix').value = ''; $('cls-new').hidden = true; $('users-filter').value = '';
+  acctOpen.add('c:' + id);   // the new class shows unfolded, with its codes
+  await renderUsers(true);
 }
+// A class's own panel, shown in place under its row: the class tools and its seats.
 async function openClass(id) {
-  const body = $('classes-body'); body.innerHTML = '<p style="color:var(--muted);">Loading…</p>';
+  const box = $('classbox-' + id); if (!box) return;
   let classes, seats;
   try { [classes, seats] = await Promise.all([rpc('list_classes'), rpc('list_class_seats', { p_class_id: id })]); }
-  catch (e) { body.innerHTML = `<div class="lt-error">${escapeHTML(e.message)}</div>`; return; }
-  const c = classes.find(x => x.id === id); if (!c) { renderClassesList(); return; }
-  classesView = { classId: id, cls: c, seats };
-  const active = seats.filter(s => s.last_sign_in_at).length;
-  body.innerHTML = `
-    <div class="lt-toolbar" style="margin-bottom:1rem;">
-      <button type="button" class="btn-small" onclick="renderClassesList()">← All classes</button>
-      <span style="font-family:var(--font-heading); font-size:1.4rem;">${escapeHTML(c.name)}</span>
-      ${c.archived ? '<span class="badge">closed</span>' : ''}
-      <span class="hint" style="margin:0 0 0 auto;">${seats.length} seat${seats.length === 1 ? '' : 's'} · ${active} used at least once</span>
-    </div>
-    <div class="lt-toolbar" style="margin-bottom:1.25rem;">
-      <button type="button" class="btn-small" onclick="copyCodeList()">Copy list</button>
-      <button type="button" class="btn-small" onclick="addSeatsPrompt()">Add seats…</button>
-      <button type="button" class="btn-small" onclick="renameClassPrompt()">Rename</button>
-      <button type="button" class="btn-small" onclick="toggleClassArchived()">${c.archived ? 'Reopen class' : 'Close class'}</button>
-      <button type="button" class="btn-small" style="margin-left:auto; color:var(--danger); border-color:var(--danger);" onclick="deleteClassConfirm()">Delete class</button>
+  catch (e) { const b = $('classbox-' + id); if (b) b.innerHTML = `<div class="lt-error">${escapeHTML(e.message)}</div>`; return; }
+  const c = classes.find(x => x.id === id), now = $('classbox-' + id); if (!now) return;
+  if (!c) { now.innerHTML = '<span class="hint">This class no longer exists.</span>'; delete classViews[id]; return; }
+  const active = seats.filter(s => s.last_sign_in_at).length, use = `useClass('${jsAttr(id)}'); `;
+  const html = `
+    <div class="lt-toolbar" style="margin:0.25rem 0 1rem;">
+      <button type="button" class="btn-small" onclick="${use}copyCodeList()">Copy list</button>
+      <button type="button" class="btn-small" onclick="${use}addSeatsPrompt()">Add seats…</button>
+      <button type="button" class="btn-small" onclick="${use}renameClassPrompt()">Rename</button>
+      <button type="button" class="btn-small" onclick="${use}toggleClassArchived()">${c.archived ? 'Reopen class' : 'Close class'}</button>
+      <span class="hint" style="margin:0;">${seats.length} seat${seats.length === 1 ? '' : 's'} · ${active} used at least once</span>
+      <button type="button" class="btn-small" style="margin-left:auto; color:var(--danger); border-color:var(--danger);" onclick="${use}deleteClassConfirm()">Delete class</button>
     </div>
     ${c.archived ? '<p class="hint" style="margin-bottom:1rem;">This class is closed: its access codes no longer log in, but every entry is kept. Reopen it to let students back in.</p>' : ''}
     <div style="overflow-x:auto;"><table class="stats-table"><thead><tr><th>Seat</th><th>Access code</th><th>Nickname (only you see it)</th><th>Last login</th><th>Labs</th><th></th></tr></thead><tbody>
       ${seats.map(s => `<tr>
         <td>${s.seat_no}</td>
         <td style="white-space:nowrap;"><code class="cls-code">${escapeHTML(s.passcode)}</code> <button type="button" class="btn-small" onclick="copyText('${escapeHTML(s.passcode)}')" title="Copy this code">Copy</button></td>
-        <td><input type="text" class="cls-nick" value="${escapeHTML(s.nickname || '')}" placeholder="—" onchange="saveNickname('${s.user_id}', this.value)"/></td>
+        <td><input type="text" class="cls-nick" value="${escapeHTML(s.nickname || '')}" placeholder="—" onchange="${use}saveNickname('${s.user_id}', this.value)"/></td>
         <td>${s.last_sign_in_at ? escapeHTML(formatDate(s.last_sign_in_at)) : '<span class="hint" style="margin:0;">never</span>'}</td>
-        <td>${s.entries ? `<button type="button" class="btn-small" onclick="showSeatLabs('${s.user_id}')">${s.entries}</button>` : '0'}</td>
-        <td style="white-space:nowrap;"><button type="button" class="btn-small" onclick="regenerateSeat('${s.user_id}', ${s.seat_no})" title="Give this seat a new access code (the old one stops working; entries are kept)">New code</button> <button type="button" class="btn-small" style="color:var(--danger);" onclick="deleteSeatConfirm('${s.user_id}', ${s.seat_no})">Remove</button></td>
+        <td>${s.entries ? `<button type="button" class="btn-small" onclick="${use}showSeatLabs('${s.user_id}')">${s.entries}</button>` : '0'}</td>
+        <td style="white-space:nowrap;"><button type="button" class="btn-small" onclick="${use}regenerateSeat('${s.user_id}', ${s.seat_no})" title="Give this seat a new access code (the old one stops working; entries are kept)">New code</button> <button type="button" class="btn-small" style="color:var(--danger);" onclick="${use}deleteSeatConfirm('${s.user_id}', ${s.seat_no})">Remove</button></td>
       </tr><tr id="seatlabs-${s.user_id}" hidden><td colspan="6"><span class="hint">Loading…</span></td></tr>`).join('')}
     </tbody></table></div>
-    <p class="hint" style="margin-top:1rem;">"New code" is the fix for a lost or shared code. "Remove" deletes the seat and its entries. Closing the class keeps everything but stops logins, which is the right choice at the end of a term.</p>`;
+    <p class="hint" style="margin:0.75rem 0 0.5rem;">"New code" is the fix for a lost or shared code. "Remove" deletes the seat and its entries. Closing the class keeps everything but stops logins, which is the right choice at the end of a term.</p>`;
+  classViews[id] = { classId: id, cls: c, seats, html };
+  now.innerHTML = html;
 }
 async function showSeatLabs(uid) {
   const row = $('seatlabs-' + uid); if (!row) return; row.hidden = !row.hidden; if (row.hidden) return;
@@ -4250,9 +4305,10 @@ async function showSeatLabs(uid) {
 async function reviewSeatEntries(uid, labId) {
   const { data, error } = await sb.from('lab_entries').select('data, updated_at').eq('user_id', uid).eq('lab_id', labId).maybeSingle();
   if (error || !data) { toast('Could not load those entries', true); return; }
-  const s = classesView.seats.find(x => x.user_id === uid);
-  state.reviewing = { lab_id: labId, user_id: uid, name: seatLabel(classesView.cls, s), data: data.data || {}, updated_at: data.updated_at };
-  closeModal('classes-modal');
+  const view = Object.values(classViews).find(v => (v.seats || []).some(x => x.user_id === uid)) || classesView;
+  const s = (view.seats || []).find(x => x.user_id === uid);
+  state.reviewing = { lab_id: labId, user_id: uid, name: seatLabel(view.cls, s), data: data.data || {}, updated_at: data.updated_at };
+  closeModal('users-modal');
   const lab = state.labs.find(l => l.id === labId); if (lab) navigate('#/lab/' + encodeURIComponent(lab.slug));
 }
 function seatLabel(cls, s) { return `${cls ? cls.name : 'Class'} · Seat ${s ? s.seat_no : '?'}${s && s.nickname ? ` (${s.nickname})` : ''}`; }
@@ -4262,7 +4318,7 @@ async function saveNickname(uid, value) {
 }
 async function addSeatsPrompt() {
   const n = parseInt(prompt('How many seats to add?', '5'), 10); if (!n) return;
-  try { await rpc('add_seats', { p_class_id: classesView.classId, p_count: n }); toast(`${n} seat${n === 1 ? '' : 's'} added`); await openClass(classesView.classId); }
+  try { await rpc('add_seats', { p_class_id: classesView.classId, p_count: n }); toast(`${n} seat${n === 1 ? '' : 's'} added`); await renderUsers(true); }
   catch (e) { toast(e.message, true); }
 }
 async function renameClassPrompt() {
@@ -4270,30 +4326,30 @@ async function renameClassPrompt() {
   const { error } = await sb.from('classes').update({ name: name.trim() }).eq('id', classesView.classId);
   if (error) { toast(error.message, true); return; }
   await sb.from('groups').update({ name: name.trim() }).eq('id', classesView.classId);
-  await openClass(classesView.classId);
+  await renderUsers(true);
 }
 async function toggleClassArchived() {
   const c = classesView.cls;
   if (!c.archived && !confirm(`Close "${c.name}"? Its access codes will stop working until you reopen it. Nothing is deleted.`)) return;
-  try { await rpc('set_class_archived', { p_class_id: c.id, p_archived: !c.archived }); await openClass(c.id); } catch (e) { toast(e.message, true); }
+  try { await rpc('set_class_archived', { p_class_id: c.id, p_archived: !c.archived }); await renderUsers(true); } catch (e) { toast(e.message, true); }
 }
 async function regenerateSeat(uid, seatNo) {
   if (!confirm(`Give seat ${seatNo} a new access code? The old code stops working immediately. Entries are kept.`)) return;
-  try { const code = await rpc('regenerate_seat', { p_user: uid }); toast(`Seat ${seatNo}: ${code}`); await openClass(classesView.classId); } catch (e) { toast(e.message, true); }
+  try { const code = await rpc('regenerate_seat', { p_user: uid }); toast(`Seat ${seatNo}: ${code}`); await renderUsers(true); } catch (e) { toast(e.message, true); }
 }
 async function deleteSeatConfirm(uid, seatNo) {
   const seat = (classesView.seats || []).find(s => s.user_id === uid), n = seat ? +seat.entries || 0 : 0;
   const work = n ? `This seat has saved work in ${n} lab${n === 1 ? '' : 's'}. Deleting the seat erases that work permanently; there is no undo.` : 'Its access code and any entries saved under it are deleted. This cannot be undone.';
   if (!confirm(`Remove seat ${seatNo}? ${work}`)) return;
   if (n && prompt(`Type DELETE to confirm erasing seat ${seatNo}'s saved work:`) !== 'DELETE') { toast('Nothing deleted'); return; }
-  try { await removePrivatePrefix(`photos/${uid}`).catch(() => {}); await rpc('delete_seat', { p_user: uid }); toast(`Seat ${seatNo} removed`); await openClass(classesView.classId); } catch (e) { toast(e.message, true); }
+  try { await removePrivatePrefix(`photos/${uid}`).catch(() => {}); await rpc('delete_seat', { p_user: uid }); toast(`Seat ${seatNo} removed`); await renderUsers(true); } catch (e) { toast(e.message, true); }
 }
 async function deleteClassConfirm() {
   const c = classesView.cls;
   const labsWithWork = (classesView.seats || []).reduce((a, s) => a + (+s.entries || 0), 0);
   if (!confirm(`Delete "${c.name}" and all ${classesView.seats.length} seats, including every entry saved under them?${labsWithWork ? ` That is ${labsWithWork} saved lab${labsWithWork === 1 ? '' : 's'} of student work, erased permanently.` : ''} This cannot be undone. Consider "Close class" instead, which keeps everything.`)) return;
   if (prompt(`Type the class name to confirm deleting it:`) !== c.name) { toast('Name did not match; nothing deleted'); return; }
-  try { for (const s of classesView.seats || []) await removePrivatePrefix(`photos/${s.user_id}`).catch(() => {}); await rpc('delete_class', { p_class_id: c.id }); toast('Class deleted'); await renderClassesList(); } catch (e) { toast(e.message, true); }
+  try { for (const s of classesView.seats || []) await removePrivatePrefix(`photos/${s.user_id}`).catch(() => {}); await rpc('delete_class', { p_class_id: c.id }); toast('Class deleted'); delete classViews[c.id]; acctOpen.delete('c:' + c.id); await renderUsers(true); } catch (e) { toast(e.message, true); }
 }
 function copyText(t) { navigator.clipboard.writeText(t).then(() => toast('Copied'), () => prompt('Copy:', t)); }
 function copyCodeList() {
@@ -4302,13 +4358,8 @@ function copyCodeList() {
 }
 
 /* ============================================================
-   ADMINS PANEL (any admin may add or remove admins)
+   ADMINS (their own section at the top of the Users panel; any admin may add or remove admins)
    ============================================================ */
-async function openAdminsModal() {
-  openModal('admins-modal'); $('admin-email').value = '';
-  await renderAdminsList();
-  setTimeout(() => $('admin-email').focus(), 100);
-}
 async function renderAdminsList() {
   const ul = $('admins-list'); ul.innerHTML = '<li style="color:var(--muted);">Loading…</li>';
   const { data, error } = await sb.rpc('list_admins');
@@ -4323,19 +4374,26 @@ async function addAdmin() {
   const { data, error } = await sb.rpc('set_admin', { p_email: email, p_admin: true });
   if (error) { toast(error.message, true); return; }
   if (data === 'not_found') { toast('No account with that email yet. Ask them to sign in with Google once, then try again.', true); return; }
-  $('admin-email').value = ''; toast(`${email} is now an admin (takes effect after they sign in again)`); renderAdminsList();
+  $('admin-email').value = ''; toast(`${email} is now an admin (takes effect after they sign in again)`); renderAdminsList(); renderUsers(true);
+}
+async function makeAdminFromRow(email) {   // the button under a Google account in the list below
+  if (!email || !confirm(`Make ${email} an admin? Admins can edit everything on the site, see all student work, and add or remove other admins.`)) return;
+  const { data, error } = await sb.rpc('set_admin', { p_email: email, p_admin: true });
+  if (error) { toast(error.message, true); return; }
+  if (data === 'not_found') { toast('No account with that email.', true); return; }
+  toast(`${email} is now an admin (takes effect after they sign in again)`); renderAdminsList(); renderUsers(true);
 }
 async function removeAdmin(email) {
   if (!confirm(`Remove admin access from ${email}?`)) return;
   const { data, error } = await sb.rpc('set_admin', { p_email: email, p_admin: false });
   if (error) { toast(error.message, true); return; }
   if (data !== 'ok') { toast(data, true); return; }
-  toast('Admin access removed'); renderAdminsList();
+  toast('Admin access removed'); renderAdminsList(); renderUsers(true);
 }
 $('admin-email').addEventListener('keydown', e => { if (e.key === 'Enter') addAdmin(); });
 
 /* ============================================================
-   STATS PANEL (admin): activity, students, results
+   STATS PANEL (admin): activity and results (the list of accounts is the Users panel)
    ============================================================ */
 let statsRange = 30, statsTab = 'overview', statsCache = {}, statsReq = 0;
 async function openStatsModal() {
@@ -4344,11 +4402,12 @@ async function openStatsModal() {
   switchStatsTab(statsTab);
 }
 function switchStatsTab(tab) {
+  if (tab !== 'results') tab = 'overview';
   statsTab = tab;
   document.querySelectorAll('#stats-tabs .design-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
   const body = $('stats-body'); body.innerHTML = '<p style="color:var(--muted);">Loading…</p>';
   const req = ++statsReq;   // a slower earlier request must not overwrite the tab the admin is now looking at
-  ({ overview: renderStatsOverview, students: renderStatsStudents, results: renderStatsResults })[tab](req).catch(e => { if (req !== statsReq) return; body.innerHTML = `<div class="lt-error">${escapeHTML(e.message || String(e))}</div>`; });
+  ({ overview: renderStatsOverview, results: renderStatsResults })[tab](req).catch(e => { if (req !== statsReq) return; body.innerHTML = `<div class="lt-error">${escapeHTML(e.message || String(e))}</div>`; });
 }
 function setStatsRange(n) { statsRange = n; statsCache = {}; switchStatsTab('overview'); }
 function labTitle(id) { const l = state.labs.find(x => x.id === id); return l ? l.title : id; }
@@ -4400,48 +4459,6 @@ async function loadStudentsAndEntries() {
   statsCache.students = [...(s.data || []), ...seatRows]; statsCache.entries = e.data || []; statsCache.classes = cl.data || [];
   return statsCache;
 }
-async function renderStatsStudents(req) {
-  const body = $('stats-body'); const [{ students, entries, classes }] = await Promise.all([loadStudentsAndEntries(), loadAccountFolders()]);
-  const adminIds = new Set(); try { (await rpc('list_admins')).forEach(a => adminIds.add(a.user_id)); } catch (e) { /* ignore */ }
-  const list = students.filter(s => !adminIds.has(s.user_id));
-  const byUser = {}; entries.forEach(e => { (byUser[e.user_id] = byUser[e.user_id] || []).push(e); });
-  if (req !== undefined && req !== statsReq) return;
-  // The list is a tree: account folders, then classes (their seats inside), then Google accounts. Folders and classes fold shut.
-  const google = list.filter(s => !s.seat), known = new Set((classes || []).map(c => c.id)), pad = d => `padding-left:${0.6 + d * 1.25}rem;`;
-  const folderSelect = (kind, id, cur) => acct.ready ? `<select class="acct-select" title="Account folder" onclick="event.stopPropagation()" onchange="acctSetFolder('${kind}', '${jsAttr(id)}', this.value)">${acctOptionsHTML(cur || null)}</select>` : '';
-  const accountRows = (s, anc, d) => {
-    const es = byUser[s.user_id] || []; const last = es.length ? es.map(e => e.updated_at).sort().pop() : null;
-    const idCell = s.seat ? `<span class="code-hidden" data-code="${escapeHTML(s.passcode)}"><button type="button" class="btn-small" onclick="event.stopPropagation(); revealCode(this)">Show code</button></span>` : escapeHTML(s.email);
-    return `<tr class="stats-row" data-anc="${anc}" onclick="showStudentLabs('${s.user_id}')"><td style="${pad(d)}">${escapeHTML(s.full_name || '')}</td><td style="white-space:nowrap;">${idCell}</td><td>${escapeHTML(formatDate(s.created_at))}</td><td>${es.length}</td><td>${last ? escapeHTML(formatDate(last)) : '—'}</td><td>${s.seat ? '' : folderSelect('user', s.user_id, acct.userFolder.get(s.user_id))}</td></tr>
-      <tr id="studentlabs-${s.user_id}" data-anc="${anc}" hidden><td colspan="6">${es.length ? es.map(e => `<div style="display:flex; gap:0.75rem; align-items:center; padding:0.3rem 0;"><span style="flex:1;">${escapeHTML(labTitle(e.lab_id))}</span><span class="hint" style="margin:0;">${escapeHTML(formatDate(e.updated_at))}</span><button type="button" class="btn-small" onclick="event.stopPropagation(); reviewEntries('${s.user_id}', '${e.lab_id}')">View entries</button></div>`).join('') : '<span class="hint">No saved entries yet.</span>'}</td></tr>`;
-  };
-  const classBlock = (c, anc, d) => {
-    const key = 'c:' + c.id, seats = list.filter(s => s.seat && s.class_id === c.id).sort((a, b) => (a.seat_no || 0) - (b.seat_no || 0));
-    return `<tr class="acct-head" data-key="${escapeHTML(key)}" data-anc="${anc}" onclick="acctToggle('${jsAttr(key)}')"><td colspan="5" style="${pad(d)}"><span class="acct-mark"></span>${escapeHTML(c.name)}${c.archived ? ' <span class="badge">closed</span>' : ''} <span class="hint" style="margin:0;">class · ${seats.length} seat${seats.length === 1 ? '' : 's'}</span></td><td>${folderSelect('class', c.id, acct.classFolder.get(c.id))}</td></tr>`
-      + seats.map(s => accountRows(s, (anc + ' ' + key).trim(), d + 1)).join('');
-  };
-  const classesIn = fid => (classes || []).filter(c => (acct.classFolder.get(c.id) || null) === fid).sort((a, b) => a.name.localeCompare(b.name));
-  const googleIn = fid => google.filter(s => (acct.userFolder.get(s.user_id) || null) === fid);
-  const folderBlock = (f, anc, d) => {
-    const key = 'f:' + f.id, mine = (anc + ' ' + key).trim(), under = acctUnder(f.id);
-    const n = list.filter(s => under.has(s.seat ? acct.classFolder.get(s.class_id) : acct.userFolder.get(s.user_id))).length;
-    return `<tr class="acct-head" data-key="${escapeHTML(key)}" data-anc="${anc}" onclick="acctToggle('${jsAttr(key)}')"><td colspan="5" style="${pad(d)}"><span class="acct-mark"></span><strong>${escapeHTML(f.name)}</strong> <span class="hint" style="margin:0;">${n} account${n === 1 ? '' : 's'}</span><span class="acct-tools"><button type="button" class="btn-small" onclick="event.stopPropagation(); acctRenameFolder('${jsAttr(f.id)}')">Rename</button> <button type="button" class="btn-small" onclick="event.stopPropagation(); acctAddFolder('${jsAttr(f.id)}')">+ Folder inside</button> <button type="button" class="btn-small" onclick="event.stopPropagation(); acctDeleteFolder('${jsAttr(f.id)}')">Delete</button></span></td><td><select class="acct-select" title="Put this folder inside another" onclick="event.stopPropagation()" onchange="acctSetParent('${jsAttr(f.id)}', this.value)">${acctOptionsHTML(f.parent_id || null, f.id, 'Top level')}</select></td></tr>`
-      + acctChildren(f.id).map(k => folderBlock(k, mine, d + 1)).join('') + classesIn(f.id).map(c => classBlock(c, mine, d + 1)).join('') + googleIn(f.id).map(s => accountRows(s, mine, d + 1)).join('');
-  };
-  const strays = list.filter(s => s.seat && !known.has(s.class_id));   // a seat whose class row did not load: shown plainly, never dropped
-  const rowsHTML = acctChildren(null).map(f => folderBlock(f, '', 0)).join('') + classesIn(null).map(c => classBlock(c, '', 0)).join('') + googleIn(null).map(s => accountRows(s, '', 0)).join('') + strays.map(s => accountRows(s, '', 0)).join('');
-  body.innerHTML = `
-    <div class="lt-toolbar" style="margin-bottom:1rem;"><span class="hint" style="margin:0;">${list.length} student account${list.length === 1 ? '' : 's'}</span>${list.some(s => s.seat) ? `<button type="button" class="btn-small" onclick="toggleAllCodes(this)">Show all access codes</button>` : ''}${acct.ready ? `<button type="button" class="btn-small" onclick="acctAddFolder()">+ Account folder</button>` : ''}<button type="button" class="btn-small" style="margin-left:auto;" onclick="exportStudentsCsv()">Export CSV</button></div>
-    ${list.length ? `<div style="overflow-x:auto;"><table class="stats-table"><thead><tr><th>Name</th><th>Email / access code</th><th>Joined</th><th>Labs with entries</th><th>Last activity</th><th>Folder</th></tr></thead><tbody>${rowsHTML}</tbody></table></div>
-    <p class="hint" style="margin-top:1rem;">${acct.ready ? 'Click a folder or a class to open it. Folders only organize this list and the tick lists in the lab and folder editors: filing an account or a class never changes what it can see or edit. A class moves as a whole.' : 'Account folders are not set up in the database yet.'}</p>` : `<div class="empty-state" style="padding:1.5rem;">No student accounts yet. Students create one with the Log in button, or you create a class of access codes.</div>`}`;
-  acctApplyFold();
-}
-function revealCode(btn) {
-  const span = btn.closest('.code-hidden'); const code = span.dataset.code;
-  span.innerHTML = `<code class="cls-code">${escapeHTML(code)}</code> <button type="button" class="btn-small" onclick="event.stopPropagation(); copyText('${escapeHTML(code)}')">Copy</button>`;
-  span.classList.remove('code-hidden');
-}
-function toggleAllCodes(btn) { document.querySelectorAll('#stats-body .code-hidden button').forEach(b => revealCode(b)); btn.remove(); }
 function showStudentLabs(uid) { const el = $('studentlabs-' + uid); if (el) el.hidden = !el.hidden; }
 async function renderStatsResults(req) {
   const body = $('stats-body'); const [{ students, entries, classes }] = await Promise.all([loadStudentsAndEntries(), loadAccountFolders()]);
@@ -4471,7 +4488,7 @@ async function reviewEntries(userId, labId) {
   const { students } = await loadStudentsAndEntries();
   const s = students.find(x => x.user_id === userId) || {};
   state.reviewing = { lab_id: labId, user_id: userId, name: s.full_name || s.email || 'student', data: data.data || {}, updated_at: data.updated_at };
-  closeModal('stats-modal');
+  closeModal('stats-modal'); closeModal('users-modal');
   const lab = state.labs.find(l => l.id === labId);
   if (lab) navigate('#/lab/' + encodeURIComponent(lab.slug));
 }
