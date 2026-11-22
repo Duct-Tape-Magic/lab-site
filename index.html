@@ -470,6 +470,12 @@
   .access-list .acc-filter { width: 100%; margin-bottom: 0.4rem; }
   .access-list .acc-people { max-height: 200px; overflow: auto; border-top: 0.5px solid var(--rule); padding-top: 0.3rem; }
   .access-list summary { cursor: pointer; font-size: 13px; color: var(--ink); }
+  .acct-folder { margin: 0.2rem 0 0.2rem 0.2rem; padding-left: 0.7rem; border-left: 0.5px solid var(--rule-strong); }
+  .acct-folder > summary { padding: 0.15rem 0; }
+  .stats-table tr.acct-head td { background: var(--card-bg); cursor: pointer; }
+  .stats-table .acct-mark { display: inline-block; width: 1.1em; color: var(--muted); }
+  .stats-table .acct-tools { margin-left: 0.75rem; white-space: nowrap; }
+  .stats-table select.acct-select { width: auto; max-width: 12rem; font-size: 12px; padding: 0.15rem 0.3rem; }
   .cls-code { font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.06em; font-size: 13px; }
   .cls-nick { width: 100%; background: transparent; border: none; border-bottom: 0.5px solid var(--rule); font-family: var(--font-body); font-size: 13px; color: var(--ink); padding: 0.2rem 0; }
   .cls-nick:focus { outline: none; border-bottom-color: var(--rule-strong); }
@@ -3475,6 +3481,118 @@ function updateAccessHint() {
 }
 $('lab-access').addEventListener('change', updateAccessHint);
 
+/* ---------- Account folders (owner, 2026-11-22) ----------
+   Admin-only filing for accounts, so long lists are quick to get through. A folder holds Google accounts and whole classes (a
+   class moves as one unit and its seats stay under it), and folders can sit inside folders. Filing changes NOTHING about who
+   can see or edit anything: in the tick lists a folder's checkbox is only a shortcut that ticks what is inside it right now.
+   Tables: account_folders, account_folder_users, account_folder_classes (supabase/account-folders-2026-11-22.sql). */
+let acct = { folders: [], userFolder: new Map(), classFolder: new Map(), ready: false, error: null };
+async function loadAccountFolders() {
+  try {
+    const [f, u, c] = await Promise.all([sb.from('account_folders').select('*'), sb.from('account_folder_users').select('*'), sb.from('account_folder_classes').select('*')]);
+    if (f.error) throw f.error; if (u.error) throw u.error; if (c.error) throw c.error;
+    const ids = new Set((f.data || []).map(x => x.id));
+    acct = { folders: f.data || [], userFolder: new Map((u.data || []).filter(r => ids.has(r.folder_id)).map(r => [r.user_id, r.folder_id])),
+      classFolder: new Map((c.data || []).filter(r => ids.has(r.folder_id)).map(r => [r.class_id, r.folder_id])), ready: true, error: null };
+  } catch (e) { acct = { folders: [], userFolder: new Map(), classFolder: new Map(), ready: false, error: e }; }   // not set up yet, or unreachable: everything shows as not in a folder
+  return acct;
+}
+function acctFolderById(id) { return acct.folders.find(f => f.id === id) || null; }
+function acctChildren(parentId) {   // a folder whose parent is missing counts as top level, so nothing can drop out of sight
+  const top = f => !f.parent_id || !acctFolderById(f.parent_id);
+  return acct.folders.filter(f => parentId ? f.parent_id === parentId : top(f)).sort((a, b) => ((a.sort_order || 0) - (b.sort_order || 0)) || a.name.localeCompare(b.name));
+}
+function acctPath(id) { const names = []; let f = acctFolderById(id), n = 0; while (f && n++ < 20) { names.unshift(f.name); f = f.parent_id ? acctFolderById(f.parent_id) : null; } return names.join(' / '); }
+function acctUnder(id) {   // the folder and every folder inside it
+  const out = new Set([id]); let grew = true, n = 0;
+  while (grew && n++ < 20) { grew = false; for (const f of acct.folders) if (f.parent_id && out.has(f.parent_id) && !out.has(f.id)) { out.add(f.id); grew = true; } }
+  return out;
+}
+function acctOptionsHTML(selected, exclude, noneLabel = 'No folder') {   // exclude: a folder that cannot be chosen, nor anything inside it (a folder cannot move into itself)
+  const skip = exclude ? acctUnder(exclude) : new Set(), opts = [];
+  (function walk(parent, depth) { for (const f of acctChildren(parent)) { if (skip.has(f.id)) continue; opts.push(`<option value="${escapeHTML(f.id)}" ${f.id === selected ? 'selected' : ''}>${'   '.repeat(depth)}${escapeHTML(f.name)}</option>`); walk(f.id, depth + 1); } })(null, 0);
+  return `<option value="" ${selected ? '' : 'selected'}>${escapeHTML(noneLabel)}</option>` + opts.join('');
+}
+// The tick lists (who can open it, who can edit it) show classes and accounts inside their account folders. `attr` is the data
+// attribute the list uses ('acc' or 'edit'); st holds { classes: Set, users: Set, allClasses, allPeople } and remembers which folders are open.
+function acctPickerHTML(st, filter, attr, rerender) {
+  const f = (filter || '').trim().toLowerCase(); st.openFolders = st.openFolders || new Set();
+  const cIn = fid => st.allClasses.filter(c => (acct.classFolder.get(c.id) || null) === fid && (!f || c.name.toLowerCase().includes(f)));
+  const pIn = fid => st.allPeople.filter(p => (acct.userFolder.get(p.user_id) || null) === fid && (!f || p.label.toLowerCase().includes(f)));
+  const classRow = c => `<label class="bu-check"><input type="checkbox" data-${attr}="class" data-id="${escapeHTML(c.id)}" ${st.classes.has(c.id) ? 'checked' : ''}/> ${escapeHTML(c.name)}${c.archived ? ' <span class="badge">closed</span>' : ''} <span class="hint" style="margin:0;">${c.seat_count} seats</span></label>`;
+  const personRow = p => `<label class="bu-check"><input type="checkbox" data-${attr}="user" data-id="${escapeHTML(p.user_id)}" ${st.users.has(p.user_id) ? 'checked' : ''}/> ${escapeHTML(p.label)}</label>`;
+  const folderHTML = folder => {
+    const inner = acctChildren(folder.id).map(folderHTML).join('') + cIn(folder.id).map(classRow).join('') + pIn(folder.id).map(personRow).join('');
+    if (f && !inner) return '';
+    return `<details class="acct-folder" data-folder="${escapeHTML(folder.id)}" ${f || st.openFolders.has(folder.id) ? 'open' : ''}><summary><input type="checkbox" data-pickfolder="${escapeHTML(folder.id)}" title="Tick or untick everything in this folder"/> ${escapeHTML(folder.name)} <span class="hint acct-count" style="margin:0;"></span></summary>${inner || '<span class="hint">Nothing in this folder.</span>'}</details>`;
+  };
+  const tree = acctChildren(null).map(folderHTML).join(''), filed = acct.folders.length > 0, classes = cIn(null), people = pIn(null), rest = filed ? ' not in a folder' : '';
+  return `${st.allPeople.length || filed ? `<input type="text" class="acc-filter" placeholder="Filter by name or email…" value="${escapeHTML(filter || '')}" oninput="${rerender}"/>` : ''}
+    ${filed ? `<h4>Account folders</h4>${tree || '<span class="hint">No matches.</span>'}` : ''}
+    ${classes.length || !filed ? `<h4>Classes${rest}</h4>${classes.map(classRow).join('') || `<span class="hint">${st.allClasses.length ? 'No matches.' : 'No classes yet. Create them from the Classes button in the admin bar.'}</span>`}` : ''}
+    ${people.length || !filed ? `<h4>Individual accounts (Google sign-in)${rest}</h4>${st.allPeople.length ? `<div class="acc-people">${people.map(personRow).join('') || '<span class="hint">No matches.</span>'}</div>` : '<span class="hint">No Google accounts have signed in yet.</span>'}` : ''}`;
+}
+function acctPickerBind(box, st, attr, onChange) {
+  const inside = fid => { const ids = acctUnder(fid); return { classes: st.allClasses.filter(c => ids.has(acct.classFolder.get(c.id))), people: st.allPeople.filter(p => ids.has(acct.userFolder.get(p.user_id))) }; };
+  const marks = () => box.querySelectorAll('input[data-pickfolder]').forEach(cb => {
+    const u = inside(cb.dataset.pickfolder), total = u.classes.length + u.people.length, on = u.classes.filter(c => st.classes.has(c.id)).length + u.people.filter(p => st.users.has(p.user_id)).length;
+    cb.checked = total > 0 && on === total; cb.indeterminate = on > 0 && on < total; cb.disabled = total === 0;
+    const n = cb.closest('summary').querySelector('.acct-count'); if (n) n.textContent = total ? `${on} of ${total} ticked` : 'empty';
+  });
+  box.querySelectorAll(`input[data-${attr}]`).forEach(cb => cb.addEventListener('change', () => {
+    const set = cb.dataset[attr] === 'class' ? st.classes : st.users; cb.checked ? set.add(cb.dataset.id) : set.delete(cb.dataset.id); marks(); onChange();
+  }));
+  box.querySelectorAll('input[data-pickfolder]').forEach(cb => cb.addEventListener('change', () => {   // a shortcut: tick or untick everything in the folder as it is now
+    const u = inside(cb.dataset.pickfolder), on = cb.checked;
+    u.classes.forEach(c => on ? st.classes.add(c.id) : st.classes.delete(c.id)); u.people.forEach(p => on ? st.users.add(p.user_id) : st.users.delete(p.user_id));
+    box.querySelectorAll(`input[data-${attr}]`).forEach(x => { x.checked = (x.dataset[attr] === 'class' ? st.classes : st.users).has(x.dataset.id); });
+    marks(); onChange();
+  }));
+  box.querySelectorAll('details.acct-folder').forEach(d => d.addEventListener('toggle', () => { d.open ? st.openFolders.add(d.dataset.folder) : st.openFolders.delete(d.dataset.folder); }));
+  marks();
+}
+// Folder tools, used from Stats → Students. Every one of them changes filing only.
+let acctOpen = new Set();   // which folders ('f:<id>') and classes ('c:<id>') are unfolded in the Students list; kept only while the page is open
+function acctApplyFold() {
+  document.querySelectorAll('#stats-body tr[data-anc]').forEach(tr => { tr.style.display = tr.dataset.anc.split(' ').filter(Boolean).some(k => !acctOpen.has(k)) ? 'none' : ''; });
+  document.querySelectorAll('#stats-body tr[data-key]').forEach(tr => { const m = tr.querySelector('.acct-mark'); if (m) m.textContent = acctOpen.has(tr.dataset.key) ? '▾' : '▸'; });
+}
+function acctToggle(key) { acctOpen.has(key) ? acctOpen.delete(key) : acctOpen.add(key); acctApplyFold(); }
+async function acctAddFolder(parentId) {
+  const name = (prompt(parentId ? `Name of the new folder inside "${acctFolderById(parentId)?.name || ''}"` : 'Name of the new account folder') || '').trim(); if (!name) return;
+  const { error } = await sb.from('account_folders').insert({ id: 'af-' + Date.now(), name: name.slice(0, 80), parent_id: parentId || null });
+  if (error) { toast('Could not add the folder: ' + error.message, true); return; }
+  if (parentId) acctOpen.add('f:' + parentId);
+  switchStatsTab('students');
+}
+async function acctRenameFolder(id) {
+  const f = acctFolderById(id); if (!f) return;
+  const name = (prompt('Folder name', f.name) || '').trim(); if (!name || name === f.name) return;
+  const { error } = await sb.from('account_folders').update({ name: name.slice(0, 80) }).eq('id', id);
+  if (error) { toast('Could not rename: ' + error.message, true); return; }
+  switchStatsTab('students');
+}
+async function acctDeleteFolder(id) {
+  const f = acctFolderById(id); if (!f) return;
+  if (!confirm(`Delete the account folder "${f.name}"? No account or class is deleted: what is filed in it goes back to "not in a folder", and folders inside it move up one level.`)) return;
+  let r = await sb.from('account_folders').update({ parent_id: f.parent_id || null }).eq('parent_id', id);
+  if (!r.error) r = await sb.from('account_folders').delete().eq('id', id);
+  if (r.error) { toast('Could not delete the folder: ' + r.error.message, true); return; }
+  switchStatsTab('students');
+}
+async function acctSetParent(id, parentId) {
+  if (parentId && acctUnder(id).has(parentId)) { toast('A folder cannot be moved inside itself', true); switchStatsTab('students'); return; }
+  const { error } = await sb.from('account_folders').update({ parent_id: parentId || null }).eq('id', id);
+  if (error) toast('Could not move the folder: ' + error.message, true);
+  switchStatsTab('students');
+}
+async function acctSetFolder(kind, id, folderId) {   // kind: 'class' (the whole class moves) or 'user' (one Google account)
+  const table = kind === 'class' ? 'account_folder_classes' : 'account_folder_users', col = kind === 'class' ? 'class_id' : 'user_id';
+  const r = folderId ? await sb.from(table).upsert({ [col]: id, folder_id: folderId }) : await sb.from(table).delete().eq(col, id);
+  if (r.error) toast('Could not move it: ' + r.error.message, true); else toast(folderId ? `Moved to ${acctPath(folderId)}` : 'Taken out of its folder');
+  switchStatsTab('students');
+}
+
 /* ---------- Access lists (who can open an account-locked item) ---------- */
 let accessListState = { lab: null, folder: null };   // { classes: Set, users: Set }
 function onAccessSelectChange(kind) {
@@ -3489,7 +3607,7 @@ async function loadAccessList(kind, itemId) {
   try {
     const [classes, people, ig, iu] = await Promise.all([
       rpc('list_classes'), rpc('list_account_choices'),
-      sb.from('item_groups').select('group_id').eq('item_id', itemId), sb.from('item_users').select('user_id').eq('item_id', itemId)
+      sb.from('item_groups').select('group_id').eq('item_id', itemId), sb.from('item_users').select('user_id').eq('item_id', itemId), loadAccountFolders()
     ]);
     const st = { classes: new Set((ig.data || []).map(r => r.group_id)), users: new Set((iu.data || []).map(r => r.user_id)), allClasses: classes, allPeople: people };
     accessListState[kind] = st;
@@ -3498,17 +3616,12 @@ async function loadAccessList(kind, itemId) {
 }
 function renderAccessList(kind, filter = '') {
   const st = accessListState[kind], box = $(kind + '-access-list'); if (!st) return;
-  const f = filter.trim().toLowerCase();
-  const people = st.allPeople.filter(p => !f || p.label.toLowerCase().includes(f));
+  const typing = box.contains(document.activeElement) && document.activeElement.classList.contains('acc-filter');
   box.innerHTML = `<label>Who can open it</label>
-    <h4>Classes</h4>
-    ${st.allClasses.length ? st.allClasses.map(c => `<label class="bu-check"><input type="checkbox" data-acc="class" data-id="${c.id}" ${st.classes.has(c.id) ? 'checked' : ''}/> ${escapeHTML(c.name)}${c.archived ? ' <span class="badge">closed</span>' : ''} <span class="hint" style="margin:0;">${c.seat_count} seats</span></label>`).join('') : '<span class="hint">No classes yet. Create them from the Classes button in the admin bar.</span>'}
-    <h4>Individual accounts (Google sign-in)</h4>
-    ${st.allPeople.length ? `<input type="text" class="acc-filter" placeholder="Filter by name or email…" value="${escapeHTML(filter)}" oninput="renderAccessList('${kind}', this.value)"/>
-      <div class="acc-people">${people.map(p => `<label class="bu-check"><input type="checkbox" data-acc="user" data-id="${p.user_id}" ${st.users.has(p.user_id) ? 'checked' : ''}/> ${escapeHTML(p.label)}</label>`).join('') || '<span class="hint">No matches.</span>'}</div>` : '<span class="hint">No Google-account students have signed in yet.</span>'}
+    ${acctPickerHTML(st, filter, 'acc', `renderAccessList('${kind}', this.value)`)}
     <div class="hint" style="margin-top:0.6rem;">Ticked classes and accounts can open this and everything inside it that follows its setting. Admins always can.</div>`;
-  box.querySelectorAll('input[data-acc]').forEach(cb => cb.addEventListener('change', () => { const set = cb.dataset.acc === 'class' ? st.classes : st.users; cb.checked ? set.add(cb.dataset.id) : set.delete(cb.dataset.id); }));
-  const filt = box.querySelector('.acc-filter'); if (filt && f) { filt.focus(); filt.setSelectionRange(filt.value.length, filt.value.length); }
+  acctPickerBind(box, st, 'acc', () => {});
+  const filt = box.querySelector('.acc-filter'); if (filt && typing) { filt.focus(); filt.setSelectionRange(filt.value.length, filt.value.length); }
 }
 async function saveAccessList(kind, itemId) {
   const st = accessListState[kind]; if (!st || $(kind + '-access').value !== 'accounts') return;
@@ -3529,7 +3642,7 @@ async function loadEditList(kind, itemId) {
   try {
     const [classes, people, ig, iu] = await Promise.all([
       rpc('list_classes'), rpc('list_account_choices'),
-      sb.from('item_edit_groups').select('group_id').eq('item_id', itemId), sb.from('item_edit_users').select('user_id').eq('item_id', itemId)
+      sb.from('item_edit_groups').select('group_id').eq('item_id', itemId), sb.from('item_edit_users').select('user_id').eq('item_id', itemId), loadAccountFolders()
     ]);
     if (ig.error) throw ig.error; if (iu.error) throw iu.error;
     if (!current()) return;
@@ -3547,23 +3660,15 @@ function editListSummary(st) {
 }
 function renderEditList(kind, filter = '') {
   const st = editListState[kind], box = $(kind + '-edit-list'); if (!st) return;
-  const f = filter.trim().toLowerCase();
-  const people = st.allPeople.filter(p => !f || p.label.toLowerCase().includes(f));
+  const typing = box.contains(document.activeElement) && document.activeElement.classList.contains('acc-filter');
   box.innerHTML = `<details ${st.open ? 'open' : ''}><summary>${escapeHTML(editListSummary(st))}</summary>
-    <h4>Classes</h4>
-    ${st.allClasses.length ? st.allClasses.map(c => `<label class="bu-check"><input type="checkbox" data-edit="class" data-id="${escapeHTML(c.id)}" ${st.classes.has(c.id) ? 'checked' : ''}/> ${escapeHTML(c.name)}${c.archived ? ' <span class="badge">closed</span>' : ''} <span class="hint" style="margin:0;">${c.seat_count} seats</span></label>`).join('') : '<span class="hint">No classes yet. Create them from the Classes button in the admin bar.</span>'}
-    <h4>Individual accounts (Google sign-in)</h4>
-    ${st.allPeople.length ? `<input type="text" class="acc-filter" placeholder="Filter by name or email…" value="${escapeHTML(filter)}" oninput="renderEditList('${kind}', this.value)"/>
-      <div class="acc-people">${people.map(p => `<label class="bu-check"><input type="checkbox" data-edit="user" data-id="${escapeHTML(p.user_id)}" ${st.users.has(p.user_id) ? 'checked' : ''}/> ${escapeHTML(p.label)}</label>`).join('') || '<span class="hint">No matches.</span>'}</div>` : '<span class="hint">No Google accounts have signed in yet.</span>'}
+    ${acctPickerHTML(st, filter, 'edit', `renderEditList('${kind}', this.value)`)}
     <div class="hint" style="margin-top:0.6rem;">${kind === 'lab'
       ? 'Ticked classes and accounts may edit this lab (text, photos, files) if they can open it. They cannot move it, delete it or change who sees it. To let them also add, move and delete labs, tick them on the folder instead.'
       : 'Ticked classes and accounts may edit every lab inside this folder (subfolders included), add labs, and move or delete them, if they can open the folder. A lab they add is published at once with this folder\'s access.'} Ticking someone here never lets them see anything new, and editors never see student work.</div></details>`;
   box.querySelector('details').addEventListener('toggle', e => { st.open = e.target.open; });
-  box.querySelectorAll('input[data-edit]').forEach(cb => cb.addEventListener('change', () => {
-    const set = cb.dataset.edit === 'class' ? st.classes : st.users; cb.checked ? set.add(cb.dataset.id) : set.delete(cb.dataset.id);
-    st.dirty = true; box.querySelector('summary').textContent = editListSummary(st);
-  }));
-  const filt = box.querySelector('.acc-filter'); if (filt && f) { filt.focus(); filt.setSelectionRange(filt.value.length, filt.value.length); }
+  acctPickerBind(box, st, 'edit', () => { st.dirty = true; box.querySelector('summary').textContent = editListSummary(st); });
+  const filt = box.querySelector('.acc-filter'); if (filt && typing) { filt.focus(); filt.setSelectionRange(filt.value.length, filt.value.length); }
 }
 async function saveEditList(kind, itemId) {
   const st = editListState[kind]; if (!st || !st.dirty || st.itemId !== itemId) return;   // rewritten only when it loaded for this item and was changed
@@ -4291,24 +4396,45 @@ async function loadStudentsAndEntries() {
   const [s, e, cl, se] = await Promise.all([sb.from('students').select('*').order('created_at'), sb.from('lab_entries').select('user_id, lab_id, updated_at'), sb.from('classes').select('*'), sb.from('seats').select('*')]);
   if (s.error) throw s.error; if (e.error) throw e.error;
   const classes = Object.fromEntries((cl.data || []).map(c => [c.id, c]));
-  const seatRows = (se.data || []).map(x => ({ user_id: x.user_id, email: '', full_name: seatLabel(classes[x.class_id], x), created_at: x.created_at, seat: true, passcode: x.passcode }));
-  statsCache.students = [...(s.data || []), ...seatRows]; statsCache.entries = e.data || [];
+  const seatRows = (se.data || []).map(x => ({ user_id: x.user_id, email: '', full_name: seatLabel(classes[x.class_id], x), created_at: x.created_at, seat: true, passcode: x.passcode, class_id: x.class_id, seat_no: x.seat_no }));
+  statsCache.students = [...(s.data || []), ...seatRows]; statsCache.entries = e.data || []; statsCache.classes = cl.data || [];
   return statsCache;
 }
 async function renderStatsStudents(req) {
-  const body = $('stats-body'); const { students, entries } = await loadStudentsAndEntries();
+  const body = $('stats-body'); const [{ students, entries, classes }] = await Promise.all([loadStudentsAndEntries(), loadAccountFolders()]);
   const adminIds = new Set(); try { (await rpc('list_admins')).forEach(a => adminIds.add(a.user_id)); } catch (e) { /* ignore */ }
   const list = students.filter(s => !adminIds.has(s.user_id));
   const byUser = {}; entries.forEach(e => { (byUser[e.user_id] = byUser[e.user_id] || []).push(e); });
   if (req !== undefined && req !== statsReq) return;
+  // The list is a tree: account folders, then classes (their seats inside), then Google accounts. Folders and classes fold shut.
+  const google = list.filter(s => !s.seat), known = new Set((classes || []).map(c => c.id)), pad = d => `padding-left:${0.6 + d * 1.25}rem;`;
+  const folderSelect = (kind, id, cur) => acct.ready ? `<select class="acct-select" title="Account folder" onclick="event.stopPropagation()" onchange="acctSetFolder('${kind}', '${jsAttr(id)}', this.value)">${acctOptionsHTML(cur || null)}</select>` : '';
+  const accountRows = (s, anc, d) => {
+    const es = byUser[s.user_id] || []; const last = es.length ? es.map(e => e.updated_at).sort().pop() : null;
+    const idCell = s.seat ? `<span class="code-hidden" data-code="${escapeHTML(s.passcode)}"><button type="button" class="btn-small" onclick="event.stopPropagation(); revealCode(this)">Show code</button></span>` : escapeHTML(s.email);
+    return `<tr class="stats-row" data-anc="${anc}" onclick="showStudentLabs('${s.user_id}')"><td style="${pad(d)}">${escapeHTML(s.full_name || '')}</td><td style="white-space:nowrap;">${idCell}</td><td>${escapeHTML(formatDate(s.created_at))}</td><td>${es.length}</td><td>${last ? escapeHTML(formatDate(last)) : '—'}</td><td>${s.seat ? '' : folderSelect('user', s.user_id, acct.userFolder.get(s.user_id))}</td></tr>
+      <tr id="studentlabs-${s.user_id}" data-anc="${anc}" hidden><td colspan="6">${es.length ? es.map(e => `<div style="display:flex; gap:0.75rem; align-items:center; padding:0.3rem 0;"><span style="flex:1;">${escapeHTML(labTitle(e.lab_id))}</span><span class="hint" style="margin:0;">${escapeHTML(formatDate(e.updated_at))}</span><button type="button" class="btn-small" onclick="event.stopPropagation(); reviewEntries('${s.user_id}', '${e.lab_id}')">View entries</button></div>`).join('') : '<span class="hint">No saved entries yet.</span>'}</td></tr>`;
+  };
+  const classBlock = (c, anc, d) => {
+    const key = 'c:' + c.id, seats = list.filter(s => s.seat && s.class_id === c.id).sort((a, b) => (a.seat_no || 0) - (b.seat_no || 0));
+    return `<tr class="acct-head" data-key="${escapeHTML(key)}" data-anc="${anc}" onclick="acctToggle('${jsAttr(key)}')"><td colspan="5" style="${pad(d)}"><span class="acct-mark"></span>${escapeHTML(c.name)}${c.archived ? ' <span class="badge">closed</span>' : ''} <span class="hint" style="margin:0;">class · ${seats.length} seat${seats.length === 1 ? '' : 's'}</span></td><td>${folderSelect('class', c.id, acct.classFolder.get(c.id))}</td></tr>`
+      + seats.map(s => accountRows(s, (anc + ' ' + key).trim(), d + 1)).join('');
+  };
+  const classesIn = fid => (classes || []).filter(c => (acct.classFolder.get(c.id) || null) === fid).sort((a, b) => a.name.localeCompare(b.name));
+  const googleIn = fid => google.filter(s => (acct.userFolder.get(s.user_id) || null) === fid);
+  const folderBlock = (f, anc, d) => {
+    const key = 'f:' + f.id, mine = (anc + ' ' + key).trim(), under = acctUnder(f.id);
+    const n = list.filter(s => under.has(s.seat ? acct.classFolder.get(s.class_id) : acct.userFolder.get(s.user_id))).length;
+    return `<tr class="acct-head" data-key="${escapeHTML(key)}" data-anc="${anc}" onclick="acctToggle('${jsAttr(key)}')"><td colspan="5" style="${pad(d)}"><span class="acct-mark"></span><strong>${escapeHTML(f.name)}</strong> <span class="hint" style="margin:0;">${n} account${n === 1 ? '' : 's'}</span><span class="acct-tools"><button type="button" class="btn-small" onclick="event.stopPropagation(); acctRenameFolder('${jsAttr(f.id)}')">Rename</button> <button type="button" class="btn-small" onclick="event.stopPropagation(); acctAddFolder('${jsAttr(f.id)}')">+ Folder inside</button> <button type="button" class="btn-small" onclick="event.stopPropagation(); acctDeleteFolder('${jsAttr(f.id)}')">Delete</button></span></td><td><select class="acct-select" title="Put this folder inside another" onclick="event.stopPropagation()" onchange="acctSetParent('${jsAttr(f.id)}', this.value)">${acctOptionsHTML(f.parent_id || null, f.id, 'Top level')}</select></td></tr>`
+      + acctChildren(f.id).map(k => folderBlock(k, mine, d + 1)).join('') + classesIn(f.id).map(c => classBlock(c, mine, d + 1)).join('') + googleIn(f.id).map(s => accountRows(s, mine, d + 1)).join('');
+  };
+  const strays = list.filter(s => s.seat && !known.has(s.class_id));   // a seat whose class row did not load: shown plainly, never dropped
+  const rowsHTML = acctChildren(null).map(f => folderBlock(f, '', 0)).join('') + classesIn(null).map(c => classBlock(c, '', 0)).join('') + googleIn(null).map(s => accountRows(s, '', 0)).join('') + strays.map(s => accountRows(s, '', 0)).join('');
   body.innerHTML = `
-    <div class="lt-toolbar" style="margin-bottom:1rem;"><span class="hint" style="margin:0;">${list.length} student account${list.length === 1 ? '' : 's'}</span>${list.some(s => s.seat) ? `<button type="button" class="btn-small" onclick="toggleAllCodes(this)">Show all access codes</button>` : ''}<button type="button" class="btn-small" style="margin-left:auto;" onclick="exportStudentsCsv()">Export CSV</button></div>
-    ${list.length ? `<div style="overflow-x:auto;"><table class="stats-table"><thead><tr><th>Name</th><th>Email / access code</th><th>Joined</th><th>Labs with entries</th><th>Last activity</th></tr></thead><tbody>${list.map(s => {
-      const es = byUser[s.user_id] || []; const last = es.length ? es.map(e => e.updated_at).sort().pop() : null;
-      const idCell = s.seat ? `<span class="code-hidden" data-code="${escapeHTML(s.passcode)}"><button type="button" class="btn-small" onclick="event.stopPropagation(); revealCode(this)">Show code</button></span>` : escapeHTML(s.email);
-      return `<tr class="stats-row" onclick="showStudentLabs('${s.user_id}')"><td>${escapeHTML(s.full_name || '')}</td><td style="white-space:nowrap;">${idCell}</td><td>${escapeHTML(formatDate(s.created_at))}</td><td>${es.length}</td><td>${last ? escapeHTML(formatDate(last)) : '—'}</td></tr>
-      <tr id="studentlabs-${s.user_id}" hidden><td colspan="5">${es.length ? es.map(e => `<div style="display:flex; gap:0.75rem; align-items:center; padding:0.3rem 0;"><span style="flex:1;">${escapeHTML(labTitle(e.lab_id))}</span><span class="hint" style="margin:0;">${escapeHTML(formatDate(e.updated_at))}</span><button type="button" class="btn-small" onclick="event.stopPropagation(); reviewEntries('${s.user_id}', '${e.lab_id}')">View entries</button></div>`).join('') : '<span class="hint">No saved entries yet.</span>'}</td></tr>`;
-    }).join('')}</tbody></table></div>` : `<div class="empty-state" style="padding:1.5rem;">No student accounts yet. Students create one with the Log in button, or you create a class of access codes.</div>`}`;
+    <div class="lt-toolbar" style="margin-bottom:1rem;"><span class="hint" style="margin:0;">${list.length} student account${list.length === 1 ? '' : 's'}</span>${list.some(s => s.seat) ? `<button type="button" class="btn-small" onclick="toggleAllCodes(this)">Show all access codes</button>` : ''}${acct.ready ? `<button type="button" class="btn-small" onclick="acctAddFolder()">+ Account folder</button>` : ''}<button type="button" class="btn-small" style="margin-left:auto;" onclick="exportStudentsCsv()">Export CSV</button></div>
+    ${list.length ? `<div style="overflow-x:auto;"><table class="stats-table"><thead><tr><th>Name</th><th>Email / access code</th><th>Joined</th><th>Labs with entries</th><th>Last activity</th><th>Folder</th></tr></thead><tbody>${rowsHTML}</tbody></table></div>
+    <p class="hint" style="margin-top:1rem;">${acct.ready ? 'Click a folder or a class to open it. Folders only organize this list and the tick lists in the lab and folder editors: filing an account or a class never changes what it can see or edit. A class moves as a whole.' : 'Account folders are not set up in the database yet.'}</p>` : `<div class="empty-state" style="padding:1.5rem;">No student accounts yet. Students create one with the Log in button, or you create a class of access codes.</div>`}`;
+  acctApplyFold();
 }
 function revealCode(btn) {
   const span = btn.closest('.code-hidden'); const code = span.dataset.code;
@@ -4318,16 +4444,25 @@ function revealCode(btn) {
 function toggleAllCodes(btn) { document.querySelectorAll('#stats-body .code-hidden button').forEach(b => revealCode(b)); btn.remove(); }
 function showStudentLabs(uid) { const el = $('studentlabs-' + uid); if (el) el.hidden = !el.hidden; }
 async function renderStatsResults(req) {
-  const body = $('stats-body'); const { students, entries } = await loadStudentsAndEntries();
+  const body = $('stats-body'); const [{ students, entries, classes }] = await Promise.all([loadStudentsAndEntries(), loadAccountFolders()]);
   const labIds = [...new Set(entries.map(e => e.lab_id))].filter(id => state.labs.some(l => l.id === id));
   const current = statsCache.resultsLab || labIds[0];
   const rows = entries.filter(e => e.lab_id === current);
   const byUser = Object.fromEntries(students.map(s => [s.user_id, s]));
   if (req !== undefined && req !== statsReq) return;
+  const rowHTML = e => { const s = byUser[e.user_id] || {}; return `<tr><td>${escapeHTML(s.full_name || '')}</td><td>${escapeHTML(s.email || e.user_id)}</td><td>${escapeHTML(formatDate(e.updated_at))}</td><td><button type="button" class="btn-small" onclick="reviewEntries('${e.user_id}', '${current}')">View entries</button></td></tr>`; };
+  let tbody;
+  if (!acct.folders.length) tbody = rows.map(rowHTML).join('');   // no account folders: the list as it has always been
+  else {   // grouped the way the accounts are filed: folder path, then class
+    const className = Object.fromEntries((classes || []).map(c => [c.id, c.name]));
+    const groupOf = e => { const s = byUser[e.user_id] || {}; const fid = s.seat ? acct.classFolder.get(s.class_id) : acct.userFolder.get(s.user_id); return [fid ? acctPath(fid) : '', s.seat ? (className[s.class_id] || '') : ''].filter(Boolean).join(' / '); };
+    const tagged = rows.map(e => ({ e, g: groupOf(e), s: byUser[e.user_id] || {} })).sort((a, b) => (!a.g - !b.g) || a.g.localeCompare(b.g) || ((a.s.seat_no || 0) - (b.s.seat_no || 0)) || String(a.s.full_name || '').localeCompare(String(b.s.full_name || '')));
+    let last = null; tbody = tagged.map(t => { const head = t.g !== last ? `<tr class="acct-head"><td colspan="4" style="cursor:default;">${escapeHTML(t.g || 'Not in a folder')}</td></tr>` : ''; last = t.g; return head + rowHTML(t.e); }).join('');
+  }
   body.innerHTML = `
     <div class="form-row"><label>Lab</label><select id="stats-lab" onchange="statsCache.resultsLab = this.value; switchStatsTab('results')">${labIds.length ? labIds.map(id => `<option value="${id}" ${id === current ? 'selected' : ''}>${escapeHTML(labTitle(id))}</option>`).join('') : '<option value="">No entries saved yet</option>'}</select></div>
     ${current ? `<div class="lt-toolbar" style="margin-bottom:1rem;"><span class="hint" style="margin:0;">${rows.length} student${rows.length === 1 ? '' : 's'} with entries</span><button type="button" class="btn-small" style="margin-left:auto;" onclick="exportLabEntriesCsv('${current}')">Export all entries (CSV)</button></div>
-    <table class="stats-table"><thead><tr><th>Student</th><th>Email</th><th>Last saved</th><th></th></tr></thead><tbody>${rows.map(e => { const s = byUser[e.user_id] || {}; return `<tr><td>${escapeHTML(s.full_name || '')}</td><td>${escapeHTML(s.email || e.user_id)}</td><td>${escapeHTML(formatDate(e.updated_at))}</td><td><button type="button" class="btn-small" onclick="reviewEntries('${e.user_id}', '${current}')">View entries</button></td></tr>`; }).join('')}</tbody></table>` : ''}
+    <table class="stats-table"><thead><tr><th>Student</th><th>Email</th><th>Last saved</th><th></th></tr></thead><tbody>${tbody}</tbody></table>` : ''}
     <p class="hint" style="margin-top:1rem;">"View entries" opens the lab filled in with that student's answers and photos, read-only. The CSV export holds the written entries only.</p>`;
 }
 async function reviewEntries(userId, labId) {
