@@ -361,10 +361,15 @@
     display: none; background: var(--ink); color: var(--bg); padding: 0.6rem 3rem; align-items: center;
     justify-content: space-between; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; flex-wrap: wrap; gap: 0.5rem;
   }
-  body.admin-mode .admin-bar { display: flex; }
-  .admin-preview-pill { display: none; position: fixed; right: 1rem; bottom: 1rem; z-index: 50; align-items: center; gap: 0.75rem; background: #1a1a18; color: #f3f1ec; padding: 0.5rem 0.6rem 0.5rem 0.9rem; border-radius: 999px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; box-shadow: 0 2px 10px rgba(0,0,0,0.25); }
-  body.admin-preview .admin-preview-pill { display: flex; }
-  .admin-preview-pill button { background: #f3f1ec; color: #1a1a18; border: none; padding: 0.35rem 0.7rem; border-radius: 999px; font: inherit; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; }
+  body.admin-mode .admin-bar, body.admin-preview .admin-bar { display: flex; }
+  body.admin-preview .admin-bar-tools { display: none; }   /* student view: the bar stays, with only the switch */
+  .admin-switch { display: inline-flex; align-items: center; gap: 0.6rem; cursor: pointer; user-select: none; }
+  .admin-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .admin-switch-track { position: relative; width: 2.1rem; height: 1.1rem; border: 0.5px solid rgba(255,255,255,0.6); border-radius: 999px; transition: background 0.15s; }
+  .admin-switch-track::after { content: ''; position: absolute; top: 50%; left: 0.15rem; width: 0.75rem; height: 0.75rem; border-radius: 50%; background: var(--bg); transform: translateY(-50%); transition: left 0.15s; }
+  .admin-switch input:checked + .admin-switch-track { background: rgba(255,255,255,0.3); }
+  .admin-switch input:checked + .admin-switch-track::after { left: calc(100% - 0.9rem); }
+  .admin-switch input:focus-visible + .admin-switch-track { outline: 1px solid var(--bg); outline-offset: 2px; }
   .admin-bar button {
     background: transparent; border: 0.5px solid rgba(255,255,255,0.4); color: var(--bg); padding: 0.4rem 0.9rem;
     font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; font-family: inherit; margin-left: 0.4rem;
@@ -963,8 +968,8 @@
 <div id="loading"><div class="loader">Loading…</div></div>
 
 <div class="admin-bar">
-  <span>● Admin mode</span>
-  <div>
+  <label class="admin-switch" title="Switch between admin mode and student view"><input type="checkbox" id="admin-switch" checked onchange="toggleAdminPreview()"/><span class="admin-switch-track"></span><span id="admin-switch-label">Admin mode</span></label>
+  <div class="admin-bar-tools">
     <button onclick="openLabModal()">+ Lab</button>
     <button onclick="openFolderModal()">+ Folder</button>
     <button onclick="openDesignModal()">Site design</button>
@@ -972,11 +977,9 @@
     <button onclick="openStatsModal()">Stats</button>
     <button onclick="openHelpModal()">Help<span class="help-count" id="help-count" hidden></span></button>
     <button onclick="openUsersModal()">Users</button>
-    <button onclick="toggleAdminPreview()">View as student</button>
     <button onclick="logoutAdmin()">Log out</button>
   </div>
 </div>
-<div class="admin-preview-pill" id="admin-preview-pill"><span>Student view</span><button type="button" onclick="toggleAdminPreview()">Back to admin mode</button></div>
 
 <div class="banner error" id="error-banner" hidden><span id="error-banner-text"></span><button onclick="location.reload()">Reload</button></div>
 <div class="banner" id="fallback-banner" hidden><span id="fallback-banner-text"></span></div>
@@ -1991,13 +1994,18 @@ function editorFolderOptionsHTML(lab) {   // a lab moves only between folders th
   if (!cur) opts.unshift('<option value="" selected>(Top level)</option>');
   return opts.join('');
 }
+function syncAdminSwitch() {   // the switch in the admin bar: on = admin mode, off = student view (the bar stays, the tools and all admin rights go)
+  const sw = $('admin-switch'); if (!sw) return;
+  sw.checked = !state.adminPreview; $('admin-switch-label').textContent = state.adminPreview ? 'Student view' : 'Admin mode';
+}
 function toggleAdminPreview() {
   if (!isRealAdmin()) return;
   state.adminPreview = !state.adminPreview;
   try { sessionStorage.setItem('labsite.adminPreview', state.adminPreview ? '1' : ''); } catch (e) { /* ignore */ }
   document.body.classList.toggle('admin-mode', isAdmin());
   document.body.classList.toggle('admin-preview', !!state.adminPreview);
-  closeModal('lab-modal'); renderChrome(); render();
+  document.querySelectorAll('.modal-backdrop.open').forEach(m => closeModal(m.id));   // no admin panel stays open in student view
+  renderChrome(); render();
   if (!state.adminPreview) { helpAdminWatch(); helpAdminRefresh(); }
 }
 function labIsLive(lab) {
@@ -2078,6 +2086,7 @@ function submitSearch(e) {
    RENDERING — chrome
    ============================================================ */
 function renderChrome() {
+  syncAdminSwitch();
   const title = getText('siteTitle');
   $('site-title').textContent = title;
   $('footer-text').innerHTML = fmt('footerText');
