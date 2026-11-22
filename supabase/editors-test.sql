@@ -190,7 +190,7 @@ begin
   if not editor_can_use_folder('f-et-open') or not editor_can_edit_lab('l-9000000000002') then fails := fails || 'C cannot edit the public items they are listed on'; end if;
   select count(*) into n from labs where id = 'l-9000000000001'; if n <> 0 then fails := fails || 'being on an edit list let C SEE a restricted lab'; end if;
   select count(*) into n from folders where id = 'f-et-edit'; if n <> 0 then fails := fails || 'being on an edit list let C SEE a restricted folder'; end if;
-  select string_agg(r.kind || ':' || r.item, ',' order by r.kind, r.item) into t from my_edit_rights() r where r.item like '%-et-%' or r.item like 'l-9_00000000000_';
+  select string_agg(r.kind || ':' || r.item, ',' order by r.kind, r.item) into t from my_edit_rights() r where r.item like '%-et-%' or r.item like 'l-9_0000000000_';
   if t is distinct from 'folder:f-et-open,lab:l-9000000000002' then fails := fails || format('C rights list wrong: %s', t); end if;
   begin perform editor_save_lab('{"id":"l-9000000000001","title":"x","folder_id":"f-et-sub"}'::jsonb, '{"content":"x","format":"labtags"}'::jsonb); fails := fails || 'C saved a lab they cannot see'; exception when others then null; end;
   begin perform editor_save_lab('{"id":"l-9100000000009","title":"x","folder_id":"f-et-edit"}'::jsonb, '{"content":"x","format":"labtags"}'::jsonb); fails := fails || 'C created a lab in a folder they cannot see'; exception when others then null; end;
