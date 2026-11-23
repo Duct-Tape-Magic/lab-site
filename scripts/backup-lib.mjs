@@ -13,7 +13,7 @@ export const KEY_FILE = path.join(os.homedir(), '.config', 'ohschemlabs', 'servi
 export const BACKUP_ROOT = process.env.LAB_BACKUP_DIR || path.join(os.homedir(), 'Lab Site Backups');
 export const KEEP_DAYS = 30;        // a backup older than this is deleted (the Privacy page says so: change both together)
 export const BACKUP_EVERY_DAYS = 7; // the scheduled job makes a new backup when the newest verified one is this old
-export const TABLES = ['lab_entries', 'students', 'seats', 'classes', 'group_members', 'help_threads', 'help_messages', 'user_prefs', 'labs', 'lab_content', 'folders', 'site_content', 'attachments', 'item_groups', 'item_users', 'item_edit_groups', 'item_edit_users', 'account_folders', 'account_folder_users', 'account_folder_classes', 'help_notify', 'lab_revisions',
+export const TABLES = ['lab_entries', 'students', 'seats', 'classes', 'group_members', 'help_threads', 'help_messages', 'user_prefs', 'labs', 'lab_content', 'folders', 'site_content', 'attachments', 'item_groups', 'item_users', 'item_edit_groups', 'item_edit_users', 'account_folders', 'account_folder_users', 'account_folder_classes', 'entry_moves', 'help_notify', 'lab_revisions',
   'oral_banks', 'oral_settings', 'oral_sessions', 'oral_messages', 'oral_reports', 'oral_usage'];   // the Socratic tutor: banks, settings, every student conversation, problem reports, usage (added 2026-11-13)
 const ORDER = { oral_banks: 'id', oral_settings: 'key', oral_sessions: 'id', oral_messages: 'id', oral_reports: 'id', oral_usage: 'user_id,day' };   // an explicit order, so paging through a table of more than 1000 rows cannot skip or repeat one
 

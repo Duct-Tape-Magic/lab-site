@@ -1324,6 +1324,7 @@
       <span class="hint" style="margin:0;" id="users-count"></span>
       <button type="button" class="btn-small" id="users-add-folder" onclick="acctAddFolder()">+ Folder</button>
       <button type="button" class="btn-small" onclick="toggleNewClassForm()">+ Class</button>
+      <button type="button" class="btn-small" onclick="openMoveModal()">Move labs…</button>
       <input type="text" id="users-filter" placeholder="Filter by name, email or class…" oninput="renderUsers()" style="flex:1; min-width:11rem; width:auto; padding:0.35rem 0.5rem; border:0.5px solid var(--rule-strong); background:transparent; font-family:var(--font-body); font-size:13px; color:var(--ink);"/>
       <button type="button" class="btn-small" onclick="exportStudentsCsv()">Export CSV</button>
     </div>
@@ -1338,6 +1339,21 @@
       <button type="button" class="btn btn-accent" onclick="createClass()" id="cls-create-btn">Create class</button>
     </div>
     <div id="users-body"></div>
+  </div>
+</div>
+
+<!-- Move labs between accounts (admin): lab by lab; copies on both accounts trade places, nothing is deleted -->
+<div class="modal-backdrop" id="move-modal">
+  <div class="modal modal-wide">
+    <button class="modal-close" onclick="closeMoveModal()">×</button>
+    <h2>Move labs between accounts</h2>
+    <p style="font-size:13px; color:var(--muted); margin-bottom:1rem; line-height:1.6;">Pick two accounts, then tick the labs to move from the first account to the second. Photos, the lab's help thread and its Socratic 1 sessions go with it. If the second account already has work on a ticked lab, the two copies trade places, so nothing is deleted and the same move made again puts everything back. Move a lab while the student is not working on it.</p>
+    <div class="form-grid-2">
+      <div class="form-row"><label>Move labs from</label><select id="move-from" onchange="moveSetAccount('from', this.value)"></select></div>
+      <div class="form-row"><label>To</label><select id="move-to" onchange="moveSetAccount('to', this.value)"></select></div>
+    </div>
+    <div id="move-pending"></div>
+    <div id="move-body"></div>
   </div>
 </div>
 
@@ -4476,9 +4492,11 @@ async function renderStatsResults(req) {
     <table class="stats-table"><thead><tr><th>Student</th><th>Email</th><th>Last saved</th><th></th></tr></thead><tbody>${tbody}</tbody></table>` : ''}
     <p class="hint" style="margin-top:1rem;">"View entries" opens the lab filled in with that student's answers and photos, read-only. The CSV export holds the written entries only.</p>`;
 }
-async function reviewEntries(userId, labId) {
+async function reviewEntries(userId, labId, fromMove) {
+  moveSt.returning = false;
   const { data, error } = await sb.from('lab_entries').select('data, updated_at').eq('user_id', userId).eq('lab_id', labId).maybeSingle();
   if (error || !data) { toast('Could not load those entries', true); return; }
+  if (fromMove) { moveSt.returning = true; closeModal('move-modal'); }   // Exit brings the admin back to the list, ticks kept
   const { students } = await loadStudentsAndEntries();
   const s = students.find(x => x.user_id === userId) || {};
   state.reviewing = { lab_id: labId, user_id: userId, name: s.full_name || s.email || 'student', data: data.data || {}, updated_at: data.updated_at };
@@ -4486,7 +4504,7 @@ async function reviewEntries(userId, labId) {
   const lab = state.labs.find(l => l.id === labId);
   if (lab) navigate('#/lab/' + encodeURIComponent(lab.slug));
 }
-function exitReview() { state.reviewing = null; render(); }
+function exitReview() { const back = moveSt.returning; moveSt.returning = false; state.reviewing = null; render(); if (back && isAdmin()) openMoveModal(true); }
 function csvEscape(v) { let s = v == null ? '' : String(v); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;   /* a leading =,+,-,@ would run as a formula in Excel/Sheets */ return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
 function downloadCsv(name, rows) {
   const csv = rows.map(r => r.map(csvEscape).join(',')).join('\n');
@@ -4504,6 +4522,184 @@ async function exportLabEntriesCsv(labId) {
   const fields = [...new Set((data || []).flatMap(r => Object.keys(r.data || {}).filter(k => !k.startsWith('_'))))].sort();
   const rows = [['Student', 'Email', 'Last saved', ...fields], ...(data || []).map(r => { const s = byUser[r.user_id] || {}; return [s.full_name || '', s.email || r.user_id, r.updated_at, ...fields.map(f => r.data?.[f] ?? '')]; })];
   downloadCsv(`${slugify(labTitle(labId))}-entries.csv`, rows);
+}
+
+/* ============================================================
+   MOVE LABS BETWEEN ACCOUNTS (admin; supabase/merge-2026-11-22.sql)
+   The admin picks two accounts and ticks labs. Each ticked lab's entries go from the first account to the second; when the
+   second already has work on that lab the two copies trade places, so nothing is deleted. Order of work, chosen so that every
+   photo exists in at least one place at every moment: (1) copy both accounts' photos for the ticked labs into
+   merge-hold/<move id>/, (2) one database call moves the entries (all labs or none), (3) put the photos in their new places
+   from the hold, check them, mark the lab done, drop its hold. A lab whose step 3 did not finish stays listed in entry_moves
+   with photos_done = false, and the tool offers to finish it.
+   ============================================================ */
+let moveSt = { from: '', to: '', rows: null, ticks: new Set(), busy: false, req: 0, note: null, returning: false };
+const MOVE_HOLD = 'merge-hold';
+function moveAccounts() { const adminIds = statsCache.adminIds || new Set(); return (statsCache.students || []).filter(s => !adminIds.has(s.user_id)); }
+function moveName(uid) { const s = moveAccounts().find(x => x.user_id === uid); return s ? (s.full_name || s.email || 'account') : 'account'; }
+function moveOptionsHTML(selected) {   // grouped the way the Users panel files accounts: classes (with their folder), then Google accounts by folder
+  const list = moveAccounts(), classes = (statsCache.classes || []).slice().sort((a, b) => String(a.name).localeCompare(String(b.name)));
+  const opt = (s, label) => `<option value="${escapeHTML(s.user_id)}" ${s.user_id === selected ? 'selected' : ''}>${escapeHTML(label)}</option>`;
+  let html = '<option value="">Choose an account…</option>';
+  for (const c of classes) {
+    const seats = list.filter(s => s.seat && s.class_id === c.id).sort((a, b) => (a.seat_no || 0) - (b.seat_no || 0)); if (!seats.length) continue;
+    const fid = acct.classFolder.get(c.id);
+    html += `<optgroup label="${escapeHTML((fid ? acctPath(fid) + ' / ' : '') + c.name)}">${seats.map(s => opt(s, s.full_name)).join('')}</optgroup>`;
+  }
+  const groups = new Map();
+  list.filter(s => !s.seat).forEach(s => { const fid = acct.userFolder.get(s.user_id), g = fid ? acctPath(fid) : ''; if (!groups.has(g)) groups.set(g, []); groups.get(g).push(s); });
+  [...groups.keys()].sort((a, b) => (!a - !b) || a.localeCompare(b)).forEach(g => {
+    const rows = groups.get(g).sort((a, b) => String(a.full_name || a.email).localeCompare(String(b.full_name || b.email)));
+    html += `<optgroup label="${escapeHTML('Google accounts' + (g ? ' · ' + g : ''))}">${rows.map(s => opt(s, [s.full_name, s.email].filter(Boolean).join(' · '))).join('')}</optgroup>`;
+  });
+  return html;
+}
+async function openMoveModal(keep) {
+  if (!isAdmin() || !sb) return;
+  closeModal('users-modal'); openModal('move-modal');
+  if (!keep) moveSt = { from: '', to: '', rows: null, ticks: new Set(), busy: false, req: moveSt.req, note: null, returning: false };
+  const body = $('move-body');
+  try {
+    await Promise.all([loadStudentsAndEntries(), acct.ready ? acct : loadAccountFolders()]);
+    if (!statsCache.adminIds) { statsCache.adminIds = new Set(); (await rpc('list_admins')).forEach(a => statsCache.adminIds.add(a.user_id)); }
+  } catch (e) { body.innerHTML = `<div class="lt-error">${escapeHTML(e.message || String(e))}</div>`; return; }
+  $('move-from').innerHTML = moveOptionsHTML(moveSt.from); $('move-to').innerHTML = moveOptionsHTML(moveSt.to);
+  movePendingCheck();
+  if (keep && moveSt.rows) moveRender(); else moveLoad();
+}
+function closeMoveModal() { if (moveSt.busy) return; closeModal('move-modal'); openUsersModal(); }
+function moveSetAccount(side, uid) { moveSt[side] = uid; moveSt.ticks = new Set(); moveSt.note = null; moveLoad(); }
+async function moveList(prefix) {   // file names directly under a folder of the private bucket; throws rather than guess
+  const { data, error } = await sb.storage.from(CONFIG.PRIVATE_BUCKET).list(prefix, { limit: 1000 });
+  if (error) throw new Error('Could not list photos: ' + error.message);
+  return (data || []).filter(o => o.id).map(o => o.name);
+}
+async function moveLoad() {
+  const st = moveSt, body = $('move-body'), req = ++st.req; st.rows = null;
+  if (!st.from || !st.to) { body.innerHTML = '<p class="hint">Choose both accounts to see their labs.</p>'; return; }
+  if (st.from === st.to) { body.innerHTML = '<div class="lt-error">Choose two different accounts.</div>'; return; }
+  body.innerHTML = '<p style="color:var(--muted);">Loading…</p>';
+  try {
+    const { data, error } = await sb.from('lab_entries').select('user_id, lab_id, updated_at').in('user_id', [st.from, st.to]);   // times only, never the answers
+    if (error) throw error;
+    const ids = [...new Set((data || []).map(r => r.lab_id))];
+    const rows = await Promise.all(ids.map(async id => {
+      const fr = data.find(r => r.user_id === st.from && r.lab_id === id), to = data.find(r => r.user_id === st.to && r.lab_id === id);
+      const [fromPhotos, toPhotos] = await Promise.all([moveList(`photos/${st.from}/${id}`), moveList(`photos/${st.to}/${id}`)]);
+      return { lab_id: id, from: fr ? fr.updated_at : null, to: to ? to.updated_at : null, fromPhotos, toPhotos };
+    }));
+    if (req !== st.req) return;
+    rows.sort((a, b) => String(labTitle(a.lab_id)).localeCompare(String(labTitle(b.lab_id)), undefined, { numeric: true }));
+    st.rows = rows; st.ticks = new Set([...st.ticks].filter(id => rows.some(r => r.lab_id === id && r.from)));
+    moveRender();
+  } catch (e) { if (req === st.req) body.innerHTML = `<div class="lt-error">${escapeHTML(e.message || String(e))}</div>`; }
+}
+function moveRender() {
+  const st = moveSt, body = $('move-body'), rows = st.rows || [];
+  const note = st.note ? `<p style="font-size:13px; margin:0 0 1rem; color:${st.note.bad ? 'var(--danger)' : '#2e7d32'};">${escapeHTML(st.note.text)}</p>` : '';
+  if (!rows.length) { body.innerHTML = note + '<p class="hint">Neither account has saved work on any lab.</p>'; return; }
+  const known = id => state.labs.some(l => l.id === id);
+  const copy = (uid, r, saved, photos) => saved
+    ? `saved ${escapeHTML(formatDate(saved))}${photos.length ? ` · ${photos.length} photo${photos.length === 1 ? '' : 's'}` : ''}${known(r.lab_id) ? ` <button type="button" class="btn-small" style="margin-left:0.5rem;" ${st.busy ? 'disabled' : ''} onclick="reviewEntries('${jsAttr(uid)}', '${jsAttr(r.lab_id)}', true)">View</button>` : ''}`
+    : '<span class="hint" style="margin:0;">none</span>';
+  const movable = rows.filter(r => r.from), n = movable.filter(r => st.ticks.has(r.lab_id)).length;
+  body.innerHTML = note + `
+    <div class="lt-toolbar" style="margin-bottom:0.75rem;">
+      <span class="hint" style="margin:0;">${n} of ${movable.length} lab${movable.length === 1 ? '' : 's'} ticked</span>
+      <button type="button" class="btn-small" style="margin-left:auto;" onclick="moveTickAll(true)" ${st.busy ? 'disabled' : ''}>Tick all</button>
+      <button type="button" class="btn-small" onclick="moveTickAll(false)" ${st.busy ? 'disabled' : ''}>Untick all</button>
+    </div>
+    <table class="stats-table"><thead><tr><th>Move</th><th>Lab</th><th>${escapeHTML(moveName(st.from))}</th><th>${escapeHTML(moveName(st.to))}</th><th>If ticked</th></tr></thead><tbody>${rows.map(r => `
+      <tr><td>${r.from ? `<input type="checkbox" style="width:auto;" ${st.ticks.has(r.lab_id) ? 'checked' : ''} ${st.busy ? 'disabled' : ''} onchange="moveTick('${jsAttr(r.lab_id)}', this.checked)"/>` : ''}</td>
+      <td>${escapeHTML(labTitle(r.lab_id))}</td><td>${copy(st.from, r, r.from, r.fromPhotos)}</td><td>${copy(st.to, r, r.to, r.toPhotos)}</td>
+      <td>${!r.from ? '<span class="hint" style="margin:0;">nothing to move</span>' : r.to ? 'the two copies trade places' : 'moves to the second account'}</td></tr>`).join('')}</tbody></table>
+    <div class="lt-toolbar" style="margin-top:1rem;"><button type="button" class="btn btn-accent" onclick="moveRun()" ${n && !st.busy ? '' : 'disabled'}>${st.busy ? 'Moving…' : `Move ${n || ''} ticked lab${n === 1 ? '' : 's'}`}</button><span class="hint" style="margin:0;" id="move-progress"></span></div>`;
+}
+function moveTick(id, on) { if (on) moveSt.ticks.add(id); else moveSt.ticks.delete(id); moveRender(); }
+function moveTickAll(on) { moveSt.ticks = new Set(on ? (moveSt.rows || []).filter(r => r.from).map(r => r.lab_id) : []); moveRender(); }
+function moveProgress(text) { const el = $('move-progress'); if (el) el.textContent = text; }
+async function moveCopy(from, to) { const { error } = await sb.storage.from(CONFIG.PRIVATE_BUCKET).copy(from, to); if (error) throw new Error('Could not copy a photo: ' + error.message); }
+async function moveRemove(dir, names) {   // remove, then look: a refused delete answers without an error
+  if (!names.length) return;
+  const { error } = await sb.storage.from(CONFIG.PRIVATE_BUCKET).remove(names.map(n => `${dir}/${n}`));
+  if (error) throw new Error('Could not move a photo: ' + error.message);
+  const left = await moveList(dir); if (names.some(n => left.includes(n))) throw new Error('A photo could not be moved out of its old place.');
+}
+// Put one moved lab's photos where its entries now are, from the hold. Safe to run again after a failure: the hold is the complete
+// set of both accounts' photos as they were, and nothing in an account's folder is removed before the hold is checked.
+async function movePlacePhotos(m) {
+  const hold = `${MOVE_HOLD}/${m.move_id}/${m.lab_id}`, fromNames = m.from_photos || [], toNames = m.to_photos || [];
+  if (fromNames.length || toNames.length) {
+    const [heldFrom, heldTo] = await Promise.all([moveList(`${hold}/from`), moveList(`${hold}/to`)]);
+    if (fromNames.some(n => !heldFrom.includes(n)) || toNames.some(n => !heldTo.includes(n))) throw new Error('The held copies of the photos are not complete, so nothing was changed.');
+    const put = async (uid, own, incoming, side) => {
+      const dir = `photos/${uid}/${m.lab_id}`, present = await moveList(dir);
+      await moveRemove(dir, present.filter(n => own.includes(n) || incoming.includes(n)));
+      for (const n of incoming) await moveCopy(`${hold}/${side}/${n}`, `${dir}/${n}`);
+      const now = await moveList(dir); if (incoming.some(n => !now.includes(n))) throw new Error('A photo did not arrive in its new place.');
+    };
+    await put(m.to_user, toNames, fromNames, 'from');   // the second account now holds the first account's photos
+    await put(m.from_user, fromNames, toNames, 'to');   // and the first holds the second's (none for a plain move)
+  }
+  const { error } = await sb.from('entry_moves').update({ photos_done: true }).eq('move_id', m.move_id).eq('lab_id', m.lab_id);
+  if (error) throw new Error(error.message);
+  try { await sb.storage.from(CONFIG.PRIVATE_BUCKET).remove([...fromNames.map(n => `${hold}/from/${n}`), ...toNames.map(n => `${hold}/to/${n}`)]); } catch (e) { /* a leftover hold copy harms nothing */ }
+}
+async function moveRun() {
+  const st = moveSt; if (st.busy || !st.rows) return;
+  const picked = st.rows.filter(r => r.from && st.ticks.has(r.lab_id)); if (!picked.length) return;
+  const swaps = picked.filter(r => r.to).length, photos = picked.reduce((n, r) => n + r.fromPhotos.length + r.toPhotos.length, 0);
+  if (!confirm(`Move ${picked.length} lab${picked.length === 1 ? '' : 's'} from ${moveName(st.from)} to ${moveName(st.to)}?\n\n${picked.length - swaps} move${swaps ? `, ${swaps} trade places with the copy already there` : ''}. ${photos} photo${photos === 1 ? '' : 's'} go along.\nNothing is deleted.`)) return;
+  const moveId = 'mv-' + Date.now(), from = st.from, to = st.to, toName = moveName(to), B = sb.storage.from(CONFIG.PRIVATE_BUCKET);
+  const held = [];   // every hold copy made, so a move that never happened leaves nothing behind
+  st.busy = true; st.note = null; moveRender();
+  let moved = false;
+  try {
+    moveProgress('Holding copies of the photos…');
+    for (const r of picked) for (const [side, uid, names] of [['from', from, r.fromPhotos], ['to', to, r.toPhotos]]) {
+      for (const n of names) { const dest = `${MOVE_HOLD}/${moveId}/${r.lab_id}/${side}/${n}`; await moveCopy(`photos/${uid}/${r.lab_id}/${n}`, dest); held.push(dest); }
+      if (names.length) { const got = await moveList(`${MOVE_HOLD}/${moveId}/${r.lab_id}/${side}`); if (names.some(n => !got.includes(n))) throw new Error('A photo could not be held.'); }
+    }
+    moveProgress('Moving the entries…');
+    await rpc('move_lab_work', { p_move_id: moveId, p_from: from, p_to: to, p_labs: picked.map(r => ({ lab_id: r.lab_id, from_saved_at: r.from, to_saved_at: r.to, from_photos: r.fromPhotos, to_photos: r.toPhotos })) });
+    moved = true;
+  } catch (e) {
+    // Did the entries move after all (an answer lost on the way back)? Only a clear "no" lets the hold go.
+    let known = false;
+    try { const { data, error } = await sb.from('entry_moves').select('lab_id').eq('move_id', moveId); if (!error) { known = true; moved = (data || []).length > 0; } } catch (e2) { /* unknown */ }
+    if (!moved) {
+      if (known && held.length) { try { await B.remove(held); } catch (e3) { /* harmless leftovers */ } }
+      st.busy = false; st.note = { bad: true, text: `Nothing was moved. ${e.message || e}` };
+      await moveLoad(); return;
+    }
+  }
+  const failed = [];
+  for (const r of picked) {
+    moveProgress(`Putting photos in place: ${labTitle(r.lab_id)}…`);
+    try { await movePlacePhotos({ move_id: moveId, lab_id: r.lab_id, from_user: from, to_user: to, from_photos: r.fromPhotos, to_photos: r.toPhotos }); }
+    catch (e) { console.warn('photos not placed:', r.lab_id, e.message); failed.push(r); }
+  }
+  st.busy = false; st.ticks = new Set(); statsCache = {};
+  st.note = failed.length
+    ? { bad: true, text: `The entries of ${picked.length} lab${picked.length === 1 ? '' : 's'} were moved, but the photos of ${failed.length} still have to be put in place. No photo is lost: use "Finish now" above.` }
+    : { bad: false, text: `Moved ${picked.length} lab${picked.length === 1 ? '' : 's'} to ${toName}.` };
+  try { await loadStudentsAndEntries(); } catch (e) { /* the list below still loads */ }
+  movePendingCheck(); await moveLoad();
+}
+async function movePendingCheck() {   // moves whose photos were never put in place (a closed tab or a lost connection in the middle)
+  const box = $('move-pending'); if (!box) return; box.innerHTML = '';
+  try {
+    const { data, error } = await sb.from('entry_moves').select('move_id, lab_id, from_user, to_user, from_photos, to_photos').eq('photos_done', false);
+    if (error || !(data || []).length) return;
+    moveSt.pending = data;
+    box.innerHTML = `<div class="review-banner" style="margin-bottom:1rem;"><span style="flex:1;">The photos of ${data.length} moved lab${data.length === 1 ? '' : 's'} still have to be put in place. No photo is lost.</span><button type="button" class="btn-small" onclick="moveFinishPending()">Finish now</button></div>`;
+  } catch (e) { /* the table arrives with supabase/merge-2026-11-22.sql */ }
+}
+async function moveFinishPending() {
+  if (moveSt.busy) return; moveSt.busy = true; let bad = 0;
+  for (const m of moveSt.pending || []) { try { await movePlacePhotos(m); } catch (e) { console.warn('photos not placed:', m.lab_id, e.message); bad++; } }
+  moveSt.busy = false; moveSt.note = bad ? { bad: true, text: `${bad} lab${bad === 1 ? '' : 's'} could not be finished. No photo is lost; try again.` } : { bad: false, text: 'Photos put in place.' };
+  movePendingCheck(); if (moveSt.rows) await moveLoad(); else moveRender();
 }
 
 /* ============================================================
@@ -5318,6 +5514,13 @@ async function removePrivatePrefix(prefix) {   // delete everything under photos
   for (const f of folders) await removePrivatePrefix(f);
   if (files.length) await sb.storage.from(CONFIG.PRIVATE_BUCKET).remove(files);
 }
+// Never deletes: this device's photos for one lab go under 'kept:<move id>:<their key>', which no account's view reads, and the
+// account's own photos for the lab then come down from the bucket like on a new device.
+async function ltPhotoSetAside(labId, stamp) {
+  try {
+    for (const k of await ltPhotoKeys(ltScope() + labId + '|')) { const v = await ltPhotoGet(k); if (v) await ltPhotoSet(`kept:${stamp}:${k}`, v); await ltPhotoDel(k); }
+  } catch (e) { /* the device keeps showing its own photos; nothing is lost */ }
+}
 async function ltPhotoKeys(prefix) { try { const keys = await idbOp('readonly', s => s.getAllKeys()); return (keys || []).filter(k => String(k).startsWith(prefix)); } catch (e) { return []; } }
 
 async function fileToDataUrl(file, maxEdge = 1400, quality = 0.8) {
@@ -5352,10 +5555,15 @@ function ltInsertPlainText(el, text) {
 }
 function ltBind(area, labId, cloud = null, readOnly = false) {
   let entries = readOnly ? { ...(cloud?.data || {}) } : ltLoad(labId);
+  let photoReset = Promise.resolve();   // awaited before any device photo is read
   if (!readOnly) {
     // Merge with the student's account copy: newer side wins; the older side is brought up to date.
     const useCloud = !!(cloud && cloud.data && (!entries._savedAt || new Date(cloud.updated_at) > new Date(entries._savedAt)));
-    if (useCloud) { entries = { ...cloud.data, _savedAt: cloud.updated_at }; ltStore(labId, entries); }
+    if (useCloud) {
+      // An admin moved this lab's work here from another account (supabase/merge-2026-11-22.sql): the photos on this device belong to the copy it replaced
+      if (cloud.data._moved && cloud.data._moved !== entries._moved) photoReset = ltPhotoSetAside(labId, cloud.data._moved);
+      entries = { ...cloud.data, _savedAt: cloud.updated_at }; ltStore(labId, entries);
+    }
     else if (cloud && entries._savedAt && (cloud.none || new Date(entries._savedAt) > new Date(cloud.updated_at))) ltPushCloud(labId, entries);   // local is newer, or the account has nothing yet
   }
   let timer = null, cloudTimer = null, pushInFlight = null, storeWarned = false;
@@ -5436,7 +5644,7 @@ function ltBind(area, labId, cloud = null, readOnly = false) {
       if (rm) rm.hidden = !filled.length;
       if (addLbl) { addLbl.hidden = max > 1 && filled.length >= max; if (addLbl.firstChild) addLbl.firstChild.textContent = getText(max === 1 && filled.length ? 'photoChange' : 'photoAdd'); }
     };
-    if (!readOnly) for (let n = 1; n <= max; n++) urls[n] = await ltPhotoGet(keyOf(n));
+    if (!readOnly) { await photoReset; for (let n = 1; n <= max; n++) urls[n] = await ltPhotoGet(keyOf(n)); }
     show();
     if (photoUid) {
       const remote = await remoteSlots;
