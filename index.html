@@ -704,6 +704,9 @@
   body.soc-fullpage .lt-widget[data-fullpage] .soc-start .btn-small { font-size: 0.95em; padding: 0.85rem 1.8rem; border-radius: 14px; }
   /* SOC-FULLPAGE-END */
 
+  .stats-chart { width: 100%; height: auto; display: block; background: var(--bg); border: 0.5px solid var(--rule); font-family: var(--font-body); }
+  .stats-chart .stats-hit:hover { fill: var(--ink); fill-opacity: 0.06; }
+  #stats-tip { position: fixed; z-index: 3000; pointer-events: none; background: var(--ink); color: var(--bg); font-family: var(--font-body); font-size: 12px; padding: 0.3rem 0.5rem; white-space: nowrap; }
   .stat-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; }
   .stat-tile { border: 0.5px solid var(--rule-strong); padding: 0.9rem 1rem; }
   .stat-num { font-family: var(--font-heading); font-size: 2rem; line-height: 1; }
@@ -2323,7 +2326,6 @@ function renderFolder(view) {
   html += `</section>`;
   view.innerHTML = html;
   markTransparentCovers(view);
-  logEvent('view', { folder_id: f.id, path: location.hash });
 }
 
 function renderSearch(view) {
@@ -2340,7 +2342,6 @@ function renderSearch(view) {
     ${gridOrEmpty(results.map(labCardHTML), getText('searchNoResults'))}
   </section>`;
   markTransparentCovers(view);
-  if (q) logEvent('search', { path: 'search:' + q.slice(0, 120) });
 }
 
 function renderNotFound(view) {
@@ -3051,21 +3052,29 @@ document.addEventListener('keydown', e => {
    ============================================================ */
 // Activity is recorded only for signed-in students. Visitors without an account send nothing.
 function visitorId() { return state.session?.user?.id || null; }
+const SCHOOL_TZ = 'America/Los_Angeles';   // the school's days turn over at midnight Pacific time (the same zone as stats_tz() in the database)
+function schoolDay() { try { return new Date().toLocaleDateString('en-CA', { timeZone: SCHOOL_TZ }); } catch (e) { return new Date().toISOString().slice(0, 10); } }
+let viewLoggedLab = null;   // the lab on screen whose view was offered for logging; a tab left open is offered again when it is looked at on a later day
 function logEvent(type, fields = {}) {
-  if (!sb || state.source !== 'live' || !isStudent()) return;
+  if (!sb || state.source !== 'live' || !isStudent() || !fields.lab_id) return;   // lab events of signed-in students only
   try {
-    if (type === 'view' && fields.lab_id) {
-      const k = 'labsite.viewed.' + fields.lab_id;
+    if (type === 'view') {   // sent once per account, lab and school day from this tab; the stats count it once however often it arrives
+      viewLoggedLab = fields.lab_id;
+      const k = `labsite.viewed.${visitorId()}.${fields.lab_id}.${schoolDay()}`;
       if (sessionStorage.getItem(k)) return;
       sessionStorage.setItem(k, '1');
     }
     sb.from('events').insert({
-      type, lab_id: fields.lab_id || null, folder_id: fields.folder_id || null,
+      type, lab_id: fields.lab_id, folder_id: fields.folder_id || null,
       path: (fields.path || location.hash || '').slice(0, 300), visitor_id: visitorId(),
       referrer: (document.referrer || '').slice(0, 200) || null, device: deviceClass()
     }).then(({ error }) => { if (error) console.warn('event not logged:', error.message); });
   } catch (e) { /* never break the page for analytics */ }
 }
+document.addEventListener('visibilitychange', () => {   // a lab tab that stayed open overnight counts for the new day once the student is back on it
+  if (document.hidden || !viewLoggedLab || !state.route || state.route.view !== 'lab') return;
+  const lab = labBySlug(state.route.slug); if (lab && lab.id === viewLoggedLab) logEvent('view', { lab_id: lab.id, folder_id: lab.folder_id, path: location.hash });
+});
 
 /* ============================================================
    AUTH (admin)
@@ -4422,42 +4431,61 @@ function switchStatsTab(tab) {
 function setStatsRange(n) { statsRange = n; statsCache = {}; switchStatsTab('overview'); }
 function labTitle(id) { const l = state.labs.find(x => x.id === id); return l ? l.title : id; }
 function fmtDay(d) { try { return new Date(d + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } catch (e) { return d; } }
-function barChart(rows, key, label) {
+function fmtDayLong(d) { try { return new Date(d + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }); } catch (e) { return d; } }
+function statsAxisMax(v) { if (v <= 2) return 2; const p = Math.pow(10, Math.floor(Math.log10(v))); for (const m of [1, 2, 4, 6, 8, 10]) if (v <= m * p && m * p > 1) return m * p; return 10 * p; }   // an even top, so the middle line is a whole number
+// One bar per day of the range, in order, empty days included. rows: [{ day: 'YYYY-MM-DD', <key>: n }], one and other: the unit ("lab view", "lab views").
+function barChart(rows, key, one, other) {
   if (!rows.length) return `<div class="empty-state" style="padding:1.5rem;">No activity in this period.</div>`;
-  const W = 640, H = 200, mL = 36, mB = 28, mT = 10, max = Math.max(1, ...rows.map(r => +r[key]));
-  const bw = (W - mL - 10) / rows.length;
-  let svg = `<svg viewBox="0 0 ${W} ${H}" class="lt-graph-svg" style="max-width:100%;">`;
-  [0, 0.5, 1].forEach(f => { const y = H - mB - f * (H - mB - mT); svg += `<line x1="${mL}" x2="${W - 10}" y1="${y}" y2="${y}" class="lt-g-grid"/><text x="${mL - 6}" y="${y + 4}" text-anchor="end" class="lt-g-tick">${Math.round(max * f)}</text>`; });
+  const W = 720, H = 190, mL = 34, mR = 8, mB = 26, mT = 10, pw = W - mL - mR, ph = H - mB - mT;
+  const max = statsAxisMax(Math.max(0, ...rows.map(r => +r[key] || 0))), bw = pw / rows.length, gap = bw >= 7 ? 2 : (bw >= 3.5 ? 1 : 0);
+  const every = Math.max(1, Math.ceil(rows.length / 8)), last = rows.length - 1;   // about eight date labels, counted back from the newest day
+  let grid = '', bars = '', labels = '', hits = '';
+  [0, 0.5, 1].forEach(f => { const y = mT + ph - f * ph; grid += `<line x1="${mL}" x2="${W - mR}" y1="${y}" y2="${y}" class="lt-g-grid"/><text x="${mL - 6}" y="${y + 4}" text-anchor="end" class="lt-g-tick">${max * f}</text>`; });
   rows.forEach((r, i) => {
-    const h = (+r[key] / max) * (H - mB - mT), x = mL + i * bw;
-    svg += `<rect x="${x + 1}" y="${H - mB - h}" width="${Math.max(1, bw - 2)}" height="${h}" fill="var(--accent)"><title>${escapeHTML(fmtDay(r.day))}: ${r[key]} ${label}</title></rect>`;
-    if (rows.length <= 14 || i % Math.ceil(rows.length / 10) === 0) svg += `<text x="${x + bw / 2}" y="${H - 8}" text-anchor="middle" class="lt-g-tick">${escapeHTML(fmtDay(r.day))}</text>`;
+    const v = +r[key] || 0, x = mL + i * bw, w = Math.max(1, bw - gap), h = v / max * ph, y = mT + ph - h, rad = Math.min(2, w / 2, h);
+    if (v > 0) bars += `<path d="M${(x + gap / 2).toFixed(2)},${mT + ph} v${-(h - rad).toFixed(2)} q0,${-rad} ${rad},${-rad} h${(w - 2 * rad).toFixed(2)} q${rad},0 ${rad},${rad} v${(h - rad).toFixed(2)} z" fill="var(--accent)"/>`;
+    if ((last - i) % every === 0) labels += `<text x="${(x + bw / 2).toFixed(2)}" y="${H - 8}" text-anchor="${i === last && rows.length > 14 ? 'end' : 'middle'}" class="lt-g-tick">${escapeHTML(fmtDay(r.day))}</text>`;
+    const tip = `${fmtDayLong(r.day)}: ${v} ${v === 1 ? one : other}`;
+    hits += `<rect class="stats-hit" x="${x.toFixed(2)}" y="${mT}" width="${bw.toFixed(2)}" height="${ph}" fill="transparent" data-tip="${escapeHTML(tip)}" aria-label="${escapeHTML(tip)}"/>`;
   });
-  return svg + '</svg>';
+  return `<svg viewBox="0 0 ${W} ${H}" class="stats-chart" role="img" aria-label="${escapeHTML(other)} per day">${grid}${bars}${labels}${hits}</svg>`;
 }
+// The hover line for a bar: one small box that follows the pointer.
+document.addEventListener('mousemove', e => {
+  const hit = e.target.closest && e.target.closest('.stats-hit'); let tip = $('stats-tip');
+  if (!hit) { if (tip) tip.hidden = true; return; }
+  if (!tip) { tip = document.createElement('div'); tip.id = 'stats-tip'; document.body.appendChild(tip); }
+  tip.textContent = hit.dataset.tip; tip.hidden = false;
+  tip.style.left = Math.min(e.clientX + 12, window.innerWidth - tip.offsetWidth - 8) + 'px'; tip.style.top = Math.max(8, e.clientY - tip.offsetHeight - 10) + 'px';
+});
 async function rpc(name, args) { const { data, error } = await sb.rpc(name, args); if (error) throw error; return data; }
 async function renderStatsOverview(req) {
   const body = $('stats-body'); const n = statsRange;
   const [summary, daily, top, labDaily] = await Promise.all([
-    rpc('stats_summary', { n_days: n }), rpc('stats_daily', { n_days: n }), rpc('stats_top_labs', { n_days: n, lim: 100 }),
+    rpc('stats_summary', { n_days: n }), rpc('stats_daily', { n_days: n }), rpc('stats_top_labs', { n_days: n, lim: 200 }),
     rpc('stats_lab_daily', { n_days: n }).catch(e => ({ error: e.message }))
   ]);
-  const tiles = [['Lab views', summary.views], ['Students', summary.visitors], ['File downloads', summary.downloads], ['Unlocks', summary.unlocks]]
+  const days = daily || [], first = days.length ? days[0].day : null, lastDay = days.length ? days[days.length - 1].day : null;
+  const tiles = [['Lab views', summary.views], ['Students', summary.visitors], ['File downloads', summary.downloads], ['Prints', summary.prints]]
     .map(([k, v]) => `<div class="stat-tile"><div class="stat-num">${v ?? 0}</div><div class="stat-label">${k}</div></div>`).join('');
-  const devices = Object.entries(summary.devices || {}).map(([k, v]) => `${k}: ${v}`).join(' · ') || 'no data';
+  const began = summary.first_day && first && summary.first_day > first ? `Recording began ${fmtDay(summary.first_day)}, so the days before it are empty.` : '';
+  const removed = summary.removed > 0 ? ` Students includes ${summary.removed} account${summary.removed === 1 ? '' : 's'} that ${summary.removed === 1 ? 'has' : 'have'} since been removed.` : '';
   const perLab = {};
   if (Array.isArray(labDaily)) labDaily.forEach(r => { (perLab[r.lab_id] = perLab[r.lab_id] || []).push(r); });
   if (req !== undefined && req !== statsReq) return;
   body.innerHTML = `
-    <div class="lt-toolbar" style="margin-bottom:1rem;">${[7, 30, 90].map(d => `<button type="button" class="btn-small ${statsRange === d ? 'active' : ''}" onclick="setStatsRange(${d})">Last ${d} days</button>`).join('')}<span class="hint" style="margin:0 0 0 auto;">Devices: ${escapeHTML(devices)}</span></div>
+    <div class="lt-toolbar" style="margin-bottom:1rem;">${[7, 30, 90].map(d => `<button type="button" class="btn-small ${statsRange === d ? 'active' : ''}" onclick="setStatsRange(${d})">Last ${d} days</button>`).join('')}<span class="hint" style="margin:0 0 0 auto;">${first ? `${escapeHTML(fmtDay(first))} to ${escapeHTML(fmtDay(lastDay))} (today), ${days.length} days` : ''}</span></div>
     <div class="stat-tiles">${tiles}</div>
+    ${began ? `<p class="hint" style="margin-top:0.75rem;">${escapeHTML(began)}</p>` : ''}
     <p class="text-group-label" style="margin:1.25rem 0 0.5rem;">Lab views per day</p>
-    ${barChart(daily || [], 'views', 'views')}
-    <p class="text-group-label" style="margin:1.5rem 0 0.5rem;">Visitors per lab (click a lab for the day-by-day numbers)</p>
-    ${(top || []).length ? `<table class="stats-table"><thead><tr><th>Lab</th><th>Views</th><th>Students</th><th>Downloads</th></tr></thead><tbody>${(top || []).map(r => `
-      <tr class="stats-row" onclick="toggleLabDays('${r.lab_id}')"><td>${escapeHTML(labTitle(r.lab_id))}</td><td>${r.views}</td><td>${r.visitors}</td><td>${r.downloads}</td></tr>
-      <tr id="labdays-${r.lab_id}" hidden><td colspan="4">${perLab[r.lab_id] ? `<table class="stats-table inner"><thead><tr><th>Day</th><th>Views</th><th>Students</th></tr></thead><tbody>${perLab[r.lab_id].map(d => `<tr><td>${escapeHTML(fmtDay(d.day))}</td><td>${d.views}</td><td>${d.visitors}</td></tr>`).join('')}</tbody></table>` : `<span class="hint">${labDaily && labDaily.error ? 'Day-by-day numbers need the stats_lab_daily function (see schema.sql).' : 'No data.'}</span>`}</td></tr>`).join('')}</tbody></table>` : `<div class="empty-state" style="padding:1.5rem;">No lab views in this period.</div>`}
-    <p class="hint" style="margin-top:1rem;">Only signed-in students are counted. Visitors without an account, and your own admin visits, are never recorded.</p>`;
+    ${barChart(days, 'views', 'lab view', 'lab views')}
+    <p class="text-group-label" style="margin:1.25rem 0 0.5rem;">Students per day</p>
+    ${barChart(days, 'visitors', 'student', 'students')}
+    <p class="text-group-label" style="margin:1.5rem 0 0.5rem;">Per lab (click a lab for the day-by-day numbers)</p>
+    ${(top || []).length ? `<table class="stats-table"><thead><tr><th>Lab</th><th>Views</th><th>Students</th><th>Downloads</th><th>Prints</th></tr></thead><tbody>${(top || []).map(r => `
+      <tr class="stats-row" onclick="toggleLabDays('${jsAttr(r.lab_id)}')"><td>${escapeHTML(labTitle(r.lab_id))}</td><td>${r.views}</td><td>${r.visitors}</td><td>${r.downloads}</td><td>${r.prints ?? 0}</td></tr>
+      <tr id="labdays-${escapeHTML(r.lab_id)}" hidden><td colspan="5">${perLab[r.lab_id] ? `<table class="stats-table inner"><thead><tr><th>Day</th><th>Views</th><th>Students</th></tr></thead><tbody>${perLab[r.lab_id].slice().reverse().map(d => `<tr><td>${escapeHTML(fmtDayLong(d.day))}</td><td>${d.views}</td><td>${d.visitors}</td></tr>`).join('')}</tbody></table>` : `<span class="hint">${labDaily && labDaily.error ? 'The day-by-day numbers could not be loaded.' : 'No data.'}</span>`}</td></tr>`).join('')}</tbody></table>` : `<div class="empty-state" style="padding:1.5rem;">No lab activity in this period.</div>`}
+    <p class="hint" style="margin-top:1rem;">A lab view is one student opening one lab on one day, however many times they open it. Students is the number of accounts that opened, downloaded from or printed a lab. Days change at midnight Pacific time. Only signed-in students are counted: visitors without an account, and your own admin visits, are never recorded.${escapeHTML(removed)}</p>`;
 }
 function toggleLabDays(id) { const el = $('labdays-' + id); if (el) el.hidden = !el.hidden; }
 async function loadStudentsAndEntries() {
@@ -4472,19 +4500,18 @@ async function loadStudentsAndEntries() {
 function showStudentLabs(uid) { const el = $('studentlabs-' + uid); if (el) el.hidden = !el.hidden; }
 async function renderStatsResults(req) {
   const body = $('stats-body'); const [{ students, entries, classes }] = await Promise.all([loadStudentsAndEntries(), loadAccountFolders()]);
-  const labIds = [...new Set(entries.map(e => e.lab_id))].filter(id => state.labs.some(l => l.id === id));
+  const labIds = [...new Set(entries.map(e => e.lab_id))].filter(id => state.labs.some(l => l.id === id)).sort((a, b) => String(labTitle(a)).localeCompare(String(labTitle(b)), undefined, { numeric: true }));
   const current = statsCache.resultsLab || labIds[0];
   const rows = entries.filter(e => e.lab_id === current);
   const byUser = Object.fromEntries(students.map(s => [s.user_id, s]));
   if (req !== undefined && req !== statsReq) return;
-  const rowHTML = e => { const s = byUser[e.user_id] || {}; return `<tr><td>${escapeHTML(s.full_name || '')}</td><td>${escapeHTML(s.email || e.user_id)}</td><td>${escapeHTML(formatDate(e.updated_at))}</td><td><button type="button" class="btn-small" onclick="reviewEntries('${e.user_id}', '${current}')">View entries</button></td></tr>`; };
+  const rowHTML = e => { const s = byUser[e.user_id] || {}; return `<tr><td>${escapeHTML(s.full_name || (s.user_id ? '' : 'Account not in the list'))}</td><td>${escapeHTML(s.email || '')}</td><td>${escapeHTML(formatDate(e.updated_at))}</td><td><button type="button" class="btn-small" onclick="reviewEntries('${e.user_id}', '${current}')">View entries</button></td></tr>`; };
   let tbody;
-  if (!acct.folders.length) tbody = rows.map(rowHTML).join('');   // no account folders: the list as it has always been
-  else {   // grouped the way the accounts are filed: folder path, then class
+  {   // grouped the way the accounts are filed: folder path, then class; within a class by seat number, otherwise by name
     const className = Object.fromEntries((classes || []).map(c => [c.id, c.name]));
     const groupOf = e => { const s = byUser[e.user_id] || {}; const fid = s.seat ? acct.classFolder.get(s.class_id) : acct.userFolder.get(s.user_id); return [fid ? acctPath(fid) : '', s.seat ? (className[s.class_id] || '') : ''].filter(Boolean).join(' / '); };
     const tagged = rows.map(e => ({ e, g: groupOf(e), s: byUser[e.user_id] || {} })).sort((a, b) => (!a.g - !b.g) || a.g.localeCompare(b.g) || ((a.s.seat_no || 0) - (b.s.seat_no || 0)) || String(a.s.full_name || '').localeCompare(String(b.s.full_name || '')));
-    let last = null; tbody = tagged.map(t => { const head = t.g !== last ? `<tr class="acct-head"><td colspan="4" style="cursor:default;">${escapeHTML(t.g || 'Not in a folder')}</td></tr>` : ''; last = t.g; return head + rowHTML(t.e); }).join('');
+    let last = null; tbody = tagged.map(t => { const head = t.g !== last ? `<tr class="acct-head"><td colspan="4" style="cursor:default;">${escapeHTML(t.g || (acct.folders.length ? 'Not in a folder' : 'Google accounts'))}</td></tr>` : ''; last = t.g; return head + rowHTML(t.e); }).join('');
   }
   body.innerHTML = `
     <div class="form-row"><label>Lab</label><select id="stats-lab" onchange="statsCache.resultsLab = this.value; switchStatsTab('results')">${labIds.length ? labIds.map(id => `<option value="${id}" ${id === current ? 'selected' : ''}>${escapeHTML(labTitle(id))}</option>`).join('') : '<option value="">No entries saved yet</option>'}</select></div>
@@ -4520,7 +4547,7 @@ async function exportLabEntriesCsv(labId) {
   if (error) { toast(error.message, true); return; }
   const { students } = await loadStudentsAndEntries(); const byUser = Object.fromEntries(students.map(s => [s.user_id, s]));
   const fields = [...new Set((data || []).flatMap(r => Object.keys(r.data || {}).filter(k => !k.startsWith('_'))))].sort();
-  const rows = [['Student', 'Email', 'Last saved', ...fields], ...(data || []).map(r => { const s = byUser[r.user_id] || {}; return [s.full_name || '', s.email || r.user_id, r.updated_at, ...fields.map(f => r.data?.[f] ?? '')]; })];
+  const rows = [['Student', 'Email', 'Last saved', ...fields], ...(data || []).map(r => { const s = byUser[r.user_id] || {}; return [s.full_name || '', s.email || (s.user_id ? '' : r.user_id), r.updated_at, ...fields.map(f => r.data?.[f] ?? '')]; })];
   downloadCsv(`${slugify(labTitle(labId))}-entries.csv`, rows);
 }
 
