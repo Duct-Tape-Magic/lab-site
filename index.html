@@ -2352,6 +2352,7 @@ function renderNotFound(view) {
 }
 
 function isStudent() { return !!state.session && !isRealAdmin(); }
+function hasAccount() { return !!state.session; }   // a student or an admin. Saved entries and photos follow ANY signed-in account to its other devices (owner, 2026-11-23: "make all admin devices entries sync up the same way student entires do"); until then an admin's stayed on the device
 function studentName() {
   if (isSeat()) { const st = state.seat; return st ? fmt('seatName', { cls: st.class_name, n: st.seat_no }) + (st.nickname ? ` (${st.nickname})` : '') : getText('seatUnknown'); }
   const u = state.session?.user; return u?.user_metadata?.full_name || u?.user_metadata?.name || u?.email || '';
@@ -4504,18 +4505,20 @@ async function renderStatsResults(req) {
   const current = statsCache.resultsLab || labIds[0];
   const rows = entries.filter(e => e.lab_id === current);
   const byUser = Object.fromEntries(students.map(s => [s.user_id, s]));
+  if (!statsCache.adminIds) { statsCache.adminIds = new Set(); try { (await rpc('list_admins')).forEach(a => statsCache.adminIds.add(a.user_id)); } catch (e) { /* admins then list with the other accounts */ } }
+  const adminIds = statsCache.adminIds, nAdmin = rows.filter(e => adminIds.has(e.user_id)).length, nStud = rows.length - nAdmin;   // an admin's own entries sync too (2026-11-23)
   if (req !== undefined && req !== statsReq) return;
   const rowHTML = e => { const s = byUser[e.user_id] || {}; return `<tr><td>${escapeHTML(s.full_name || (s.user_id ? '' : 'Account not in the list'))}</td><td>${escapeHTML(s.email || '')}</td><td>${escapeHTML(formatDate(e.updated_at))}</td><td><button type="button" class="btn-small" onclick="reviewEntries('${e.user_id}', '${current}')">View entries</button></td></tr>`; };
   let tbody;
   {   // grouped the way the accounts are filed: folder path, then class; within a class by seat number, otherwise by name
     const className = Object.fromEntries((classes || []).map(c => [c.id, c.name]));
-    const groupOf = e => { const s = byUser[e.user_id] || {}; const fid = s.seat ? acct.classFolder.get(s.class_id) : acct.userFolder.get(s.user_id); return [fid ? acctPath(fid) : '', s.seat ? (className[s.class_id] || '') : ''].filter(Boolean).join(' / '); };
-    const tagged = rows.map(e => ({ e, g: groupOf(e), s: byUser[e.user_id] || {} })).sort((a, b) => (!a.g - !b.g) || a.g.localeCompare(b.g) || ((a.s.seat_no || 0) - (b.s.seat_no || 0)) || String(a.s.full_name || '').localeCompare(String(b.s.full_name || '')));
+    const groupOf = e => { if (adminIds.has(e.user_id)) return 'Admins'; const s = byUser[e.user_id] || {}; const fid = s.seat ? acct.classFolder.get(s.class_id) : acct.userFolder.get(s.user_id); return [fid ? acctPath(fid) : '', s.seat ? (className[s.class_id] || '') : ''].filter(Boolean).join(' / '); };
+    const tagged = rows.map(e => ({ e, g: groupOf(e), s: byUser[e.user_id] || {}, adm: adminIds.has(e.user_id) })).sort((a, b) => (a.adm - b.adm) || (!a.g - !b.g) || a.g.localeCompare(b.g) || ((a.s.seat_no || 0) - (b.s.seat_no || 0)) || String(a.s.full_name || '').localeCompare(String(b.s.full_name || '')));
     let last = null; tbody = tagged.map(t => { const head = t.g !== last ? `<tr class="acct-head"><td colspan="4" style="cursor:default;">${escapeHTML(t.g || (acct.folders.length ? 'Not in a folder' : 'Google accounts'))}</td></tr>` : ''; last = t.g; return head + rowHTML(t.e); }).join('');
   }
   body.innerHTML = `
     <div class="form-row"><label>Lab</label><select id="stats-lab" onchange="statsCache.resultsLab = this.value; switchStatsTab('results')">${labIds.length ? labIds.map(id => `<option value="${id}" ${id === current ? 'selected' : ''}>${escapeHTML(labTitle(id))}</option>`).join('') : '<option value="">No entries saved yet</option>'}</select></div>
-    ${current ? `<div class="lt-toolbar" style="margin-bottom:1rem;"><span class="hint" style="margin:0;">${rows.length} student${rows.length === 1 ? '' : 's'} with entries</span><button type="button" class="btn-small" style="margin-left:auto;" onclick="exportLabEntriesCsv('${current}')">Export all entries (CSV)</button></div>
+    ${current ? `<div class="lt-toolbar" style="margin-bottom:1rem;"><span class="hint" style="margin:0;">${nStud} student${nStud === 1 ? '' : 's'} with entries${nAdmin ? `, and ${nAdmin} admin${nAdmin === 1 ? '' : 's'}` : ''}</span><button type="button" class="btn-small" style="margin-left:auto;" onclick="exportLabEntriesCsv('${current}')">Export all entries (CSV)</button></div>
     <table class="stats-table"><thead><tr><th>Student</th><th>Email</th><th>Last saved</th><th></th></tr></thead><tbody>${tbody}</tbody></table>` : ''}
     <p class="hint" style="margin-top:1rem;">"View entries" opens the lab filled in with that student's answers and photos, read-only. The CSV export holds the written entries only.</p>`;
 }
@@ -5559,7 +5562,7 @@ async function fileToDataUrl(file, maxEdge = 1400, quality = 0.8) {
 }
 
 async function ltFetchCloud(labId) {
-  if (!sb || !isStudent() || state.source !== 'live') return null;
+  if (!sb || !hasAccount() || state.source !== 'live') return null;
   try {
     const { data, error } = await sb.from('lab_entries').select('data, updated_at').eq('lab_id', labId).eq('user_id', state.session.user.id).maybeSingle();
     if (error) return null;            // unknown state: do not push over it
@@ -5580,15 +5583,19 @@ function ltInsertPlainText(el, text) {
   range.setStartAfter(node); range.collapse(true); sel.removeAllRanges(); sel.addRange(range);
   el.dispatchEvent(new Event('input', { bubbles: true }));
 }
+// An admin's entries stayed on each device until 2026-11-23, so two devices may hold different work on the same lab. The first time the
+// account copy replaces a device's own copy of a lab, that device copy is kept under 'labsite.presync.<user>:<lab>' (once per lab; never deleted, nothing reads it back by itself).
+function ltKeepPresync(labId, entries) { try { const k = 'labsite.presync.' + ltScope() + labId; if (!localStorage.getItem(k)) localStorage.setItem(k, JSON.stringify(entries)); } catch (e) { /* ignore */ } }
 function ltBind(area, labId, cloud = null, readOnly = false) {
   let entries = readOnly ? { ...(cloud?.data || {}) } : ltLoad(labId);
   let photoReset = Promise.resolve();   // awaited before any device photo is read
   if (!readOnly) {
-    // Merge with the student's account copy: newer side wins; the older side is brought up to date.
+    // Merge with the account copy (a student's or an admin's own): newer side wins; the older side is brought up to date.
     const useCloud = !!(cloud && cloud.data && (!entries._savedAt || new Date(cloud.updated_at) > new Date(entries._savedAt)));
     if (useCloud) {
       // An admin moved this lab's work here from another account (supabase/merge-2026-11-22.sql): the photos on this device belong to the copy it replaced
       if (cloud.data._moved && cloud.data._moved !== entries._moved) photoReset = ltPhotoSetAside(labId, cloud.data._moved);
+      if (isRealAdmin() && entries._savedAt) ltKeepPresync(labId, entries);
       entries = { ...cloud.data, _savedAt: cloud.updated_at }; ltStore(labId, entries);
     }
     else if (cloud && entries._savedAt && (cloud.none || new Date(entries._savedAt) > new Date(cloud.updated_at))) ltPushCloud(labId, entries);   // local is newer, or the account has nothing yet
@@ -5602,7 +5609,7 @@ function ltBind(area, labId, cloud = null, readOnly = false) {
       if (ltStore(labId, entries)) flash();
       else if (!storeWarned) { storeWarned = true; toast(getText('entriesSaveFailed'), true); }   // storage blocked or full: do not pretend
     }, 300);
-    if (isStudent()) { clearTimeout(cloudTimer); cloudTimer = setTimeout(() => { pushInFlight = ltPushCloud(labId, entries).finally(() => { pushInFlight = null; }); }, 1500); }
+    if (hasAccount()) { clearTimeout(cloudTimer); cloudTimer = setTimeout(() => { pushInFlight = ltPushCloud(labId, entries).finally(() => { pushInFlight = null; }); }, 1500); }
   };
 
   // extra table rows first, so their fields exist before restore
@@ -5655,8 +5662,8 @@ function ltBind(area, labId, cloud = null, readOnly = false) {
     cb.checked = !!entries[cb.dataset.check];
     cb.addEventListener('change', () => { entries[cb.dataset.check] = cb.checked ? 1 : 0; save(); });
   });
-  // Photos: the device copy first, then the account copy (a signed-in student's own, or the reviewed student's for an admin).
-  const photoUid = readOnly ? (state.reviewing && state.reviewing.user_id) || null : (isStudent() && sb && state.source === 'live' ? state.session.user.id : null);
+  // Photos: the device copy first, then the account copy (the signed-in account's own, or the reviewed student's for an admin).
+  const photoUid = readOnly ? (state.reviewing && state.reviewing.user_id) || null : (hasAccount() && sb && state.source === 'live' ? state.session.user.id : null);
   const remoteSlots = photoUid ? ltPhotoRemoteList(photoUid, labId) : Promise.resolve(null);   // one list request per lab
   area.querySelectorAll('.lt-photo').forEach(async box => {
     const photoId = box.dataset.photo, max = Math.min(6, Math.max(1, parseInt(box.dataset.max, 10) || 1)), prev = box.querySelector('.lt-photo-preview');
@@ -5709,19 +5716,19 @@ function ltBind(area, labId, cloud = null, readOnly = false) {
     if (!confirm(getText('entriesClearConfirm'))) return;
     clearTimeout(timer); clearTimeout(cloudTimer);   // a pending autosave must not re-create what we are clearing
     if (pushInFlight) { try { await pushInFlight; } catch (e) { /* ignore */ } }   // nor an upload that already left
-    if (isStudent() && sb && state.source === 'live') {   // the account copy too, or the next load would just restore it
+    if (hasAccount() && sb && state.source === 'live') {   // the account copy too, or the next load would just restore it
       const { error } = await sb.from('lab_entries').delete().eq('lab_id', labId).eq('user_id', state.session.user.id);
       if (error) { toast(getText('entriesClearFailed'), true); return; }
     }
     try { localStorage.removeItem(ltKey(labId)); } catch (e) { /* ignore */ }
     for (const k of await ltPhotoKeys(ltScope() + labId + '|')) await ltPhotoDel(k);
-    if (isStudent() && sb && state.source === 'live') { try { await removePrivatePrefix(`photos/${state.session.user.id}/${labId}`); } catch (e) { /* ignore */ } }
+    if (hasAccount() && sb && state.source === 'live') { try { await removePrivatePrefix(`photos/${state.session.user.id}/${labId}`); } catch (e) { /* ignore */ } }
     render();
   });
 }
 
 async function ltPushCloud(labId, entries) {
-  if (!sb || !isStudent() || state.source !== 'live') return;
+  if (!sb || !hasAccount() || state.source !== 'live') return;
   const data = { ...entries }; delete data._savedAt;
   const { error } = await sb.from('lab_entries').upsert({ user_id: state.session.user.id, lab_id: labId, data, updated_at: entries._savedAt || new Date().toISOString() });
   if (error) console.warn('cloud save failed:', error.message);
