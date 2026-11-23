@@ -362,7 +362,7 @@
     justify-content: space-between; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; flex-wrap: wrap; gap: 0.5rem;
   }
   body.admin-mode .admin-bar, body.admin-preview .admin-bar { display: flex; }
-  body.admin-preview .admin-bar-tools { display: none; }   /* student view: the bar stays, with only the switch */
+  body.admin-preview .admin-bar-tools { visibility: hidden; }   /* student view: the bar stays, with only the switch; the tools keep their space so the bar is the same thickness in both modes */
   .admin-switch { display: inline-flex; align-items: center; gap: 0.6rem; cursor: pointer; user-select: none; }
   .admin-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
   .admin-switch-track { position: relative; width: 2.1rem; height: 1.1rem; border: 0.5px solid rgba(255,255,255,0.6); border-radius: 999px; transition: background 0.15s; }
