@@ -22,6 +22,15 @@ A lab file is plain text: **Markdown for the writing**, plus a small set of **La
 
 Headings (`#`, `##`, `###`), paragraphs, **bold**, *italic*, numbered lists (`1.`), bullet lists (`-`), checklists (`- [ ] item` — students can tick them), links, blockquotes (`>`), horizontal rules (`---`), and tables (`| a | b |`) for information that is *not* filled in by the student. Inline code with backticks. Images with `![caption](path)` if the teacher gives you a path.
 
+### The Materials section is read by the site (2026-11-25)
+
+The admin **Materials** panel builds one cumulative list of everything a set of labs calls for. It reads each lab's Materials section, so write that section this way:
+
+- The heading text starts with `Materials` (`# Materials`, `## Materials and equipment`). The section runs to the next heading of the same or a higher level.
+- **One list item per material**: `- [ ] 250 mL glass beaker`. Each item becomes one line of the cumulative list, so do not put two unrelated materials in one item, and do not put a material in a paragraph, a table or a `\safety{…}` block (those are not read).
+- A bold line (`**Chemicals**`, `**Equipment**`) or a lower-level heading labels the items under it. Keep to those two labels.
+- State the size or concentration in the item (`250 mL`, `3%`): a 50 mL beaker and a 250 mL beaker are listed separately, and two labs that word the same item differently are listed once.
+
 ## Commands
 
 | Command | What it does |

@@ -712,6 +712,14 @@
   .stat-num { font-family: var(--font-heading); font-size: 2rem; line-height: 1; }
   .stat-label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-top: 0.4rem; }
   .stats-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .mat-items { list-style: none; margin: 0 0 1.75rem; }
+  .mat-items li { padding: 0.45rem 0; border-bottom: 0.5px solid var(--rule); font-size: 14px; line-height: 1.5; }
+  .mat-items .mat-labs { font-size: 11px; color: var(--muted); margin-left: 0.5rem; }
+  .mat-items .mat-said { font-size: 12px; color: var(--muted); margin: 0.1rem 0 0 1rem; }
+  .mat-hide-said .mat-said { display: none; }
+  .mat-note { font-size: 13px; line-height: 1.6; margin: 0.4rem 0; }
+  .mat-note.ok { color: #2e7d32; }
+  #materials-body .hint { font-size: 12px; color: var(--muted); line-height: 1.5; }
   .stats-table th, .stats-table td { text-align: left; padding: 0.5rem 0.6rem; border-bottom: 0.5px solid var(--rule); vertical-align: top; }
   .stats-table th { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 400; }
   .stats-table .stats-row { cursor: pointer; }
@@ -978,6 +986,7 @@
     <button onclick="openDesignModal()">Site design</button>
     <button onclick="openWidgetsModal()">Widgets</button>
     <button onclick="openStatsModal()">Stats</button>
+    <button onclick="openMaterialsModal()">Materials</button>
     <button onclick="openHelpModal()">Help<span class="help-count" id="help-count" hidden></span></button>
     <button onclick="openUsersModal()">Users</button>
     <button onclick="logoutAdmin()">Log out</button>
@@ -1299,6 +1308,16 @@
       <button type="button" class="design-tab" data-tab="results" onclick="switchStatsTab('results')">Results</button>
     </div>
     <div id="stats-body"></div>
+  </div>
+</div>
+
+<!-- Materials lists -->
+<div class="modal-backdrop" id="materials-modal">
+  <div class="modal modal-wide">
+    <button class="modal-close" onclick="closeModal('materials-modal')">×</button>
+    <h2>Materials</h2>
+    <p style="font-size:13px; color:var(--muted); margin-bottom:1.5rem; line-height:1.6;">One list of everything the ticked labs call for, read from each lab's Materials section. An item that several labs word differently is listed once. The list checks the labs every time this panel opens and rebuilds itself when a Materials section has changed.</p>
+    <div id="materials-body"></div>
   </div>
 </div>
 
@@ -4869,6 +4888,160 @@ function loadDesignFromSiteContent() {
 }
 
 /* ---------- Widgets admin tab: a showroom read from the WIDGETS catalog; per-site on/off in site_content key _widgets (JSON) ---------- */
+/* ---------- Materials lists (admin): one cumulative list of what the ticked labs' Materials sections call for.
+   A list is a row of materials_lists (name + ticked labs, written here). The "materials" server function reads the labs and
+   builds the list (supabase/functions/materials); this page only shows what it stored. Nothing here reads student work. ---------- */
+const matSt = { lists: [], cur: null, ticks: null, busy: new Map(), error: '', loadError: '', wording: true, open: new Set(), labsOpen: null };
+const matList = () => matSt.lists.find(l => l.id === matSt.cur) || null;
+const matLabsIn = fid => state.labs.filter(l => (l.folder_id || null) === fid).sort((a, b) => ((a.sort_order || 0) - (b.sort_order || 0)) || a.title.localeCompare(b.title));
+const matFoldersIn = fid => state.folders.filter(f => (f.parent_id || null) === fid).sort((a, b) => ((a.sort_order || 0) - (b.sort_order || 0)) || a.name.localeCompare(b.name));
+function matLabsUnder(fid, depth = 0) { return depth > 30 ? [] : [...matLabsIn(fid).map(l => l.id), ...matFoldersIn(fid).flatMap(f => matLabsUnder(f.id, depth + 1))]; }
+function matSavedTicks() { const l = matList(), have = new Set(state.labs.map(x => x.id)); return new Set(((l && l.lab_ids) || []).filter(id => have.has(id))); }
+function matTicks() { return matSt.ticks || matSavedTicks(); }
+function matDirty() { if (!matSt.ticks) return false; const a = matSavedTicks(), b = matSt.ticks; return a.size !== b.size || [...a].some(id => !b.has(id)); }
+function matWhen(ts) { try { return new Date(ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); } catch (e) { return ts; } }
+function matLabNames(it) { return [...new Set((it.sources || []).map(s => s.lab_id))].map(labTitle); }
+
+async function openMaterialsModal() { openModal('materials-modal'); matSt.ticks = null; matSt.error = ''; matSt.labsOpen = null; await matLoad(); }
+async function matLoad() {
+  $('materials-body').innerHTML = '<p style="color:var(--muted);">Loading…</p>';
+  const { data, error } = await sb.from('materials_lists').select('*').order('created_at');
+  matSt.loadError = !error ? '' : (error.code === 'PGRST205' || error.code === '42P01') ? 'The Materials panel needs its database table: supabase/materials-2026-11-25.sql has not been run yet.' : (error.message || String(error));
+  matSt.lists = data || [];
+  if (!matList()) matSt.cur = matSt.lists.length ? matSt.lists[0].id : null;
+  matRender();
+  if (matSt.cur && !error) matRefresh(false);
+}
+function matTreeHTML(fid, ticks) {
+  const folders = matFoldersIn(fid).map(f => {
+    if (!matLabsUnder(f.id).length) return '';
+    return `<details class="acct-folder" data-mat-folder="${escapeHTML(f.id)}" ${matSt.open.has(f.id) ? 'open' : ''}><summary><input type="checkbox" data-mat-all="${escapeHTML(f.id)}" title="Tick or untick every lab in this folder"/> ${escapeHTML(f.name)} <span class="hint acct-count" style="margin:0;"></span></summary>${matTreeHTML(f.id, ticks)}</details>`;
+  }).join('');
+  const labs = matLabsIn(fid).map(l => `<label class="bu-check"><input type="checkbox" data-mat-lab="${escapeHTML(l.id)}" ${ticks.has(l.id) ? 'checked' : ''}/> ${escapeHTML(l.title)}${l.status && l.status !== 'published' ? ` <span class="hint" style="margin:0;">${escapeHTML(l.status)}</span>` : ''}</label>`).join('');
+  return folders + labs;
+}
+function matRender() {
+  const body = $('materials-body'); if (!body) return;
+  if (matSt.loadError) { body.innerHTML = `<div class="lt-error">${escapeHTML(matSt.loadError)}</div>`; return; }
+  const l = matList();
+  const bar = `<div class="lt-toolbar" style="margin-bottom:1rem;">${matSt.lists.length ? `<select id="mat-pick" onchange="matPick(this.value)" style="width:auto; max-width:100%;">${matSt.lists.map(x => `<option value="${escapeHTML(x.id)}" ${x.id === matSt.cur ? 'selected' : ''}>${escapeHTML(x.title)}</option>`).join('')}</select>` : ''}
+    <button type="button" class="btn-small" onclick="matAdd()">+ List</button>${l ? ` <button type="button" class="btn-small" onclick="matRename()">Rename</button> <button type="button" class="btn-small" onclick="matDelete()">Delete</button>` : ''}</div>`;
+  if (!l) { body.innerHTML = bar + '<p class="hint">No list yet. "+ List" makes one; then tick the labs it should cover.</p>'; return; }
+  const ticks = matTicks();
+  if (matSt.labsOpen === null) matSt.labsOpen = ticks.size === 0;
+  body.innerHTML = `${bar}
+    <details id="mat-labs" ${matSt.labsOpen ? 'open' : ''} style="margin-bottom:1.25rem;"><summary style="cursor:pointer; font-size:13px;">Labs in this list <span class="hint" id="mat-labs-count" style="margin:0;"></span></summary>
+      <div class="access-list" id="mat-tree" style="margin-top:0.6rem;">${state.labs.length ? matTreeHTML(null, ticks) : '<span class="hint">There are no labs yet.</span>'}</div>
+      <div class="lt-toolbar" style="margin-top:0.6rem;"><button type="button" class="btn-small" id="mat-save" onclick="matSaveTicks()">Save and build the list</button> <span class="hint" id="mat-dirty" style="margin:0;"></span></div>
+    </details>
+    <div id="mat-result"></div>`;
+  const box = $('mat-tree');
+  box.querySelectorAll('input[data-mat-lab]').forEach(cb => cb.addEventListener('change', () => { const t = matSt.ticks = new Set(matTicks()); cb.checked ? t.add(cb.dataset.matLab) : t.delete(cb.dataset.matLab); matMarks(); }));
+  box.querySelectorAll('input[data-mat-all]').forEach(cb => cb.addEventListener('change', () => {   // a shortcut: tick or untick every lab in the folder as it is now
+    const t = matSt.ticks = new Set(matTicks()), on = cb.checked;
+    matLabsUnder(cb.dataset.matAll).forEach(id => on ? t.add(id) : t.delete(id));
+    box.querySelectorAll('input[data-mat-lab]').forEach(x => { x.checked = t.has(x.dataset.matLab); });
+    matMarks();
+  }));
+  box.querySelectorAll('details.acct-folder').forEach(d => d.addEventListener('toggle', () => { d.open ? matSt.open.add(d.dataset.matFolder) : matSt.open.delete(d.dataset.matFolder); }));
+  $('mat-labs').addEventListener('toggle', e => { matSt.labsOpen = e.target.open; });
+  matMarks(); matRenderResult();
+}
+function matMarks() {
+  const box = $('mat-tree'); if (!box) return;
+  const t = matTicks(), dirty = matDirty(), busy = matSt.busy.has(matSt.cur);
+  box.querySelectorAll('input[data-mat-all]').forEach(cb => {
+    const ids = matLabsUnder(cb.dataset.matAll), on = ids.filter(id => t.has(id)).length;
+    cb.checked = ids.length > 0 && on === ids.length; cb.indeterminate = on > 0 && on < ids.length;
+    const n = cb.closest('summary').querySelector('.acct-count'); if (n) n.textContent = `${on} of ${ids.length} ticked`;
+  });
+  $('mat-labs-count').textContent = `(${t.size} ticked)`;
+  $('mat-save').disabled = !dirty || busy;
+  $('mat-dirty').textContent = !dirty ? '' : busy ? 'The list is being checked. Save when it is done.' : 'Not saved yet. The list below still shows the labs saved before.';
+}
+function matRenderResult() {
+  const box = $('mat-result'), l = matList(); if (!box || !l) return;
+  const busy = matSt.busy.get(l.id), rep = l.report || {}, items = Array.isArray(l.items) ? l.items : [];
+  const names = ids => (ids || []).map(labTitle).map(escapeHTML).join(', ');
+  let status;
+  if (busy === 'building') status = '<p class="mat-note">Building the list from the labs\' Materials sections. This can take a minute or two.</p>';
+  else if (busy) status = '<p class="mat-note" style="color:var(--muted);">Checking the labs…</p>';
+  else if (matSt.error) status = `<div class="lt-error">The list could not be brought up to date: ${escapeHTML(matSt.error)}${l.built_at ? ' What is shown below is the list as it was last built.' : ''}</div><button type="button" class="btn-small" onclick="matRefresh(false)">Try again</button>`;
+  else if (!l.built_at) status = '<p class="mat-note" style="color:var(--muted);">Tick the labs this list should cover, then Save.</p>';
+  else if (!(l.lab_ids || []).length) status = '<p class="mat-note" style="color:var(--muted);">No labs are ticked.</p>';
+  else status = `<p class="mat-note ok">Up to date. ${items.length} item${items.length === 1 ? '' : 's'} from ${(rep.read || []).length} lab${(rep.read || []).length === 1 ? '' : 's'} (${rep.lines || 0} line${rep.lines === 1 ? '' : 's'} in their Materials sections).</p><p class="hint" style="margin:0 0 0.4rem;">Last rebuilt ${escapeHTML(matWhen(l.built_at))}${Number(l.cost) > 0 ? `, which cost $${Number(l.cost).toFixed(Number(l.cost) < 0.1 ? 3 : 2)}` : ''}.</p>`;
+  const notes = [];
+  if (!busy && l.built_at) {
+    if ((rep.missing || []).length) notes.push(`No Materials section was found in: ${names(rep.missing)}. Nothing from ${rep.missing.length === 1 ? 'this lab' : 'these labs'} is in the list.`);
+    if ((rep.empty || []).length) notes.push(`The Materials section has no list items in: ${names(rep.empty)}.`);
+    if ((rep.gone || []).length) notes.push(`${rep.gone.length} ticked lab${rep.gone.length === 1 ? ' no longer exists and was' : 's no longer exist and were'} skipped.`);
+    if (rep.unmerged) notes.push(`${rep.unmerged} line${rep.unmerged === 1 ? ' was' : 's were'} not placed when the list was merged. ${rep.unmerged === 1 ? 'It is' : 'They are'} listed as the lab words ${rep.unmerged === 1 ? 'it' : 'them'}, marked "as written". Rebuild to try again.`);
+  }
+  const cats = [...new Set(items.map(it => it.category || 'Other'))];
+  const lists = cats.map(cat => { const own = items.filter(it => (it.category || 'Other') === cat);
+    return `<p class="text-group-label" style="margin-top:1.25rem;">${escapeHTML(cat)} (${own.length})</p><ul class="mat-items">${own.map(it => `<li>${escapeHTML(it.name)}${it.unmerged ? ' <span class="badge">as written</span>' : ''}<span class="mat-labs">${matLabNames(it).map(escapeHTML).join(' · ')}</span>${(it.sources || []).map(s => `<div class="mat-said">${escapeHTML(labTitle(s.lab_id))}: ${escapeHTML(s.text)}</div>`).join('')}</li>`).join('')}</ul>`; }).join('');
+  const tools = items.length ? `<div class="lt-toolbar" style="margin-top:1rem;"><button type="button" class="btn-small" onclick="matCopy()">Copy list</button> <button type="button" class="btn-small" onclick="matPrint()">Print</button> <label class="bu-check" style="display:inline-flex; align-items:center; gap:0.4rem; font-size:13px;"><input type="checkbox" style="width:auto;" ${matSt.wording ? 'checked' : ''} onchange="matSt.wording = this.checked; $('mat-result').classList.toggle('mat-hide-said', !this.checked)"/> Show each lab's wording</label>${busy ? '' : ' <button type="button" class="btn-small" onclick="matRefresh(true)" title="Ask Claude to merge the list again from scratch">Rebuild</button>'}</div>` : '';
+  box.classList.toggle('mat-hide-said', !matSt.wording);
+  box.innerHTML = status + notes.map(n => `<p class="mat-note">${n}</p>`).join('') + tools + lists;
+  matMarks();
+}
+async function matRefresh(force) {
+  const id = matSt.cur; if (!id || matSt.busy.has(id)) return;
+  matSt.busy.set(id, 'checking'); matSt.error = ''; matRenderResult();
+  let err = '';
+  try {
+    const r = await ltFnStream('materials', { action: 'refresh', list_id: id, force: !!force }, () => { if (matSt.busy.get(id) === 'checking') { matSt.busy.set(id, 'building'); if (matSt.cur === id) matRenderResult(); } });
+    const i = matSt.lists.findIndex(x => x.id === id); if (i >= 0 && r && r.list) matSt.lists[i] = r.list;
+  } catch (e) { err = /HTTP 404/.test(e.message || '') ? 'the materials function is not deployed yet.' : (e.message || String(e)); }
+  matSt.busy.delete(id);
+  if (matSt.cur === id) { matSt.error = err; if ($('materials-modal').classList.contains('open')) matRenderResult(); }
+}
+function matPick(id) { matSt.cur = id; matSt.ticks = null; matSt.error = ''; matSt.labsOpen = null; matRender(); matRefresh(false); }
+async function matAdd() {
+  const title = (prompt('Name of the new list', 'Semester materials') || '').trim(); if (!title) return;
+  const row = { id: 'ml-' + Date.now(), title: title.slice(0, 120), lab_ids: [] };
+  const { data, error } = await sb.from('materials_lists').insert(row).select('*').maybeSingle();
+  if (error) { toast('Could not make the list: ' + error.message, true); return; }
+  matSt.lists.push(data || { ...row, items: [], report: {} }); matSt.cur = row.id; matSt.ticks = null; matSt.error = ''; matSt.labsOpen = true; matRender();
+}
+async function matRename() {
+  const l = matList(); if (!l) return;
+  const title = (prompt('List name', l.title) || '').trim(); if (!title || title === l.title) return;
+  const { error } = await sb.from('materials_lists').update({ title: title.slice(0, 120) }).eq('id', l.id);
+  if (error) { toast('Could not rename the list: ' + error.message, true); return; }
+  l.title = title.slice(0, 120); matRender();
+}
+async function matDelete() {
+  const l = matList(); if (!l) return;
+  if (!confirm(`Delete the list "${l.title}"? The labs themselves are not affected.`)) return;
+  const { error } = await sb.from('materials_lists').delete().eq('id', l.id);
+  if (error) { toast('Could not delete the list: ' + error.message, true); return; }
+  matSt.lists = matSt.lists.filter(x => x.id !== l.id); matSt.cur = matSt.lists.length ? matSt.lists[0].id : null; matSt.ticks = null; matSt.error = ''; matSt.labsOpen = null; matRender();
+  if (matSt.cur) matRefresh(false);
+}
+async function matSaveTicks() {
+  const l = matList(); if (!l || !matDirty() || matSt.busy.has(l.id)) return;
+  const ids = state.labs.map(x => x.id).filter(id => matSt.ticks.has(id));
+  $('mat-save').disabled = true;
+  const { error } = await sb.from('materials_lists').update({ lab_ids: ids }).eq('id', l.id);
+  if (error) { toast('Could not save the labs: ' + error.message, true); matMarks(); return; }
+  l.lab_ids = ids; matSt.ticks = null; matMarks(); matRefresh(false);
+}
+function matByCategory(l) { const items = Array.isArray(l.items) ? l.items : []; return [...new Set(items.map(it => it.category || 'Other'))].map(cat => ({ cat, items: items.filter(it => (it.category || 'Other') === cat) })); }
+function matCopy() {
+  const l = matList(); if (!l) return;
+  const out = [l.title, ''];
+  matByCategory(l).forEach(g => { out.push(g.cat.toUpperCase()); g.items.forEach(it => out.push(`- ${it.name} (${matLabNames(it).join('; ')})`)); out.push(''); });
+  copyText(out.join('\n').trim() + '\n');
+}
+function matPrint() {
+  const l = matList(); if (!l) return;
+  const w = window.open('', '_blank'); if (!w) { toast('The browser blocked the print window. Allow pop-ups for this site, or use Copy list.', true); return; }
+  const rows = matByCategory(l).map(g => `<h2>${escapeHTML(g.cat)}</h2><ul>${g.items.map(it => `<li><span class="box"></span><span><strong>${escapeHTML(it.name)}</strong> <small>${matLabNames(it).map(escapeHTML).join(' · ')}</small>${matSt.wording ? (it.sources || []).map(s => `<div class="said">${escapeHTML(labTitle(s.lab_id))}: ${escapeHTML(s.text)}</div>`).join('') : ''}</span></li>`).join('')}</ul>`).join('');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHTML(l.title)}</title><style>body{font:13px/1.45 Helvetica,Arial,sans-serif;color:#111;margin:2rem;}h1{font-size:20px;margin:0 0 .2rem;}h2{font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin:1.4rem 0 .4rem;border-bottom:1px solid #999;padding-bottom:.2rem;}ul{list-style:none;margin:0;padding:0;}li{display:flex;gap:.6rem;padding:.3rem 0;border-bottom:1px solid #ddd;break-inside:avoid;}.box{flex:none;width:11px;height:11px;border:1px solid #333;margin-top:.2rem;}small{color:#555;margin-left:.3rem;}.said{color:#555;font-size:11px;}p{color:#555;margin:0;}</style></head><body><h1>${escapeHTML(l.title)}</h1><p>${(l.report && l.report.read || []).length} labs. Built ${escapeHTML(matWhen(l.built_at))}.</p>${rows}</body></html>`);
+  w.document.close(); w.focus(); setTimeout(() => { try { w.print(); } catch (e) { /* the window stays open to print by hand */ } }, 300);
+}
+
 function openWidgetsModal() { renderWidgetsList(); openModal('widgets-modal'); }
 function renderWidgetsList() {   // the Widgets tab opens on a list; each widget has its own page (openWidgetPage)
   const box = $('widgets-list'); ltStopWidgets(box);
