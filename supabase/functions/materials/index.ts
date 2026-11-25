@@ -4,7 +4,7 @@
 // their material lines differ from what the list was last built from, it asks Claude to merge them into one cumulative
 // list with no repeats and stores the result. Nothing changed = no model call and no cost.
 //
-// The code, not the model, decides which lines exist and guarantees that each one lands in exactly one entry (lib.ts).
+// The code, not the model, decides which lines exist and guarantees that none is left out of the list (lib.ts).
 //
 // Deploy:  npx supabase functions deploy materials --project-ref nioebkjtrweyxvboajyv
 // Secrets: ANTHROPIC_API_KEY (the one the owner set for Socratic 1). SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY are provided.

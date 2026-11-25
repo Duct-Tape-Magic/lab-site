@@ -4992,7 +4992,7 @@ async function matRefresh(force) {
   try {
     const r = await ltFnStream('materials', { action: 'refresh', list_id: id, force: !!force }, () => { if (matSt.busy.get(id) === 'checking') { matSt.busy.set(id, 'building'); if (matSt.cur === id) matRenderResult(); } });
     const i = matSt.lists.findIndex(x => x.id === id); if (i >= 0 && r && r.list) matSt.lists[i] = r.list;
-  } catch (e) { err = /HTTP 404/.test(e.message || '') ? 'the materials function is not deployed yet.' : (e.message || String(e)); }
+  } catch (e) { err = /HTTP 404|Failed to fetch|NetworkError|Load failed/i.test(e.message || '') ? 'the materials function could not be reached. Either it is not deployed yet or the connection dropped.' : (e.message || String(e)); }   // an undeployed function answers without CORS headers, which the browser reports as a failed fetch
   matSt.busy.delete(id);
   if (matSt.cur === id) { matSt.error = err; if ($('materials-modal').classList.contains('open')) matRenderResult(); }
 }

@@ -1,5 +1,5 @@
 // Checks the parts of the materials list that need no network: node scripts/materials-test.mjs
-// (supabase/functions/materials/lib.ts: finding a lab's Materials lines, and keeping every line in exactly one entry.)
+// (supabase/functions/materials/lib.ts: finding a lab's Materials lines, and never losing a line when they are merged.)
 import { materialsLines, numberLines, settle, fingerprint, userMessage } from '../supabase/functions/materials/lib.ts';
 
 let fails = 0;
@@ -75,10 +75,16 @@ const good = settle([{ name: '50 mL borosilicate glass beaker', category: 'Equip
 eq('merged: no repeats', good.items.map(i => [i.category, i.name, i.sources.map(s => s.lab_id).join('')]), [['Chemicals', 'Table salt', 'B'], ['Chemicals', 'White vinegar', 'A'], ['Equipment', '50 mL borosilicate glass beaker', 'AB'], ['Equipment', 'Stopwatch', 'B']]);
 eq('merged: nothing unplaced', good.unmerged, 0);
 const bad = settle([{ name: 'Beaker', category: 'Equipment', lines: [1, 3, 3, 99, 'x'] }, { name: 'Also beaker', category: 'Equipment', lines: [1] }, { name: 'Ghost', category: 'Nonsense', lines: [] }, { name: '', category: 'Nonsense', lines: [4] }], lines);
-const all = bad.items.flatMap(i => i.sources.map(s => s.text)).sort();
-eq('repair: every line exactly once', all, ['50 mL clear beaker', '50 mL glass beaker', 'Stopwatch', 'Table salt', 'Vinegar']);
+const all = [...new Set(bad.items.flatMap(i => i.sources.map(s => s.text)))].sort();
+eq('repair: no line left out', all, ['50 mL clear beaker', '50 mL glass beaker', 'Stopwatch', 'Table salt', 'Vinegar']);
+eq('repair: a number repeated inside one entry counts once', bad.items.find(i => i.name === 'Beaker').sources.map(s => s.text), ['50 mL clear beaker', '50 mL glass beaker']);
 eq('repair: unplaced lines become their own entries', [bad.unmerged, bad.items.filter(i => i.unmerged).map(i => [i.name, i.category])], [2, [['Table salt', 'Chemicals'], ['Vinegar', 'Chemicals']]]);
-eq('repair: empty and duplicate entries dropped, blank name and bad category filled', bad.items.filter(i => !i.unmerged).map(i => [i.name, i.category]), [['Beaker', 'Equipment'], ['Stopwatch', 'Equipment']]);
+eq('repair: empty entries dropped, blank name and bad category filled', bad.items.filter(i => !i.unmerged).map(i => [i.name, i.category]), [['Also beaker', 'Equipment'], ['Beaker', 'Equipment'], ['Stopwatch', 'Equipment']]);
+// a line that names several things is listed under each of them
+const two = numberLines([{ lab_id: 'A', lines: [{ text: 'Safety goggles and gloves', group: 'Equipment' }] }, { lab_id: 'B', lines: [{ text: 'Goggles', group: 'Equipment' }] }]);
+const split = settle([{ name: 'Safety goggles', category: 'Equipment', lines: [1, 2] }, { name: 'Gloves', category: 'Equipment', lines: [1] }], two);
+eq('a compound line sits in both entries', split.items.map(i => [i.name, i.sources.map(s => s.lab_id).join('')]), [['Gloves', 'A'], ['Safety goggles', 'AB']]);
+eq('a compound line is not unplaced', split.unmerged, 0);
 eq('no reply at all: every line still listed', settle(null, lines).items.length, 5);
 
 // ---- fingerprint: same lines = same print, whatever the lab order; any change of wording, label or lab = new print ----

@@ -2,7 +2,7 @@
 //
 //   materialsLines(content, format)  the material lines of one lab's Materials section
 //   numberLines(labs)                every line of every lab, numbered from 1
-//   settle(entries, lines)           Claude's entries, repaired so that every line sits in exactly one entry
+//   settle(entries, lines)           Claude's entries, repaired so that no line is left out
 //   fingerprint(...)                 what the list was built from; unchanged fingerprint = no model call
 //
 // A lab's Materials section is the part under the first heading whose text starts with "Materials" ("# Materials",
@@ -84,9 +84,11 @@ export function numberLines(labs: { lab_id: string; lines: Line[] }[]): Numbered
   return out;
 }
 
-// Claude answers with entries that point at line numbers. Whatever it answers, the stored list holds every line exactly
-// once: a number used twice counts the first time only, a number that does not exist is dropped, an entry left with no
-// line is dropped, and a line no entry took becomes an entry of its own, marked unmerged. No material is ever lost.
+// Claude answers with entries that point at line numbers. Whatever it answers, the stored list holds every line at
+// least once: a number that does not exist is dropped, a number repeated inside one entry counts once, an entry left
+// with no line is dropped, and a line no entry took becomes an entry of its own, marked unmerged. No material is ever
+// lost. A line may sit in several entries: that is how a line naming several things ("goggles and gloves") is listed
+// under each of them.
 export function settle(entries: { name?: unknown; category?: unknown; lines?: unknown }[], lines: Numbered[]): { items: Item[]; unmerged: number } {
   const byN = new Map(lines.map((l) => [l.n, l]));
   const taken = new Set<number>(), items: Item[] = [];
@@ -95,7 +97,7 @@ export function settle(entries: { name?: unknown; category?: unknown; lines?: un
     const own: Numbered[] = [];
     for (const raw of Array.isArray(e?.lines) ? e.lines : []) {
       const n = Number(raw);
-      if (!Number.isInteger(n) || !byN.has(n) || taken.has(n)) continue;
+      if (!Number.isInteger(n) || !byN.has(n) || own.some((l) => l.n === n)) continue;
       taken.add(n); own.push(byN.get(n)!);
     }
     if (!own.length) continue;
@@ -122,29 +124,32 @@ export async function fingerprint(version: string, model: string, labs: { lab_id
 }
 
 // ---------- what Claude is asked ----------
-export const PROMPT_VERSION = "1";
-export const SYSTEM_PROMPT = `You merge the materials lists of several chemistry labs into one cumulative list, for the person who has to gather everything for the semester.
+export const PROMPT_VERSION = "2";
+export const SYSTEM_PROMPT = `You merge the materials lists of several chemistry labs into one cumulative list, for the person who has to gather everything for the semester. The labs are done one at a time, so one item can be reused from lab to lab.
 
-You are given numbered lines. Each line is one material exactly as one lab's Materials section words it, with the lab it comes from and the label it sat under in that lab (usually Chemicals or Equipment).
+You are given numbered lines. Each line is one list item exactly as one lab's Materials section words it, with the lab it comes from and the label it sat under in that lab (usually Chemicals or Equipment).
 
-Return the cumulative list: one entry for each distinct thing to obtain.
+Return the cumulative list: one entry for each distinct thing to obtain. The reader's main complaint about a list like this is the same thing appearing several times, so merge wherever one item really does the job.
 
 Merging:
 - Lines that call for the same thing become one entry, however differently the labs word it. "50 mL clear beaker" in one lab and "50 mL glass beaker" in another are one beaker and must not appear twice.
-- Two lines are the same thing only when the same physical item, or the same purchase, satisfies both. A different size, capacity, concentration, grade or form is a different entry: a 50 mL beaker and a 250 mL beaker; 3% and 30% hydrogen peroxide; table salt and Epsom salt; a thermometer and a pH probe.
-- When you are not sure two lines are the same thing, keep them apart. A near-duplicate costs the reader a second look; a wrong merge means something is missing on lab day.
-- Never split a line. A line that offers alternatives ("wire cutter, pliers or multitool") or names things that go together ("pipette and bulb") is one line and belongs to one entry.
-- Every line number appears in exactly one entry. An entry always has at least one line.
+- More generally, lines belong in one entry whenever a single item, or a single purchase, would serve every one of them. Labs describe the same tool with different amounts of detail: "Thermometer", "Thermometer reading to 0.1 °C" and "Digital thermometer reading to 0.1 °C with a metal stem" are served by one thermometer that meets the most demanding line. "Beaker, 250 mL or larger" is served by the 250 mL beaker another lab asks for.
+- Keep lines apart when one item could not serve both: a size or capacity that differs where the size matters (a 50 mL beaker and a 250 mL beaker), a different concentration or grade (3% and 30% hydrogen peroxide), a different substance (table salt and Epsom salt; distilled water where a lab requires distilled, and tap water), or requirements that exclude each other (a foam cup, and a cup that must not be foam).
+- When you cannot tell whether one item would serve both lines, keep them apart. A near-duplicate costs the reader a second look; a wrong merge means something is missing on lab day.
+- A line that offers alternatives for one job ("wire cutter, pliers or multitool") is one thing and goes in one entry.
+- A line that names several separate things to obtain ("safety goggles and gloves"; "beaker, metal spoon, lighter") belongs in the entry for each of those things: put its number in every one of them. That is the only case in which a line number appears in more than one entry.
+- Every line number appears in at least one entry. An entry always has at least one line.
 
 Naming an entry:
 - Name it the way a supply list would: the item with its size, capacity or concentration, in the standard term for it. Where the labs word the same thing loosely, give the standard, fully specific name: a "50 mL clear beaker" and a "50 mL glass beaker" are a "50 mL borosilicate glass beaker"; "baking soda" is "Sodium bicarbonate (baking soda)".
-- Do not add a size, quantity, concentration or brand that no line states.
-- Leave out amounts needed, shopping advice, substitutions and instructions. The reader sees the labs' original lines under your entry, so nothing is lost by keeping the name short.
+- When an entry merges lines with different amounts of detail, the name carries every requirement the lines state, so that the one item named serves all of them ("Digital thermometer, 0.1 °C, metal stem").
+- Do not add a size, quantity, concentration, requirement or brand that no line states.
+- Leave out amounts needed, counts, shopping advice, substitutions and instructions. The reader sees the labs' original lines under your entry, so nothing is lost by keeping the name short.
 - For a line of alternatives, name what the item is used as and keep the alternatives short ("Wire cutter or similar cutting tool").
 
 Category: "Chemicals" for substances that are used in the lab (chemicals, solutions, household substances, foods, water, ice); "Equipment" for everything else, including glassware, tools, containers, safety gear and paper goods. The label a line sat under is usually right.
 
-When a previous list is given, an entry that is the same thing as a previous entry keeps that previous name exactly, so the list does not change wording from one update to the next.`;
+When a previous list is given, an entry that is the same thing as a previous entry, and covers the same requirements, keeps that previous name exactly, so the list does not change wording from one update to the next.`;
 
 export const OUTPUT_SCHEMA = {
   type: "object",
