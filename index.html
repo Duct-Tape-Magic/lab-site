@@ -4478,17 +4478,7 @@ document.addEventListener('mousemove', e => {
   tip.textContent = hit.dataset.tip; tip.hidden = false;
   tip.style.left = Math.min(e.clientX + 12, window.innerWidth - tip.offsetWidth - 8) + 'px'; tip.style.top = Math.max(8, e.clientY - tip.offsetHeight - 10) + 'px';
 });
-// "admin only" from the database means the request did not carry an admin's login: this browser was signed out, or another
-// account (a class code, a Google account) signed in in another tab. One browser holds one login, shared by all its tabs.
-const ADMIN_GONE_MSG = 'This browser is no longer logged in as an admin: it was signed out, or another account signed in in another tab. Reload the page and log in as admin again. Nothing was changed.';
-async function rpc(name, args) { const { data, error } = await sb.rpc(name, args); if (error) { if (error.message === 'admin only') throw new Error(ADMIN_GONE_MSG); throw error; } return data; }
-// The login stopped being an admin's while admin panels were open. The read-only panels close (they could only answer
-// "admin only"); a panel that may hold typed work (a lab being edited, a reply, settings) stays open so nothing typed is lost.
-function adminLost() {
-  const shut = ['users-modal', 'stats-modal', 'materials-modal'].filter(id => $(id) && $(id).classList.contains('open'));
-  shut.forEach(closeModal);
-  if (shut.length || document.querySelector('.modal-backdrop.open')) { toast(ADMIN_GONE_MSG, true); clearTimeout(toast._t); toast._t = setTimeout(() => $('toast').classList.remove('show'), 15000); }   // long enough to read
-}
+async function rpc(name, args) { const { data, error } = await sb.rpc(name, args); if (error) throw error; return data; }
 async function renderStatsOverview(req) {
   const body = $('stats-body'); const n = statsRange;
   const [summary, daily, top, labDaily] = await Promise.all([
@@ -9736,9 +9726,8 @@ function buEquivalenceCheck(text) {
     if (sb) sb.auth.onAuthStateChange((event, session) => {
       // The library fires SIGNED_IN / TOKEN_REFRESHED whenever the tab regains focus; only react when the user actually changes.
       const prevUser = state.session?.user?.id || null, nextUser = session?.user?.id || null;
-      const was = isAdmin(), wasReal = isRealAdmin(); state.session = session; state.role = roleFromSession(session);
+      const was = isAdmin(); state.session = session; state.role = roleFromSession(session);
       if (prevUser === nextUser) return;
-      if (wasReal && !isRealAdmin()) adminLost();
       if (!nextUser) { state.adminPreview = false; try { sessionStorage.removeItem('labsite.adminPreview'); } catch (e) { /* ignore */ } }
       Promise.all([loadMySeat(), loadEditRights()]).then(() => { renderChrome(); if (state.route.view === 'signin' || isEditor() || isRealAdmin()) render(); });   // the edit buttons (and an admin's Editors badges) appear once the answer is in
       if (!isRealAdmin()) reloadCatalogue();   // a student signed in (Google, or a code in another tab) or out: what they may see has changed. Admin login/logout reload on their own.
